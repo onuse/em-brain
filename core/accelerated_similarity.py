@@ -17,6 +17,39 @@ except ImportError:
     SKLEARN_AVAILABLE = False
     print("Spatial Indexing: scikit-learn not available, using grid-based fallback")
 
+# Try to import PyTorch with MPS support
+try:
+    import torch
+    TORCH_AVAILABLE = True
+    MPS_AVAILABLE = torch.backends.mps.is_available()
+    MPS_BUILT = torch.backends.mps.is_built()
+    
+    print(f"PyTorch Acceleration: PyTorch {torch.__version__} available")
+    print(f"  MPS Built: {'Yes' if MPS_BUILT else 'No'}")
+    print(f"  MPS Available: {'Yes' if MPS_AVAILABLE else 'No'}")
+    
+    # Test MPS functionality
+    MPS_FUNCTIONAL = False
+    if MPS_AVAILABLE:
+        try:
+            # Test basic MPS operation
+            test_tensor = torch.tensor([1.0, 2.0, 3.0]).to('mps')
+            _ = test_tensor + 1
+            MPS_FUNCTIONAL = True
+            print(f"  MPS Functional: Yes")
+        except Exception as e:
+            print(f"  MPS Functional: No ({e})")
+            MPS_FUNCTIONAL = False
+    else:
+        print(f"  MPS Functional: No (not available)")
+        
+except ImportError:
+    TORCH_AVAILABLE = False
+    MPS_AVAILABLE = False
+    MPS_BUILT = False
+    MPS_FUNCTIONAL = False
+    print("PyTorch Acceleration: PyTorch not available")
+
 # Try to import acceleration libraries
 try:
     import jax
@@ -64,18 +97,21 @@ class AcceleratedSimilarityEngine:
     Automatically chooses the best available acceleration method.
     """
     
-    def __init__(self, enable_jax: bool = True, enable_caching: bool = True, 
+    def __init__(self, enable_pytorch: bool = True, enable_jax: bool = True, enable_caching: bool = True, 
                  enable_spatial_indexing: bool = True, spatial_index_threshold: int = 100):
         """
         Initialize the acceleration engine.
         
         Args:
+            enable_pytorch: Whether to use PyTorch MPS acceleration if available (highest priority)
             enable_jax: Whether to use JAX acceleration if available
             enable_caching: Whether to enable context caching for repeated searches
             enable_spatial_indexing: Whether to use spatial indexing for O(log n) search
             spatial_index_threshold: Minimum number of contexts to trigger spatial indexing
         """
-        self.enable_jax = enable_jax and JAX_AVAILABLE
+        # Determine best acceleration method (priority order)
+        self.enable_pytorch = enable_pytorch and TORCH_AVAILABLE and MPS_FUNCTIONAL
+        self.enable_jax = enable_jax and JAX_AVAILABLE and not self.enable_pytorch  # JAX fallback
         self.enable_caching = enable_caching
         self.enable_spatial_indexing = enable_spatial_indexing and SKLEARN_AVAILABLE
         self.spatial_index_threshold = spatial_index_threshold
@@ -98,8 +134,16 @@ class AcceleratedSimilarityEngine:
         # Initialize acceleration method
         self._init_acceleration()
         
+        # Determine acceleration method name
+        if self.enable_pytorch:
+            method_name = "PyTorch MPS"
+        elif self.enable_jax:
+            method_name = "JAX"
+        else:
+            method_name = "NumPy"
+        
         print(f"AcceleratedSimilarityEngine initialized:")
-        print(f"  Method: {'JAX' if self.enable_jax else 'NumPy'}")
+        print(f"  Method: {method_name}")
         print(f"  Caching: {'Enabled' if enable_caching else 'Disabled'}")
         print(f"  Spatial Indexing: {'Enabled' if self.enable_spatial_indexing else 'Disabled'}")
         if self.enable_spatial_indexing:
@@ -107,10 +151,67 @@ class AcceleratedSimilarityEngine:
     
     def _init_acceleration(self):
         """Initialize the appropriate acceleration method"""
-        if self.enable_jax:
+        if self.enable_pytorch:
+            self._init_pytorch_acceleration()
+        elif self.enable_jax:
             self._init_jax_acceleration()
         else:
             self._init_numpy_acceleration()
+    
+    def _init_pytorch_acceleration(self):
+        """Initialize PyTorch MPS-based acceleration"""
+        def _pytorch_similarity_search(target_context, all_contexts):
+            # Convert to PyTorch tensors on MPS device
+            target = torch.tensor(target_context, dtype=torch.float32).to('mps')
+            contexts = torch.tensor(all_contexts, dtype=torch.float32).to('mps')
+            
+            # Vectorized Euclidean distance on GPU
+            distances = torch.norm(contexts - target, dim=1)
+            max_distance = torch.sqrt(torch.tensor(len(target_context) * 4.0)).to('mps')
+            
+            similarities = torch.clamp(1.0 - (distances / max_distance), min=0.0)
+            return similarities.cpu().numpy()  # Return to CPU as numpy array
+        
+        def _pytorch_similarity_with_filtering(target_context, all_contexts,
+                                             similarity_threshold, max_results):
+            similarities = _pytorch_similarity_search(target_context, all_contexts)
+            
+            # Find indices that meet threshold
+            valid_indices = np.where(similarities >= similarity_threshold)[0]
+            valid_similarities = similarities[valid_indices]
+            
+            # Sort by similarity (highest first)
+            if len(valid_similarities) > 0:
+                sorted_order = np.argsort(-valid_similarities)
+                top_indices = valid_indices[sorted_order[:max_results]]
+                top_similarities = valid_similarities[sorted_order[:max_results]]
+            else:
+                top_indices = np.array([], dtype=int)
+                top_similarities = np.array([])
+            
+            return top_indices, top_similarities
+        
+        self._pytorch_similarity_search = _pytorch_similarity_search
+        self._pytorch_similarity_with_filtering = _pytorch_similarity_with_filtering
+        
+        # Warmup PyTorch MPS with dummy data
+        dummy_context = [0.0] * 8
+        dummy_contexts = np.zeros((10, 8))
+        
+        try:
+            _ = self._pytorch_similarity_search(dummy_context, dummy_contexts)
+            _ = self._pytorch_similarity_with_filtering(dummy_context, dummy_contexts, 0.5, 5)
+            print("  PyTorch MPS warmup: Complete")
+        except Exception as e:
+            print(f"  PyTorch MPS warmup warning: {e}")
+            # Fall back to JAX/NumPy on MPS failure
+            print("  Falling back to JAX/NumPy acceleration")
+            self.enable_pytorch = False
+            if JAX_AVAILABLE:
+                self.enable_jax = True
+                self._init_jax_acceleration()
+            else:
+                self._init_numpy_acceleration()
     
     def _init_jax_acceleration(self):
         """Initialize JAX-based acceleration"""
@@ -236,7 +337,11 @@ class AcceleratedSimilarityEngine:
             self.spatial_index_hits += 1
         else:
             # Use accelerated linear search for smaller datasets (O(n))
-            if self.enable_jax:
+            if self.enable_pytorch:
+                indices, similarities = self._pytorch_find_similar(
+                    target_context, all_contexts_array, similarity_threshold, max_results
+                )
+            elif self.enable_jax:
                 indices, similarities = self._jax_find_similar(
                     target_context, all_contexts_array, similarity_threshold, max_results
                 )
@@ -259,6 +364,15 @@ class AcceleratedSimilarityEngine:
                     del self._context_cache[old_key]
             
             self._context_cache[cache_key] = (indices, similarities)
+        
+        return indices, similarities
+    
+    def _pytorch_find_similar(self, target_context, all_contexts_array,
+                             similarity_threshold, max_results):
+        """PyTorch MPS-accelerated similarity search"""
+        indices, similarities = self._pytorch_similarity_with_filtering(
+            target_context, all_contexts_array, similarity_threshold, max_results
+        )
         
         return indices, similarities
     
@@ -385,7 +499,10 @@ class AcceleratedSimilarityEngine:
         """
         all_contexts_array = np.array(all_contexts)
         
-        if self.enable_jax:
+        if self.enable_pytorch:
+            similarities = self._pytorch_similarity_search(target_context, all_contexts_array)
+            return similarities
+        elif self.enable_jax:
             similarities = self._jax_similarity_search(target_context, all_contexts_array)
             return np.array(similarities)
         else:
@@ -410,9 +527,18 @@ class AcceleratedSimilarityEngine:
             'spatial_index_hits': self.spatial_index_hits,
             'spatial_hit_rate': spatial_hit_rate,
             'spatial_index_active': self._spatial_index is not None,
-            'acceleration_method': 'JAX' if self.enable_jax else 'NumPy',
-            'gpu_available': GPU_AVAILABLE
+            'acceleration_method': self._get_acceleration_method_name(),
+            'gpu_available': GPU_AVAILABLE or MPS_AVAILABLE
         }
+    
+    def _get_acceleration_method_name(self) -> str:
+        """Get the name of the current acceleration method"""
+        if self.enable_pytorch:
+            return "PyTorch MPS"
+        elif self.enable_jax:
+            return "JAX"
+        else:
+            return "NumPy"
     
     def clear_cache(self):
         """Clear the similarity cache"""

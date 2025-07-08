@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 """
-Ultimate 2D Brain Demo - THE definitive demonstration of the complete robot brain system
+Robot Brain Demo - THE definitive demonstration of the complete robot brain system
 
-This is THE single demo that showcases ALL brain capabilities working together:
-• Unified emergent memory system
-• Multi-drive motivation (survival, curiosity, exploration)  
-• Goal generation from drives
-• Adaptive parameter tuning
-• Universal actuator discovery
-• Persistent memory (lifelong learning)
-• Visual brain state monitoring
-• Cross-session learning accumulation
+This is the single consolidated demo that showcases ALL brain capabilities working together:
+• Unified emergent memory system with neural-like dynamics
+• Multi-drive motivation system (survival, curiosity, exploration)
+• Real-time goal generation from competing drives
+• Adaptive parameter tuning based on prediction accuracy
+• Universal actuator discovery (learns motor effects automatically)
+• Persistent memory with lifelong learning across sessions
+• Real-time visual brain state monitoring and analysis
+• Cross-session learning accumulation and memory consolidation
+• High-performance prediction pipeline (70+ FPS capable)
 
-This replaces all other 2D world demos - everything is integrated here.
+This consolidates and replaces all other demo files in the project.
 """
 
 import time
@@ -24,7 +25,7 @@ from enhanced_run_logger import EnhancedRunLogger
 
 def main():
     """Launch the ultimate 2D brain demonstration."""
-    print("🧠 ULTIMATE 2D BRAIN DEMO")
+    print("🧠 ROBOT BRAIN DEMO")
     print("=" * 60)
     print("THE definitive demonstration of the complete robot brain system")
     print()

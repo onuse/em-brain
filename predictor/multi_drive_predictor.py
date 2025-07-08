@@ -12,6 +12,7 @@ from core.communication import PredictionPacket
 from .single_traversal import SingleTraversal, TraversalResult
 from .consensus_resolver import ConsensusResolver, ConsensusResult
 from drives import create_default_motivation_system, DriveContext, MotivationSystem
+from brain_prediction_profiler import profile_section
 
 
 class MultiDrivePredictor:
@@ -102,54 +103,61 @@ class MultiDrivePredictor:
         start_time = time.time()
         
         # Handle empty graph (bootstrap case)
-        if not world_graph.has_nodes():
-            return self._bootstrap_prediction(sequence_id, threat_level, 
-                                            robot_health, robot_energy, 
-                                            robot_position, robot_orientation, step_count)
+        with profile_section("bootstrap_check"):
+            if not world_graph.has_nodes():
+                return self._bootstrap_prediction(sequence_id, threat_level, 
+                                                robot_health, robot_energy, 
+                                                robot_position, robot_orientation, step_count)
         
         # Calculate time budget based on threat level
-        time_budget = self._calculate_time_budget(threat_level)
+        with profile_section("time_budget_calculation"):
+            time_budget = self._calculate_time_budget(threat_level)
         
         # Run time-budgeted traversals to get experience-based insights
-        if self.enable_parallel_traversals:
-            traversal_results, traversal_count = self._run_parallel_traversals(
-                current_context, world_graph, start_time, time_budget
-            )
-        else:
-            traversal_results, traversal_count = self._run_sequential_traversals(
-                current_context, world_graph, start_time, time_budget
-            )
+        with profile_section("traversals"):
+            if self.enable_parallel_traversals:
+                traversal_results, traversal_count = self._run_parallel_traversals(
+                    current_context, world_graph, start_time, time_budget
+                )
+            else:
+                traversal_results, traversal_count = self._run_sequential_traversals(
+                    current_context, world_graph, start_time, time_budget
+                )
         
         # Create drive context
-        drive_context = DriveContext(
-            current_sensory=current_context,
-            robot_health=robot_health,
-            robot_energy=robot_energy,
-            robot_position=robot_position,
-            robot_orientation=robot_orientation,
-            recent_experiences=list(world_graph.all_nodes())[-10:],  # Last 10 experiences
-            prediction_errors=self._extract_recent_prediction_errors(world_graph),
-            time_since_last_food=self._calculate_time_since_last_food(world_graph),
-            time_since_last_damage=self._calculate_time_since_last_damage(world_graph),
-            threat_level=threat_level,
-            step_count=step_count
-        )
+        with profile_section("drive_context_creation"):
+            drive_context = DriveContext(
+                current_sensory=current_context,
+                robot_health=robot_health,
+                robot_energy=robot_energy,
+                robot_position=robot_position,
+                robot_orientation=robot_orientation,
+                recent_experiences=list(world_graph.all_nodes())[-10:],  # Last 10 experiences
+                prediction_errors=self._extract_recent_prediction_errors(world_graph),
+                time_since_last_food=self._calculate_time_since_last_food(world_graph),
+                time_since_last_damage=self._calculate_time_since_last_damage(world_graph),
+                threat_level=threat_level,
+                step_count=step_count
+            )
         
         # Generate action candidates using motivation system
-        action_candidates = self.motivation_system.generate_action_candidates(drive_context)
-        
-        # Add experience-based actions from traversals
-        for result in traversal_results:
-            if result.prediction:
-                action_candidates.append(result.prediction.motor_action)
+        with profile_section("action_candidate_generation"):
+            action_candidates = self.motivation_system.generate_action_candidates(drive_context)
+            
+            # Add experience-based actions from traversals
+            for result in traversal_results:
+                if result.prediction:
+                    action_candidates.append(result.prediction.motor_action)
         
         # Use motivation system to choose best action
-        motivation_result = self.motivation_system.evaluate_action_candidates(
-            action_candidates, drive_context
-        )
+        with profile_section("motivation_evaluation"):
+            motivation_result = self.motivation_system.evaluate_action_candidates(
+                action_candidates, drive_context
+            )
         
         # Create prediction packet with chosen action
-        thinking_time = time.time() - start_time
+        with profile_section("prediction_packet_creation"):
+            thinking_time = time.time() - start_time
         
         prediction = PredictionPacket(
             expected_sensory=self._predict_sensory_outcome(motivation_result.chosen_action, world_graph),

@@ -51,31 +51,33 @@ class WorldGraph:
         return len(self.nodes) > 0
     
     def add_node(self, experience: ExperienceNode) -> str:
-        """Add a new experience node to the graph with neural-like connection formation."""
+        """Add a new experience node to the graph with optimized connection formation."""
         node_id = experience.node_id
         self.nodes[node_id] = experience
         self.total_nodes_created += 1
         
-        # Update indexes (legacy)
+        # Update indexes (fast operations)
         self._update_strength_index(node_id, experience.strength)
         self.temporal_chain.append(node_id)
         
-        # Link to previous node temporally (legacy)
+        # Link to previous node temporally (fast)
         if self.latest_node_id:
             experience.temporal_predecessor = self.latest_node_id
             if self.latest_node_id in self.nodes:
                 self.nodes[self.latest_node_id].temporal_successor = node_id
         
-        # Neural-like connection formation based on similarity
-        self._create_natural_connections(experience)
-        
-        # Activate the new memory
+        # Activate the new memory (fast)
         experience.activate(strength=1.0)
-        
         self.latest_node_id = node_id
         
-        # Trigger natural time step processes
-        self.step_time()
+        # OPTIMIZATION: Only do expensive operations every N additions
+        # This moves O(n²) operations from critical path
+        if self.total_nodes_created % 10 == 0:  # Every 10 nodes instead of every node
+            self._create_natural_connections_batch()
+            self.step_time()
+        else:
+            # Quick connection to just the most recent nodes (fast O(k) where k=5)
+            self._create_minimal_connections(experience)
         
         return node_id
     
@@ -101,6 +103,68 @@ class WorldGraph:
                     
                     new_node.connection_weights[existing_node.node_id] = connection_strength
                     existing_node.connection_weights[new_node.node_id] = connection_strength
+    
+    def _create_minimal_connections(self, new_node: ExperienceNode):
+        """Create connections to only the most recent 5 nodes for fast operation."""
+        # Get the 5 most recent nodes (O(5) instead of O(n))
+        recent_node_ids = self.temporal_chain[-5:] if len(self.temporal_chain) > 5 else self.temporal_chain[:-1]
+        
+        for node_id in recent_node_ids:
+            if node_id in self.nodes and node_id != new_node.node_id:
+                existing_node = self.nodes[node_id]
+                
+                # Calculate similarity only with recent nodes
+                similarity = self._calculate_context_similarity(
+                    new_node.mental_context, existing_node.mental_context
+                )
+                
+                # Create connection if similar enough
+                if similarity > self.similarity_threshold:
+                    connection_strength = similarity * 0.6
+                    new_node.connection_weights[existing_node.node_id] = connection_strength
+                    existing_node.connection_weights[new_node.node_id] = connection_strength
+                elif similarity > 0.4:
+                    connection_strength = similarity * 0.3
+                    new_node.connection_weights[existing_node.node_id] = connection_strength
+                    existing_node.connection_weights[new_node.node_id] = connection_strength
+    
+    def _create_natural_connections_batch(self):
+        """Batch process connections for recently added nodes (called every 10 additions)."""
+        # Get the last 10 nodes that might need full connection processing
+        recent_node_ids = self.temporal_chain[-10:] if len(self.temporal_chain) >= 10 else self.temporal_chain
+        
+        # Only process connections between recent nodes to limit complexity
+        for i, node_id1 in enumerate(recent_node_ids):
+            if node_id1 not in self.nodes:
+                continue
+            node1 = self.nodes[node_id1]
+            
+            # Connect to some older nodes for diversity (sample, don't check all)
+            import random
+            if len(self.nodes) > 20:
+                older_sample = random.sample(list(self.nodes.keys()), min(20, len(self.nodes) - len(recent_node_ids)))
+                candidate_nodes = recent_node_ids + older_sample
+            else:
+                candidate_nodes = list(self.nodes.keys())
+            
+            for node_id2 in candidate_nodes:
+                if node_id2 != node_id1 and node_id2 in self.nodes:
+                    node2 = self.nodes[node_id2]
+                    
+                    # Only create connection if one doesn't exist
+                    if node_id2 not in node1.connection_weights:
+                        similarity = self._calculate_context_similarity(
+                            node1.mental_context, node2.mental_context
+                        )
+                        
+                        if similarity > self.similarity_threshold:
+                            connection_strength = similarity * 0.6
+                            node1.connection_weights[node_id2] = connection_strength
+                            node2.connection_weights[node_id1] = connection_strength
+                        elif similarity > 0.4:
+                            connection_strength = similarity * 0.3
+                            node1.connection_weights[node_id2] = connection_strength
+                            node2.connection_weights[node_id1] = connection_strength
     
     def get_node(self, node_id: str) -> Optional[ExperienceNode]:
         """Retrieve a node by ID."""

@@ -12,6 +12,7 @@ from core.persistent_memory import PersistentMemoryManager
 from core.actuator_discovery import UniversalActuatorDiscovery
 from predictor.triple_predictor import TriplePredictor
 from predictor.consensus_resolver import ConsensusResult
+from brain_prediction_profiler import get_brain_profiler, profile_section
 
 
 class BrainInterface:
@@ -72,133 +73,151 @@ class BrainInterface:
         Returns:
             Prediction packet with motor actions and expected sensory outcome
         """
-        # Learn sensory dimensions from first encounter
-        if self.sensory_vector_length is None:
-            self.sensory_vector_length = len(sensory_packet.sensor_values)
-            print(f"Brain learned sensory vector length: {self.sensory_vector_length}")
-        
-        # Validate consistent sensory length (brainstem should be consistent)
-        if len(sensory_packet.sensor_values) != self.sensory_vector_length:
-            raise ValueError(f"Inconsistent sensory length: expected {self.sensory_vector_length}, "
-                           f"got {len(sensory_packet.sensor_values)}")
-        
-        # Create experience from previous prediction (if any)
-        if self.last_prediction and self.last_sensory:
-            self._create_experience_from_prediction()
-        
-        # Extract ACTUAL survival state from sensory data (indices 17-21 are internal state)
-        actual_health = sensory_packet.sensor_values[17] if len(sensory_packet.sensor_values) > 17 else 1.0
-        actual_energy = sensory_packet.sensor_values[18] if len(sensory_packet.sensor_values) > 18 else 1.0
-        
-        # Generate new prediction with ACTUAL survival state
-        consensus_result = self.predictor.generate_prediction(
-            mental_context, self.world_graph, 
-            sensory_packet.sequence_id, threat_level,
-            robot_health=actual_health,  # Pass real health
-            robot_energy=actual_energy   # Pass real energy
-        )
-        
-        # Ensure prediction has correct sensory vector length
-        if consensus_result.prediction:
-            consensus_result.prediction.set_sensory_vector_length(
-                self.sensory_vector_length, default_value=0.0
-            )
-        
-        # Store for next experience creation
-        self.last_prediction = consensus_result.prediction
-        self.last_sensory = sensory_packet
-        
-        return consensus_result.prediction
+        with get_brain_profiler().start_prediction_timing():
+            # Learn sensory dimensions from first encounter
+            with profile_section("sensory_length_learning"):
+                if self.sensory_vector_length is None:
+                    self.sensory_vector_length = len(sensory_packet.sensor_values)
+                    print(f"Brain learned sensory vector length: {self.sensory_vector_length}")
+                
+                # Validate consistent sensory length (brainstem should be consistent)
+                if len(sensory_packet.sensor_values) != self.sensory_vector_length:
+                    raise ValueError(f"Inconsistent sensory length: expected {self.sensory_vector_length}, "
+                                   f"got {len(sensory_packet.sensor_values)}")
+            
+            # Create experience from previous prediction (if any)
+            with profile_section("experience_creation"):
+                if self.last_prediction and self.last_sensory:
+                    self._create_experience_from_prediction()
+            
+            # Extract ACTUAL survival state from sensory data (indices 17-21 are internal state)
+            with profile_section("survival_state_extraction"):
+                actual_health = sensory_packet.sensor_values[17] if len(sensory_packet.sensor_values) > 17 else 1.0
+                actual_energy = sensory_packet.sensor_values[18] if len(sensory_packet.sensor_values) > 18 else 1.0
+            
+            # Generate new prediction with ACTUAL survival state
+            with profile_section("prediction_generation"):
+                consensus_result = self.predictor.generate_prediction(
+                    mental_context, self.world_graph, 
+                    sensory_packet.sequence_id, threat_level,
+                    robot_health=actual_health,  # Pass real health
+                    robot_energy=actual_energy   # Pass real energy
+                )
+            
+            # Ensure prediction has correct sensory vector length
+            with profile_section("prediction_finalization"):
+                if consensus_result.prediction:
+                    consensus_result.prediction.set_sensory_vector_length(
+                        self.sensory_vector_length, default_value=0.0
+                    )
+                
+                # Store for next experience creation
+                self.last_prediction = consensus_result.prediction
+                self.last_sensory = sensory_packet
+            
+            return consensus_result.prediction
     
     def _create_experience_from_prediction(self):
         """Create experience node from previous prediction and current sensory reality."""
-        if not self.last_prediction or not self.last_sensory:
-            return
-            
+        with profile_section("experience_creation_validation"):
+            if not self.last_prediction or not self.last_sensory:
+                return
+        
         # Calculate prediction error
-        prediction_error = self._calculate_prediction_error(
-            self.last_prediction.expected_sensory,
-            self.last_sensory.sensor_values
-        )
+        with profile_section("prediction_error_calculation"):
+            prediction_error = self._calculate_prediction_error(
+                self.last_prediction.expected_sensory,
+                self.last_sensory.sensor_values
+            )
         
         # Use stored mental context from the last prediction
         # Use the first 8 sensor values as mental context (robot's perception of its environment)
-        mental_context = self.last_sensory.sensor_values[:8] if len(self.last_sensory.sensor_values) >= 8 else self.last_sensory.sensor_values
-        
-        # Extract ACTUAL survival state from sensory data (indices 17-21 are internal state)
-        actual_health = self.last_sensory.sensor_values[17] if len(self.last_sensory.sensor_values) > 17 else 1.0
-        actual_energy = self.last_sensory.sensor_values[18] if len(self.last_sensory.sensor_values) > 18 else 1.0
+        with profile_section("mental_context_extraction"):
+            mental_context = self.last_sensory.sensor_values[:8] if len(self.last_sensory.sensor_values) >= 8 else self.last_sensory.sensor_values
+            
+            # Extract ACTUAL survival state from sensory data (indices 17-21 are internal state)
+            actual_health = self.last_sensory.sensor_values[17] if len(self.last_sensory.sensor_values) > 17 else 1.0
+            actual_energy = self.last_sensory.sensor_values[18] if len(self.last_sensory.sensor_values) > 18 else 1.0
         
         # Create experience node (generic - no drive-specific logic here)
-        experience = ExperienceNode(
-            mental_context=mental_context,
-            action_taken=self.last_prediction.motor_action,
-            predicted_sensory=self.last_prediction.expected_sensory,
-            actual_sensory=self.last_sensory.sensor_values,
-            prediction_error=prediction_error
-        )
+        with profile_section("experience_node_creation"):
+            experience = ExperienceNode(
+                mental_context=mental_context,
+                action_taken=self.last_prediction.motor_action,
+                predicted_sensory=self.last_prediction.expected_sensory,
+                actual_sensory=self.last_sensory.sensor_values,
+                prediction_error=prediction_error
+            )
         
         # Let drives evaluate experience significance AND pain/pleasure (proper separation of concerns)
-        if hasattr(self.predictor, 'motivation_system'):
-            context = self._create_drive_context(actual_health, actual_energy)
-            total_pain = 0.0
-            
-            for drive in self.predictor.motivation_system.drives.values():
-                # Evaluate significance for memory strengthening
-                significance = drive.evaluate_experience_significance(experience, context)
-                if significance > 1.0:
-                    # Drive considers this experience significant - adjust strength
-                    experience.strength *= significance
+        with profile_section("drive_evaluation"):
+            if hasattr(self.predictor, 'motivation_system'):
+                with profile_section("drive_context_creation"):
+                    context = self._create_drive_context(actual_health, actual_energy)
+                    total_pain = 0.0
                 
-                # Evaluate pain/pleasure for learning bias
-                valence = drive.evaluate_experience_valence(experience, context)
-                total_pain += valence
-            
-            # Apply pain bias to experience - painful experiences should be more memorable
-            # and create negative association with actions that caused them
-            if total_pain < -0.1:  # Significant pain
-                # Make painful experiences much more memorable
-                pain_multiplier = min(5.0, abs(total_pain) * 3.0)
-                experience.strength *= pain_multiplier
+                with profile_section("drive_experience_evaluation"):
+                    for drive in self.predictor.motivation_system.drives.values():
+                        # Evaluate significance for memory strengthening
+                        significance = drive.evaluate_experience_significance(experience, context)
+                        if significance > 1.0:
+                            # Drive considers this experience significant - adjust strength
+                            experience.strength *= significance
+                        
+                        # Evaluate pain/pleasure for learning bias
+                        valence = drive.evaluate_experience_valence(experience, context)
+                        total_pain += valence
                 
-                # Store pain signal for future action evaluation (this creates avoidance)
-                if not hasattr(experience, 'pain_signal'):
-                    experience.pain_signal = total_pain
-                    
-            elif total_pain > 0.1:  # Significant pleasure
-                # Make pleasurable experiences more memorable too
-                pleasure_multiplier = min(3.0, total_pain * 2.0)
-                experience.strength *= pleasure_multiplier
-                
-                # Store pleasure signal for future action evaluation (this creates approach)
-                if not hasattr(experience, 'pleasure_signal'):
-                    experience.pleasure_signal = total_pain
+                with profile_section("pain_pleasure_processing"):
+                    # Apply pain bias to experience - painful experiences should be more memorable
+                    # and create negative association with actions that caused them
+                    if total_pain < -0.1:  # Significant pain
+                        # Make painful experiences much more memorable
+                        pain_multiplier = min(5.0, abs(total_pain) * 3.0)
+                        experience.strength *= pain_multiplier
+                        
+                        # Store pain signal for future action evaluation (this creates avoidance)
+                        if not hasattr(experience, 'pain_signal'):
+                            experience.pain_signal = total_pain
+                            
+                    elif total_pain > 0.1:  # Significant pleasure
+                        # Make pleasurable experiences more memorable too
+                        pleasure_multiplier = min(3.0, total_pain * 2.0)
+                        experience.strength *= pleasure_multiplier
+                        
+                        # Store pleasure signal for future action evaluation (this creates approach)
+                        if not hasattr(experience, 'pleasure_signal'):
+                            experience.pleasure_signal = total_pain
         
         # Add to world graph
-        self.world_graph.add_node(experience)
+        with profile_section("world_graph_add_node"):
+            self.world_graph.add_node(experience)
         
         # Adaptive parameter tuning based on prediction error and sensory characteristics
-        adapted_params = self.adaptive_tuner.adapt_parameters_from_prediction_error(
-            prediction_error=prediction_error,
-            sensory_vector=self.last_sensory.sensor_values,
-            context={
-                'sequence_id': self.last_sensory.sequence_id,
-                'mental_context': mental_context,
-                'action_taken': self.last_prediction.motor_action
-            }
-        )
-        
-        # Apply adapted parameters to world graph and predictor
-        self._apply_adapted_parameters(adapted_params)
+        with profile_section("adaptive_parameter_tuning"):
+            adapted_params = self.adaptive_tuner.adapt_parameters_from_prediction_error(
+                prediction_error=prediction_error,
+                sensory_vector=self.last_sensory.sensor_values,
+                context={
+                    'sequence_id': self.last_sensory.sequence_id,
+                    'mental_context': mental_context,
+                    'action_taken': self.last_prediction.motor_action
+                }
+            )
+            
+            # Apply adapted parameters to world graph and predictor
+            self._apply_adapted_parameters(adapted_params)
         
         # Universal actuator discovery - learn actuator effects from experience
-        actuator_discovery_result = self.actuator_discovery.observe_actuator_effects(
-            actuator_commands=self.last_prediction.motor_action,
-            sensory_reading=self.last_sensory.sensor_values
-        )
+        with profile_section("actuator_discovery"):
+            actuator_discovery_result = self.actuator_discovery.observe_actuator_effects(
+                actuator_commands=self.last_prediction.motor_action,
+                sensory_reading=self.last_sensory.sensor_values
+            )
         
         # Update exploration rate based on prediction error (legacy)
-        self._update_exploration_rate(prediction_error)
+        with profile_section("exploration_rate_update"):
+            self._update_exploration_rate(prediction_error)
         
     def _calculate_prediction_error(self, predicted: List[float], actual: List[float]) -> float:
         """Calculate prediction error between predicted and actual sensory values."""
