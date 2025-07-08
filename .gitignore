@@ -1,0 +1,10 @@
+*.gz
+# Python bytecode and cache
+__pycache__/
+.pytest_cache/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.pyd
+robot_memory*/
