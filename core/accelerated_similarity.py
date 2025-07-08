@@ -50,38 +50,23 @@ except ImportError:
     MPS_FUNCTIONAL = False
     print("PyTorch Acceleration: PyTorch not available")
 
-# Try to import acceleration libraries
+# Try to import acceleration libraries - JAX Metal disabled to avoid warnings
 try:
+    # Disable JAX Metal support to avoid noisy warnings
+    import os
+    os.environ['JAX_PLATFORMS'] = 'cpu'  # Force JAX to use CPU only
+    
     import jax
     import jax.numpy as jnp
     JAX_AVAILABLE = True
+    GPU_AVAILABLE = False  # Disabled for now
+    METAL_AVAILABLE = False  # Disabled for now
+    METAL_FUNCTIONAL = False  # Disabled for now
     
-    # Check for GPU/Metal support with better detection
-    devices = jax.devices()
-    device_kinds = [device.device_kind.lower() for device in devices]
-    
-    # Detect Metal specifically
-    METAL_AVAILABLE = any('metal' in str(device).lower() for device in devices)
-    GPU_AVAILABLE = any(kind in ['gpu', 'metal'] for kind in device_kinds) or METAL_AVAILABLE
-    
-    # Try to detect if Metal is functional
-    METAL_FUNCTIONAL = False
-    if METAL_AVAILABLE:
-        try:
-            # Test basic Metal operation
-            test_array = jnp.array([1, 2, 3])
-            _ = test_array + 1
-            METAL_FUNCTIONAL = True
-        except Exception as e:
-            print(f"  Metal detected but not functional: {e}")
-            METAL_FUNCTIONAL = False
-    
-    print(f"Accelerated Similarity: JAX {jax.__version__} available")
+    print(f"Accelerated Similarity: JAX {jax.__version__} available (CPU-only mode)")
     print(f"  Backend: {jax.default_backend()}")
-    print(f"  Devices: {[str(d) for d in devices]}")
-    print(f"  Metal Available: {'Yes' if METAL_AVAILABLE else 'No'}")
-    print(f"  Metal Functional: {'Yes' if METAL_FUNCTIONAL else 'No'}")
-    print(f"  GPU/Acceleration: {'Yes' if GPU_AVAILABLE and METAL_FUNCTIONAL else 'CPU Optimized'}")
+    print(f"  Metal Support: Disabled (to avoid warnings)")
+    print(f"  GPU/Acceleration: CPU Optimized")
     
 except ImportError:
     JAX_AVAILABLE = False
@@ -151,12 +136,13 @@ class AcceleratedSimilarityEngine:
     
     def _init_acceleration(self):
         """Initialize the appropriate acceleration method"""
+        # Always initialize NumPy acceleration as fallback
+        self._init_numpy_acceleration()
+        
         if self.enable_pytorch:
             self._init_pytorch_acceleration()
         elif self.enable_jax:
             self._init_jax_acceleration()
-        else:
-            self._init_numpy_acceleration()
     
     def _init_pytorch_acceleration(self):
         """Initialize PyTorch MPS-based acceleration"""
@@ -425,8 +411,8 @@ class AcceleratedSimilarityEngine:
         search_k = min(max_results * 5, len(all_contexts_array))
         
         try:
-            distances, indices = self._spatial_index.kneighbors(
-                [target_context], n_neighbors=search_k, return_distance=True
+            distances, indices = self._spatial_index.query(
+                [target_context], k=search_k, return_distance=True
             )
             
             # Convert distances to similarities

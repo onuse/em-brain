@@ -11,3 +11,4 @@ robot_memory*/
 .DS_Store
 .claude*/
 run_logs/
+debug_output/

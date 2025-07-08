@@ -10,6 +10,8 @@ from core.communication import PredictionPacket, SensoryPacket
 from core.adaptive_tuning import AdaptiveParameterTuner
 from core.persistent_memory import PersistentMemoryManager
 from core.actuator_discovery import UniversalActuatorDiscovery
+from core.novelty_detection import NoveltyDetector, ExperienceSignature
+from core.node_consolidation import NodeConsolidationEngine
 from predictor.triple_predictor import TriplePredictor
 from predictor.consensus_resolver import ConsensusResult
 from brain_prediction_profiler import get_brain_profiler, profile_section
@@ -41,6 +43,10 @@ class BrainInterface:
         
         # Universal actuator discovery system
         self.actuator_discovery = UniversalActuatorDiscovery()
+        
+        # Novelty detection and consolidation systems
+        self.novelty_detector = NoveltyDetector(self.world_graph)
+        self.consolidation_engine = NodeConsolidationEngine(self.world_graph)
         
         # Persistent memory system
         self.enable_persistence = enable_persistence
@@ -139,15 +145,34 @@ class BrainInterface:
             actual_health = self.last_sensory.sensor_values[17] if len(self.last_sensory.sensor_values) > 17 else 1.0
             actual_energy = self.last_sensory.sensor_values[18] if len(self.last_sensory.sensor_values) > 18 else 1.0
         
-        # Create experience node (generic - no drive-specific logic here)
-        with profile_section("experience_node_creation"):
-            experience = ExperienceNode(
+        # Create experience signature for novelty detection
+        with profile_section("experience_signature_creation"):
+            experience_signature = ExperienceSignature(
                 mental_context=mental_context,
-                action_taken=self.last_prediction.motor_action,
-                predicted_sensory=self.last_prediction.expected_sensory,
-                actual_sensory=self.last_sensory.sensor_values,
-                prediction_error=prediction_error
+                motor_action=self.last_prediction.motor_action or {},
+                sensory_outcome=dict(enumerate(self.last_sensory.sensor_values)),
+                prediction_accuracy=1.0 - prediction_error,  # Convert error to accuracy
+                temporal_context=mental_context[-5:] if len(mental_context) > 5 else mental_context,
+                drive_states={}  # Could be populated from drive system
             )
+            
+            # Update novelty detector's context history
+            self.novelty_detector.add_to_context_history(mental_context)
+        
+        # Evaluate novelty of this experience
+        with profile_section("novelty_evaluation"):
+            novelty_score = self.novelty_detector.evaluate_experience_novelty(experience_signature)
+        
+        # Consolidate experience based on novelty (instead of always creating new node)
+        with profile_section("experience_consolidation"):
+            consolidation_result = self.consolidation_engine.consolidate_experience(
+                experience_signature=experience_signature,
+                novelty_score=novelty_score,
+                prediction_success=(prediction_error < 0.5)  # Consider low error as success
+            )
+            
+            # Get the final experience node (either new or consolidated)
+            experience = consolidation_result.target_node
         
         # Let drives evaluate experience significance AND pain/pleasure (proper separation of concerns)
         with profile_section("drive_evaluation"):
@@ -189,9 +214,11 @@ class BrainInterface:
                         if not hasattr(experience, 'pleasure_signal'):
                             experience.pleasure_signal = total_pain
         
-        # Add to world graph
+        # Add to world graph (only if it's a new node)
         with profile_section("world_graph_add_node"):
-            self.world_graph.add_node(experience)
+            if consolidation_result.strategy_used.value == "create_new":
+                self.world_graph.add_node(experience)
+            # For other strategies, the node is already in the graph and has been modified
         
         # Adaptive parameter tuning based on prediction error and sensory characteristics
         with profile_section("adaptive_parameter_tuning"):
@@ -214,6 +241,17 @@ class BrainInterface:
                 actuator_commands=self.last_prediction.motor_action,
                 sensory_reading=self.last_sensory.sensor_values
             )
+        
+        # Update memory pressure for novelty detection
+        with profile_section("memory_pressure_update"):
+            self.novelty_detector.update_memory_pressure(
+                self.world_graph.node_count(), 
+                max_nodes=10000  # Could be configurable
+            )
+            
+            # Optimize consolidation parameters periodically
+            if self.consolidation_engine.consolidations_performed % 50 == 0:
+                self.consolidation_engine.optimize_consolidation_parameters()
         
         # Update exploration rate based on prediction error (legacy)
         with profile_section("exploration_rate_update"):
@@ -320,7 +358,9 @@ class BrainInterface:
             },
             "adaptive_tuning_stats": self.adaptive_tuner.get_adaptation_statistics(),
             "persistent_memory_stats": self.get_memory_statistics() if self.enable_persistence else {},
-            "actuator_discovery_stats": self.actuator_discovery.get_discovery_statistics()
+            "actuator_discovery_stats": self.actuator_discovery.get_discovery_statistics(),
+            "novelty_detection_stats": self.novelty_detector.get_novelty_stats(),
+            "consolidation_stats": self.consolidation_engine.get_consolidation_stats()
         }
         
         # Get predictor statistics (handle both old and new predictor types)
@@ -339,6 +379,10 @@ class BrainInterface:
         self.predictor.reset_statistics()
         self.last_prediction = None
         self.last_sensory = None
+        
+        # Reset novelty detection and consolidation systems
+        self.novelty_detector.reset_session_stats()
+        self.consolidation_engine.reset_session_stats()
         # Keep sensory_vector_length - brain remembers its interface
     
     def get_world_graph(self) -> WorldGraph:

@@ -8,6 +8,7 @@ from dataclasses import dataclass
 import importlib
 import pkgutil
 from .base_drive import BaseDrive, DriveContext, ActionEvaluation
+from .action_proficiency import ActionMaturationSystem
 
 
 @dataclass
@@ -31,11 +32,16 @@ class MotivationSystem:
     provides a clean interface for multi-motivation decision making.
     """
     
-    def __init__(self):
+    def __init__(self, world_graph=None):
         self.drives: Dict[str, BaseDrive] = {}
         self.drive_history: List[Dict] = []
         self.action_history: List[Dict] = []
         self.total_evaluations = 0
+        
+        # Action proficiency and maturation system
+        self.world_graph = world_graph
+        self.action_maturation = ActionMaturationSystem(world_graph) if world_graph else None
+        self.enable_maturation = True  # Can be toggled for comparison
         
     def add_drive(self, drive: BaseDrive):
         """Add a drive to the motivation system."""
@@ -167,6 +173,9 @@ class MotivationSystem:
         """
         Generate diverse action candidates for evaluation.
         
+        Uses maturation-influenced generation if available, otherwise falls back
+        to static template generation.
+        
         Args:
             context: Current situation context
             num_candidates: Number of action candidates to generate
@@ -174,6 +183,18 @@ class MotivationSystem:
         Returns:
             List of potential motor actions
         """
+        # Use maturation system if available and enabled
+        if self.action_maturation and self.enable_maturation:
+            return self.action_maturation.generate_maturation_influenced_actions(
+                context, num_candidates
+            )
+        
+        # Fallback to static template generation
+        return self._generate_static_action_candidates(context, num_candidates)
+    
+    def _generate_static_action_candidates(self, context: DriveContext,
+                                         num_candidates: int = 5) -> List[Dict[str, float]]:
+        """Generate action candidates using the original static template approach."""
         import random
         
         candidates = []
@@ -506,15 +527,53 @@ class MotivationSystem:
                     
         except Exception as e:
             print(f"Warning: Could not load drives from module {module_name}: {e}")
+    
+    def record_action_outcome(self, action: Dict[str, float], 
+                            prediction_accuracy: float,
+                            execution_success: bool = True):
+        """
+        Record the outcome of an action for proficiency tracking and maturation.
+        
+        Args:
+            action: The motor action that was executed
+            prediction_accuracy: How accurate our prediction was (0.0 to 1.0)
+            execution_success: Whether the action was executed successfully
+        """
+        if self.action_maturation:
+            self.action_maturation.record_action_outcome(
+                action, prediction_accuracy, execution_success
+            )
+    
+    def get_maturation_status(self) -> Dict[str, Any]:
+        """Get comprehensive maturation and proficiency status."""
+        if not self.action_maturation:
+            return {
+                'maturation_enabled': False,
+                'message': 'Action maturation system not available (no world_graph provided)'
+            }
+        
+        status = self.action_maturation.get_maturation_status()
+        status['maturation_enabled'] = self.enable_maturation
+        return status
+    
+    def toggle_maturation(self, enabled: bool = None):
+        """Toggle maturation system on/off for comparison testing."""
+        if enabled is None:
+            self.enable_maturation = not self.enable_maturation
+        else:
+            self.enable_maturation = enabled
+        
+        status = "enabled" if self.enable_maturation else "disabled"
+        print(f"🧠 Action maturation system {status}")
 
 
-def create_default_motivation_system() -> MotivationSystem:
+def create_default_motivation_system(world_graph=None) -> MotivationSystem:
     """Create a motivation system with the three core drives."""
     from .curiosity_drive import CuriosityDrive
     from .survival_drive import SurvivalDrive
     from .exploration_drive import ExplorationDrive
     
-    system = MotivationSystem()
+    system = MotivationSystem(world_graph=world_graph)
     
     # Add the three core drives
     system.add_drive(CuriosityDrive(base_weight=0.4))

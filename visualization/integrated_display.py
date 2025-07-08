@@ -246,7 +246,7 @@ class IntegratedDisplay:
         # Handle robot death
         if not is_alive:
             self.brain_monitor._log_event("Robot died - resetting", "error")
-            time.sleep(1.0)  # Brief pause to show death
+            # No sleep delay - let the brain continue learning immediately
     
     def _generate_motor_action(self, sensor_packet) -> Dict[str, float]:
         """Generate motor action using available methods."""
