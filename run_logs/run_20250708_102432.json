@@ -1,0 +1,4809 @@
+{
+  "session_info": {
+    "session_id": "run_20250708_102432",
+    "session_start": "2025-07-08T10:24:32.508311",
+    "session_end": "2025-07-08T10:25:10.483100",
+    "duration_seconds": 37.974790811538696,
+    "final_fps": 0.0,
+    "brain_statistics": {
+      "graph_stats": {
+        "total_nodes": 305,
+        "total_merges": 0,
+        "avg_strength": 2843.646226935847,
+        "max_strength": 434664.38496343966,
+        "min_strength": 0.30000000000000027,
+        "avg_context_length": 8.0,
+        "temporal_chain_length": 305,
+        "avg_access_count": 2841.0786885245902,
+        "total_accesses": 866529,
+        "similarity_engine": {
+          "total_searches": 0,
+          "total_time": 0.0,
+          "avg_search_time": 0.0,
+          "searches_per_second": 1000000.0,
+          "cache_enabled": true,
+          "cache_hits": 0,
+          "cache_hit_rate": 0.0,
+          "acceleration_method": "NumPy",
+          "gpu_available": true
+        }
+      },
+      "interface_stats": {
+        "sensory_vector_length": 22,
+        "total_experiences": 305,
+        "is_learning": true,
+        "persistence_enabled": true
+      },
+      "adaptive_tuning_stats": {
+        "total_adaptations": 6,
+        "successful_adaptations": 6,
+        "adaptation_success_rate": 1.0,
+        "current_parameters": {
+          "similarity_threshold": 0.712,
+          "activation_spread_iterations": 3.0,
+          "consolidation_frequency": 50.0,
+          "forgetting_threshold": 0.1,
+          "connection_learning_rate": 0.094,
+          "exploration_rate": 0.26999999999999996,
+          "time_budget_base": 0.1,
+          "prediction_confidence_threshold": 0.5,
+          "sensory_importance_threshold": 0.3,
+          "dimension_clustering_threshold": 0.5,
+          "bandwidth_adaptation_rate": 0.05
+        },
+        "sensory_insights": {
+          "bandwidth_tier": "medium",
+          "total_dimensions": 22,
+          "high_variance_dimensions": [],
+          "high_change_dimensions": [],
+          "stable_dimensions": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            8,
+            10,
+            12,
+            13,
+            14,
+            15,
+            16,
+            18,
+            19,
+            21
+          ],
+          "avg_variance": 0.07969633261131275,
+          "avg_change_frequency": 0.005454545454545455
+        },
+        "parameter_performance_summary": {
+          "similarity_threshold": {
+            "best_score": 1.4906126000744964,
+            "avg_score": 1.4257666125982322,
+            "values_tested": 2,
+            "best_value": 0.71
+          },
+          "activation_spread_iterations": {
+            "best_score": 1.3950708167878112,
+            "avg_score": 1.3950708167878112,
+            "values_tested": 1,
+            "best_value": 3
+          },
+          "consolidation_frequency": {
+            "best_score": 1.3950708167878112,
+            "avg_score": 1.3950708167878112,
+            "values_tested": 1,
+            "best_value": 50
+          },
+          "forgetting_threshold": {
+            "best_score": 1.3950708167878112,
+            "avg_score": 1.3950708167878112,
+            "values_tested": 1,
+            "best_value": 0.1
+          },
+          "connection_learning_rate": {
+            "best_score": 1.3950708167878112,
+            "avg_score": 1.3950708167878112,
+            "values_tested": 1,
+            "best_value": 0.1
+          },
+          "exploration_rate": {
+            "best_score": 1.4967101610501063,
+            "avg_score": 1.3411887503094337,
+            "values_tested": 4,
+            "best_value": 0.26999999999999996
+          },
+          "time_budget_base": {
+            "best_score": 1.3950708167878112,
+            "avg_score": 1.3950708167878112,
+            "values_tested": 1,
+            "best_value": 0.1
+          },
+          "prediction_confidence_threshold": {
+            "best_score": 1.3950708167878112,
+            "avg_score": 1.3950708167878112,
+            "values_tested": 1,
+            "best_value": 0.5
+          },
+          "sensory_importance_threshold": {
+            "best_score": 1.3950708167878112,
+            "avg_score": 1.3950708167878112,
+            "values_tested": 1,
+            "best_value": 0.3
+          },
+          "dimension_clustering_threshold": {
+            "best_score": 1.3950708167878112,
+            "avg_score": 1.3950708167878112,
+            "values_tested": 1,
+            "best_value": 0.5
+          },
+          "bandwidth_adaptation_rate": {
+            "best_score": 1.3950708167878112,
+            "avg_score": 1.3950708167878112,
+            "values_tested": 1,
+            "best_value": 0.05
+          }
+        }
+      },
+      "persistent_memory_stats": {
+        "memory_root": "robot_memory",
+        "storage_usage": {
+          "total_bytes": 440005,
+          "graphs_bytes": 391209,
+          "archives_bytes": 37699,
+          "sessions_bytes": 4736,
+          "adaptive_params_bytes": 6179,
+          "metadata_bytes": 182
+        },
+        "total_sessions": 4,
+        "total_graphs": 1,
+        "total_adaptive_saves": 1,
+        "current_session": null,
+        "metadata": {
+          "created_time": "2025-07-08T10:24:32.549408",
+          "total_saved_graphs": 1,
+          "total_experiences": 305,
+          "last_save_time": "2025-07-08T10:25:10.175927",
+          "memory_version": "1.0"
+        },
+        "archive_summary": {
+          "high_importance": 0,
+          "spatial_memory": 305,
+          "skill_learning": 243,
+          "prediction_mastery": 0,
+          "recent_experiences": 305
+        }
+      },
+      "actuator_discovery_stats": {
+        "total_observations": 305,
+        "total_actuators_discovered": 3,
+        "actuators_with_significant_effects": 351,
+        "emergent_categories_formed": 2,
+        "actuators_categorized": 2,
+        "categorization_coverage": 0.6666666666666666,
+        "category_distribution": {
+          "spatial_categories": 2,
+          "manipulative_categories": 0,
+          "environmental_categories": 0,
+          "unclassified_categories": 0
+        },
+        "discovery_efficiency": 1.1508196721311474
+      },
+      "predictor_stats": {
+        "total_predictions": 305,
+        "average_thinking_time": 0.10452179830582418,
+        "consensus_breakdown": {
+          "perfect": 0,
+          "strong": 0,
+          "weak": 0,
+          "single": 0,
+          "motivation_driven": 305,
+          "no_consensus": 0
+        },
+        "base_time_budget": 0.1,
+        "threat_multipliers": {
+          "safe": 2.0,
+          "normal": 1.0,
+          "alert": 0.5,
+          "danger": 0.2,
+          "critical": 0.05
+        },
+        "perfect_percentage": 0.0,
+        "strong_percentage": 0.0,
+        "weak_percentage": 0.0,
+        "single_percentage": 0.0,
+        "motivation_driven_percentage": 100.0,
+        "no_consensus_percentage": 0.0,
+        "average_traversals": 214.72,
+        "max_traversals": 233,
+        "min_traversals": 188,
+        "drive_dominance_counts": {
+          "Curiosity": 51
+        },
+        "most_dominant_drive": "Curiosity",
+        "motivation_system": {
+          "total_drives": 3,
+          "active_drives": [
+            "Curiosity",
+            "Survival",
+            "Exploration"
+          ],
+          "total_evaluations": 306,
+          "decision_history_length": 51,
+          "drive_statistics": {
+            "Curiosity": {
+              "name": "Curiosity",
+              "base_weight": 0.4,
+              "current_weight": 0.1785632121927183,
+              "total_evaluations": 148349,
+              "activation_history_length": 4
+            },
+            "Survival": {
+              "name": "Survival",
+              "base_weight": 0.4,
+              "current_weight": 0.07850754313116112,
+              "total_evaluations": 148349,
+              "activation_history_length": 92
+            },
+            "Exploration": {
+              "name": "Exploration",
+              "base_weight": 0.2,
+              "current_weight": 0.27999999999999997,
+              "total_evaluations": 148349,
+              "activation_history_length": 85
+            }
+          },
+          "recent_drive_dominance": {
+            "Curiosity": 10
+          },
+          "average_recent_confidence": 0.5666666666666667,
+          "average_recent_urgency": 0.8
+        }
+      }
+    },
+    "similarity_engine_stats": {},
+    "simulation_state": null,
+    "performance_samples": 14,
+    "brain_snapshots": 3,
+    "events_logged": 5
+  },
+  "performance_data": [
+    {
+      "timestamp": 1751963101.9829419,
+      "elapsed_seconds": 29.47463083267212,
+      "fps": 8.723557722305648,
+      "frame_time": 0.11463212966918945,
+      "brain_nodes": 239,
+      "brain_stats": {
+        "graph_stats": {
+          "total_nodes": 239,
+          "total_merges": 0,
+          "avg_strength": 3262.9819804249314,
+          "max_strength": 391003.38496343966,
+          "min_strength": 0.30000000000000027,
+          "avg_context_length": 8.0,
+          "temporal_chain_length": 239,
+          "avg_access_count": 3260.2719665271966,
+          "total_accesses": 779205,
+          "similarity_engine": {
+            "total_searches": 0,
+            "total_time": 0.0,
+            "avg_search_time": 0.0,
+            "searches_per_second": 1000000.0,
+            "cache_enabled": true,
+            "cache_hits": 0,
+            "cache_hit_rate": 0.0,
+            "acceleration_method": "NumPy",
+            "gpu_available": true
+          }
+        },
+        "interface_stats": {
+          "sensory_vector_length": 22,
+          "total_experiences": 239,
+          "is_learning": true,
+          "persistence_enabled": true
+        },
+        "adaptive_tuning_stats": {
+          "total_adaptations": 5,
+          "successful_adaptations": 5,
+          "adaptation_success_rate": 1.0,
+          "current_parameters": {
+            "similarity_threshold": 0.71,
+            "activation_spread_iterations": 3.0,
+            "consolidation_frequency": 50.0,
+            "forgetting_threshold": 0.1,
+            "connection_learning_rate": 0.095,
+            "exploration_rate": 0.27499999999999997,
+            "time_budget_base": 0.1,
+            "prediction_confidence_threshold": 0.5,
+            "sensory_importance_threshold": 0.3,
+            "dimension_clustering_threshold": 0.5,
+            "bandwidth_adaptation_rate": 0.05
+          },
+          "sensory_insights": {
+            "bandwidth_tier": "medium",
+            "total_dimensions": 22,
+            "high_variance_dimensions": [],
+            "high_change_dimensions": [],
+            "stable_dimensions": [
+              2,
+              9,
+              10,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21
+            ],
+            "avg_variance": 0.07080610507364425,
+            "avg_change_frequency": 0.12272727272727273
+          },
+          "parameter_performance_summary": {
+            "similarity_threshold": {
+              "best_score": 1.4274382957589693,
+              "avg_score": 1.3941794604404687,
+              "values_tested": 2,
+              "best_value": 0.71
+            },
+            "activation_spread_iterations": {
+              "best_score": 1.336540540644018,
+              "avg_score": 1.336540540644018,
+              "values_tested": 1,
+              "best_value": 3
+            },
+            "consolidation_frequency": {
+              "best_score": 1.336540540644018,
+              "avg_score": 1.336540540644018,
+              "values_tested": 1,
+              "best_value": 50
+            },
+            "forgetting_threshold": {
+              "best_score": 1.336540540644018,
+              "avg_score": 1.336540540644018,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "connection_learning_rate": {
+              "best_score": 1.336540540644018,
+              "avg_score": 1.336540540644018,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "exploration_rate": {
+              "best_score": 1.4416574896803032,
+              "avg_score": 1.277017385222481,
+              "values_tested": 3,
+              "best_value": 0.27999999999999997
+            },
+            "time_budget_base": {
+              "best_score": 1.336540540644018,
+              "avg_score": 1.336540540644018,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "prediction_confidence_threshold": {
+              "best_score": 1.336540540644018,
+              "avg_score": 1.336540540644018,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "sensory_importance_threshold": {
+              "best_score": 1.336540540644018,
+              "avg_score": 1.336540540644018,
+              "values_tested": 1,
+              "best_value": 0.3
+            },
+            "dimension_clustering_threshold": {
+              "best_score": 1.336540540644018,
+              "avg_score": 1.336540540644018,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "bandwidth_adaptation_rate": {
+              "best_score": 1.336540540644018,
+              "avg_score": 1.336540540644018,
+              "values_tested": 1,
+              "best_value": 0.05
+            }
+          }
+        },
+        "persistent_memory_stats": {
+          "memory_root": "robot_memory",
+          "storage_usage": {
+            "total_bytes": 961,
+            "graphs_bytes": 0,
+            "archives_bytes": 0,
+            "sessions_bytes": 961,
+            "adaptive_params_bytes": 0,
+            "metadata_bytes": 0
+          },
+          "total_sessions": 4,
+          "total_graphs": 0,
+          "total_adaptive_saves": 0,
+          "current_session": "session_20250708_102432_9e77a3",
+          "metadata": {
+            "created_time": "2025-07-08T10:24:32.549408",
+            "total_saved_graphs": 1,
+            "total_experiences": 305,
+            "last_save_time": "2025-07-08T10:25:10.175927",
+            "memory_version": "1.0"
+          },
+          "archive_summary": {
+            "high_importance": 0,
+            "spatial_memory": 0,
+            "skill_learning": 0,
+            "prediction_mastery": 0,
+            "recent_experiences": 0
+          }
+        },
+        "actuator_discovery_stats": {
+          "total_observations": 239,
+          "total_actuators_discovered": 3,
+          "actuators_with_significant_effects": 325,
+          "emergent_categories_formed": 2,
+          "actuators_categorized": 2,
+          "categorization_coverage": 0.6666666666666666,
+          "category_distribution": {
+            "spatial_categories": 2,
+            "manipulative_categories": 0,
+            "environmental_categories": 0,
+            "unclassified_categories": 0
+          },
+          "discovery_efficiency": 1.3598326359832635
+        },
+        "predictor_stats": {
+          "total_predictions": 239,
+          "average_thinking_time": 0.10525601179529932,
+          "consensus_breakdown": {
+            "perfect": 0,
+            "strong": 0,
+            "weak": 0,
+            "single": 0,
+            "motivation_driven": 239,
+            "no_consensus": 0
+          },
+          "base_time_budget": 0.1,
+          "threat_multipliers": {
+            "safe": 2.0,
+            "normal": 1.0,
+            "alert": 0.5,
+            "danger": 0.2,
+            "critical": 0.05
+          },
+          "perfect_percentage": 0.0,
+          "strong_percentage": 0.0,
+          "weak_percentage": 0.0,
+          "single_percentage": 0.0,
+          "motivation_driven_percentage": 100.0,
+          "no_consensus_percentage": 0.0,
+          "average_traversals": 291.36046511627904,
+          "max_traversals": 351,
+          "min_traversals": 212,
+          "drive_dominance_counts": {
+            "Survival": 82,
+            "Curiosity": 5
+          },
+          "most_dominant_drive": "Survival",
+          "motivation_system": {
+            "total_drives": 3,
+            "active_drives": [
+              "Curiosity",
+              "Survival",
+              "Exploration"
+            ],
+            "total_evaluations": 240,
+            "decision_history_length": 87,
+            "drive_statistics": {
+              "Curiosity": {
+                "name": "Curiosity",
+                "base_weight": 0.4,
+                "current_weight": 0.17856342195085345,
+                "total_evaluations": 133465,
+                "activation_history_length": 4
+              },
+              "Survival": {
+                "name": "Survival",
+                "base_weight": 0.4,
+                "current_weight": 0.06516951891903451,
+                "total_evaluations": 133465,
+                "activation_history_length": 100
+              },
+              "Exploration": {
+                "name": "Exploration",
+                "base_weight": 0.2,
+                "current_weight": 0.27999999999999997,
+                "total_evaluations": 133465,
+                "activation_history_length": 92
+              }
+            },
+            "recent_drive_dominance": {
+              "Survival": 5,
+              "Curiosity": 5
+            },
+            "average_recent_confidence": 0.6203888888888891,
+            "average_recent_urgency": 0.8783333333333347
+          }
+        }
+      }
+    },
+    {
+      "timestamp": 1751963102.57142,
+      "elapsed_seconds": 30.063108921051025,
+      "fps": 8.647746367653093,
+      "frame_time": 0.11563706398010254,
+      "brain_nodes": 244,
+      "brain_stats": {
+        "graph_stats": {
+          "total_nodes": 244,
+          "total_merges": 0,
+          "avg_strength": 3226.154277084937,
+          "max_strength": 394663.38496343966,
+          "min_strength": 0.30000000000000027,
+          "avg_context_length": 8.0,
+          "temporal_chain_length": 244,
+          "avg_access_count": 3223.4631147540986,
+          "total_accesses": 786525,
+          "similarity_engine": {
+            "total_searches": 0,
+            "total_time": 0.0,
+            "avg_search_time": 0.0,
+            "searches_per_second": 1000000.0,
+            "cache_enabled": true,
+            "cache_hits": 0,
+            "cache_hit_rate": 0.0,
+            "acceleration_method": "NumPy",
+            "gpu_available": true
+          }
+        },
+        "interface_stats": {
+          "sensory_vector_length": 22,
+          "total_experiences": 244,
+          "is_learning": true,
+          "persistence_enabled": true
+        },
+        "adaptive_tuning_stats": {
+          "total_adaptations": 5,
+          "successful_adaptations": 5,
+          "adaptation_success_rate": 1.0,
+          "current_parameters": {
+            "similarity_threshold": 0.71,
+            "activation_spread_iterations": 3.0,
+            "consolidation_frequency": 50.0,
+            "forgetting_threshold": 0.1,
+            "connection_learning_rate": 0.095,
+            "exploration_rate": 0.27499999999999997,
+            "time_budget_base": 0.1,
+            "prediction_confidence_threshold": 0.5,
+            "sensory_importance_threshold": 0.3,
+            "dimension_clustering_threshold": 0.5,
+            "bandwidth_adaptation_rate": 0.05
+          },
+          "sensory_insights": {
+            "bandwidth_tier": "medium",
+            "total_dimensions": 22,
+            "high_variance_dimensions": [],
+            "high_change_dimensions": [],
+            "stable_dimensions": [
+              2,
+              10,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21
+            ],
+            "avg_variance": 0.07780710476595899,
+            "avg_change_frequency": 0.10363636363636364
+          },
+          "parameter_performance_summary": {
+            "similarity_threshold": {
+              "best_score": 1.4421981525381484,
+              "avg_score": 1.4015593888300582,
+              "values_tested": 2,
+              "best_value": 0.71
+            },
+            "activation_spread_iterations": {
+              "best_score": 1.3389584960198033,
+              "avg_score": 1.3389584960198033,
+              "values_tested": 1,
+              "best_value": 3
+            },
+            "consolidation_frequency": {
+              "best_score": 1.3389584960198033,
+              "avg_score": 1.3389584960198033,
+              "values_tested": 1,
+              "best_value": 50
+            },
+            "forgetting_threshold": {
+              "best_score": 1.3389584960198033,
+              "avg_score": 1.3389584960198033,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "connection_learning_rate": {
+              "best_score": 1.3389584960198033,
+              "avg_score": 1.3389584960198033,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "exploration_rate": {
+              "best_score": 1.4432804036203994,
+              "avg_score": 1.2775583565358466,
+              "values_tested": 3,
+              "best_value": 0.27999999999999997
+            },
+            "time_budget_base": {
+              "best_score": 1.3389584960198033,
+              "avg_score": 1.3389584960198033,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "prediction_confidence_threshold": {
+              "best_score": 1.3389584960198033,
+              "avg_score": 1.3389584960198033,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "sensory_importance_threshold": {
+              "best_score": 1.3389584960198033,
+              "avg_score": 1.3389584960198033,
+              "values_tested": 1,
+              "best_value": 0.3
+            },
+            "dimension_clustering_threshold": {
+              "best_score": 1.3389584960198033,
+              "avg_score": 1.3389584960198033,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "bandwidth_adaptation_rate": {
+              "best_score": 1.3389584960198033,
+              "avg_score": 1.3389584960198033,
+              "values_tested": 1,
+              "best_value": 0.05
+            }
+          }
+        },
+        "persistent_memory_stats": {
+          "memory_root": "robot_memory",
+          "storage_usage": {
+            "total_bytes": 961,
+            "graphs_bytes": 0,
+            "archives_bytes": 0,
+            "sessions_bytes": 961,
+            "adaptive_params_bytes": 0,
+            "metadata_bytes": 0
+          },
+          "total_sessions": 4,
+          "total_graphs": 0,
+          "total_adaptive_saves": 0,
+          "current_session": "session_20250708_102432_9e77a3",
+          "metadata": {
+            "created_time": "2025-07-08T10:24:32.549408",
+            "total_saved_graphs": 1,
+            "total_experiences": 305,
+            "last_save_time": "2025-07-08T10:25:10.175927",
+            "memory_version": "1.0"
+          },
+          "archive_summary": {
+            "high_importance": 0,
+            "spatial_memory": 0,
+            "skill_learning": 0,
+            "prediction_mastery": 0,
+            "recent_experiences": 0
+          }
+        },
+        "actuator_discovery_stats": {
+          "total_observations": 244,
+          "total_actuators_discovered": 3,
+          "actuators_with_significant_effects": 335,
+          "emergent_categories_formed": 2,
+          "actuators_categorized": 2,
+          "categorization_coverage": 0.6666666666666666,
+          "category_distribution": {
+            "spatial_categories": 2,
+            "manipulative_categories": 0,
+            "environmental_categories": 0,
+            "unclassified_categories": 0
+          },
+          "discovery_efficiency": 1.3729508196721312
+        },
+        "predictor_stats": {
+          "total_predictions": 244,
+          "average_thinking_time": 0.10519101287497849,
+          "consensus_breakdown": {
+            "perfect": 0,
+            "strong": 0,
+            "weak": 0,
+            "single": 0,
+            "motivation_driven": 244,
+            "no_consensus": 0
+          },
+          "base_time_budget": 0.1,
+          "threat_multipliers": {
+            "safe": 2.0,
+            "normal": 1.0,
+            "alert": 0.5,
+            "danger": 0.2,
+            "critical": 0.05
+          },
+          "perfect_percentage": 0.0,
+          "strong_percentage": 0.0,
+          "weak_percentage": 0.0,
+          "single_percentage": 0.0,
+          "motivation_driven_percentage": 100.0,
+          "no_consensus_percentage": 0.0,
+          "average_traversals": 288.75824175824175,
+          "max_traversals": 351,
+          "min_traversals": 212,
+          "drive_dominance_counts": {
+            "Survival": 82,
+            "Curiosity": 10
+          },
+          "most_dominant_drive": "Survival",
+          "motivation_system": {
+            "total_drives": 3,
+            "active_drives": [
+              "Curiosity",
+              "Survival",
+              "Exploration"
+            ],
+            "total_evaluations": 245,
+            "decision_history_length": 92,
+            "drive_statistics": {
+              "Curiosity": {
+                "name": "Curiosity",
+                "base_weight": 0.4,
+                "current_weight": 0.1785624586107935,
+                "total_evaluations": 134710,
+                "activation_history_length": 4
+              },
+              "Survival": {
+                "name": "Survival",
+                "base_weight": 0.4,
+                "current_weight": 0.06537521311492354,
+                "total_evaluations": 134710,
+                "activation_history_length": 70
+              },
+              "Exploration": {
+                "name": "Exploration",
+                "base_weight": 0.2,
+                "current_weight": 0.27999999999999997,
+                "total_evaluations": 134710,
+                "activation_history_length": 52
+              }
+            },
+            "recent_drive_dominance": {
+              "Curiosity": 10
+            },
+            "average_recent_confidence": 0.5656666666666667,
+            "average_recent_urgency": 0.8
+          }
+        }
+      }
+    },
+    {
+      "timestamp": 1751963103.163859,
+      "elapsed_seconds": 30.655547857284546,
+      "fps": 8.661908538197197,
+      "frame_time": 0.115447998046875,
+      "brain_nodes": 249,
+      "brain_stats": {
+        "graph_stats": {
+          "total_nodes": 249,
+          "total_merges": 0,
+          "avg_strength": 3190.1951721171677,
+          "max_strength": 398245.38496343966,
+          "min_strength": 0.30000000000000027,
+          "avg_context_length": 8.0,
+          "temporal_chain_length": 249,
+          "avg_access_count": 3187.5060240963853,
+          "total_accesses": 793689,
+          "similarity_engine": {
+            "total_searches": 0,
+            "total_time": 0.0,
+            "avg_search_time": 0.0,
+            "searches_per_second": 1000000.0,
+            "cache_enabled": true,
+            "cache_hits": 0,
+            "cache_hit_rate": 0.0,
+            "acceleration_method": "NumPy",
+            "gpu_available": true
+          }
+        },
+        "interface_stats": {
+          "sensory_vector_length": 22,
+          "total_experiences": 249,
+          "is_learning": true,
+          "persistence_enabled": true
+        },
+        "adaptive_tuning_stats": {
+          "total_adaptations": 5,
+          "successful_adaptations": 5,
+          "adaptation_success_rate": 1.0,
+          "current_parameters": {
+            "similarity_threshold": 0.71,
+            "activation_spread_iterations": 3.0,
+            "consolidation_frequency": 50.0,
+            "forgetting_threshold": 0.1,
+            "connection_learning_rate": 0.095,
+            "exploration_rate": 0.27499999999999997,
+            "time_budget_base": 0.1,
+            "prediction_confidence_threshold": 0.5,
+            "sensory_importance_threshold": 0.3,
+            "dimension_clustering_threshold": 0.5,
+            "bandwidth_adaptation_rate": 0.05
+          },
+          "sensory_insights": {
+            "bandwidth_tier": "medium",
+            "total_dimensions": 22,
+            "high_variance_dimensions": [],
+            "high_change_dimensions": [],
+            "stable_dimensions": [
+              2,
+              10,
+              15,
+              16,
+              17,
+              18,
+              19,
+              21
+            ],
+            "avg_variance": 0.07765871190742436,
+            "avg_change_frequency": 0.08409090909090909
+          },
+          "parameter_performance_summary": {
+            "similarity_threshold": {
+              "best_score": 1.446554679795941,
+              "avg_score": 1.4037376524589544,
+              "values_tested": 2,
+              "best_value": 0.71
+            },
+            "activation_spread_iterations": {
+              "best_score": 1.3412874570588387,
+              "avg_score": 1.3412874570588387,
+              "values_tested": 1,
+              "best_value": 3
+            },
+            "consolidation_frequency": {
+              "best_score": 1.3412874570588387,
+              "avg_score": 1.3412874570588387,
+              "values_tested": 1,
+              "best_value": 50
+            },
+            "forgetting_threshold": {
+              "best_score": 1.3412874570588387,
+              "avg_score": 1.3412874570588387,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "connection_learning_rate": {
+              "best_score": 1.3412874570588387,
+              "avg_score": 1.3412874570588387,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "exploration_rate": {
+              "best_score": 1.44465868846333,
+              "avg_score": 1.2780177848168235,
+              "values_tested": 3,
+              "best_value": 0.27999999999999997
+            },
+            "time_budget_base": {
+              "best_score": 1.3412874570588387,
+              "avg_score": 1.3412874570588387,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "prediction_confidence_threshold": {
+              "best_score": 1.3412874570588387,
+              "avg_score": 1.3412874570588387,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "sensory_importance_threshold": {
+              "best_score": 1.3412874570588387,
+              "avg_score": 1.3412874570588387,
+              "values_tested": 1,
+              "best_value": 0.3
+            },
+            "dimension_clustering_threshold": {
+              "best_score": 1.3412874570588387,
+              "avg_score": 1.3412874570588387,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "bandwidth_adaptation_rate": {
+              "best_score": 1.3412874570588387,
+              "avg_score": 1.3412874570588387,
+              "values_tested": 1,
+              "best_value": 0.05
+            }
+          }
+        },
+        "persistent_memory_stats": {
+          "memory_root": "robot_memory",
+          "storage_usage": {
+            "total_bytes": 961,
+            "graphs_bytes": 0,
+            "archives_bytes": 0,
+            "sessions_bytes": 961,
+            "adaptive_params_bytes": 0,
+            "metadata_bytes": 0
+          },
+          "total_sessions": 4,
+          "total_graphs": 0,
+          "total_adaptive_saves": 0,
+          "current_session": "session_20250708_102432_9e77a3",
+          "metadata": {
+            "created_time": "2025-07-08T10:24:32.549408",
+            "total_saved_graphs": 1,
+            "total_experiences": 305,
+            "last_save_time": "2025-07-08T10:25:10.175927",
+            "memory_version": "1.0"
+          },
+          "archive_summary": {
+            "high_importance": 0,
+            "spatial_memory": 0,
+            "skill_learning": 0,
+            "prediction_mastery": 0,
+            "recent_experiences": 0
+          }
+        },
+        "actuator_discovery_stats": {
+          "total_observations": 249,
+          "total_actuators_discovered": 3,
+          "actuators_with_significant_effects": 345,
+          "emergent_categories_formed": 2,
+          "actuators_categorized": 2,
+          "categorization_coverage": 0.6666666666666666,
+          "category_distribution": {
+            "spatial_categories": 2,
+            "manipulative_categories": 0,
+            "environmental_categories": 0,
+            "unclassified_categories": 0
+          },
+          "discovery_efficiency": 1.3855421686746987
+        },
+        "predictor_stats": {
+          "total_predictions": 249,
+          "average_thinking_time": 0.1051308036329277,
+          "consensus_breakdown": {
+            "perfect": 0,
+            "strong": 0,
+            "weak": 0,
+            "single": 0,
+            "motivation_driven": 249,
+            "no_consensus": 0
+          },
+          "base_time_budget": 0.1,
+          "threat_multipliers": {
+            "safe": 2.0,
+            "normal": 1.0,
+            "alert": 0.5,
+            "danger": 0.2,
+            "critical": 0.05
+          },
+          "perfect_percentage": 0.0,
+          "strong_percentage": 0.0,
+          "weak_percentage": 0.0,
+          "single_percentage": 0.0,
+          "motivation_driven_percentage": 100.0,
+          "no_consensus_percentage": 0.0,
+          "average_traversals": 286.15625,
+          "max_traversals": 351,
+          "min_traversals": 212,
+          "drive_dominance_counts": {
+            "Survival": 82,
+            "Curiosity": 15
+          },
+          "most_dominant_drive": "Survival",
+          "motivation_system": {
+            "total_drives": 3,
+            "active_drives": [
+              "Curiosity",
+              "Survival",
+              "Exploration"
+            ],
+            "total_evaluations": 250,
+            "decision_history_length": 97,
+            "drive_statistics": {
+              "Curiosity": {
+                "name": "Curiosity",
+                "base_weight": 0.4,
+                "current_weight": 0.17856235030998652,
+                "total_evaluations": 135929,
+                "activation_history_length": 4
+              },
+              "Survival": {
+                "name": "Survival",
+                "base_weight": 0.4,
+                "current_weight": 0.06567356543640888,
+                "total_evaluations": 135929,
+                "activation_history_length": 65
+              },
+              "Exploration": {
+                "name": "Exploration",
+                "base_weight": 0.2,
+                "current_weight": 0.27999999999999997,
+                "total_evaluations": 135929,
+                "activation_history_length": 91
+              }
+            },
+            "recent_drive_dominance": {
+              "Curiosity": 10
+            },
+            "average_recent_confidence": 0.5666666666666667,
+            "average_recent_urgency": 0.8
+          }
+        }
+      }
+    },
+    {
+      "timestamp": 1751963103.7552938,
+      "elapsed_seconds": 31.24698281288147,
+      "fps": 8.647158024945881,
+      "frame_time": 0.11564493179321289,
+      "brain_nodes": 254,
+      "brain_stats": {
+        "graph_stats": {
+          "total_nodes": 254,
+          "total_merges": 0,
+          "avg_strength": 3155.139017381647,
+          "max_strength": 401764.38496343966,
+          "min_strength": 0.30000000000000027,
+          "avg_context_length": 8.0,
+          "temporal_chain_length": 254,
+          "avg_access_count": 3152.468503937008,
+          "total_accesses": 800727,
+          "similarity_engine": {
+            "total_searches": 0,
+            "total_time": 0.0,
+            "avg_search_time": 0.0,
+            "searches_per_second": 1000000.0,
+            "cache_enabled": true,
+            "cache_hits": 0,
+            "cache_hit_rate": 0.0,
+            "acceleration_method": "NumPy",
+            "gpu_available": true
+          }
+        },
+        "interface_stats": {
+          "sensory_vector_length": 22,
+          "total_experiences": 254,
+          "is_learning": true,
+          "persistence_enabled": true
+        },
+        "adaptive_tuning_stats": {
+          "total_adaptations": 5,
+          "successful_adaptations": 5,
+          "adaptation_success_rate": 1.0,
+          "current_parameters": {
+            "similarity_threshold": 0.71,
+            "activation_spread_iterations": 3.0,
+            "consolidation_frequency": 50.0,
+            "forgetting_threshold": 0.1,
+            "connection_learning_rate": 0.095,
+            "exploration_rate": 0.27499999999999997,
+            "time_budget_base": 0.1,
+            "prediction_confidence_threshold": 0.5,
+            "sensory_importance_threshold": 0.3,
+            "dimension_clustering_threshold": 0.5,
+            "bandwidth_adaptation_rate": 0.05
+          },
+          "sensory_insights": {
+            "bandwidth_tier": "medium",
+            "total_dimensions": 22,
+            "high_variance_dimensions": [],
+            "high_change_dimensions": [],
+            "stable_dimensions": [
+              2,
+              10,
+              15,
+              16,
+              18,
+              19,
+              21
+            ],
+            "avg_variance": 0.08758434365047725,
+            "avg_change_frequency": 0.0740909090909091
+          },
+          "parameter_performance_summary": {
+            "similarity_threshold": {
+              "best_score": 1.449428497568619,
+              "avg_score": 1.4051745613452935,
+              "values_tested": 2,
+              "best_value": 0.71
+            },
+            "activation_spread_iterations": {
+              "best_score": 1.3435102857321952,
+              "avg_score": 1.3435102857321952,
+              "values_tested": 1,
+              "best_value": 3
+            },
+            "consolidation_frequency": {
+              "best_score": 1.3435102857321952,
+              "avg_score": 1.3435102857321952,
+              "values_tested": 1,
+              "best_value": 50
+            },
+            "forgetting_threshold": {
+              "best_score": 1.3435102857321952,
+              "avg_score": 1.3435102857321952,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "connection_learning_rate": {
+              "best_score": 1.3435102857321952,
+              "avg_score": 1.3435102857321952,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "exploration_rate": {
+              "best_score": 1.4458206877214201,
+              "avg_score": 1.2784051179028535,
+              "values_tested": 3,
+              "best_value": 0.27999999999999997
+            },
+            "time_budget_base": {
+              "best_score": 1.3435102857321952,
+              "avg_score": 1.3435102857321952,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "prediction_confidence_threshold": {
+              "best_score": 1.3435102857321952,
+              "avg_score": 1.3435102857321952,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "sensory_importance_threshold": {
+              "best_score": 1.3435102857321952,
+              "avg_score": 1.3435102857321952,
+              "values_tested": 1,
+              "best_value": 0.3
+            },
+            "dimension_clustering_threshold": {
+              "best_score": 1.3435102857321952,
+              "avg_score": 1.3435102857321952,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "bandwidth_adaptation_rate": {
+              "best_score": 1.3435102857321952,
+              "avg_score": 1.3435102857321952,
+              "values_tested": 1,
+              "best_value": 0.05
+            }
+          }
+        },
+        "persistent_memory_stats": {
+          "memory_root": "robot_memory",
+          "storage_usage": {
+            "total_bytes": 961,
+            "graphs_bytes": 0,
+            "archives_bytes": 0,
+            "sessions_bytes": 961,
+            "adaptive_params_bytes": 0,
+            "metadata_bytes": 0
+          },
+          "total_sessions": 4,
+          "total_graphs": 0,
+          "total_adaptive_saves": 0,
+          "current_session": "session_20250708_102432_9e77a3",
+          "metadata": {
+            "created_time": "2025-07-08T10:24:32.549408",
+            "total_saved_graphs": 1,
+            "total_experiences": 305,
+            "last_save_time": "2025-07-08T10:25:10.175927",
+            "memory_version": "1.0"
+          },
+          "archive_summary": {
+            "high_importance": 0,
+            "spatial_memory": 0,
+            "skill_learning": 0,
+            "prediction_mastery": 0,
+            "recent_experiences": 0
+          }
+        },
+        "actuator_discovery_stats": {
+          "total_observations": 254,
+          "total_actuators_discovered": 3,
+          "actuators_with_significant_effects": 351,
+          "emergent_categories_formed": 2,
+          "actuators_categorized": 2,
+          "categorization_coverage": 0.6666666666666666,
+          "category_distribution": {
+            "spatial_categories": 2,
+            "manipulative_categories": 0,
+            "environmental_categories": 0,
+            "unclassified_categories": 0
+          },
+          "discovery_efficiency": 1.3818897637795275
+        },
+        "predictor_stats": {
+          "total_predictions": 254,
+          "average_thinking_time": 0.10507003622730886,
+          "consensus_breakdown": {
+            "perfect": 0,
+            "strong": 0,
+            "weak": 0,
+            "single": 0,
+            "motivation_driven": 254,
+            "no_consensus": 0
+          },
+          "base_time_budget": 0.1,
+          "threat_multipliers": {
+            "safe": 2.0,
+            "normal": 1.0,
+            "alert": 0.5,
+            "danger": 0.2,
+            "critical": 0.05
+          },
+          "perfect_percentage": 0.0,
+          "strong_percentage": 0.0,
+          "weak_percentage": 0.0,
+          "single_percentage": 0.0,
+          "motivation_driven_percentage": 100.0,
+          "no_consensus_percentage": 0.0,
+          "average_traversals": 255.18,
+          "max_traversals": 279,
+          "min_traversals": 212,
+          "drive_dominance_counts": {
+            "Survival": 31,
+            "Curiosity": 20
+          },
+          "most_dominant_drive": "Survival",
+          "motivation_system": {
+            "total_drives": 3,
+            "active_drives": [
+              "Curiosity",
+              "Survival",
+              "Exploration"
+            ],
+            "total_evaluations": 255,
+            "decision_history_length": 51,
+            "drive_statistics": {
+              "Curiosity": {
+                "name": "Curiosity",
+                "base_weight": 0.4,
+                "current_weight": 0.17856313724494263,
+                "total_evaluations": 137127,
+                "activation_history_length": 4
+              },
+              "Survival": {
+                "name": "Survival",
+                "base_weight": 0.4,
+                "current_weight": 0.0660970818525457,
+                "total_evaluations": 137127,
+                "activation_history_length": 90
+              },
+              "Exploration": {
+                "name": "Exploration",
+                "base_weight": 0.2,
+                "current_weight": 0.27999999999999997,
+                "total_evaluations": 137127,
+                "activation_history_length": 59
+              }
+            },
+            "recent_drive_dominance": {
+              "Curiosity": 10
+            },
+            "average_recent_confidence": 0.5666666666666667,
+            "average_recent_urgency": 0.8
+          }
+        }
+      }
+    },
+    {
+      "timestamp": 1751963104.346771,
+      "elapsed_seconds": 31.838459968566895,
+      "fps": 8.633630431650234,
+      "frame_time": 0.11582612991333008,
+      "brain_nodes": 259,
+      "brain_stats": {
+        "graph_stats": {
+          "total_nodes": 259,
+          "total_merges": 0,
+          "avg_strength": 3121.1641101203472,
+          "max_strength": 405247.38496343966,
+          "min_strength": 0.30000000000000027,
+          "avg_context_length": 8.0,
+          "temporal_chain_length": 259,
+          "avg_access_count": 3118.5057915057914,
+          "total_accesses": 807693,
+          "similarity_engine": {
+            "total_searches": 0,
+            "total_time": 0.0,
+            "avg_search_time": 0.0,
+            "searches_per_second": 1000000.0,
+            "cache_enabled": true,
+            "cache_hits": 0,
+            "cache_hit_rate": 0.0,
+            "acceleration_method": "NumPy",
+            "gpu_available": true
+          }
+        },
+        "interface_stats": {
+          "sensory_vector_length": 22,
+          "total_experiences": 259,
+          "is_learning": true,
+          "persistence_enabled": true
+        },
+        "adaptive_tuning_stats": {
+          "total_adaptations": 5,
+          "successful_adaptations": 5,
+          "adaptation_success_rate": 1.0,
+          "current_parameters": {
+            "similarity_threshold": 0.71,
+            "activation_spread_iterations": 3.0,
+            "consolidation_frequency": 50.0,
+            "forgetting_threshold": 0.1,
+            "connection_learning_rate": 0.095,
+            "exploration_rate": 0.27499999999999997,
+            "time_budget_base": 0.1,
+            "prediction_confidence_threshold": 0.5,
+            "sensory_importance_threshold": 0.3,
+            "dimension_clustering_threshold": 0.5,
+            "bandwidth_adaptation_rate": 0.05
+          },
+          "sensory_insights": {
+            "bandwidth_tier": "medium",
+            "total_dimensions": 22,
+            "high_variance_dimensions": [],
+            "high_change_dimensions": [],
+            "stable_dimensions": [
+              0,
+              2,
+              4,
+              5,
+              6,
+              8,
+              10,
+              12,
+              13,
+              14,
+              15,
+              16,
+              18,
+              19,
+              21
+            ],
+            "avg_variance": 0.0884873951037328,
+            "avg_change_frequency": 0.05
+          },
+          "parameter_performance_summary": {
+            "similarity_threshold": {
+              "best_score": 1.4828315259504197,
+              "avg_score": 1.4218760755361939,
+              "values_tested": 2,
+              "best_value": 0.71
+            },
+            "activation_spread_iterations": {
+              "best_score": 1.3770292951481888,
+              "avg_score": 1.3770292951481888,
+              "values_tested": 1,
+              "best_value": 3
+            },
+            "consolidation_frequency": {
+              "best_score": 1.3770292951481888,
+              "avg_score": 1.3770292951481888,
+              "values_tested": 1,
+              "best_value": 50
+            },
+            "forgetting_threshold": {
+              "best_score": 1.3770292951481888,
+              "avg_score": 1.3770292951481888,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "connection_learning_rate": {
+              "best_score": 1.3770292951481888,
+              "avg_score": 1.3770292951481888,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "exploration_rate": {
+              "best_score": 1.4782018963207901,
+              "avg_score": 1.2891988541026436,
+              "values_tested": 3,
+              "best_value": 0.27999999999999997
+            },
+            "time_budget_base": {
+              "best_score": 1.3770292951481888,
+              "avg_score": 1.3770292951481888,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "prediction_confidence_threshold": {
+              "best_score": 1.3770292951481888,
+              "avg_score": 1.3770292951481888,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "sensory_importance_threshold": {
+              "best_score": 1.3770292951481888,
+              "avg_score": 1.3770292951481888,
+              "values_tested": 1,
+              "best_value": 0.3
+            },
+            "dimension_clustering_threshold": {
+              "best_score": 1.3770292951481888,
+              "avg_score": 1.3770292951481888,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "bandwidth_adaptation_rate": {
+              "best_score": 1.3770292951481888,
+              "avg_score": 1.3770292951481888,
+              "values_tested": 1,
+              "best_value": 0.05
+            }
+          }
+        },
+        "persistent_memory_stats": {
+          "memory_root": "robot_memory",
+          "storage_usage": {
+            "total_bytes": 961,
+            "graphs_bytes": 0,
+            "archives_bytes": 0,
+            "sessions_bytes": 961,
+            "adaptive_params_bytes": 0,
+            "metadata_bytes": 0
+          },
+          "total_sessions": 4,
+          "total_graphs": 0,
+          "total_adaptive_saves": 0,
+          "current_session": "session_20250708_102432_9e77a3",
+          "metadata": {
+            "created_time": "2025-07-08T10:24:32.549408",
+            "total_saved_graphs": 1,
+            "total_experiences": 305,
+            "last_save_time": "2025-07-08T10:25:10.175927",
+            "memory_version": "1.0"
+          },
+          "archive_summary": {
+            "high_importance": 0,
+            "spatial_memory": 0,
+            "skill_learning": 0,
+            "prediction_mastery": 0,
+            "recent_experiences": 0
+          }
+        },
+        "actuator_discovery_stats": {
+          "total_observations": 259,
+          "total_actuators_discovered": 3,
+          "actuators_with_significant_effects": 351,
+          "emergent_categories_formed": 2,
+          "actuators_categorized": 2,
+          "categorization_coverage": 0.6666666666666666,
+          "category_distribution": {
+            "spatial_categories": 2,
+            "manipulative_categories": 0,
+            "environmental_categories": 0,
+            "unclassified_categories": 0
+          },
+          "discovery_efficiency": 1.3552123552123552
+        },
+        "predictor_stats": {
+          "total_predictions": 259,
+          "average_thinking_time": 0.10501111520303262,
+          "consensus_breakdown": {
+            "perfect": 0,
+            "strong": 0,
+            "weak": 0,
+            "single": 0,
+            "motivation_driven": 259,
+            "no_consensus": 0
+          },
+          "base_time_budget": 0.1,
+          "threat_multipliers": {
+            "safe": 2.0,
+            "normal": 1.0,
+            "alert": 0.5,
+            "danger": 0.2,
+            "critical": 0.05
+          },
+          "perfect_percentage": 0.0,
+          "strong_percentage": 0.0,
+          "weak_percentage": 0.0,
+          "single_percentage": 0.0,
+          "motivation_driven_percentage": 100.0,
+          "no_consensus_percentage": 0.0,
+          "average_traversals": 253.0909090909091,
+          "max_traversals": 279,
+          "min_traversals": 212,
+          "drive_dominance_counts": {
+            "Survival": 31,
+            "Curiosity": 25
+          },
+          "most_dominant_drive": "Survival",
+          "motivation_system": {
+            "total_drives": 3,
+            "active_drives": [
+              "Curiosity",
+              "Survival",
+              "Exploration"
+            ],
+            "total_evaluations": 260,
+            "decision_history_length": 56,
+            "drive_statistics": {
+              "Curiosity": {
+                "name": "Curiosity",
+                "base_weight": 0.4,
+                "current_weight": 0.17856259211807438,
+                "total_evaluations": 138313,
+                "activation_history_length": 4
+              },
+              "Survival": {
+                "name": "Survival",
+                "base_weight": 0.4,
+                "current_weight": 0.06661682164986446,
+                "total_evaluations": 138313,
+                "activation_history_length": 52
+              },
+              "Exploration": {
+                "name": "Exploration",
+                "base_weight": 0.2,
+                "current_weight": 0.27999999999999997,
+                "total_evaluations": 138313,
+                "activation_history_length": 63
+              }
+            },
+            "recent_drive_dominance": {
+              "Curiosity": 10
+            },
+            "average_recent_confidence": 0.5666666666666667,
+            "average_recent_urgency": 0.8
+          }
+        }
+      }
+    },
+    {
+      "timestamp": 1751963104.946271,
+      "elapsed_seconds": 32.43795990943909,
+      "fps": 8.593582120743985,
+      "frame_time": 0.11636590957641602,
+      "brain_nodes": 264,
+      "brain_stats": {
+        "graph_stats": {
+          "total_nodes": 264,
+          "total_merges": 0,
+          "avg_strength": 3088.026278189174,
+          "max_strength": 408670.38496343966,
+          "min_strength": 0.30000000000000027,
+          "avg_context_length": 8.0,
+          "temporal_chain_length": 264,
+          "avg_access_count": 3085.375,
+          "total_accesses": 814539,
+          "similarity_engine": {
+            "total_searches": 0,
+            "total_time": 0.0,
+            "avg_search_time": 0.0,
+            "searches_per_second": 1000000.0,
+            "cache_enabled": true,
+            "cache_hits": 0,
+            "cache_hit_rate": 0.0,
+            "acceleration_method": "NumPy",
+            "gpu_available": true
+          }
+        },
+        "interface_stats": {
+          "sensory_vector_length": 22,
+          "total_experiences": 264,
+          "is_learning": true,
+          "persistence_enabled": true
+        },
+        "adaptive_tuning_stats": {
+          "total_adaptations": 6,
+          "successful_adaptations": 6,
+          "adaptation_success_rate": 1.0,
+          "current_parameters": {
+            "similarity_threshold": 0.712,
+            "activation_spread_iterations": 3.0,
+            "consolidation_frequency": 50.0,
+            "forgetting_threshold": 0.1,
+            "connection_learning_rate": 0.094,
+            "exploration_rate": 0.26999999999999996,
+            "time_budget_base": 0.1,
+            "prediction_confidence_threshold": 0.5,
+            "sensory_importance_threshold": 0.3,
+            "dimension_clustering_threshold": 0.5,
+            "bandwidth_adaptation_rate": 0.05
+          },
+          "sensory_insights": {
+            "bandwidth_tier": "medium",
+            "total_dimensions": 22,
+            "high_variance_dimensions": [],
+            "high_change_dimensions": [],
+            "stable_dimensions": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              8,
+              10,
+              12,
+              13,
+              14,
+              15,
+              16,
+              18,
+              19,
+              21
+            ],
+            "avg_variance": 0.0874320322030626,
+            "avg_change_frequency": 0.03590909090909091
+          },
+          "parameter_performance_summary": {
+            "similarity_threshold": {
+              "best_score": 1.4845249966642338,
+              "avg_score": 1.422722810893101,
+              "values_tested": 2,
+              "best_value": 0.71
+            },
+            "activation_spread_iterations": {
+              "best_score": 1.3792958761912106,
+              "avg_score": 1.3792958761912106,
+              "values_tested": 1,
+              "best_value": 3
+            },
+            "consolidation_frequency": {
+              "best_score": 1.3792958761912106,
+              "avg_score": 1.3792958761912106,
+              "values_tested": 1,
+              "best_value": 50
+            },
+            "forgetting_threshold": {
+              "best_score": 1.3792958761912106,
+              "avg_score": 1.3792958761912106,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "connection_learning_rate": {
+              "best_score": 1.3792958761912106,
+              "avg_score": 1.3792958761912106,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "exploration_rate": {
+              "best_score": 1.496713410091123,
+              "avg_score": 1.341189562569688,
+              "values_tested": 4,
+              "best_value": 0.26999999999999996
+            },
+            "time_budget_base": {
+              "best_score": 1.3792958761912106,
+              "avg_score": 1.3792958761912106,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "prediction_confidence_threshold": {
+              "best_score": 1.3792958761912106,
+              "avg_score": 1.3792958761912106,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "sensory_importance_threshold": {
+              "best_score": 1.3792958761912106,
+              "avg_score": 1.3792958761912106,
+              "values_tested": 1,
+              "best_value": 0.3
+            },
+            "dimension_clustering_threshold": {
+              "best_score": 1.3792958761912106,
+              "avg_score": 1.3792958761912106,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "bandwidth_adaptation_rate": {
+              "best_score": 1.3792958761912106,
+              "avg_score": 1.3792958761912106,
+              "values_tested": 1,
+              "best_value": 0.05
+            }
+          }
+        },
+        "persistent_memory_stats": {
+          "memory_root": "robot_memory",
+          "storage_usage": {
+            "total_bytes": 961,
+            "graphs_bytes": 0,
+            "archives_bytes": 0,
+            "sessions_bytes": 961,
+            "adaptive_params_bytes": 0,
+            "metadata_bytes": 0
+          },
+          "total_sessions": 4,
+          "total_graphs": 0,
+          "total_adaptive_saves": 0,
+          "current_session": "session_20250708_102432_9e77a3",
+          "metadata": {
+            "created_time": "2025-07-08T10:24:32.549408",
+            "total_saved_graphs": 1,
+            "total_experiences": 305,
+            "last_save_time": "2025-07-08T10:25:10.175927",
+            "memory_version": "1.0"
+          },
+          "archive_summary": {
+            "high_importance": 0,
+            "spatial_memory": 0,
+            "skill_learning": 0,
+            "prediction_mastery": 0,
+            "recent_experiences": 0
+          }
+        },
+        "actuator_discovery_stats": {
+          "total_observations": 264,
+          "total_actuators_discovered": 3,
+          "actuators_with_significant_effects": 351,
+          "emergent_categories_formed": 2,
+          "actuators_categorized": 2,
+          "categorization_coverage": 0.6666666666666666,
+          "category_distribution": {
+            "spatial_categories": 2,
+            "manipulative_categories": 0,
+            "environmental_categories": 0,
+            "unclassified_categories": 0
+          },
+          "discovery_efficiency": 1.3295454545454546
+        },
+        "predictor_stats": {
+          "total_predictions": 264,
+          "average_thinking_time": 0.10495275981498486,
+          "consensus_breakdown": {
+            "perfect": 0,
+            "strong": 0,
+            "weak": 0,
+            "single": 0,
+            "motivation_driven": 264,
+            "no_consensus": 0
+          },
+          "base_time_budget": 0.1,
+          "threat_multipliers": {
+            "safe": 2.0,
+            "normal": 1.0,
+            "alert": 0.5,
+            "danger": 0.2,
+            "critical": 0.05
+          },
+          "perfect_percentage": 0.0,
+          "strong_percentage": 0.0,
+          "weak_percentage": 0.0,
+          "single_percentage": 0.0,
+          "motivation_driven_percentage": 100.0,
+          "no_consensus_percentage": 0.0,
+          "average_traversals": 251.01666666666668,
+          "max_traversals": 279,
+          "min_traversals": 212,
+          "drive_dominance_counts": {
+            "Survival": 31,
+            "Curiosity": 30
+          },
+          "most_dominant_drive": "Survival",
+          "motivation_system": {
+            "total_drives": 3,
+            "active_drives": [
+              "Curiosity",
+              "Survival",
+              "Exploration"
+            ],
+            "total_evaluations": 265,
+            "decision_history_length": 61,
+            "drive_statistics": {
+              "Curiosity": {
+                "name": "Curiosity",
+                "base_weight": 0.4,
+                "current_weight": 0.17856297234710725,
+                "total_evaluations": 139479,
+                "activation_history_length": 4
+              },
+              "Survival": {
+                "name": "Survival",
+                "base_weight": 0.4,
+                "current_weight": 0.06724622415068801,
+                "total_evaluations": 139479,
+                "activation_history_length": 96
+              },
+              "Exploration": {
+                "name": "Exploration",
+                "base_weight": 0.2,
+                "current_weight": 0.27999999999999997,
+                "total_evaluations": 139479,
+                "activation_history_length": 98
+              }
+            },
+            "recent_drive_dominance": {
+              "Curiosity": 10
+            },
+            "average_recent_confidence": 0.5666666666666667,
+            "average_recent_urgency": 0.8
+          }
+        }
+      }
+    },
+    {
+      "timestamp": 1751963105.542352,
+      "elapsed_seconds": 33.03404092788696,
+      "fps": 8.576274028286976,
+      "frame_time": 0.11660075187683105,
+      "brain_nodes": 269,
+      "brain_stats": {
+        "graph_stats": {
+          "total_nodes": 269,
+          "total_merges": 0,
+          "avg_strength": 3055.7419718470455,
+          "max_strength": 412042.38496343966,
+          "min_strength": 0.30000000000000027,
+          "avg_context_length": 8.0,
+          "temporal_chain_length": 269,
+          "avg_access_count": 3053.096654275093,
+          "total_accesses": 821283,
+          "similarity_engine": {
+            "total_searches": 0,
+            "total_time": 0.0,
+            "avg_search_time": 0.0,
+            "searches_per_second": 1000000.0,
+            "cache_enabled": true,
+            "cache_hits": 0,
+            "cache_hit_rate": 0.0,
+            "acceleration_method": "NumPy",
+            "gpu_available": true
+          }
+        },
+        "interface_stats": {
+          "sensory_vector_length": 22,
+          "total_experiences": 269,
+          "is_learning": true,
+          "persistence_enabled": true
+        },
+        "adaptive_tuning_stats": {
+          "total_adaptations": 6,
+          "successful_adaptations": 6,
+          "adaptation_success_rate": 1.0,
+          "current_parameters": {
+            "similarity_threshold": 0.712,
+            "activation_spread_iterations": 3.0,
+            "consolidation_frequency": 50.0,
+            "forgetting_threshold": 0.1,
+            "connection_learning_rate": 0.094,
+            "exploration_rate": 0.26999999999999996,
+            "time_budget_base": 0.1,
+            "prediction_confidence_threshold": 0.5,
+            "sensory_importance_threshold": 0.3,
+            "dimension_clustering_threshold": 0.5,
+            "bandwidth_adaptation_rate": 0.05
+          },
+          "sensory_insights": {
+            "bandwidth_tier": "medium",
+            "total_dimensions": 22,
+            "high_variance_dimensions": [],
+            "high_change_dimensions": [],
+            "stable_dimensions": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              8,
+              10,
+              12,
+              13,
+              14,
+              15,
+              16,
+              18,
+              19,
+              21
+            ],
+            "avg_variance": 0.08917789246820329,
+            "avg_change_frequency": 0.015909090909090907
+          },
+          "parameter_performance_summary": {
+            "similarity_threshold": {
+              "best_score": 1.4858505966522686,
+              "avg_score": 1.4233856108871183,
+              "values_tested": 2,
+              "best_value": 0.71
+            },
+            "activation_spread_iterations": {
+              "best_score": 1.3814785261819276,
+              "avg_score": 1.3814785261819276,
+              "values_tested": 1,
+              "best_value": 3
+            },
+            "consolidation_frequency": {
+              "best_score": 1.3814785261819276,
+              "avg_score": 1.3814785261819276,
+              "values_tested": 1,
+              "best_value": 50
+            },
+            "forgetting_threshold": {
+              "best_score": 1.3814785261819276,
+              "avg_score": 1.3814785261819276,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "connection_learning_rate": {
+              "best_score": 1.3814785261819276,
+              "avg_score": 1.3814785261819276,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "exploration_rate": {
+              "best_score": 1.4967232185788268,
+              "avg_score": 1.3411920146916139,
+              "values_tested": 4,
+              "best_value": 0.26999999999999996
+            },
+            "time_budget_base": {
+              "best_score": 1.3814785261819276,
+              "avg_score": 1.3814785261819276,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "prediction_confidence_threshold": {
+              "best_score": 1.3814785261819276,
+              "avg_score": 1.3814785261819276,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "sensory_importance_threshold": {
+              "best_score": 1.3814785261819276,
+              "avg_score": 1.3814785261819276,
+              "values_tested": 1,
+              "best_value": 0.3
+            },
+            "dimension_clustering_threshold": {
+              "best_score": 1.3814785261819276,
+              "avg_score": 1.3814785261819276,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "bandwidth_adaptation_rate": {
+              "best_score": 1.3814785261819276,
+              "avg_score": 1.3814785261819276,
+              "values_tested": 1,
+              "best_value": 0.05
+            }
+          }
+        },
+        "persistent_memory_stats": {
+          "memory_root": "robot_memory",
+          "storage_usage": {
+            "total_bytes": 961,
+            "graphs_bytes": 0,
+            "archives_bytes": 0,
+            "sessions_bytes": 961,
+            "adaptive_params_bytes": 0,
+            "metadata_bytes": 0
+          },
+          "total_sessions": 4,
+          "total_graphs": 0,
+          "total_adaptive_saves": 0,
+          "current_session": "session_20250708_102432_9e77a3",
+          "metadata": {
+            "created_time": "2025-07-08T10:24:32.549408",
+            "total_saved_graphs": 1,
+            "total_experiences": 305,
+            "last_save_time": "2025-07-08T10:25:10.175927",
+            "memory_version": "1.0"
+          },
+          "archive_summary": {
+            "high_importance": 0,
+            "spatial_memory": 0,
+            "skill_learning": 0,
+            "prediction_mastery": 0,
+            "recent_experiences": 0
+          }
+        },
+        "actuator_discovery_stats": {
+          "total_observations": 269,
+          "total_actuators_discovered": 3,
+          "actuators_with_significant_effects": 351,
+          "emergent_categories_formed": 2,
+          "actuators_categorized": 2,
+          "categorization_coverage": 0.6666666666666666,
+          "category_distribution": {
+            "spatial_categories": 2,
+            "manipulative_categories": 0,
+            "environmental_categories": 0,
+            "unclassified_categories": 0
+          },
+          "discovery_efficiency": 1.304832713754647
+        },
+        "predictor_stats": {
+          "total_predictions": 269,
+          "average_thinking_time": 0.10489590992271679,
+          "consensus_breakdown": {
+            "perfect": 0,
+            "strong": 0,
+            "weak": 0,
+            "single": 0,
+            "motivation_driven": 269,
+            "no_consensus": 0
+          },
+          "base_time_budget": 0.1,
+          "threat_multipliers": {
+            "safe": 2.0,
+            "normal": 1.0,
+            "alert": 0.5,
+            "danger": 0.2,
+            "critical": 0.05
+          },
+          "perfect_percentage": 0.0,
+          "strong_percentage": 0.0,
+          "weak_percentage": 0.0,
+          "single_percentage": 0.0,
+          "motivation_driven_percentage": 100.0,
+          "no_consensus_percentage": 0.0,
+          "average_traversals": 249.0,
+          "max_traversals": 279,
+          "min_traversals": 212,
+          "drive_dominance_counts": {
+            "Survival": 31,
+            "Curiosity": 35
+          },
+          "most_dominant_drive": "Curiosity",
+          "motivation_system": {
+            "total_drives": 3,
+            "active_drives": [
+              "Curiosity",
+              "Survival",
+              "Exploration"
+            ],
+            "total_evaluations": 270,
+            "decision_history_length": 66,
+            "drive_statistics": {
+              "Curiosity": {
+                "name": "Curiosity",
+                "base_weight": 0.4,
+                "current_weight": 0.17856252741086576,
+                "total_evaluations": 140628,
+                "activation_history_length": 4
+              },
+              "Survival": {
+                "name": "Survival",
+                "base_weight": 0.4,
+                "current_weight": 0.06798174843121191,
+                "total_evaluations": 140628,
+                "activation_history_length": 72
+              },
+              "Exploration": {
+                "name": "Exploration",
+                "base_weight": 0.2,
+                "current_weight": 0.27999999999999997,
+                "total_evaluations": 140628,
+                "activation_history_length": 67
+              }
+            },
+            "recent_drive_dominance": {
+              "Curiosity": 10
+            },
+            "average_recent_confidence": 0.5666666666666667,
+            "average_recent_urgency": 0.8
+          }
+        }
+      }
+    },
+    {
+      "timestamp": 1751963106.139819,
+      "elapsed_seconds": 33.631507873535156,
+      "fps": 8.556224436715251,
+      "frame_time": 0.11687397956848145,
+      "brain_nodes": 274,
+      "brain_stats": {
+        "graph_stats": {
+          "total_nodes": 274,
+          "total_merges": 0,
+          "avg_strength": 3024.016717441269,
+          "max_strength": 415329.38496343966,
+          "min_strength": 0.30000000000000027,
+          "avg_context_length": 8.0,
+          "temporal_chain_length": 274,
+          "avg_access_count": 3021.383211678832,
+          "total_accesses": 827859,
+          "similarity_engine": {
+            "total_searches": 0,
+            "total_time": 0.0,
+            "avg_search_time": 0.0,
+            "searches_per_second": 1000000.0,
+            "cache_enabled": true,
+            "cache_hits": 0,
+            "cache_hit_rate": 0.0,
+            "acceleration_method": "NumPy",
+            "gpu_available": true
+          }
+        },
+        "interface_stats": {
+          "sensory_vector_length": 22,
+          "total_experiences": 274,
+          "is_learning": true,
+          "persistence_enabled": true
+        },
+        "adaptive_tuning_stats": {
+          "total_adaptations": 6,
+          "successful_adaptations": 6,
+          "adaptation_success_rate": 1.0,
+          "current_parameters": {
+            "similarity_threshold": 0.712,
+            "activation_spread_iterations": 3.0,
+            "consolidation_frequency": 50.0,
+            "forgetting_threshold": 0.1,
+            "connection_learning_rate": 0.094,
+            "exploration_rate": 0.26999999999999996,
+            "time_budget_base": 0.1,
+            "prediction_confidence_threshold": 0.5,
+            "sensory_importance_threshold": 0.3,
+            "dimension_clustering_threshold": 0.5,
+            "bandwidth_adaptation_rate": 0.05
+          },
+          "sensory_insights": {
+            "bandwidth_tier": "medium",
+            "total_dimensions": 22,
+            "high_variance_dimensions": [],
+            "high_change_dimensions": [],
+            "stable_dimensions": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              8,
+              10,
+              12,
+              13,
+              14,
+              15,
+              16,
+              18,
+              19,
+              21
+            ],
+            "avg_variance": 0.09375773003766102,
+            "avg_change_frequency": 0.015909090909090907
+          },
+          "parameter_performance_summary": {
+            "similarity_threshold": {
+              "best_score": 1.4869168088223672,
+              "avg_score": 1.4239187169721677,
+              "values_tested": 2,
+              "best_value": 0.71
+            },
+            "activation_spread_iterations": {
+              "best_score": 1.3835820442596078,
+              "avg_score": 1.3835820442596078,
+              "values_tested": 1,
+              "best_value": 3
+            },
+            "consolidation_frequency": {
+              "best_score": 1.3835820442596078,
+              "avg_score": 1.3835820442596078,
+              "values_tested": 1,
+              "best_value": 50
+            },
+            "forgetting_threshold": {
+              "best_score": 1.3835820442596078,
+              "avg_score": 1.3835820442596078,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "connection_learning_rate": {
+              "best_score": 1.3835820442596078,
+              "avg_score": 1.3835820442596078,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "exploration_rate": {
+              "best_score": 1.4967191679267768,
+              "avg_score": 1.3411910020286013,
+              "values_tested": 4,
+              "best_value": 0.26999999999999996
+            },
+            "time_budget_base": {
+              "best_score": 1.3835820442596078,
+              "avg_score": 1.3835820442596078,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "prediction_confidence_threshold": {
+              "best_score": 1.3835820442596078,
+              "avg_score": 1.3835820442596078,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "sensory_importance_threshold": {
+              "best_score": 1.3835820442596078,
+              "avg_score": 1.3835820442596078,
+              "values_tested": 1,
+              "best_value": 0.3
+            },
+            "dimension_clustering_threshold": {
+              "best_score": 1.3835820442596078,
+              "avg_score": 1.3835820442596078,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "bandwidth_adaptation_rate": {
+              "best_score": 1.3835820442596078,
+              "avg_score": 1.3835820442596078,
+              "values_tested": 1,
+              "best_value": 0.05
+            }
+          }
+        },
+        "persistent_memory_stats": {
+          "memory_root": "robot_memory",
+          "storage_usage": {
+            "total_bytes": 961,
+            "graphs_bytes": 0,
+            "archives_bytes": 0,
+            "sessions_bytes": 961,
+            "adaptive_params_bytes": 0,
+            "metadata_bytes": 0
+          },
+          "total_sessions": 4,
+          "total_graphs": 0,
+          "total_adaptive_saves": 0,
+          "current_session": "session_20250708_102432_9e77a3",
+          "metadata": {
+            "created_time": "2025-07-08T10:24:32.549408",
+            "total_saved_graphs": 1,
+            "total_experiences": 305,
+            "last_save_time": "2025-07-08T10:25:10.175927",
+            "memory_version": "1.0"
+          },
+          "archive_summary": {
+            "high_importance": 0,
+            "spatial_memory": 0,
+            "skill_learning": 0,
+            "prediction_mastery": 0,
+            "recent_experiences": 0
+          }
+        },
+        "actuator_discovery_stats": {
+          "total_observations": 274,
+          "total_actuators_discovered": 3,
+          "actuators_with_significant_effects": 351,
+          "emergent_categories_formed": 2,
+          "actuators_categorized": 2,
+          "categorization_coverage": 0.6666666666666666,
+          "category_distribution": {
+            "spatial_categories": 2,
+            "manipulative_categories": 0,
+            "environmental_categories": 0,
+            "unclassified_categories": 0
+          },
+          "discovery_efficiency": 1.281021897810219
+        },
+        "predictor_stats": {
+          "total_predictions": 274,
+          "average_thinking_time": 0.10483884550359128,
+          "consensus_breakdown": {
+            "perfect": 0,
+            "strong": 0,
+            "weak": 0,
+            "single": 0,
+            "motivation_driven": 274,
+            "no_consensus": 0
+          },
+          "base_time_budget": 0.1,
+          "threat_multipliers": {
+            "safe": 2.0,
+            "normal": 1.0,
+            "alert": 0.5,
+            "danger": 0.2,
+            "critical": 0.05
+          },
+          "perfect_percentage": 0.0,
+          "strong_percentage": 0.0,
+          "weak_percentage": 0.0,
+          "single_percentage": 0.0,
+          "motivation_driven_percentage": 100.0,
+          "no_consensus_percentage": 0.0,
+          "average_traversals": 246.87142857142857,
+          "max_traversals": 279,
+          "min_traversals": 212,
+          "drive_dominance_counts": {
+            "Survival": 31,
+            "Curiosity": 40
+          },
+          "most_dominant_drive": "Curiosity",
+          "motivation_system": {
+            "total_drives": 3,
+            "active_drives": [
+              "Curiosity",
+              "Survival",
+              "Exploration"
+            ],
+            "total_evaluations": 275,
+            "decision_history_length": 71,
+            "drive_statistics": {
+              "Curiosity": {
+                "name": "Curiosity",
+                "base_weight": 0.4,
+                "current_weight": 0.1785633887706213,
+                "total_evaluations": 141749,
+                "activation_history_length": 4
+              },
+              "Survival": {
+                "name": "Survival",
+                "base_weight": 0.4,
+                "current_weight": 0.06887672458894466,
+                "total_evaluations": 141749,
+                "activation_history_length": 71
+              },
+              "Exploration": {
+                "name": "Exploration",
+                "base_weight": 0.2,
+                "current_weight": 0.27999999999999997,
+                "total_evaluations": 141749,
+                "activation_history_length": 60
+              }
+            },
+            "recent_drive_dominance": {
+              "Curiosity": 10
+            },
+            "average_recent_confidence": 0.5666666666666667,
+            "average_recent_urgency": 0.8
+          }
+        }
+      }
+    },
+    {
+      "timestamp": 1751963106.740294,
+      "elapsed_seconds": 34.231982946395874,
+      "fps": 8.518238554319636,
+      "frame_time": 0.11739516258239746,
+      "brain_nodes": 279,
+      "brain_stats": {
+        "graph_stats": {
+          "total_nodes": 279,
+          "total_merges": 0,
+          "avg_strength": 2993.3207624338024,
+          "max_strength": 418602.38496343966,
+          "min_strength": 0.30000000000000027,
+          "avg_context_length": 8.0,
+          "temporal_chain_length": 279,
+          "avg_access_count": 2990.6989247311826,
+          "total_accesses": 834405,
+          "similarity_engine": {
+            "total_searches": 0,
+            "total_time": 0.0,
+            "avg_search_time": 0.0,
+            "searches_per_second": 1000000.0,
+            "cache_enabled": true,
+            "cache_hits": 0,
+            "cache_hit_rate": 0.0,
+            "acceleration_method": "NumPy",
+            "gpu_available": true
+          }
+        },
+        "interface_stats": {
+          "sensory_vector_length": 22,
+          "total_experiences": 279,
+          "is_learning": true,
+          "persistence_enabled": true
+        },
+        "adaptive_tuning_stats": {
+          "total_adaptations": 6,
+          "successful_adaptations": 6,
+          "adaptation_success_rate": 1.0,
+          "current_parameters": {
+            "similarity_threshold": 0.712,
+            "activation_spread_iterations": 3.0,
+            "consolidation_frequency": 50.0,
+            "forgetting_threshold": 0.1,
+            "connection_learning_rate": 0.094,
+            "exploration_rate": 0.26999999999999996,
+            "time_budget_base": 0.1,
+            "prediction_confidence_threshold": 0.5,
+            "sensory_importance_threshold": 0.3,
+            "dimension_clustering_threshold": 0.5,
+            "bandwidth_adaptation_rate": 0.05
+          },
+          "sensory_insights": {
+            "bandwidth_tier": "medium",
+            "total_dimensions": 22,
+            "high_variance_dimensions": [],
+            "high_change_dimensions": [],
+            "stable_dimensions": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              8,
+              10,
+              12,
+              13,
+              14,
+              15,
+              16,
+              18,
+              19,
+              21
+            ],
+            "avg_variance": 0.09648119533988386,
+            "avg_change_frequency": 0.015909090909090907
+          },
+          "parameter_performance_summary": {
+            "similarity_threshold": {
+              "best_score": 1.4877894792849427,
+              "avg_score": 1.4243550522034554,
+              "values_tested": 2,
+              "best_value": 0.71
+            },
+            "activation_spread_iterations": {
+              "best_score": 1.3856069396024029,
+              "avg_score": 1.3856069396024029,
+              "values_tested": 1,
+              "best_value": 3
+            },
+            "consolidation_frequency": {
+              "best_score": 1.3856069396024029,
+              "avg_score": 1.3856069396024029,
+              "values_tested": 1,
+              "best_value": 50
+            },
+            "forgetting_threshold": {
+              "best_score": 1.3856069396024029,
+              "avg_score": 1.3856069396024029,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "connection_learning_rate": {
+              "best_score": 1.3856069396024029,
+              "avg_score": 1.3856069396024029,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "exploration_rate": {
+              "best_score": 1.496716463302096,
+              "avg_score": 1.3411903258724311,
+              "values_tested": 4,
+              "best_value": 0.26999999999999996
+            },
+            "time_budget_base": {
+              "best_score": 1.3856069396024029,
+              "avg_score": 1.3856069396024029,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "prediction_confidence_threshold": {
+              "best_score": 1.3856069396024029,
+              "avg_score": 1.3856069396024029,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "sensory_importance_threshold": {
+              "best_score": 1.3856069396024029,
+              "avg_score": 1.3856069396024029,
+              "values_tested": 1,
+              "best_value": 0.3
+            },
+            "dimension_clustering_threshold": {
+              "best_score": 1.3856069396024029,
+              "avg_score": 1.3856069396024029,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "bandwidth_adaptation_rate": {
+              "best_score": 1.3856069396024029,
+              "avg_score": 1.3856069396024029,
+              "values_tested": 1,
+              "best_value": 0.05
+            }
+          }
+        },
+        "persistent_memory_stats": {
+          "memory_root": "robot_memory",
+          "storage_usage": {
+            "total_bytes": 961,
+            "graphs_bytes": 0,
+            "archives_bytes": 0,
+            "sessions_bytes": 961,
+            "adaptive_params_bytes": 0,
+            "metadata_bytes": 0
+          },
+          "total_sessions": 4,
+          "total_graphs": 0,
+          "total_adaptive_saves": 0,
+          "current_session": "session_20250708_102432_9e77a3",
+          "metadata": {
+            "created_time": "2025-07-08T10:24:32.549408",
+            "total_saved_graphs": 1,
+            "total_experiences": 305,
+            "last_save_time": "2025-07-08T10:25:10.175927",
+            "memory_version": "1.0"
+          },
+          "archive_summary": {
+            "high_importance": 0,
+            "spatial_memory": 0,
+            "skill_learning": 0,
+            "prediction_mastery": 0,
+            "recent_experiences": 0
+          }
+        },
+        "actuator_discovery_stats": {
+          "total_observations": 279,
+          "total_actuators_discovered": 3,
+          "actuators_with_significant_effects": 351,
+          "emergent_categories_formed": 2,
+          "actuators_categorized": 2,
+          "categorization_coverage": 0.6666666666666666,
+          "category_distribution": {
+            "spatial_categories": 2,
+            "manipulative_categories": 0,
+            "environmental_categories": 0,
+            "unclassified_categories": 0
+          },
+          "discovery_efficiency": 1.2580645161290323
+        },
+        "predictor_stats": {
+          "total_predictions": 279,
+          "average_thinking_time": 0.10478668229981564,
+          "consensus_breakdown": {
+            "perfect": 0,
+            "strong": 0,
+            "weak": 0,
+            "single": 0,
+            "motivation_driven": 279,
+            "no_consensus": 0
+          },
+          "base_time_budget": 0.1,
+          "threat_multipliers": {
+            "safe": 2.0,
+            "normal": 1.0,
+            "alert": 0.5,
+            "danger": 0.2,
+            "critical": 0.05
+          },
+          "perfect_percentage": 0.0,
+          "strong_percentage": 0.0,
+          "weak_percentage": 0.0,
+          "single_percentage": 0.0,
+          "motivation_driven_percentage": 100.0,
+          "no_consensus_percentage": 0.0,
+          "average_traversals": 244.96,
+          "max_traversals": 279,
+          "min_traversals": 212,
+          "drive_dominance_counts": {
+            "Survival": 31,
+            "Curiosity": 45
+          },
+          "most_dominant_drive": "Curiosity",
+          "motivation_system": {
+            "total_drives": 3,
+            "active_drives": [
+              "Curiosity",
+              "Survival",
+              "Exploration"
+            ],
+            "total_evaluations": 280,
+            "decision_history_length": 76,
+            "drive_statistics": {
+              "Curiosity": {
+                "name": "Curiosity",
+                "base_weight": 0.4,
+                "current_weight": 0.17856298537886245,
+                "total_evaluations": 142865,
+                "activation_history_length": 4
+              },
+              "Survival": {
+                "name": "Survival",
+                "base_weight": 0.4,
+                "current_weight": 0.06992599348818061,
+                "total_evaluations": 142865,
+                "activation_history_length": 65
+              },
+              "Exploration": {
+                "name": "Exploration",
+                "base_weight": 0.2,
+                "current_weight": 0.27999999999999997,
+                "total_evaluations": 142865,
+                "activation_history_length": 95
+              }
+            },
+            "recent_drive_dominance": {
+              "Curiosity": 10
+            },
+            "average_recent_confidence": 0.5666666666666667,
+            "average_recent_urgency": 0.8
+          }
+        }
+      }
+    },
+    {
+      "timestamp": 1751963107.3427289,
+      "elapsed_seconds": 34.83441781997681,
+      "fps": 8.489686203944158,
+      "frame_time": 0.11778998374938965,
+      "brain_nodes": 284,
+      "brain_stats": {
+        "graph_stats": {
+          "total_nodes": 284,
+          "total_merges": 0,
+          "avg_strength": 2963.2093203080317,
+          "max_strength": 421803.38496343966,
+          "min_strength": 0.30000000000000027,
+          "avg_context_length": 8.0,
+          "temporal_chain_length": 284,
+          "avg_access_count": 2960.5880281690143,
+          "total_accesses": 840807,
+          "similarity_engine": {
+            "total_searches": 0,
+            "total_time": 0.0,
+            "avg_search_time": 0.0,
+            "searches_per_second": 1000000.0,
+            "cache_enabled": true,
+            "cache_hits": 0,
+            "cache_hit_rate": 0.0,
+            "acceleration_method": "NumPy",
+            "gpu_available": true
+          }
+        },
+        "interface_stats": {
+          "sensory_vector_length": 22,
+          "total_experiences": 284,
+          "is_learning": true,
+          "persistence_enabled": true
+        },
+        "adaptive_tuning_stats": {
+          "total_adaptations": 6,
+          "successful_adaptations": 6,
+          "adaptation_success_rate": 1.0,
+          "current_parameters": {
+            "similarity_threshold": 0.712,
+            "activation_spread_iterations": 3.0,
+            "consolidation_frequency": 50.0,
+            "forgetting_threshold": 0.1,
+            "connection_learning_rate": 0.094,
+            "exploration_rate": 0.26999999999999996,
+            "time_budget_base": 0.1,
+            "prediction_confidence_threshold": 0.5,
+            "sensory_importance_threshold": 0.3,
+            "dimension_clustering_threshold": 0.5,
+            "bandwidth_adaptation_rate": 0.05
+          },
+          "sensory_insights": {
+            "bandwidth_tier": "medium",
+            "total_dimensions": 22,
+            "high_variance_dimensions": [
+              11
+            ],
+            "high_change_dimensions": [],
+            "stable_dimensions": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              8,
+              10,
+              12,
+              13,
+              14,
+              15,
+              16,
+              18,
+              19,
+              21
+            ],
+            "avg_variance": 0.097394003714639,
+            "avg_change_frequency": 0.010454545454545454
+          },
+          "parameter_performance_summary": {
+            "similarity_threshold": {
+              "best_score": 1.4885241685155528,
+              "avg_score": 1.4247223968187606,
+              "values_tested": 2,
+              "best_value": 0.71
+            },
+            "activation_spread_iterations": {
+              "best_score": 1.3875659602495634,
+              "avg_score": 1.3875659602495634,
+              "values_tested": 1,
+              "best_value": 3
+            },
+            "consolidation_frequency": {
+              "best_score": 1.3875659602495634,
+              "avg_score": 1.3875659602495634,
+              "values_tested": 1,
+              "best_value": 50
+            },
+            "forgetting_threshold": {
+              "best_score": 1.3875659602495634,
+              "avg_score": 1.3875659602495634,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "connection_learning_rate": {
+              "best_score": 1.3875659602495634,
+              "avg_score": 1.3875659602495634,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "exploration_rate": {
+              "best_score": 1.4967208898270283,
+              "avg_score": 1.3411914325036642,
+              "values_tested": 4,
+              "best_value": 0.26999999999999996
+            },
+            "time_budget_base": {
+              "best_score": 1.3875659602495634,
+              "avg_score": 1.3875659602495634,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "prediction_confidence_threshold": {
+              "best_score": 1.3875659602495634,
+              "avg_score": 1.3875659602495634,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "sensory_importance_threshold": {
+              "best_score": 1.3875659602495634,
+              "avg_score": 1.3875659602495634,
+              "values_tested": 1,
+              "best_value": 0.3
+            },
+            "dimension_clustering_threshold": {
+              "best_score": 1.3875659602495634,
+              "avg_score": 1.3875659602495634,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "bandwidth_adaptation_rate": {
+              "best_score": 1.3875659602495634,
+              "avg_score": 1.3875659602495634,
+              "values_tested": 1,
+              "best_value": 0.05
+            }
+          }
+        },
+        "persistent_memory_stats": {
+          "memory_root": "robot_memory",
+          "storage_usage": {
+            "total_bytes": 961,
+            "graphs_bytes": 0,
+            "archives_bytes": 0,
+            "sessions_bytes": 961,
+            "adaptive_params_bytes": 0,
+            "metadata_bytes": 0
+          },
+          "total_sessions": 4,
+          "total_graphs": 0,
+          "total_adaptive_saves": 0,
+          "current_session": "session_20250708_102432_9e77a3",
+          "metadata": {
+            "created_time": "2025-07-08T10:24:32.549408",
+            "total_saved_graphs": 1,
+            "total_experiences": 305,
+            "last_save_time": "2025-07-08T10:25:10.175927",
+            "memory_version": "1.0"
+          },
+          "archive_summary": {
+            "high_importance": 0,
+            "spatial_memory": 0,
+            "skill_learning": 0,
+            "prediction_mastery": 0,
+            "recent_experiences": 0
+          }
+        },
+        "actuator_discovery_stats": {
+          "total_observations": 284,
+          "total_actuators_discovered": 3,
+          "actuators_with_significant_effects": 351,
+          "emergent_categories_formed": 2,
+          "actuators_categorized": 2,
+          "categorization_coverage": 0.6666666666666666,
+          "category_distribution": {
+            "spatial_categories": 2,
+            "manipulative_categories": 0,
+            "environmental_categories": 0,
+            "unclassified_categories": 0
+          },
+          "discovery_efficiency": 1.2359154929577465
+        },
+        "predictor_stats": {
+          "total_predictions": 284,
+          "average_thinking_time": 0.10473450304756704,
+          "consensus_breakdown": {
+            "perfect": 0,
+            "strong": 0,
+            "weak": 0,
+            "single": 0,
+            "motivation_driven": 284,
+            "no_consensus": 0
+          },
+          "base_time_budget": 0.1,
+          "threat_multipliers": {
+            "safe": 2.0,
+            "normal": 1.0,
+            "alert": 0.5,
+            "danger": 0.2,
+            "critical": 0.05
+          },
+          "perfect_percentage": 0.0,
+          "strong_percentage": 0.0,
+          "weak_percentage": 0.0,
+          "single_percentage": 0.0,
+          "motivation_driven_percentage": 100.0,
+          "no_consensus_percentage": 0.0,
+          "average_traversals": 242.9875,
+          "max_traversals": 279,
+          "min_traversals": 212,
+          "drive_dominance_counts": {
+            "Survival": 31,
+            "Curiosity": 50
+          },
+          "most_dominant_drive": "Curiosity",
+          "motivation_system": {
+            "total_drives": 3,
+            "active_drives": [
+              "Curiosity",
+              "Survival",
+              "Exploration"
+            ],
+            "total_evaluations": 285,
+            "decision_history_length": 81,
+            "drive_statistics": {
+              "Curiosity": {
+                "name": "Curiosity",
+                "base_weight": 0.4,
+                "current_weight": 0.17856235030998652,
+                "total_evaluations": 143957,
+                "activation_history_length": 4
+              },
+              "Survival": {
+                "name": "Survival",
+                "base_weight": 0.4,
+                "current_weight": 0.07108623598185729,
+                "total_evaluations": 143957,
+                "activation_history_length": 86
+              },
+              "Exploration": {
+                "name": "Exploration",
+                "base_weight": 0.2,
+                "current_weight": 0.27999999999999997,
+                "total_evaluations": 143957,
+                "activation_history_length": 58
+              }
+            },
+            "recent_drive_dominance": {
+              "Curiosity": 10
+            },
+            "average_recent_confidence": 0.5666666666666667,
+            "average_recent_urgency": 0.8
+          }
+        }
+      }
+    },
+    {
+      "timestamp": 1751963107.958174,
+      "elapsed_seconds": 35.44986295700073,
+      "fps": 8.427932734137485,
+      "frame_time": 0.1186530590057373,
+      "brain_nodes": 289,
+      "brain_stats": {
+        "graph_stats": {
+          "total_nodes": 289,
+          "total_merges": 0,
+          "avg_strength": 2933.216430740835,
+          "max_strength": 424872.38496343966,
+          "min_strength": 0.30000000000000027,
+          "avg_context_length": 8.0,
+          "temporal_chain_length": 289,
+          "avg_access_count": 2930.60553633218,
+          "total_accesses": 846945,
+          "similarity_engine": {
+            "total_searches": 0,
+            "total_time": 0.0,
+            "avg_search_time": 0.0,
+            "searches_per_second": 1000000.0,
+            "cache_enabled": true,
+            "cache_hits": 0,
+            "cache_hit_rate": 0.0,
+            "acceleration_method": "NumPy",
+            "gpu_available": true
+          }
+        },
+        "interface_stats": {
+          "sensory_vector_length": 22,
+          "total_experiences": 289,
+          "is_learning": true,
+          "persistence_enabled": true
+        },
+        "adaptive_tuning_stats": {
+          "total_adaptations": 6,
+          "successful_adaptations": 6,
+          "adaptation_success_rate": 1.0,
+          "current_parameters": {
+            "similarity_threshold": 0.712,
+            "activation_spread_iterations": 3.0,
+            "consolidation_frequency": 50.0,
+            "forgetting_threshold": 0.1,
+            "connection_learning_rate": 0.094,
+            "exploration_rate": 0.26999999999999996,
+            "time_budget_base": 0.1,
+            "prediction_confidence_threshold": 0.5,
+            "sensory_importance_threshold": 0.3,
+            "dimension_clustering_threshold": 0.5,
+            "bandwidth_adaptation_rate": 0.05
+          },
+          "sensory_insights": {
+            "bandwidth_tier": "medium",
+            "total_dimensions": 22,
+            "high_variance_dimensions": [
+              11
+            ],
+            "high_change_dimensions": [],
+            "stable_dimensions": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              8,
+              10,
+              12,
+              13,
+              14,
+              15,
+              16,
+              18,
+              19,
+              21
+            ],
+            "avg_variance": 0.09407958488008351,
+            "avg_change_frequency": 0.005454545454545455
+          },
+          "parameter_performance_summary": {
+            "similarity_threshold": {
+              "best_score": 1.4891445593169566,
+              "avg_score": 1.4250325922194622,
+              "values_tested": 2,
+              "best_value": 0.71
+            },
+            "activation_spread_iterations": {
+              "best_score": 1.3894538809065549,
+              "avg_score": 1.3894538809065549,
+              "values_tested": 1,
+              "best_value": 3
+            },
+            "consolidation_frequency": {
+              "best_score": 1.3894538809065549,
+              "avg_score": 1.3894538809065549,
+              "values_tested": 1,
+              "best_value": 50
+            },
+            "forgetting_threshold": {
+              "best_score": 1.3894538809065549,
+              "avg_score": 1.3894538809065549,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "connection_learning_rate": {
+              "best_score": 1.3894538809065549,
+              "avg_score": 1.3894538809065549,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "exploration_rate": {
+              "best_score": 1.4967203168927141,
+              "avg_score": 1.3411912892700857,
+              "values_tested": 4,
+              "best_value": 0.26999999999999996
+            },
+            "time_budget_base": {
+              "best_score": 1.3894538809065549,
+              "avg_score": 1.3894538809065549,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "prediction_confidence_threshold": {
+              "best_score": 1.3894538809065549,
+              "avg_score": 1.3894538809065549,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "sensory_importance_threshold": {
+              "best_score": 1.3894538809065549,
+              "avg_score": 1.3894538809065549,
+              "values_tested": 1,
+              "best_value": 0.3
+            },
+            "dimension_clustering_threshold": {
+              "best_score": 1.3894538809065549,
+              "avg_score": 1.3894538809065549,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "bandwidth_adaptation_rate": {
+              "best_score": 1.3894538809065549,
+              "avg_score": 1.3894538809065549,
+              "values_tested": 1,
+              "best_value": 0.05
+            }
+          }
+        },
+        "persistent_memory_stats": {
+          "memory_root": "robot_memory",
+          "storage_usage": {
+            "total_bytes": 961,
+            "graphs_bytes": 0,
+            "archives_bytes": 0,
+            "sessions_bytes": 961,
+            "adaptive_params_bytes": 0,
+            "metadata_bytes": 0
+          },
+          "total_sessions": 4,
+          "total_graphs": 0,
+          "total_adaptive_saves": 0,
+          "current_session": "session_20250708_102432_9e77a3",
+          "metadata": {
+            "created_time": "2025-07-08T10:24:32.549408",
+            "total_saved_graphs": 1,
+            "total_experiences": 305,
+            "last_save_time": "2025-07-08T10:25:10.175927",
+            "memory_version": "1.0"
+          },
+          "archive_summary": {
+            "high_importance": 0,
+            "spatial_memory": 0,
+            "skill_learning": 0,
+            "prediction_mastery": 0,
+            "recent_experiences": 0
+          }
+        },
+        "actuator_discovery_stats": {
+          "total_observations": 289,
+          "total_actuators_discovered": 3,
+          "actuators_with_significant_effects": 351,
+          "emergent_categories_formed": 2,
+          "actuators_categorized": 2,
+          "categorization_coverage": 0.6666666666666666,
+          "category_distribution": {
+            "spatial_categories": 2,
+            "manipulative_categories": 0,
+            "environmental_categories": 0,
+            "unclassified_categories": 0
+          },
+          "discovery_efficiency": 1.2145328719723183
+        },
+        "predictor_stats": {
+          "total_predictions": 289,
+          "average_thinking_time": 0.10468234240390027,
+          "consensus_breakdown": {
+            "perfect": 0,
+            "strong": 0,
+            "weak": 0,
+            "single": 0,
+            "motivation_driven": 289,
+            "no_consensus": 0
+          },
+          "base_time_budget": 0.1,
+          "threat_multipliers": {
+            "safe": 2.0,
+            "normal": 1.0,
+            "alert": 0.5,
+            "danger": 0.2,
+            "critical": 0.05
+          },
+          "perfect_percentage": 0.0,
+          "strong_percentage": 0.0,
+          "weak_percentage": 0.0,
+          "single_percentage": 0.0,
+          "motivation_driven_percentage": 100.0,
+          "no_consensus_percentage": 0.0,
+          "average_traversals": 240.72941176470587,
+          "max_traversals": 279,
+          "min_traversals": 192,
+          "drive_dominance_counts": {
+            "Survival": 31,
+            "Curiosity": 55
+          },
+          "most_dominant_drive": "Curiosity",
+          "motivation_system": {
+            "total_drives": 3,
+            "active_drives": [
+              "Curiosity",
+              "Survival",
+              "Exploration"
+            ],
+            "total_evaluations": 290,
+            "decision_history_length": 86,
+            "drive_statistics": {
+              "Curiosity": {
+                "name": "Curiosity",
+                "base_weight": 0.4,
+                "current_weight": 0.17856265293972157,
+                "total_evaluations": 145005,
+                "activation_history_length": 4
+              },
+              "Survival": {
+                "name": "Survival",
+                "base_weight": 0.4,
+                "current_weight": 0.0724648831258148,
+                "total_evaluations": 145005,
+                "activation_history_length": 63
+              },
+              "Exploration": {
+                "name": "Exploration",
+                "base_weight": 0.2,
+                "current_weight": 0.27999999999999997,
+                "total_evaluations": 145005,
+                "activation_history_length": 79
+              }
+            },
+            "recent_drive_dominance": {
+              "Curiosity": 10
+            },
+            "average_recent_confidence": 0.5666666666666667,
+            "average_recent_urgency": 0.8
+          }
+        }
+      }
+    },
+    {
+      "timestamp": 1751963108.564013,
+      "elapsed_seconds": 36.05570197105408,
+      "fps": 8.43674808457056,
+      "frame_time": 0.11852908134460449,
+      "brain_nodes": 294,
+      "brain_stats": {
+        "graph_stats": {
+          "total_nodes": 294,
+          "total_merges": 0,
+          "avg_strength": 2904.484130648634,
+          "max_strength": 427977.38496343966,
+          "min_strength": 0.30000000000000027,
+          "avg_context_length": 8.0,
+          "temporal_chain_length": 294,
+          "avg_access_count": 2901.887755102041,
+          "total_accesses": 853155,
+          "similarity_engine": {
+            "total_searches": 0,
+            "total_time": 0.0,
+            "avg_search_time": 0.0,
+            "searches_per_second": 1000000.0,
+            "cache_enabled": true,
+            "cache_hits": 0,
+            "cache_hit_rate": 0.0,
+            "acceleration_method": "NumPy",
+            "gpu_available": true
+          }
+        },
+        "interface_stats": {
+          "sensory_vector_length": 22,
+          "total_experiences": 294,
+          "is_learning": true,
+          "persistence_enabled": true
+        },
+        "adaptive_tuning_stats": {
+          "total_adaptations": 6,
+          "successful_adaptations": 6,
+          "adaptation_success_rate": 1.0,
+          "current_parameters": {
+            "similarity_threshold": 0.712,
+            "activation_spread_iterations": 3.0,
+            "consolidation_frequency": 50.0,
+            "forgetting_threshold": 0.1,
+            "connection_learning_rate": 0.094,
+            "exploration_rate": 0.26999999999999996,
+            "time_budget_base": 0.1,
+            "prediction_confidence_threshold": 0.5,
+            "sensory_importance_threshold": 0.3,
+            "dimension_clustering_threshold": 0.5,
+            "bandwidth_adaptation_rate": 0.05
+          },
+          "sensory_insights": {
+            "bandwidth_tier": "medium",
+            "total_dimensions": 22,
+            "high_variance_dimensions": [],
+            "high_change_dimensions": [],
+            "stable_dimensions": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              8,
+              10,
+              12,
+              13,
+              14,
+              15,
+              16,
+              18,
+              19,
+              21
+            ],
+            "avg_variance": 0.09141145594435166,
+            "avg_change_frequency": 0.005454545454545455
+          },
+          "parameter_performance_summary": {
+            "similarity_threshold": {
+              "best_score": 1.4896756292721907,
+              "avg_score": 1.4252981271970793,
+              "values_tested": 2,
+              "best_value": 0.71
+            },
+            "activation_spread_iterations": {
+              "best_score": 1.391275705922569,
+              "avg_score": 1.391275705922569,
+              "values_tested": 1,
+              "best_value": 3
+            },
+            "consolidation_frequency": {
+              "best_score": 1.391275705922569,
+              "avg_score": 1.391275705922569,
+              "values_tested": 1,
+              "best_value": 50
+            },
+            "forgetting_threshold": {
+              "best_score": 1.391275705922569,
+              "avg_score": 1.391275705922569,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "connection_learning_rate": {
+              "best_score": 1.391275705922569,
+              "avg_score": 1.391275705922569,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "exploration_rate": {
+              "best_score": 1.4967178827933174,
+              "avg_score": 1.3411906807452365,
+              "values_tested": 4,
+              "best_value": 0.26999999999999996
+            },
+            "time_budget_base": {
+              "best_score": 1.391275705922569,
+              "avg_score": 1.391275705922569,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "prediction_confidence_threshold": {
+              "best_score": 1.391275705922569,
+              "avg_score": 1.391275705922569,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "sensory_importance_threshold": {
+              "best_score": 1.391275705922569,
+              "avg_score": 1.391275705922569,
+              "values_tested": 1,
+              "best_value": 0.3
+            },
+            "dimension_clustering_threshold": {
+              "best_score": 1.391275705922569,
+              "avg_score": 1.391275705922569,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "bandwidth_adaptation_rate": {
+              "best_score": 1.391275705922569,
+              "avg_score": 1.391275705922569,
+              "values_tested": 1,
+              "best_value": 0.05
+            }
+          }
+        },
+        "persistent_memory_stats": {
+          "memory_root": "robot_memory",
+          "storage_usage": {
+            "total_bytes": 961,
+            "graphs_bytes": 0,
+            "archives_bytes": 0,
+            "sessions_bytes": 961,
+            "adaptive_params_bytes": 0,
+            "metadata_bytes": 0
+          },
+          "total_sessions": 4,
+          "total_graphs": 0,
+          "total_adaptive_saves": 0,
+          "current_session": "session_20250708_102432_9e77a3",
+          "metadata": {
+            "created_time": "2025-07-08T10:24:32.549408",
+            "total_saved_graphs": 1,
+            "total_experiences": 305,
+            "last_save_time": "2025-07-08T10:25:10.175927",
+            "memory_version": "1.0"
+          },
+          "archive_summary": {
+            "high_importance": 0,
+            "spatial_memory": 0,
+            "skill_learning": 0,
+            "prediction_mastery": 0,
+            "recent_experiences": 0
+          }
+        },
+        "actuator_discovery_stats": {
+          "total_observations": 294,
+          "total_actuators_discovered": 3,
+          "actuators_with_significant_effects": 351,
+          "emergent_categories_formed": 2,
+          "actuators_categorized": 2,
+          "categorization_coverage": 0.6666666666666666,
+          "category_distribution": {
+            "spatial_categories": 2,
+            "manipulative_categories": 0,
+            "environmental_categories": 0,
+            "unclassified_categories": 0
+          },
+          "discovery_efficiency": 1.1938775510204083
+        },
+        "predictor_stats": {
+          "total_predictions": 294,
+          "average_thinking_time": 0.10463051649988916,
+          "consensus_breakdown": {
+            "perfect": 0,
+            "strong": 0,
+            "weak": 0,
+            "single": 0,
+            "motivation_driven": 294,
+            "no_consensus": 0
+          },
+          "base_time_budget": 0.1,
+          "threat_multipliers": {
+            "safe": 2.0,
+            "normal": 1.0,
+            "alert": 0.5,
+            "danger": 0.2,
+            "critical": 0.05
+          },
+          "perfect_percentage": 0.0,
+          "strong_percentage": 0.0,
+          "weak_percentage": 0.0,
+          "single_percentage": 0.0,
+          "motivation_driven_percentage": 100.0,
+          "no_consensus_percentage": 0.0,
+          "average_traversals": 238.85555555555555,
+          "max_traversals": 279,
+          "min_traversals": 192,
+          "drive_dominance_counts": {
+            "Survival": 31,
+            "Curiosity": 60
+          },
+          "most_dominant_drive": "Curiosity",
+          "motivation_system": {
+            "total_drives": 3,
+            "active_drives": [
+              "Curiosity",
+              "Survival",
+              "Exploration"
+            ],
+            "total_evaluations": 295,
+            "decision_history_length": 91,
+            "drive_statistics": {
+              "Curiosity": {
+                "name": "Curiosity",
+                "base_weight": 0.4,
+                "current_weight": 0.17856312688320916,
+                "total_evaluations": 146065,
+                "activation_history_length": 4
+              },
+              "Survival": {
+                "name": "Survival",
+                "base_weight": 0.4,
+                "current_weight": 0.07406326226442347,
+                "total_evaluations": 146065,
+                "activation_history_length": 52
+              },
+              "Exploration": {
+                "name": "Exploration",
+                "base_weight": 0.2,
+                "current_weight": 0.27999999999999997,
+                "total_evaluations": 146065,
+                "activation_history_length": 61
+              }
+            },
+            "recent_drive_dominance": {
+              "Curiosity": 10
+            },
+            "average_recent_confidence": 0.5666666666666667,
+            "average_recent_urgency": 0.8
+          }
+        }
+      }
+    },
+    {
+      "timestamp": 1751963109.1727722,
+      "elapsed_seconds": 36.66446113586426,
+      "fps": 8.41199334148934,
+      "frame_time": 0.11887788772583008,
+      "brain_nodes": 299,
+      "brain_stats": {
+        "graph_stats": {
+          "total_nodes": 299,
+          "total_merges": 0,
+          "avg_strength": 2876.571022393836,
+          "max_strength": 431061.38496343966,
+          "min_strength": 0.30000000000000027,
+          "avg_context_length": 8.0,
+          "temporal_chain_length": 299,
+          "avg_access_count": 2873.989966555184,
+          "total_accesses": 859323,
+          "similarity_engine": {
+            "total_searches": 0,
+            "total_time": 0.0,
+            "avg_search_time": 0.0,
+            "searches_per_second": 1000000.0,
+            "cache_enabled": true,
+            "cache_hits": 0,
+            "cache_hit_rate": 0.0,
+            "acceleration_method": "NumPy",
+            "gpu_available": true
+          }
+        },
+        "interface_stats": {
+          "sensory_vector_length": 22,
+          "total_experiences": 299,
+          "is_learning": true,
+          "persistence_enabled": true
+        },
+        "adaptive_tuning_stats": {
+          "total_adaptations": 6,
+          "successful_adaptations": 6,
+          "adaptation_success_rate": 1.0,
+          "current_parameters": {
+            "similarity_threshold": 0.712,
+            "activation_spread_iterations": 3.0,
+            "consolidation_frequency": 50.0,
+            "forgetting_threshold": 0.1,
+            "connection_learning_rate": 0.094,
+            "exploration_rate": 0.26999999999999996,
+            "time_budget_base": 0.1,
+            "prediction_confidence_threshold": 0.5,
+            "sensory_importance_threshold": 0.3,
+            "dimension_clustering_threshold": 0.5,
+            "bandwidth_adaptation_rate": 0.05
+          },
+          "sensory_insights": {
+            "bandwidth_tier": "medium",
+            "total_dimensions": 22,
+            "high_variance_dimensions": [],
+            "high_change_dimensions": [],
+            "stable_dimensions": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              8,
+              10,
+              12,
+              13,
+              14,
+              15,
+              16,
+              18,
+              19,
+              21
+            ],
+            "avg_variance": 0.08707215244952339,
+            "avg_change_frequency": 0.005454545454545455
+          },
+          "parameter_performance_summary": {
+            "similarity_threshold": {
+              "best_score": 1.490139116813591,
+              "avg_score": 1.4255298709677795,
+              "values_tested": 2,
+              "best_value": 0.71
+            },
+            "activation_spread_iterations": {
+              "best_score": 1.3930391344161257,
+              "avg_score": 1.3930391344161257,
+              "values_tested": 1,
+              "best_value": 3
+            },
+            "consolidation_frequency": {
+              "best_score": 1.3930391344161257,
+              "avg_score": 1.3930391344161257,
+              "values_tested": 1,
+              "best_value": 50
+            },
+            "forgetting_threshold": {
+              "best_score": 1.3930391344161257,
+              "avg_score": 1.3930391344161257,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "connection_learning_rate": {
+              "best_score": 1.3930391344161257,
+              "avg_score": 1.3930391344161257,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "exploration_rate": {
+              "best_score": 1.4967180641820121,
+              "avg_score": 1.34119072609241,
+              "values_tested": 4,
+              "best_value": 0.26999999999999996
+            },
+            "time_budget_base": {
+              "best_score": 1.3930391344161257,
+              "avg_score": 1.3930391344161257,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "prediction_confidence_threshold": {
+              "best_score": 1.3930391344161257,
+              "avg_score": 1.3930391344161257,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "sensory_importance_threshold": {
+              "best_score": 1.3930391344161257,
+              "avg_score": 1.3930391344161257,
+              "values_tested": 1,
+              "best_value": 0.3
+            },
+            "dimension_clustering_threshold": {
+              "best_score": 1.3930391344161257,
+              "avg_score": 1.3930391344161257,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "bandwidth_adaptation_rate": {
+              "best_score": 1.3930391344161257,
+              "avg_score": 1.3930391344161257,
+              "values_tested": 1,
+              "best_value": 0.05
+            }
+          }
+        },
+        "persistent_memory_stats": {
+          "memory_root": "robot_memory",
+          "storage_usage": {
+            "total_bytes": 961,
+            "graphs_bytes": 0,
+            "archives_bytes": 0,
+            "sessions_bytes": 961,
+            "adaptive_params_bytes": 0,
+            "metadata_bytes": 0
+          },
+          "total_sessions": 4,
+          "total_graphs": 0,
+          "total_adaptive_saves": 0,
+          "current_session": "session_20250708_102432_9e77a3",
+          "metadata": {
+            "created_time": "2025-07-08T10:24:32.549408",
+            "total_saved_graphs": 1,
+            "total_experiences": 305,
+            "last_save_time": "2025-07-08T10:25:10.175927",
+            "memory_version": "1.0"
+          },
+          "archive_summary": {
+            "high_importance": 0,
+            "spatial_memory": 0,
+            "skill_learning": 0,
+            "prediction_mastery": 0,
+            "recent_experiences": 0
+          }
+        },
+        "actuator_discovery_stats": {
+          "total_observations": 299,
+          "total_actuators_discovered": 3,
+          "actuators_with_significant_effects": 351,
+          "emergent_categories_formed": 2,
+          "actuators_categorized": 2,
+          "categorization_coverage": 0.6666666666666666,
+          "category_distribution": {
+            "spatial_categories": 2,
+            "manipulative_categories": 0,
+            "environmental_categories": 0,
+            "unclassified_categories": 0
+          },
+          "discovery_efficiency": 1.173913043478261
+        },
+        "predictor_stats": {
+          "total_predictions": 299,
+          "average_thinking_time": 0.10458032981209135,
+          "consensus_breakdown": {
+            "perfect": 0,
+            "strong": 0,
+            "weak": 0,
+            "single": 0,
+            "motivation_driven": 299,
+            "no_consensus": 0
+          },
+          "base_time_budget": 0.1,
+          "threat_multipliers": {
+            "safe": 2.0,
+            "normal": 1.0,
+            "alert": 0.5,
+            "danger": 0.2,
+            "critical": 0.05
+          },
+          "perfect_percentage": 0.0,
+          "strong_percentage": 0.0,
+          "weak_percentage": 0.0,
+          "single_percentage": 0.0,
+          "motivation_driven_percentage": 100.0,
+          "no_consensus_percentage": 0.0,
+          "average_traversals": 237.10526315789474,
+          "max_traversals": 279,
+          "min_traversals": 192,
+          "drive_dominance_counts": {
+            "Survival": 31,
+            "Curiosity": 65
+          },
+          "most_dominant_drive": "Curiosity",
+          "motivation_system": {
+            "total_drives": 3,
+            "active_drives": [
+              "Curiosity",
+              "Survival",
+              "Exploration"
+            ],
+            "total_evaluations": 300,
+            "decision_history_length": 96,
+            "drive_statistics": {
+              "Curiosity": {
+                "name": "Curiosity",
+                "base_weight": 0.4,
+                "current_weight": 0.17856356515614755,
+                "total_evaluations": 147118,
+                "activation_history_length": 4
+              },
+              "Survival": {
+                "name": "Survival",
+                "base_weight": 0.4,
+                "current_weight": 0.07594696161028995,
+                "total_evaluations": 147118,
+                "activation_history_length": 85
+              },
+              "Exploration": {
+                "name": "Exploration",
+                "base_weight": 0.2,
+                "current_weight": 0.27999999999999997,
+                "total_evaluations": 147118,
+                "activation_history_length": 86
+              }
+            },
+            "recent_drive_dominance": {
+              "Curiosity": 10
+            },
+            "average_recent_confidence": 0.5666666666666667,
+            "average_recent_urgency": 0.8
+          }
+        }
+      }
+    },
+    {
+      "timestamp": 1751963109.784374,
+      "elapsed_seconds": 37.276062965393066,
+      "fps": 8.351643625314358,
+      "frame_time": 0.11973690986633301,
+      "brain_nodes": 304,
+      "brain_stats": {
+        "graph_stats": {
+          "total_nodes": 304,
+          "total_merges": 0,
+          "avg_strength": 2849.2812775188927,
+          "max_strength": 434100.38496343966,
+          "min_strength": 0.30000000000000027,
+          "avg_context_length": 8.0,
+          "temporal_chain_length": 304,
+          "avg_access_count": 2846.7138157894738,
+          "total_accesses": 865401,
+          "similarity_engine": {
+            "total_searches": 0,
+            "total_time": 0.0,
+            "avg_search_time": 0.0,
+            "searches_per_second": 1000000.0,
+            "cache_enabled": true,
+            "cache_hits": 0,
+            "cache_hit_rate": 0.0,
+            "acceleration_method": "NumPy",
+            "gpu_available": true
+          }
+        },
+        "interface_stats": {
+          "sensory_vector_length": 22,
+          "total_experiences": 304,
+          "is_learning": true,
+          "persistence_enabled": true
+        },
+        "adaptive_tuning_stats": {
+          "total_adaptations": 6,
+          "successful_adaptations": 6,
+          "adaptation_success_rate": 1.0,
+          "current_parameters": {
+            "similarity_threshold": 0.712,
+            "activation_spread_iterations": 3.0,
+            "consolidation_frequency": 50.0,
+            "forgetting_threshold": 0.1,
+            "connection_learning_rate": 0.094,
+            "exploration_rate": 0.26999999999999996,
+            "time_budget_base": 0.1,
+            "prediction_confidence_threshold": 0.5,
+            "sensory_importance_threshold": 0.3,
+            "dimension_clustering_threshold": 0.5,
+            "bandwidth_adaptation_rate": 0.05
+          },
+          "sensory_insights": {
+            "bandwidth_tier": "medium",
+            "total_dimensions": 22,
+            "high_variance_dimensions": [],
+            "high_change_dimensions": [],
+            "stable_dimensions": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              8,
+              10,
+              12,
+              13,
+              14,
+              15,
+              16,
+              18,
+              19,
+              21
+            ],
+            "avg_variance": 0.0810867160573526,
+            "avg_change_frequency": 0.005454545454545455
+          },
+          "parameter_performance_summary": {
+            "similarity_threshold": {
+              "best_score": 1.4905373215439335,
+              "avg_score": 1.4257289733329508,
+              "values_tested": 2,
+              "best_value": 0.71
+            },
+            "activation_spread_iterations": {
+              "best_score": 1.3947364768395798,
+              "avg_score": 1.3947364768395798,
+              "values_tested": 1,
+              "best_value": 3
+            },
+            "consolidation_frequency": {
+              "best_score": 1.3947364768395798,
+              "avg_score": 1.3947364768395798,
+              "values_tested": 1,
+              "best_value": 50
+            },
+            "forgetting_threshold": {
+              "best_score": 1.3947364768395798,
+              "avg_score": 1.3947364768395798,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "connection_learning_rate": {
+              "best_score": 1.3947364768395798,
+              "avg_score": 1.3947364768395798,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "exploration_rate": {
+              "best_score": 1.4967101610501063,
+              "avg_score": 1.3411887503094337,
+              "values_tested": 4,
+              "best_value": 0.26999999999999996
+            },
+            "time_budget_base": {
+              "best_score": 1.3947364768395798,
+              "avg_score": 1.3947364768395798,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "prediction_confidence_threshold": {
+              "best_score": 1.3947364768395798,
+              "avg_score": 1.3947364768395798,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "sensory_importance_threshold": {
+              "best_score": 1.3947364768395798,
+              "avg_score": 1.3947364768395798,
+              "values_tested": 1,
+              "best_value": 0.3
+            },
+            "dimension_clustering_threshold": {
+              "best_score": 1.3947364768395798,
+              "avg_score": 1.3947364768395798,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "bandwidth_adaptation_rate": {
+              "best_score": 1.3947364768395798,
+              "avg_score": 1.3947364768395798,
+              "values_tested": 1,
+              "best_value": 0.05
+            }
+          }
+        },
+        "persistent_memory_stats": {
+          "memory_root": "robot_memory",
+          "storage_usage": {
+            "total_bytes": 961,
+            "graphs_bytes": 0,
+            "archives_bytes": 0,
+            "sessions_bytes": 961,
+            "adaptive_params_bytes": 0,
+            "metadata_bytes": 0
+          },
+          "total_sessions": 4,
+          "total_graphs": 0,
+          "total_adaptive_saves": 0,
+          "current_session": "session_20250708_102432_9e77a3",
+          "metadata": {
+            "created_time": "2025-07-08T10:24:32.549408",
+            "total_saved_graphs": 1,
+            "total_experiences": 305,
+            "last_save_time": "2025-07-08T10:25:10.175927",
+            "memory_version": "1.0"
+          },
+          "archive_summary": {
+            "high_importance": 0,
+            "spatial_memory": 0,
+            "skill_learning": 0,
+            "prediction_mastery": 0,
+            "recent_experiences": 0
+          }
+        },
+        "actuator_discovery_stats": {
+          "total_observations": 304,
+          "total_actuators_discovered": 3,
+          "actuators_with_significant_effects": 351,
+          "emergent_categories_formed": 2,
+          "actuators_categorized": 2,
+          "categorization_coverage": 0.6666666666666666,
+          "category_distribution": {
+            "spatial_categories": 2,
+            "manipulative_categories": 0,
+            "environmental_categories": 0,
+            "unclassified_categories": 0
+          },
+          "discovery_efficiency": 1.1546052631578947
+        },
+        "predictor_stats": {
+          "total_predictions": 304,
+          "average_thinking_time": 0.10453255396140251,
+          "consensus_breakdown": {
+            "perfect": 0,
+            "strong": 0,
+            "weak": 0,
+            "single": 0,
+            "motivation_driven": 304,
+            "no_consensus": 0
+          },
+          "base_time_budget": 0.1,
+          "threat_multipliers": {
+            "safe": 2.0,
+            "normal": 1.0,
+            "alert": 0.5,
+            "danger": 0.2,
+            "critical": 0.05
+          },
+          "perfect_percentage": 0.0,
+          "strong_percentage": 0.0,
+          "weak_percentage": 0.0,
+          "single_percentage": 0.0,
+          "motivation_driven_percentage": 100.0,
+          "no_consensus_percentage": 0.0,
+          "average_traversals": 235.38,
+          "max_traversals": 279,
+          "min_traversals": 192,
+          "drive_dominance_counts": {
+            "Curiosity": 50
+          },
+          "most_dominant_drive": "Curiosity",
+          "motivation_system": {
+            "total_drives": 3,
+            "active_drives": [
+              "Curiosity",
+              "Survival",
+              "Exploration"
+            ],
+            "total_evaluations": 305,
+            "decision_history_length": 50,
+            "drive_statistics": {
+              "Curiosity": {
+                "name": "Curiosity",
+                "base_weight": 0.4,
+                "current_weight": 0.17856343612400638,
+                "total_evaluations": 148156,
+                "activation_history_length": 4
+              },
+              "Survival": {
+                "name": "Survival",
+                "base_weight": 0.4,
+                "current_weight": 0.07806407844483237,
+                "total_evaluations": 148156,
+                "activation_history_length": 52
+              },
+              "Exploration": {
+                "name": "Exploration",
+                "base_weight": 0.2,
+                "current_weight": 0.27999999999999997,
+                "total_evaluations": 148156,
+                "activation_history_length": 97
+              }
+            },
+            "recent_drive_dominance": {
+              "Curiosity": 10
+            },
+            "average_recent_confidence": 0.5666666666666667,
+            "average_recent_urgency": 0.8
+          }
+        }
+      }
+    }
+  ],
+  "brain_snapshots": [
+    {
+      "timestamp": 1751963072.5509388,
+      "elapsed_seconds": 0.042627811431884766,
+      "brain_stats": {
+        "graph_stats": {
+          "total_nodes": 0,
+          "similarity_engine": {
+            "total_searches": 0,
+            "total_time": 0.0,
+            "avg_search_time": 0.0,
+            "searches_per_second": 1000000.0,
+            "cache_enabled": true,
+            "cache_hits": 0,
+            "cache_hit_rate": 0.0,
+            "acceleration_method": "NumPy",
+            "gpu_available": true
+          }
+        },
+        "interface_stats": {
+          "sensory_vector_length": null,
+          "total_experiences": 0,
+          "is_learning": false,
+          "persistence_enabled": true
+        },
+        "adaptive_tuning_stats": {
+          "total_adaptations": 0,
+          "successful_adaptations": 0,
+          "adaptation_success_rate": 0.0,
+          "current_parameters": {
+            "similarity_threshold": 0.7,
+            "activation_spread_iterations": 3,
+            "consolidation_frequency": 50,
+            "forgetting_threshold": 0.1,
+            "connection_learning_rate": 0.1,
+            "exploration_rate": 0.3,
+            "time_budget_base": 0.1,
+            "prediction_confidence_threshold": 0.5,
+            "sensory_importance_threshold": 0.3,
+            "dimension_clustering_threshold": 0.5,
+            "bandwidth_adaptation_rate": 0.05
+          },
+          "sensory_insights": {},
+          "parameter_performance_summary": {
+            "similarity_threshold": {
+              "best_score": 0.0,
+              "avg_score": 0.0,
+              "values_tested": 1,
+              "best_value": 0.7
+            },
+            "activation_spread_iterations": {
+              "best_score": 0.0,
+              "avg_score": 0.0,
+              "values_tested": 1,
+              "best_value": 3
+            },
+            "consolidation_frequency": {
+              "best_score": 0.0,
+              "avg_score": 0.0,
+              "values_tested": 1,
+              "best_value": 50
+            },
+            "forgetting_threshold": {
+              "best_score": 0.0,
+              "avg_score": 0.0,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "connection_learning_rate": {
+              "best_score": 0.0,
+              "avg_score": 0.0,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "exploration_rate": {
+              "best_score": 0.0,
+              "avg_score": 0.0,
+              "values_tested": 1,
+              "best_value": 0.3
+            },
+            "time_budget_base": {
+              "best_score": 0.0,
+              "avg_score": 0.0,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "prediction_confidence_threshold": {
+              "best_score": 0.0,
+              "avg_score": 0.0,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "sensory_importance_threshold": {
+              "best_score": 0.0,
+              "avg_score": 0.0,
+              "values_tested": 1,
+              "best_value": 0.3
+            },
+            "dimension_clustering_threshold": {
+              "best_score": 0.0,
+              "avg_score": 0.0,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "bandwidth_adaptation_rate": {
+              "best_score": 0.0,
+              "avg_score": 0.0,
+              "values_tested": 1,
+              "best_value": 0.05
+            }
+          }
+        },
+        "persistent_memory_stats": {
+          "memory_root": "robot_memory",
+          "storage_usage": {
+            "total_bytes": 961,
+            "graphs_bytes": 0,
+            "archives_bytes": 0,
+            "sessions_bytes": 961,
+            "adaptive_params_bytes": 0,
+            "metadata_bytes": 0
+          },
+          "total_sessions": 4,
+          "total_graphs": 0,
+          "total_adaptive_saves": 0,
+          "current_session": "session_20250708_102432_9e77a3",
+          "metadata": {
+            "created_time": "2025-07-08T10:24:32.549408",
+            "total_saved_graphs": 1,
+            "total_experiences": 305,
+            "last_save_time": "2025-07-08T10:25:10.175927",
+            "memory_version": "1.0"
+          },
+          "archive_summary": {
+            "high_importance": 0,
+            "spatial_memory": 0,
+            "skill_learning": 0,
+            "prediction_mastery": 0,
+            "recent_experiences": 0
+          }
+        },
+        "actuator_discovery_stats": {
+          "total_observations": 0,
+          "total_actuators_discovered": 0,
+          "actuators_with_significant_effects": 0,
+          "emergent_categories_formed": 0,
+          "actuators_categorized": 0,
+          "categorization_coverage": 0.0,
+          "category_distribution": {
+            "spatial_categories": 0,
+            "manipulative_categories": 0,
+            "environmental_categories": 0,
+            "unclassified_categories": 0
+          },
+          "discovery_efficiency": 0.0
+        },
+        "predictor_stats": {
+          "total_predictions": 0,
+          "average_thinking_time": 0.0,
+          "consensus_breakdown": {
+            "perfect": 0,
+            "strong": 0,
+            "weak": 0,
+            "single": 0,
+            "motivation_driven": 0,
+            "no_consensus": 0
+          },
+          "base_time_budget": 0.1,
+          "threat_multipliers": {
+            "safe": 2.0,
+            "normal": 1.0,
+            "alert": 0.5,
+            "danger": 0.2,
+            "critical": 0.05
+          },
+          "motivation_system": {
+            "total_drives": 3,
+            "active_drives": [
+              "Curiosity",
+              "Survival",
+              "Exploration"
+            ],
+            "total_evaluations": 0,
+            "decision_history_length": 0,
+            "drive_statistics": {
+              "Curiosity": {
+                "name": "Curiosity",
+                "base_weight": 0.4,
+                "current_weight": 0.4,
+                "total_evaluations": 0,
+                "activation_history_length": 0
+              },
+              "Survival": {
+                "name": "Survival",
+                "base_weight": 0.4,
+                "current_weight": 0.4,
+                "total_evaluations": 0,
+                "activation_history_length": 0
+              },
+              "Exploration": {
+                "name": "Exploration",
+                "base_weight": 0.2,
+                "current_weight": 0.2,
+                "total_evaluations": 0,
+                "activation_history_length": 0
+              }
+            }
+          }
+        }
+      },
+      "robot_state": null,
+      "learning_progress": null
+    },
+    {
+      "timestamp": 1751963104.346775,
+      "elapsed_seconds": 31.83846402168274,
+      "brain_stats": {
+        "graph_stats": {
+          "total_nodes": 259,
+          "total_merges": 0,
+          "avg_strength": 3121.1641101203472,
+          "max_strength": 405247.38496343966,
+          "min_strength": 0.30000000000000027,
+          "avg_context_length": 8.0,
+          "temporal_chain_length": 259,
+          "avg_access_count": 3118.5057915057914,
+          "total_accesses": 807693,
+          "similarity_engine": {
+            "total_searches": 0,
+            "total_time": 0.0,
+            "avg_search_time": 0.0,
+            "searches_per_second": 1000000.0,
+            "cache_enabled": true,
+            "cache_hits": 0,
+            "cache_hit_rate": 0.0,
+            "acceleration_method": "NumPy",
+            "gpu_available": true
+          }
+        },
+        "interface_stats": {
+          "sensory_vector_length": 22,
+          "total_experiences": 259,
+          "is_learning": true,
+          "persistence_enabled": true
+        },
+        "adaptive_tuning_stats": {
+          "total_adaptations": 5,
+          "successful_adaptations": 5,
+          "adaptation_success_rate": 1.0,
+          "current_parameters": {
+            "similarity_threshold": 0.71,
+            "activation_spread_iterations": 3.0,
+            "consolidation_frequency": 50.0,
+            "forgetting_threshold": 0.1,
+            "connection_learning_rate": 0.095,
+            "exploration_rate": 0.27499999999999997,
+            "time_budget_base": 0.1,
+            "prediction_confidence_threshold": 0.5,
+            "sensory_importance_threshold": 0.3,
+            "dimension_clustering_threshold": 0.5,
+            "bandwidth_adaptation_rate": 0.05
+          },
+          "sensory_insights": {
+            "bandwidth_tier": "medium",
+            "total_dimensions": 22,
+            "high_variance_dimensions": [],
+            "high_change_dimensions": [],
+            "stable_dimensions": [
+              0,
+              2,
+              4,
+              5,
+              6,
+              8,
+              10,
+              12,
+              13,
+              14,
+              15,
+              16,
+              18,
+              19,
+              21
+            ],
+            "avg_variance": 0.0884873951037328,
+            "avg_change_frequency": 0.05
+          },
+          "parameter_performance_summary": {
+            "similarity_threshold": {
+              "best_score": 1.4828315259504197,
+              "avg_score": 1.4218760755361939,
+              "values_tested": 2,
+              "best_value": 0.71
+            },
+            "activation_spread_iterations": {
+              "best_score": 1.3770292951481888,
+              "avg_score": 1.3770292951481888,
+              "values_tested": 1,
+              "best_value": 3
+            },
+            "consolidation_frequency": {
+              "best_score": 1.3770292951481888,
+              "avg_score": 1.3770292951481888,
+              "values_tested": 1,
+              "best_value": 50
+            },
+            "forgetting_threshold": {
+              "best_score": 1.3770292951481888,
+              "avg_score": 1.3770292951481888,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "connection_learning_rate": {
+              "best_score": 1.3770292951481888,
+              "avg_score": 1.3770292951481888,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "exploration_rate": {
+              "best_score": 1.4782018963207901,
+              "avg_score": 1.2891988541026436,
+              "values_tested": 3,
+              "best_value": 0.27999999999999997
+            },
+            "time_budget_base": {
+              "best_score": 1.3770292951481888,
+              "avg_score": 1.3770292951481888,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "prediction_confidence_threshold": {
+              "best_score": 1.3770292951481888,
+              "avg_score": 1.3770292951481888,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "sensory_importance_threshold": {
+              "best_score": 1.3770292951481888,
+              "avg_score": 1.3770292951481888,
+              "values_tested": 1,
+              "best_value": 0.3
+            },
+            "dimension_clustering_threshold": {
+              "best_score": 1.3770292951481888,
+              "avg_score": 1.3770292951481888,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "bandwidth_adaptation_rate": {
+              "best_score": 1.3770292951481888,
+              "avg_score": 1.3770292951481888,
+              "values_tested": 1,
+              "best_value": 0.05
+            }
+          }
+        },
+        "persistent_memory_stats": {
+          "memory_root": "robot_memory",
+          "storage_usage": {
+            "total_bytes": 961,
+            "graphs_bytes": 0,
+            "archives_bytes": 0,
+            "sessions_bytes": 961,
+            "adaptive_params_bytes": 0,
+            "metadata_bytes": 0
+          },
+          "total_sessions": 4,
+          "total_graphs": 0,
+          "total_adaptive_saves": 0,
+          "current_session": "session_20250708_102432_9e77a3",
+          "metadata": {
+            "created_time": "2025-07-08T10:24:32.549408",
+            "total_saved_graphs": 1,
+            "total_experiences": 305,
+            "last_save_time": "2025-07-08T10:25:10.175927",
+            "memory_version": "1.0"
+          },
+          "archive_summary": {
+            "high_importance": 0,
+            "spatial_memory": 0,
+            "skill_learning": 0,
+            "prediction_mastery": 0,
+            "recent_experiences": 0
+          }
+        },
+        "actuator_discovery_stats": {
+          "total_observations": 259,
+          "total_actuators_discovered": 3,
+          "actuators_with_significant_effects": 351,
+          "emergent_categories_formed": 2,
+          "actuators_categorized": 2,
+          "categorization_coverage": 0.6666666666666666,
+          "category_distribution": {
+            "spatial_categories": 2,
+            "manipulative_categories": 0,
+            "environmental_categories": 0,
+            "unclassified_categories": 0
+          },
+          "discovery_efficiency": 1.3552123552123552
+        },
+        "predictor_stats": {
+          "total_predictions": 259,
+          "average_thinking_time": 0.10501111520303262,
+          "consensus_breakdown": {
+            "perfect": 0,
+            "strong": 0,
+            "weak": 0,
+            "single": 0,
+            "motivation_driven": 259,
+            "no_consensus": 0
+          },
+          "base_time_budget": 0.1,
+          "threat_multipliers": {
+            "safe": 2.0,
+            "normal": 1.0,
+            "alert": 0.5,
+            "danger": 0.2,
+            "critical": 0.05
+          },
+          "perfect_percentage": 0.0,
+          "strong_percentage": 0.0,
+          "weak_percentage": 0.0,
+          "single_percentage": 0.0,
+          "motivation_driven_percentage": 100.0,
+          "no_consensus_percentage": 0.0,
+          "average_traversals": 253.0909090909091,
+          "max_traversals": 279,
+          "min_traversals": 212,
+          "drive_dominance_counts": {
+            "Survival": 31,
+            "Curiosity": 25
+          },
+          "most_dominant_drive": "Survival",
+          "motivation_system": {
+            "total_drives": 3,
+            "active_drives": [
+              "Curiosity",
+              "Survival",
+              "Exploration"
+            ],
+            "total_evaluations": 260,
+            "decision_history_length": 56,
+            "drive_statistics": {
+              "Curiosity": {
+                "name": "Curiosity",
+                "base_weight": 0.4,
+                "current_weight": 0.17856259211807438,
+                "total_evaluations": 138313,
+                "activation_history_length": 4
+              },
+              "Survival": {
+                "name": "Survival",
+                "base_weight": 0.4,
+                "current_weight": 0.06661682164986446,
+                "total_evaluations": 138313,
+                "activation_history_length": 52
+              },
+              "Exploration": {
+                "name": "Exploration",
+                "base_weight": 0.2,
+                "current_weight": 0.27999999999999997,
+                "total_evaluations": 138313,
+                "activation_history_length": 63
+              }
+            },
+            "recent_drive_dominance": {
+              "Curiosity": 10
+            },
+            "average_recent_confidence": 0.5666666666666667,
+            "average_recent_urgency": 0.8
+          }
+        }
+      },
+      "robot_state": {
+        "health": 0.8799999999999999,
+        "energy": 0.9122441770288787,
+        "position": [
+          1,
+          1
+        ],
+        "sensors": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          0.0,
+          1.0,
+          1.0,
+          1.0,
+          0.0,
+          0.5,
+          0.75,
+          0.08163265306122448,
+          0.02040816326530612,
+          0.8799999999999999,
+          0.9122441770288787,
+          0.0,
+          0.24,
+          0.24
+        ]
+      },
+      "learning_progress": null
+    },
+    {
+      "timestamp": 1751963107.342732,
+      "elapsed_seconds": 34.834420919418335,
+      "brain_stats": {
+        "graph_stats": {
+          "total_nodes": 284,
+          "total_merges": 0,
+          "avg_strength": 2963.2093203080317,
+          "max_strength": 421803.38496343966,
+          "min_strength": 0.30000000000000027,
+          "avg_context_length": 8.0,
+          "temporal_chain_length": 284,
+          "avg_access_count": 2960.5880281690143,
+          "total_accesses": 840807,
+          "similarity_engine": {
+            "total_searches": 0,
+            "total_time": 0.0,
+            "avg_search_time": 0.0,
+            "searches_per_second": 1000000.0,
+            "cache_enabled": true,
+            "cache_hits": 0,
+            "cache_hit_rate": 0.0,
+            "acceleration_method": "NumPy",
+            "gpu_available": true
+          }
+        },
+        "interface_stats": {
+          "sensory_vector_length": 22,
+          "total_experiences": 284,
+          "is_learning": true,
+          "persistence_enabled": true
+        },
+        "adaptive_tuning_stats": {
+          "total_adaptations": 6,
+          "successful_adaptations": 6,
+          "adaptation_success_rate": 1.0,
+          "current_parameters": {
+            "similarity_threshold": 0.712,
+            "activation_spread_iterations": 3.0,
+            "consolidation_frequency": 50.0,
+            "forgetting_threshold": 0.1,
+            "connection_learning_rate": 0.094,
+            "exploration_rate": 0.26999999999999996,
+            "time_budget_base": 0.1,
+            "prediction_confidence_threshold": 0.5,
+            "sensory_importance_threshold": 0.3,
+            "dimension_clustering_threshold": 0.5,
+            "bandwidth_adaptation_rate": 0.05
+          },
+          "sensory_insights": {
+            "bandwidth_tier": "medium",
+            "total_dimensions": 22,
+            "high_variance_dimensions": [
+              11
+            ],
+            "high_change_dimensions": [],
+            "stable_dimensions": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              8,
+              10,
+              12,
+              13,
+              14,
+              15,
+              16,
+              18,
+              19,
+              21
+            ],
+            "avg_variance": 0.097394003714639,
+            "avg_change_frequency": 0.010454545454545454
+          },
+          "parameter_performance_summary": {
+            "similarity_threshold": {
+              "best_score": 1.4885241685155528,
+              "avg_score": 1.4247223968187606,
+              "values_tested": 2,
+              "best_value": 0.71
+            },
+            "activation_spread_iterations": {
+              "best_score": 1.3875659602495634,
+              "avg_score": 1.3875659602495634,
+              "values_tested": 1,
+              "best_value": 3
+            },
+            "consolidation_frequency": {
+              "best_score": 1.3875659602495634,
+              "avg_score": 1.3875659602495634,
+              "values_tested": 1,
+              "best_value": 50
+            },
+            "forgetting_threshold": {
+              "best_score": 1.3875659602495634,
+              "avg_score": 1.3875659602495634,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "connection_learning_rate": {
+              "best_score": 1.3875659602495634,
+              "avg_score": 1.3875659602495634,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "exploration_rate": {
+              "best_score": 1.4967208898270283,
+              "avg_score": 1.3411914325036642,
+              "values_tested": 4,
+              "best_value": 0.26999999999999996
+            },
+            "time_budget_base": {
+              "best_score": 1.3875659602495634,
+              "avg_score": 1.3875659602495634,
+              "values_tested": 1,
+              "best_value": 0.1
+            },
+            "prediction_confidence_threshold": {
+              "best_score": 1.3875659602495634,
+              "avg_score": 1.3875659602495634,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "sensory_importance_threshold": {
+              "best_score": 1.3875659602495634,
+              "avg_score": 1.3875659602495634,
+              "values_tested": 1,
+              "best_value": 0.3
+            },
+            "dimension_clustering_threshold": {
+              "best_score": 1.3875659602495634,
+              "avg_score": 1.3875659602495634,
+              "values_tested": 1,
+              "best_value": 0.5
+            },
+            "bandwidth_adaptation_rate": {
+              "best_score": 1.3875659602495634,
+              "avg_score": 1.3875659602495634,
+              "values_tested": 1,
+              "best_value": 0.05
+            }
+          }
+        },
+        "persistent_memory_stats": {
+          "memory_root": "robot_memory",
+          "storage_usage": {
+            "total_bytes": 961,
+            "graphs_bytes": 0,
+            "archives_bytes": 0,
+            "sessions_bytes": 961,
+            "adaptive_params_bytes": 0,
+            "metadata_bytes": 0
+          },
+          "total_sessions": 4,
+          "total_graphs": 0,
+          "total_adaptive_saves": 0,
+          "current_session": "session_20250708_102432_9e77a3",
+          "metadata": {
+            "created_time": "2025-07-08T10:24:32.549408",
+            "total_saved_graphs": 1,
+            "total_experiences": 305,
+            "last_save_time": "2025-07-08T10:25:10.175927",
+            "memory_version": "1.0"
+          },
+          "archive_summary": {
+            "high_importance": 0,
+            "spatial_memory": 0,
+            "skill_learning": 0,
+            "prediction_mastery": 0,
+            "recent_experiences": 0
+          }
+        },
+        "actuator_discovery_stats": {
+          "total_observations": 284,
+          "total_actuators_discovered": 3,
+          "actuators_with_significant_effects": 351,
+          "emergent_categories_formed": 2,
+          "actuators_categorized": 2,
+          "categorization_coverage": 0.6666666666666666,
+          "category_distribution": {
+            "spatial_categories": 2,
+            "manipulative_categories": 0,
+            "environmental_categories": 0,
+            "unclassified_categories": 0
+          },
+          "discovery_efficiency": 1.2359154929577465
+        },
+        "predictor_stats": {
+          "total_predictions": 284,
+          "average_thinking_time": 0.10473450304756704,
+          "consensus_breakdown": {
+            "perfect": 0,
+            "strong": 0,
+            "weak": 0,
+            "single": 0,
+            "motivation_driven": 284,
+            "no_consensus": 0
+          },
+          "base_time_budget": 0.1,
+          "threat_multipliers": {
+            "safe": 2.0,
+            "normal": 1.0,
+            "alert": 0.5,
+            "danger": 0.2,
+            "critical": 0.05
+          },
+          "perfect_percentage": 0.0,
+          "strong_percentage": 0.0,
+          "weak_percentage": 0.0,
+          "single_percentage": 0.0,
+          "motivation_driven_percentage": 100.0,
+          "no_consensus_percentage": 0.0,
+          "average_traversals": 242.9875,
+          "max_traversals": 279,
+          "min_traversals": 212,
+          "drive_dominance_counts": {
+            "Survival": 31,
+            "Curiosity": 50
+          },
+          "most_dominant_drive": "Curiosity",
+          "motivation_system": {
+            "total_drives": 3,
+            "active_drives": [
+              "Curiosity",
+              "Survival",
+              "Exploration"
+            ],
+            "total_evaluations": 285,
+            "decision_history_length": 81,
+            "drive_statistics": {
+              "Curiosity": {
+                "name": "Curiosity",
+                "base_weight": 0.4,
+                "current_weight": 0.17856235030998652,
+                "total_evaluations": 143957,
+                "activation_history_length": 4
+              },
+              "Survival": {
+                "name": "Survival",
+                "base_weight": 0.4,
+                "current_weight": 0.07108623598185729,
+                "total_evaluations": 143957,
+                "activation_history_length": 86
+              },
+              "Exploration": {
+                "name": "Exploration",
+                "base_weight": 0.2,
+                "current_weight": 0.27999999999999997,
+                "total_evaluations": 143957,
+                "activation_history_length": 58
+              }
+            },
+            "recent_drive_dominance": {
+              "Curiosity": 10
+            },
+            "average_recent_confidence": 0.5666666666666667,
+            "average_recent_urgency": 0.8
+          }
+        }
+      },
+      "robot_state": {
+        "health": 0.7549999999999998,
+        "energy": 0.82221899806692,
+        "position": [
+          1,
+          1
+        ],
+        "sensors": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          0.0,
+          1.0,
+          1.0,
+          1.0,
+          0.0,
+          0.5,
+          0.75,
+          0.08163265306122448,
+          0.02040816326530612,
+          0.7549999999999998,
+          0.82221899806692,
+          0.0,
+          0.49,
+          0.49
+        ]
+      },
+      "learning_progress": null
+    }
+  ],
+  "events_log": [
+    {
+      "timestamp": 1751963072.508351,
+      "elapsed_seconds": 4.00543212890625e-05,
+      "type": "demo_start",
+      "description": "Starting logged brain demo",
+      "data": {}
+    },
+    {
+      "timestamp": 1751963072.550076,
+      "elapsed_seconds": 0.04176497459411621,
+      "type": "session_start",
+      "description": "Memory session started: session_20250708_102432_9e77a3",
+      "data": {}
+    },
+    {
+      "timestamp": 1751963072.550942,
+      "elapsed_seconds": 0.042630910873413086,
+      "type": "brain_loaded",
+      "description": "Brain loaded with 0 nodes",
+      "data": {}
+    },
+    {
+      "timestamp": 1751963073.645241,
+      "elapsed_seconds": 1.136929988861084,
+      "type": "demo_ready",
+      "description": "Demo initialized and ready to run",
+      "data": {}
+    },
+    {
+      "timestamp": 1751963110.482181,
+      "elapsed_seconds": 37.973870038986206,
+      "type": "session_end",
+      "description": "Session ended: {'session_id': 'session_20250708_102432_9e77a3', 'graph_path': 'robot_memory/graphs/graph_session_20250708_102432_9e77a3_2025-07-08T10:25:10.175927.pkl.gz', 'params_path': 'robot_memory/adaptive_params/adaptive_params_session_20250708_102432_9e77a3_2025-07-08T10:25:10.480918.json', 'experiences_count': 305, 'total_adaptations': 6}",
+      "data": {}
+    }
+  ]
+}

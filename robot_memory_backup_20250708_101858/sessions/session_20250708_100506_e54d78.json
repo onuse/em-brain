@@ -1,0 +1,132 @@
+{
+  "session_id": "session_20250708_100506_e54d78",
+  "start_time": "2025-07-08 10:05:06.093836",
+  "end_time": "2025-07-08T10:07:49.961683",
+  "experiences_count": 2312,
+  "final_graph_stats": {
+    "total_nodes": 2312,
+    "total_merges": 0,
+    "avg_strength": 612.7388843105083,
+    "max_strength": 706804.3849634397,
+    "min_strength": 0.20053401964448148,
+    "avg_context_length": 8.0,
+    "temporal_chain_length": 2312,
+    "avg_access_count": 610.381920415225,
+    "total_accesses": 1411203,
+    "similarity_engine": {
+      "total_searches": 0,
+      "total_time": 0.0,
+      "avg_search_time": 0.0,
+      "searches_per_second": 1000000.0,
+      "cache_enabled": true,
+      "cache_hits": 0,
+      "cache_hit_rate": 0.0,
+      "acceleration_method": "NumPy",
+      "gpu_available": true
+    }
+  },
+  "adaptive_tuning_stats": {
+    "total_adaptations": 147,
+    "successful_adaptations": 112,
+    "adaptation_success_rate": 0.7619047619047619,
+    "current_parameters": {
+      "similarity_threshold": 0.7861596522134238,
+      "activation_spread_iterations": 3.2,
+      "consolidation_frequency": 50.0,
+      "forgetting_threshold": 0.1,
+      "connection_learning_rate": 0.055537248380247775,
+      "exploration_rate": 0.12762772032365402,
+      "time_budget_base": 0.10200000000000001,
+      "prediction_confidence_threshold": 0.5,
+      "sensory_importance_threshold": 0.3,
+      "dimension_clustering_threshold": 0.5,
+      "bandwidth_adaptation_rate": 0.05
+    },
+    "sensory_insights": {
+      "bandwidth_tier": "medium",
+      "total_dimensions": 22,
+      "high_variance_dimensions": [],
+      "high_change_dimensions": [],
+      "stable_dimensions": [
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21
+      ],
+      "avg_variance": 0.14360790072479834,
+      "avg_change_frequency": 0.11454545454545455
+    },
+    "parameter_performance_summary": {
+      "similarity_threshold": {
+        "best_score": 1.0815914541362321,
+        "avg_score": 0.5407957270681161,
+        "values_tested": 2,
+        "best_value": 0.7915898992591063
+      },
+      "activation_spread_iterations": {
+        "best_score": 1.0942308417756197,
+        "avg_score": 0.5725932625472308,
+        "values_tested": 3,
+        "best_value": 3.2
+      },
+      "consolidation_frequency": {
+        "best_score": 1.0815914541362321,
+        "avg_score": 1.0815914541362321,
+        "values_tested": 1,
+        "best_value": 50
+      },
+      "forgetting_threshold": {
+        "best_score": 1.0815914541362321,
+        "avg_score": 1.0815914541362321,
+        "values_tested": 1,
+        "best_value": 0.1
+      },
+      "connection_learning_rate": {
+        "best_score": 1.0815914541362321,
+        "avg_score": 0.5407957270681161,
+        "values_tested": 2,
+        "best_value": 0.05336690350480605
+      },
+      "exploration_rate": {
+        "best_score": 1.3042628531537872,
+        "avg_score": 0.7449647121976688,
+        "values_tested": 3,
+        "best_value": 0.116683463103197
+      },
+      "time_budget_base": {
+        "best_score": 1.0815914541362321,
+        "avg_score": 1.0815914541362321,
+        "values_tested": 1,
+        "best_value": 0.1
+      },
+      "prediction_confidence_threshold": {
+        "best_score": 1.0815914541362321,
+        "avg_score": 1.0815914541362321,
+        "values_tested": 1,
+        "best_value": 0.5
+      },
+      "sensory_importance_threshold": {
+        "best_score": 1.0815914541362321,
+        "avg_score": 1.0815914541362321,
+        "values_tested": 1,
+        "best_value": 0.3
+      },
+      "dimension_clustering_threshold": {
+        "best_score": 1.0815914541362321,
+        "avg_score": 1.0815914541362321,
+        "values_tested": 1,
+        "best_value": 0.5
+      },
+      "bandwidth_adaptation_rate": {
+        "best_score": 1.0815914541362321,
+        "avg_score": 1.0815914541362321,
+        "values_tested": 1,
+        "best_value": 0.05
+      }
+    }
+  },
+  "session_summary": "Ultimate 2D Brain Demo"
+}

@@ -1,0 +1,4556 @@
+{
+  "session_summary": {
+    "session_id": "run_20250708_104518",
+    "start_time": "2025-07-08T10:45:18.090535",
+    "end_time": "2025-07-08T10:46:39.314779",
+    "duration_seconds": 81.22423911094666,
+    "total_frames": 539,
+    "average_fps": 6.635950128923504,
+    "final_fps": 4.737038228207896,
+    "timing_statistics": {
+      "get_brain_statistics": {
+        "count": 80,
+        "total_time": 0.12001599511131644,
+        "avg_time": 0.0015001999388914555,
+        "min_time": 0.0013916247989982367,
+        "max_time": 0.0019539999775588512,
+        "recent_avg": 0.0015706708887591957
+      },
+      "get_world_graph": {
+        "count": 80,
+        "total_time": 5.40856271982193e-05,
+        "avg_time": 6.760703399777412e-07,
+        "min_time": 4.5797787606716156e-07,
+        "max_time": 1.00000761449337e-06,
+        "recent_avg": 7.291324436664581e-07
+      },
+      "brain_prediction": {
+        "count": 80,
+        "total_time": 15.881982414284721,
+        "avg_time": 0.198524780178559,
+        "min_time": 0.18222241709008813,
+        "max_time": 0.22017583390697837,
+        "recent_avg": 0.21110237068496646
+      }
+    }
+  },
+  "performance_data": [
+    {
+      "timestamp": 1751964322.624403,
+      "frame_range": "0-50",
+      "avg_fps": 739.3743663252785,
+      "avg_frame_time": 0.0014169908361509442,
+      "timing_stats": {
+        "get_brain_statistics": {
+          "count": 50,
+          "total_time": 0.06969216233119369,
+          "avg_time": 0.0013938432466238737,
+          "min_time": 0.0011795000173151493,
+          "max_time": 0.003725500078871846,
+          "recent_avg": 0.0012308121658861637
+        },
+        "get_world_graph": {
+          "count": 50,
+          "total_time": 4.3165870010852814e-05,
+          "avg_time": 8.633174002170563e-07,
+          "min_time": 5.00120222568512e-07,
+          "max_time": 2.7080532163381577e-06,
+          "recent_avg": 6.956746801733971e-07
+        },
+        "brain_prediction": {
+          "count": 49,
+          "total_time": 2.9996872497722507,
+          "avg_time": 0.061218107138209195,
+          "min_time": 0.01760987495072186,
+          "max_time": 0.0751259580720216,
+          "recent_avg": 0.06457585834432393
+        }
+      },
+      "top_time_consumers": [
+        {
+          "method": "brain_prediction",
+          "total_time": 2.9996872497722507,
+          "avg_time": 0.061218107138209195,
+          "call_count": 49
+        },
+        {
+          "method": "get_brain_statistics",
+          "total_time": 0.06969216233119369,
+          "avg_time": 0.0013938432466238737,
+          "call_count": 50
+        },
+        {
+          "method": "get_world_graph",
+          "total_time": 4.3165870010852814e-05,
+          "avg_time": 8.633174002170563e-07,
+          "call_count": 50
+        }
+      ]
+    },
+    {
+      "timestamp": 1751964326.4091892,
+      "frame_range": "50-100",
+      "avg_fps": 776.1560694778178,
+      "avg_frame_time": 0.0012923815799877048,
+      "timing_stats": {
+        "get_brain_statistics": {
+          "count": 100,
+          "total_time": 0.13421686924993992,
+          "avg_time": 0.001342168692499399,
+          "min_time": 0.0011795000173151493,
+          "max_time": 0.003725500078871846,
+          "recent_avg": 0.0013030499452725054
+        },
+        "get_world_graph": {
+          "count": 100,
+          "total_time": 7.766601629555225e-05,
+          "avg_time": 7.766601629555225e-07,
+          "min_time": 5.00120222568512e-07,
+          "max_time": 2.7080532163381577e-06,
+          "recent_avg": 6.792368367314339e-07
+        },
+        "brain_prediction": {
+          "count": 99,
+          "total_time": 6.578553581843153,
+          "avg_time": 0.06645003618023386,
+          "min_time": 0.01760987495072186,
+          "max_time": 0.0775172091089189,
+          "recent_avg": 0.0764427084242925
+        }
+      },
+      "top_time_consumers": [
+        {
+          "method": "brain_prediction",
+          "total_time": 6.578553581843153,
+          "avg_time": 0.06645003618023386,
+          "call_count": 99
+        },
+        {
+          "method": "get_brain_statistics",
+          "total_time": 0.13421686924993992,
+          "avg_time": 0.001342168692499399,
+          "call_count": 100
+        },
+        {
+          "method": "get_world_graph",
+          "total_time": 7.766601629555225e-05,
+          "avg_time": 7.766601629555225e-07,
+          "call_count": 100
+        }
+      ]
+    },
+    {
+      "timestamp": 1751964330.814671,
+      "frame_range": "100-150",
+      "avg_fps": 750.9669305868863,
+      "avg_frame_time": 0.001338947475887835,
+      "timing_stats": {
+        "get_brain_statistics": {
+          "count": 99,
+          "total_time": 0.1301451656036079,
+          "avg_time": 0.0013145976323596757,
+          "min_time": 0.0011793749872595072,
+          "max_time": 0.0018106249626725912,
+          "recent_avg": 0.0013112081913277506
+        },
+        "get_world_graph": {
+          "count": 99,
+          "total_time": 6.79180957376957e-05,
+          "avg_time": 6.860413710878353e-07,
+          "min_time": 4.5797787606716156e-07,
+          "max_time": 1.1669471859931946e-06,
+          "recent_avg": 6.875023245811463e-07
+        },
+        "brain_prediction": {
+          "count": 98,
+          "total_time": 7.645410289056599,
+          "avg_time": 0.07801439070465918,
+          "min_time": 0.06597604206763208,
+          "max_time": 0.09052395797334611,
+          "recent_avg": 0.08777719587087632
+        }
+      },
+      "top_time_consumers": [
+        {
+          "method": "brain_prediction",
+          "total_time": 7.645410289056599,
+          "avg_time": 0.07801439070465918,
+          "call_count": 98
+        },
+        {
+          "method": "get_brain_statistics",
+          "total_time": 0.1301451656036079,
+          "avg_time": 0.0013145976323596757,
+          "call_count": 99
+        },
+        {
+          "method": "get_world_graph",
+          "total_time": 6.79180957376957e-05,
+          "avg_time": 6.860413710878353e-07,
+          "call_count": 99
+        }
+      ]
+    },
+    {
+      "timestamp": 1751964335.8333912,
+      "frame_range": "150-200",
+      "avg_fps": 743.560510141828,
+      "avg_frame_time": 0.001348457494750619,
+      "timing_stats": {
+        "get_brain_statistics": {
+          "count": 98,
+          "total_time": 0.13145745475776494,
+          "avg_time": 0.00134140259956903,
+          "min_time": 0.0012025409378111362,
+          "max_time": 0.0018106249626725912,
+          "recent_avg": 0.001371595822274685
+        },
+        "get_world_graph": {
+          "count": 98,
+          "total_time": 6.57497439533472e-05,
+          "avg_time": 6.70915754625992e-07,
+          "min_time": 4.5797787606716156e-07,
+          "max_time": 1.1669471859931946e-06,
+          "recent_avg": 6.58305361866951e-07
+        },
+        "brain_prediction": {
+          "count": 97,
+          "total_time": 8.745846375124529,
+          "avg_time": 0.09016336469200545,
+          "min_time": 0.0791246669832617,
+          "max_time": 0.10255245910957456,
+          "recent_avg": 0.10086231271270663
+        }
+      },
+      "top_time_consumers": [
+        {
+          "method": "brain_prediction",
+          "total_time": 8.745846375124529,
+          "avg_time": 0.09016336469200545,
+          "call_count": 97
+        },
+        {
+          "method": "get_brain_statistics",
+          "total_time": 0.13145745475776494,
+          "avg_time": 0.00134140259956903,
+          "call_count": 98
+        },
+        {
+          "method": "get_world_graph",
+          "total_time": 6.57497439533472e-05,
+          "avg_time": 6.70915754625992e-07,
+          "call_count": 98
+        }
+      ]
+    },
+    {
+      "timestamp": 1751964342.5505438,
+      "frame_range": "200-250",
+      "avg_fps": 713.5217471288443,
+      "avg_frame_time": 0.0014427825016900897,
+      "timing_stats": {
+        "get_brain_statistics": {
+          "count": 97,
+          "total_time": 0.13534286385402083,
+          "avg_time": 0.0013952872562270188,
+          "min_time": 0.0012292088940739632,
+          "max_time": 0.0039632078260183334,
+          "recent_avg": 0.001706753927282989
+        },
+        "get_world_graph": {
+          "count": 97,
+          "total_time": 6.795511581003666e-05,
+          "avg_time": 7.00568204227182e-07,
+          "min_time": 5.408655852079391e-07,
+          "max_time": 2.084067091345787e-06,
+          "recent_avg": 8.33394005894661e-07
+        },
+        "brain_prediction": {
+          "count": 96,
+          "total_time": 9.913116286043078,
+          "avg_time": 0.1032616279796154,
+          "min_time": 0.08973637502640486,
+          "max_time": 0.13311154185794294,
+          "recent_avg": 0.11777836233377456
+        }
+      },
+      "top_time_consumers": [
+        {
+          "method": "brain_prediction",
+          "total_time": 9.913116286043078,
+          "avg_time": 0.1032616279796154,
+          "call_count": 96
+        },
+        {
+          "method": "get_brain_statistics",
+          "total_time": 0.13534286385402083,
+          "avg_time": 0.0013952872562270188,
+          "call_count": 97
+        },
+        {
+          "method": "get_world_graph",
+          "total_time": 6.795511581003666e-05,
+          "avg_time": 7.00568204227182e-07,
+          "call_count": 97
+        }
+      ]
+    },
+    {
+      "timestamp": 1751964348.953846,
+      "frame_range": "250-300",
+      "avg_fps": 706.1098233463915,
+      "avg_frame_time": 0.0014216925064101816,
+      "timing_stats": {
+        "get_brain_statistics": {
+          "count": 96,
+          "total_time": 0.13771949289366603,
+          "avg_time": 0.0014345780509756878,
+          "min_time": 0.0012650839053094387,
+          "max_time": 0.0039632078260183334,
+          "recent_avg": 0.0014074040576815606
+        },
+        "get_world_graph": {
+          "count": 96,
+          "total_time": 6.795814260840416e-05,
+          "avg_time": 7.078973188375434e-07,
+          "min_time": 5.408655852079391e-07,
+          "max_time": 2.084067091345787e-06,
+          "recent_avg": 6.919493898749352e-07
+        },
+        "brain_prediction": {
+          "count": 95,
+          "total_time": 11.150156036484987,
+          "avg_time": 0.11737006354194722,
+          "min_time": 0.10364683298394084,
+          "max_time": 0.13694595894776285,
+          "recent_avg": 0.12871912494301796
+        }
+      },
+      "top_time_consumers": [
+        {
+          "method": "brain_prediction",
+          "total_time": 11.150156036484987,
+          "avg_time": 0.11737006354194722,
+          "call_count": 95
+        },
+        {
+          "method": "get_brain_statistics",
+          "total_time": 0.13771949289366603,
+          "avg_time": 0.0014345780509756878,
+          "call_count": 96
+        },
+        {
+          "method": "get_world_graph",
+          "total_time": 6.795814260840416e-05,
+          "avg_time": 7.078973188375434e-07,
+          "call_count": 96
+        }
+      ]
+    },
+    {
+      "timestamp": 1751964356.101099,
+      "frame_range": "300-350",
+      "avg_fps": 687.5842909676954,
+      "avg_frame_time": 0.0015011500706896186,
+      "timing_stats": {
+        "get_brain_statistics": {
+          "count": 95,
+          "total_time": 0.1379226695280522,
+          "avg_time": 0.001451817573979497,
+          "min_time": 0.0012792078778147697,
+          "max_time": 0.004605666967108846,
+          "recent_avg": 0.0014631750294938684
+        },
+        "get_world_graph": {
+          "count": 95,
+          "total_time": 6.495974957942963e-05,
+          "avg_time": 6.837868376782066e-07,
+          "min_time": 4.998873919248581e-07,
+          "max_time": 1.2922100722789764e-06,
+          "recent_avg": 7.083406671881676e-07
+        },
+        "brain_prediction": {
+          "count": 94,
+          "total_time": 12.387877291534096,
+          "avg_time": 0.13178592863334146,
+          "min_time": 0.11788195790722966,
+          "max_time": 0.14943124982528389,
+          "recent_avg": 0.1448954626917839
+        }
+      },
+      "top_time_consumers": [
+        {
+          "method": "brain_prediction",
+          "total_time": 12.387877291534096,
+          "avg_time": 0.13178592863334146,
+          "call_count": 94
+        },
+        {
+          "method": "get_brain_statistics",
+          "total_time": 0.1379226695280522,
+          "avg_time": 0.001451817573979497,
+          "call_count": 95
+        },
+        {
+          "method": "get_world_graph",
+          "total_time": 6.495974957942963e-05,
+          "avg_time": 6.837868376782066e-07,
+          "call_count": 95
+        }
+      ]
+    },
+    {
+      "timestamp": 1751964364.09314,
+      "frame_range": "350-400",
+      "avg_fps": 695.5694571513735,
+      "avg_frame_time": 0.0014415391068905593,
+      "timing_stats": {
+        "get_brain_statistics": {
+          "count": 94,
+          "total_time": 0.1351415819954127,
+          "avg_time": 0.0014376764042065182,
+          "min_time": 0.0013034590519964695,
+          "max_time": 0.0016984590329229832,
+          "recent_avg": 0.001451137475669384
+        },
+        "get_world_graph": {
+          "count": 94,
+          "total_time": 6.503541953861713e-05,
+          "avg_time": 6.918661653044376e-07,
+          "min_time": 4.998873919248581e-07,
+          "max_time": 1.3329554349184036e-06,
+          "recent_avg": 7.414026185870171e-07
+        },
+        "brain_prediction": {
+          "count": 93,
+          "total_time": 13.760947754373774,
+          "avg_time": 0.1479671801545567,
+          "min_time": 0.13179562520235777,
+          "max_time": 0.17182333301752806,
+          "recent_avg": 0.1601952542318031
+        }
+      },
+      "top_time_consumers": [
+        {
+          "method": "brain_prediction",
+          "total_time": 13.760947754373774,
+          "avg_time": 0.1479671801545567,
+          "call_count": 93
+        },
+        {
+          "method": "get_brain_statistics",
+          "total_time": 0.1351415819954127,
+          "avg_time": 0.0014376764042065182,
+          "call_count": 94
+        },
+        {
+          "method": "get_world_graph",
+          "total_time": 6.503541953861713e-05,
+          "avg_time": 6.918661653044376e-07,
+          "call_count": 94
+        }
+      ]
+    },
+    {
+      "timestamp": 1751964372.887326,
+      "frame_range": "400-450",
+      "avg_fps": 682.6249707684833,
+      "avg_frame_time": 0.0014686716347932815,
+      "timing_stats": {
+        "get_brain_statistics": {
+          "count": 93,
+          "total_time": 0.13555333367548883,
+          "avg_time": 0.0014575627276934282,
+          "min_time": 0.0013034590519964695,
+          "max_time": 0.0016986250411719084,
+          "recent_avg": 0.0014683627290651203
+        },
+        "get_world_graph": {
+          "count": 93,
+          "total_time": 6.491248495876789e-05,
+          "avg_time": 6.979837092340634e-07,
+          "min_time": 5.408655852079391e-07,
+          "max_time": 1.7080456018447876e-06,
+          "recent_avg": 6.956513971090317e-07
+        },
+        "brain_prediction": {
+          "count": 92,
+          "total_time": 15.147501707309857,
+          "avg_time": 0.16464675768815062,
+          "min_time": 0.14894483401440084,
+          "max_time": 0.18615079089067876,
+          "recent_avg": 0.17806769176386297
+        }
+      },
+      "top_time_consumers": [
+        {
+          "method": "brain_prediction",
+          "total_time": 15.147501707309857,
+          "avg_time": 0.16464675768815062,
+          "call_count": 92
+        },
+        {
+          "method": "get_brain_statistics",
+          "total_time": 0.13555333367548883,
+          "avg_time": 0.0014575627276934282,
+          "call_count": 93
+        },
+        {
+          "method": "get_world_graph",
+          "total_time": 6.491248495876789e-05,
+          "avg_time": 6.979837092340634e-07,
+          "call_count": 93
+        }
+      ]
+    },
+    {
+      "timestamp": 1751964382.627472,
+      "frame_range": "450-500",
+      "avg_fps": 675.339733225201,
+      "avg_frame_time": 0.001483387378975749,
+      "timing_stats": {
+        "get_brain_statistics": {
+          "count": 92,
+          "total_time": 0.1357468308415264,
+          "avg_time": 0.0014755090308861563,
+          "min_time": 0.0013320420403033495,
+          "max_time": 0.0016986250411719084,
+          "recent_avg": 0.0014743789564818145
+        },
+        "get_world_graph": {
+          "count": 92,
+          "total_time": 6.346008740365505e-05,
+          "avg_time": 6.89783558735381e-07,
+          "min_time": 4.5797787606716156e-07,
+          "max_time": 1.7080456018447876e-06,
+          "recent_avg": 7.125083357095718e-07
+        },
+        "brain_prediction": {
+          "count": 91,
+          "total_time": 16.594941455172375,
+          "avg_time": 0.18236199401288325,
+          "min_time": 0.16408212506212294,
+          "max_time": 0.22017583390697837,
+          "recent_avg": 0.2004982081707567
+        }
+      },
+      "top_time_consumers": [
+        {
+          "method": "brain_prediction",
+          "total_time": 16.594941455172375,
+          "avg_time": 0.18236199401288325,
+          "call_count": 91
+        },
+        {
+          "method": "get_brain_statistics",
+          "total_time": 0.1357468308415264,
+          "avg_time": 0.0014755090308861563,
+          "call_count": 92
+        },
+        {
+          "method": "get_world_graph",
+          "total_time": 6.346008740365505e-05,
+          "avg_time": 6.89783558735381e-07,
+          "call_count": 92
+        }
+      ]
+    }
+  ],
+  "timing_samples": [
+    {
+      "frame": 439,
+      "timestamp": 1461903.647483416,
+      "total_frame_time": 0.001514290925115347,
+      "fps": 660.3750860646727,
+      "brain_nodes": 1010,
+      "timing_breakdown": {
+        "brain_stats": 0.0015123749617487192,
+        "graph_access": 8.330680429935455e-07,
+        "other": 1.0828953236341476e-06
+      }
+    },
+    {
+      "frame": 440,
+      "timestamp": 1461903.829118375,
+      "total_frame_time": 0.001391999889165163,
+      "fps": 718.3908617979412,
+      "brain_nodes": 1011,
+      "timing_breakdown": {
+        "brain_stats": 0.001390084158629179,
+        "graph_access": 6.658956408500671e-07,
+        "other": 1.2498348951339722e-06
+      }
+    },
+    {
+      "frame": 441,
+      "timestamp": 1461904.0098685,
+      "total_frame_time": 0.0014640840236097574,
+      "fps": 683.0209085503578,
+      "brain_nodes": 1012,
+      "timing_breakdown": {
+        "brain_stats": 0.0014624169562011957,
+        "graph_access": 5.408655852079391e-07,
+        "other": 1.1262018233537674e-06
+      }
+    },
+    {
+      "frame": 442,
+      "timestamp": 1461904.197936083,
+      "total_frame_time": 0.0014935419894754887,
+      "fps": 669.5493043025768,
+      "brain_nodes": 1013,
+      "timing_breakdown": {
+        "brain_stats": 0.0014918339438736439,
+        "graph_access": 6.249174475669861e-07,
+        "other": 1.0831281542778015e-06
+      }
+    },
+    {
+      "frame": 443,
+      "timestamp": 1461904.381176333,
+      "total_frame_time": 0.001382957911118865,
+      "fps": 723.0878047408994,
+      "brain_nodes": 1014,
+      "timing_breakdown": {
+        "brain_stats": 0.0013814170379191637,
+        "graph_access": 6.658956408500671e-07,
+        "other": 8.749775588512421e-07
+      }
+    },
+    {
+      "frame": 444,
+      "timestamp": 1461904.563238833,
+      "total_frame_time": 0.001452375203371048,
+      "fps": 688.5273155854916,
+      "brain_nodes": 1015,
+      "timing_breakdown": {
+        "brain_stats": 0.0014507919549942017,
+        "graph_access": 6.670597940683365e-07,
+        "other": 9.16188582777977e-07
+      }
+    },
+    {
+      "frame": 445,
+      "timestamp": 1461904.744143916,
+      "total_frame_time": 0.0014295410364866257,
+      "fps": 699.5252143706864,
+      "brain_nodes": 1016,
+      "timing_breakdown": {
+        "brain_stats": 0.001427333103492856,
+        "graph_access": 5.83939254283905e-07,
+        "other": 1.6239937394857407e-06
+      }
+    },
+    {
+      "frame": 446,
+      "timestamp": 1461904.926346416,
+      "total_frame_time": 0.00148687488399446,
+      "fps": 672.5515446958924,
+      "brain_nodes": 1017,
+      "timing_breakdown": {
+        "brain_stats": 0.001485167071223259,
+        "graph_access": 7.501803338527679e-07,
+        "other": 9.576324373483658e-07
+      }
+    },
+    {
+      "frame": 447,
+      "timestamp": 1461905.113494166,
+      "total_frame_time": 0.0016493748407810926,
+      "fps": 606.2903199896217,
+      "brain_nodes": 1018,
+      "timing_breakdown": {
+        "brain_stats": 0.0016473750583827496,
+        "graph_access": 8.749775588512421e-07,
+        "other": 1.1248048394918442e-06
+      }
+    },
+    {
+      "frame": 448,
+      "timestamp": 1461905.297517916,
+      "total_frame_time": 0.0015042079612612724,
+      "fps": 664.8016934849247,
+      "brain_nodes": 1019,
+      "timing_breakdown": {
+        "brain_stats": 0.0015023748856037855,
+        "graph_access": 8.749775588512421e-07,
+        "other": 9.580980986356735e-07
+      }
+    },
+    {
+      "frame": 449,
+      "timestamp": 1461905.479523,
+      "total_frame_time": 0.0014466249849647284,
+      "fps": 691.2641564976026,
+      "brain_nodes": 1020,
+      "timing_breakdown": {
+        "brain_stats": 0.0014448331203311682,
+        "graph_access": 7.078051567077637e-07,
+        "other": 1.084059476852417e-06
+      }
+    },
+    {
+      "frame": 450,
+      "timestamp": 1461905.6634095,
+      "total_frame_time": 0.001400916837155819,
+      "fps": 713.8182463637373,
+      "brain_nodes": 1021,
+      "timing_breakdown": {
+        "brain_stats": 0.0013994169421494007,
+        "graph_access": 5.420297384262085e-07,
+        "other": 9.578652679920197e-07
+      }
+    },
+    {
+      "frame": 451,
+      "timestamp": 1461905.850202833,
+      "total_frame_time": 0.0015080829616636038,
+      "fps": 663.0934938067832,
+      "brain_nodes": 1022,
+      "timing_breakdown": {
+        "brain_stats": 0.0015065830666571856,
+        "graph_access": 5.420297384262085e-07,
+        "other": 9.578652679920197e-07
+      }
+    },
+    {
+      "frame": 452,
+      "timestamp": 1461906.033619583,
+      "total_frame_time": 0.001450041774660349,
+      "fps": 689.6353039444228,
+      "brain_nodes": 1023,
+      "timing_breakdown": {
+        "brain_stats": 0.001448625000193715,
+        "graph_access": 6.670597940683365e-07,
+        "other": 7.497146725654602e-07
+      }
+    },
+    {
+      "frame": 453,
+      "timestamp": 1461906.219341833,
+      "total_frame_time": 0.0015368747990578413,
+      "fps": 650.6710895468099,
+      "brain_nodes": 1024,
+      "timing_breakdown": {
+        "brain_stats": 0.001535041956230998,
+        "graph_access": 9.168870747089386e-07,
+        "other": 9.159557521343231e-07
+      }
+    },
+    {
+      "frame": 454,
+      "timestamp": 1461906.405000458,
+      "total_frame_time": 0.0015043749008327723,
+      "fps": 664.7279208436893,
+      "brain_nodes": 1025,
+      "timing_breakdown": {
+        "brain_stats": 0.0015025418251752853,
+        "graph_access": 6.249174475669861e-07,
+        "other": 1.2081582099199295e-06
+      }
+    },
+    {
+      "frame": 455,
+      "timestamp": 1461906.591963083,
+      "total_frame_time": 0.0014316670130938292,
+      "fps": 698.486443323858,
+      "brain_nodes": 1026,
+      "timing_breakdown": {
+        "brain_stats": 0.0014299999456852674,
+        "graph_access": 7.501803338527679e-07,
+        "other": 9.168870747089386e-07
+      }
+    },
+    {
+      "frame": 456,
+      "timestamp": 1461906.795367666,
+      "total_frame_time": 0.0016332080122083426,
+      "fps": 612.2918774123877,
+      "brain_nodes": 1027,
+      "timing_breakdown": {
+        "brain_stats": 0.0016306249890476465,
+        "graph_access": 8.749775588512421e-07,
+        "other": 1.7080456018447876e-06
+      }
+    },
+    {
+      "frame": 457,
+      "timestamp": 1461906.989901958,
+      "total_frame_time": 0.0014827500563114882,
+      "fps": 674.4225000993191,
+      "brain_nodes": 1028,
+      "timing_breakdown": {
+        "brain_stats": 0.0014769581612199545,
+        "graph_access": 6.249174475669861e-07,
+        "other": 5.166977643966675e-06
+      }
+    },
+    {
+      "frame": 458,
+      "timestamp": 1461907.179894458,
+      "total_frame_time": 0.0015229580458253622,
+      "fps": 656.6169059884071,
+      "brain_nodes": 1029,
+      "timing_breakdown": {
+        "brain_stats": 0.0015204160008579493,
+        "graph_access": 8.749775588512421e-07,
+        "other": 1.6670674085617065e-06
+      }
+    },
+    {
+      "frame": 459,
+      "timestamp": 1461907.365456666,
+      "total_frame_time": 0.0014417911879718304,
+      "fps": 693.5817116531981,
+      "brain_nodes": 1030,
+      "timing_breakdown": {
+        "brain_stats": 0.0014403329696506262,
+        "graph_access": 5.841720849275589e-07,
+        "other": 8.740462362766266e-07
+      }
+    },
+    {
+      "frame": 460,
+      "timestamp": 1461907.55234725,
+      "total_frame_time": 0.0014548341277986765,
+      "fps": 687.3635838561951,
+      "brain_nodes": 1031,
+      "timing_breakdown": {
+        "brain_stats": 0.0014532909262925386,
+        "graph_access": 7.499475032091141e-07,
+        "other": 7.932540029287338e-07
+      }
+    },
+    {
+      "frame": 461,
+      "timestamp": 1461907.739156708,
+      "total_frame_time": 0.0015200828202068806,
+      "fps": 657.8588920989856,
+      "brain_nodes": 1032,
+      "timing_breakdown": {
+        "brain_stats": 0.0015181249473243952,
+        "graph_access": 6.670597940683365e-07,
+        "other": 1.2908130884170532e-06
+      }
+    },
+    {
+      "frame": 462,
+      "timestamp": 1461907.935251041,
+      "total_frame_time": 0.001534125069156289,
+      "fps": 651.8373371930896,
+      "brain_nodes": 1033,
+      "timing_breakdown": {
+        "brain_stats": 0.0015325418207794428,
+        "graph_access": 6.2515027821064e-07,
+        "other": 9.580980986356735e-07
+      }
+    },
+    {
+      "frame": 463,
+      "timestamp": 1461908.124933875,
+      "total_frame_time": 0.0014959999825805426,
+      "fps": 668.4492056444001,
+      "brain_nodes": 1034,
+      "timing_breakdown": {
+        "brain_stats": 0.0014943750575184822,
+        "graph_access": 6.249174475669861e-07,
+        "other": 1.00000761449337e-06
+      }
+    },
+    {
+      "frame": 464,
+      "timestamp": 1461908.314875958,
+      "total_frame_time": 0.0015353329945355654,
+      "fps": 651.3245032570264,
+      "brain_nodes": 1035,
+      "timing_breakdown": {
+        "brain_stats": 0.0015336249489337206,
+        "graph_access": 7.080379873514175e-07,
+        "other": 1.00000761449337e-06
+      }
+    },
+    {
+      "frame": 465,
+      "timestamp": 1461908.502815916,
+      "total_frame_time": 0.0015212909784168005,
+      "fps": 657.3364426578634,
+      "brain_nodes": 1036,
+      "timing_breakdown": {
+        "brain_stats": 0.0015194590669125319,
+        "graph_access": 6.670597940683365e-07,
+        "other": 1.1648517102003098e-06
+      }
+    },
+    {
+      "frame": 466,
+      "timestamp": 1461908.696593708,
+      "total_frame_time": 0.0015115828718990088,
+      "fps": 661.558170967957,
+      "brain_nodes": 1037,
+      "timing_breakdown": {
+        "brain_stats": 0.0015103751793503761,
+        "graph_access": 5.830079317092896e-07,
+        "other": 6.246846169233322e-07
+      }
+    },
+    {
+      "frame": 467,
+      "timestamp": 1461908.886187708,
+      "total_frame_time": 0.0015555829741060734,
+      "fps": 642.8458119211912,
+      "brain_nodes": 1038,
+      "timing_breakdown": {
+        "brain_stats": 0.001553541049361229,
+        "graph_access": 7.499475032091141e-07,
+        "other": 1.2919772416353226e-06
+      }
+    },
+    {
+      "frame": 468,
+      "timestamp": 1461909.076589541,
+      "total_frame_time": 0.001580290962010622,
+      "fps": 632.7948612245992,
+      "brain_nodes": 1039,
+      "timing_breakdown": {
+        "brain_stats": 0.0015778329689055681,
+        "graph_access": 7.499475032091141e-07,
+        "other": 1.7080456018447876e-06
+      }
+    },
+    {
+      "frame": 469,
+      "timestamp": 1461909.269525041,
+      "total_frame_time": 0.0014165830798447132,
+      "fps": 705.924004195801,
+      "brain_nodes": 1040,
+      "timing_breakdown": {
+        "brain_stats": 0.0014150410424917936,
+        "graph_access": 5.841720849275589e-07,
+        "other": 9.578652679920197e-07
+      }
+    },
+    {
+      "frame": 470,
+      "timestamp": 1461909.461355208,
+      "total_frame_time": 0.001512874849140644,
+      "fps": 660.9932081084092,
+      "brain_nodes": 1041,
+      "timing_breakdown": {
+        "brain_stats": 0.0015113749541342258,
+        "graph_access": 5.420297384262085e-07,
+        "other": 9.578652679920197e-07
+      }
+    },
+    {
+      "frame": 471,
+      "timestamp": 1461909.651401583,
+      "total_frame_time": 0.0014065001159906387,
+      "fps": 710.984655195475,
+      "brain_nodes": 1042,
+      "timing_breakdown": {
+        "brain_stats": 0.0014049168676137924,
+        "graph_access": 5.830079317092896e-07,
+        "other": 1.000240445137024e-06
+      }
+    },
+    {
+      "frame": 472,
+      "timestamp": 1461909.842055791,
+      "total_frame_time": 0.0015103749465197325,
+      "fps": 662.0872534361357,
+      "brain_nodes": 1043,
+      "timing_breakdown": {
+        "brain_stats": 0.001508665969595313,
+        "graph_access": 6.66128471493721e-07,
+        "other": 1.042848452925682e-06
+      }
+    },
+    {
+      "frame": 473,
+      "timestamp": 1461910.032190208,
+      "total_frame_time": 0.0014520001132041216,
+      "fps": 688.7051804653822,
+      "brain_nodes": 1044,
+      "timing_breakdown": {
+        "brain_stats": 0.00145016610622406,
+        "graph_access": 7.499475032091141e-07,
+        "other": 1.084059476852417e-06
+      }
+    },
+    {
+      "frame": 474,
+      "timestamp": 1461910.224344583,
+      "total_frame_time": 0.0014322919305413961,
+      "fps": 698.1816895540333,
+      "brain_nodes": 1045,
+      "timing_breakdown": {
+        "brain_stats": 0.0014309161342680454,
+        "graph_access": 4.5797787606716156e-07,
+        "other": 9.178183972835541e-07
+      }
+    },
+    {
+      "frame": 475,
+      "timestamp": 1461910.417040458,
+      "total_frame_time": 0.001486332854256034,
+      "fps": 672.7968080208642,
+      "brain_nodes": 1046,
+      "timing_breakdown": {
+        "brain_stats": 0.0014843752142041922,
+        "graph_access": 7.08969309926033e-07,
+        "other": 1.2486707419157028e-06
+      }
+    },
+    {
+      "frame": 476,
+      "timestamp": 1461910.6111115,
+      "total_frame_time": 0.001603791955858469,
+      "fps": 623.5222694234836,
+      "brain_nodes": 1047,
+      "timing_breakdown": {
+        "brain_stats": 0.0016019169706851244,
+        "graph_access": 7.499475032091141e-07,
+        "other": 1.125037670135498e-06
+      }
+    },
+    {
+      "frame": 477,
+      "timestamp": 1461910.807739958,
+      "total_frame_time": 0.0014342500362545252,
+      "fps": 697.2284990220058,
+      "brain_nodes": 1048,
+      "timing_breakdown": {
+        "brain_stats": 0.0014322081115096807,
+        "graph_access": 6.249174475669861e-07,
+        "other": 1.4170072972774506e-06
+      }
+    },
+    {
+      "frame": 478,
+      "timestamp": 1461911.002379125,
+      "total_frame_time": 0.001457874896004796,
+      "fps": 685.9299126011634,
+      "brain_nodes": 1049,
+      "timing_breakdown": {
+        "brain_stats": 0.0014562918804585934,
+        "graph_access": 7.080379873514175e-07,
+        "other": 8.749775588512421e-07
+      }
+    },
+    {
+      "frame": 479,
+      "timestamp": 1461911.196293666,
+      "total_frame_time": 0.0015469579957425594,
+      "fps": 646.429963032052,
+      "brain_nodes": 1050,
+      "timing_breakdown": {
+        "brain_stats": 0.0015454171225428581,
+        "graph_access": 5.830079317092896e-07,
+        "other": 9.578652679920197e-07
+      }
+    },
+    {
+      "frame": 480,
+      "timestamp": 1461911.389193791,
+      "total_frame_time": 0.0014030409511178732,
+      "fps": 712.7375713469017,
+      "brain_nodes": 1051,
+      "timing_breakdown": {
+        "brain_stats": 0.0014002909883856773,
+        "graph_access": 6.670597940683365e-07,
+        "other": 2.0829029381275177e-06
+      }
+    },
+    {
+      "frame": 481,
+      "timestamp": 1461911.583433166,
+      "total_frame_time": 0.0014711248222738504,
+      "fps": 679.7519726805681,
+      "brain_nodes": 1052,
+      "timing_breakdown": {
+        "brain_stats": 0.001469791168347001,
+        "graph_access": 5.830079317092896e-07,
+        "other": 7.506459951400757e-07
+      }
+    },
+    {
+      "frame": 482,
+      "timestamp": 1461911.779598416,
+      "total_frame_time": 0.0015469160862267017,
+      "fps": 646.4474763070305,
+      "brain_nodes": 1053,
+      "timing_breakdown": {
+        "brain_stats": 0.0015452501829713583,
+        "graph_access": 5.830079317092896e-07,
+        "other": 1.0828953236341476e-06
+      }
+    },
+    {
+      "frame": 483,
+      "timestamp": 1461911.973862083,
+      "total_frame_time": 0.0014249170199036598,
+      "fps": 701.7952526580187,
+      "brain_nodes": 1054,
+      "timing_breakdown": {
+        "brain_stats": 0.0014233749825507402,
+        "graph_access": 6.670597940683365e-07,
+        "other": 8.749775588512421e-07
+      }
+    },
+    {
+      "frame": 484,
+      "timestamp": 1461912.172441375,
+      "total_frame_time": 0.0014933750499039888,
+      "fps": 669.624151055886,
+      "brain_nodes": 1055,
+      "timing_breakdown": {
+        "brain_stats": 0.001491667004302144,
+        "graph_access": 7.08969309926033e-07,
+        "other": 9.990762919187546e-07
+      }
+    },
+    {
+      "frame": 485,
+      "timestamp": 1461912.368149333,
+      "total_frame_time": 0.001419916981831193,
+      "fps": 704.2665259981271,
+      "brain_nodes": 1056,
+      "timing_breakdown": {
+        "brain_stats": 0.0014180419966578484,
+        "graph_access": 6.658956408500671e-07,
+        "other": 1.209089532494545e-06
+      }
+    },
+    {
+      "frame": 486,
+      "timestamp": 1461912.569155041,
+      "total_frame_time": 0.0014652078971266747,
+      "fps": 682.4970039821898,
+      "brain_nodes": 1057,
+      "timing_breakdown": {
+        "brain_stats": 0.0014637911226600409,
+        "graph_access": 6.249174475669861e-07,
+        "other": 7.918570190668106e-07
+      }
+    },
+    {
+      "frame": 487,
+      "timestamp": 1461912.767582666,
+      "total_frame_time": 0.0014176659751683474,
+      "fps": 705.3847785838624,
+      "brain_nodes": 1058,
+      "timing_breakdown": {
+        "brain_stats": 0.0014159171842038631,
+        "graph_access": 7.08969309926033e-07,
+        "other": 1.0398216545581818e-06
+      }
+    },
+    {
+      "frame": 488,
+      "timestamp": 1461912.9676685,
+      "total_frame_time": 0.001393500017002225,
+      "fps": 717.617501111522,
+      "brain_nodes": 1059,
+      "timing_breakdown": {
+        "brain_stats": 0.0013916247989982367,
+        "graph_access": 6.670597940683365e-07,
+        "other": 1.2081582099199295e-06
+      }
+    },
+    {
+      "frame": 489,
+      "timestamp": 1461913.165280083,
+      "total_frame_time": 0.0014897920191287994,
+      "fps": 671.2346335327934,
+      "brain_nodes": 1060,
+      "timing_breakdown": {
+        "brain_stats": 0.0014881249517202377,
+        "graph_access": 5.417969077825546e-07,
+        "other": 1.125270500779152e-06
+      }
+    },
+    {
+      "frame": 490,
+      "timestamp": 1461913.364539,
+      "total_frame_time": 0.001411624951288104,
+      "fps": 708.4034602020193,
+      "brain_nodes": 1061,
+      "timing_breakdown": {
+        "brain_stats": 0.0014100410044193268,
+        "graph_access": 6.658956408500671e-07,
+        "other": 9.180512279272079e-07
+      }
+    },
+    {
+      "frame": 491,
+      "timestamp": 1461913.564994666,
+      "total_frame_time": 0.0014354579616338015,
+      "fps": 696.6417873093445,
+      "brain_nodes": 1062,
+      "timing_breakdown": {
+        "brain_stats": 0.0014338749460875988,
+        "graph_access": 6.670597940683365e-07,
+        "other": 9.159557521343231e-07
+      }
+    },
+    {
+      "frame": 492,
+      "timestamp": 1461913.762649416,
+      "total_frame_time": 0.0013949580024927855,
+      "fps": 716.8674599615209,
+      "brain_nodes": 1063,
+      "timing_breakdown": {
+        "brain_stats": 0.0013934997841715813,
+        "graph_access": 5.830079317092896e-07,
+        "other": 8.752103894948959e-07
+      }
+    },
+    {
+      "frame": 493,
+      "timestamp": 1461913.960878958,
+      "total_frame_time": 0.0014854581095278263,
+      "fps": 673.1929992410651,
+      "brain_nodes": 1064,
+      "timing_breakdown": {
+        "brain_stats": 0.0014837919734418392,
+        "graph_access": 7.499475032091141e-07,
+        "other": 9.16188582777977e-07
+      }
+    },
+    {
+      "frame": 494,
+      "timestamp": 1461914.160735625,
+      "total_frame_time": 0.0014320421032607555,
+      "fps": 698.3034910237646,
+      "brain_nodes": 1065,
+      "timing_breakdown": {
+        "brain_stats": 0.0014305829536169767,
+        "graph_access": 6.2515027821064e-07,
+        "other": 8.33999365568161e-07
+      }
+    },
+    {
+      "frame": 495,
+      "timestamp": 1461914.362126208,
+      "total_frame_time": 0.0014207919593900442,
+      "fps": 703.8328119686903,
+      "brain_nodes": 1066,
+      "timing_breakdown": {
+        "brain_stats": 0.0014187498018145561,
+        "graph_access": 7.08969309926033e-07,
+        "other": 1.3331882655620575e-06
+      }
+    },
+    {
+      "frame": 496,
+      "timestamp": 1461914.561508708,
+      "total_frame_time": 0.001423457870259881,
+      "fps": 702.5146447203455,
+      "brain_nodes": 1067,
+      "timing_breakdown": {
+        "brain_stats": 0.0014210410881787539,
+        "graph_access": 6.249174475669861e-07,
+        "other": 1.7918646335601807e-06
+      }
+    },
+    {
+      "frame": 497,
+      "timestamp": 1461914.783652375,
+      "total_frame_time": 0.0015094589907675982,
+      "fps": 662.4890150155551,
+      "brain_nodes": 1068,
+      "timing_breakdown": {
+        "brain_stats": 0.0015076249837875366,
+        "graph_access": 7.080379873514175e-07,
+        "other": 1.1259689927101135e-06
+      }
+    },
+    {
+      "frame": 498,
+      "timestamp": 1461915.010787791,
+      "total_frame_time": 0.0016647081356495619,
+      "fps": 600.7059006831876,
+      "brain_nodes": 1069,
+      "timing_breakdown": {
+        "brain_stats": 0.0016621670220047235,
+        "graph_access": 1.00000761449337e-06,
+        "other": 1.541106030344963e-06
+      }
+    },
+    {
+      "frame": 499,
+      "timestamp": 1461915.219922833,
+      "total_frame_time": 0.0015843329019844532,
+      "fps": 631.1804790189309,
+      "brain_nodes": 1070,
+      "timing_breakdown": {
+        "brain_stats": 0.001582416007295251,
+        "graph_access": 7.920898497104645e-07,
+        "other": 1.1248048394918442e-06
+      }
+    },
+    {
+      "frame": 500,
+      "timestamp": 1461915.424465666,
+      "total_frame_time": 0.001679958077147603,
+      "fps": 595.2529492271008,
+      "brain_nodes": 1071,
+      "timing_breakdown": {
+        "brain_stats": 0.0016781250014901161,
+        "graph_access": 7.499475032091141e-07,
+        "other": 1.0831281542778015e-06
+      }
+    },
+    {
+      "frame": 501,
+      "timestamp": 1461915.62791925,
+      "total_frame_time": 0.0015411670319736004,
+      "fps": 648.8589356336099,
+      "brain_nodes": 1072,
+      "timing_breakdown": {
+        "brain_stats": 0.00153954210691154,
+        "graph_access": 7.499475032091141e-07,
+        "other": 8.749775588512421e-07
+      }
+    },
+    {
+      "frame": 502,
+      "timestamp": 1461915.834842791,
+      "total_frame_time": 0.0013937910553067923,
+      "fps": 717.4676549921512,
+      "brain_nodes": 1073,
+      "timing_breakdown": {
+        "brain_stats": 0.0013922909274697304,
+        "graph_access": 5.420297384262085e-07,
+        "other": 9.580980986356735e-07
+      }
+    },
+    {
+      "frame": 503,
+      "timestamp": 1461916.041324291,
+      "total_frame_time": 0.0015863748267292976,
+      "fps": 630.3680461582628,
+      "brain_nodes": 1074,
+      "timing_breakdown": {
+        "brain_stats": 0.0015845831949263811,
+        "graph_access": 8.33999365568161e-07,
+        "other": 9.576324373483658e-07
+      }
+    },
+    {
+      "frame": 504,
+      "timestamp": 1461916.246883041,
+      "total_frame_time": 0.001517249969765544,
+      "fps": 659.0871774111994,
+      "brain_nodes": 1075,
+      "timing_breakdown": {
+        "brain_stats": 0.00151545787230134,
+        "graph_access": 7.499475032091141e-07,
+        "other": 1.0421499609947205e-06
+      }
+    },
+    {
+      "frame": 505,
+      "timestamp": 1461916.452153958,
+      "total_frame_time": 0.0014790419954806566,
+      "fps": 676.113324067598,
+      "brain_nodes": 1076,
+      "timing_breakdown": {
+        "brain_stats": 0.0014772501308470964,
+        "graph_access": 5.830079317092896e-07,
+        "other": 1.2088567018508911e-06
+      }
+    },
+    {
+      "frame": 506,
+      "timestamp": 1461916.656802708,
+      "total_frame_time": 0.001521875150501728,
+      "fps": 657.0841239311401,
+      "brain_nodes": 1077,
+      "timing_breakdown": {
+        "brain_stats": 0.001519917044788599,
+        "graph_access": 7.08969309926033e-07,
+        "other": 1.2491364032030106e-06
+      }
+    },
+    {
+      "frame": 507,
+      "timestamp": 1461916.860778666,
+      "total_frame_time": 0.0015646661631762981,
+      "fps": 639.1139679086455,
+      "brain_nodes": 1078,
+      "timing_breakdown": {
+        "brain_stats": 0.0015627089887857437,
+        "graph_access": 8.33999365568161e-07,
+        "other": 1.123175024986267e-06
+      }
+    },
+    {
+      "frame": 508,
+      "timestamp": 1461917.065520041,
+      "total_frame_time": 0.0014651250094175339,
+      "fps": 682.5356154404558,
+      "brain_nodes": 1079,
+      "timing_breakdown": {
+        "brain_stats": 0.0014611249789595604,
+        "graph_access": 6.249174475669861e-07,
+        "other": 3.375113010406494e-06
+      }
+    },
+    {
+      "frame": 509,
+      "timestamp": 1461917.2727975,
+      "total_frame_time": 0.0015245419926941395,
+      "fps": 655.9347035320558,
+      "brain_nodes": 1080,
+      "timing_breakdown": {
+        "brain_stats": 0.0015224169474095106,
+        "graph_access": 6.249174475669861e-07,
+        "other": 1.500127837061882e-06
+      }
+    },
+    {
+      "frame": 510,
+      "timestamp": 1461917.477991791,
+      "total_frame_time": 0.0014964998699724674,
+      "fps": 668.2259184014483,
+      "brain_nodes": 1081,
+      "timing_breakdown": {
+        "brain_stats": 0.0014948751777410507,
+        "graph_access": 5.830079317092896e-07,
+        "other": 1.0416842997074127e-06
+      }
+    },
+    {
+      "frame": 511,
+      "timestamp": 1461917.68420925,
+      "total_frame_time": 0.0015027089975774288,
+      "fps": 665.4648382435561,
+      "brain_nodes": 1082,
+      "timing_breakdown": {
+        "brain_stats": 0.0015008749905973673,
+        "graph_access": 6.249174475669861e-07,
+        "other": 1.209089532494545e-06
+      }
+    },
+    {
+      "frame": 512,
+      "timestamp": 1461917.891850083,
+      "total_frame_time": 0.0015078748110681772,
+      "fps": 663.1850287966552,
+      "brain_nodes": 1083,
+      "timing_breakdown": {
+        "brain_stats": 0.0015062089078128338,
+        "graph_access": 5.830079317092896e-07,
+        "other": 1.0828953236341476e-06
+      }
+    },
+    {
+      "frame": 513,
+      "timestamp": 1461918.101089416,
+      "total_frame_time": 0.0014902499970048666,
+      "fps": 671.0283522964734,
+      "brain_nodes": 1084,
+      "timing_breakdown": {
+        "brain_stats": 0.0014881668612360954,
+        "graph_access": 8.328352123498917e-07,
+        "other": 1.25030055642128e-06
+      }
+    },
+    {
+      "frame": 514,
+      "timestamp": 1461918.307500041,
+      "total_frame_time": 0.0014412910677492619,
+      "fps": 693.8223807642216,
+      "brain_nodes": 1085,
+      "timing_breakdown": {
+        "brain_stats": 0.0014395408798009157,
+        "graph_access": 6.2515027821064e-07,
+        "other": 1.125037670135498e-06
+      }
+    },
+    {
+      "frame": 515,
+      "timestamp": 1461918.514993958,
+      "total_frame_time": 0.0015230418648570776,
+      "fps": 656.5807697570021,
+      "brain_nodes": 1086,
+      "timing_breakdown": {
+        "brain_stats": 0.0015211249701678753,
+        "graph_access": 5.83939254283905e-07,
+        "other": 1.3329554349184036e-06
+      }
+    },
+    {
+      "frame": 516,
+      "timestamp": 1461918.722982125,
+      "total_frame_time": 0.0014374169986695051,
+      "fps": 695.6923432278977,
+      "brain_nodes": 1087,
+      "timing_breakdown": {
+        "brain_stats": 0.0014358749613165855,
+        "graph_access": 6.249174475669861e-07,
+        "other": 9.171199053525925e-07
+      }
+    },
+    {
+      "frame": 517,
+      "timestamp": 1461918.931242458,
+      "total_frame_time": 0.0014194580726325512,
+      "fps": 704.4942145740049,
+      "brain_nodes": 1088,
+      "timing_breakdown": {
+        "brain_stats": 0.0014178750570863485,
+        "graph_access": 5.83939254283905e-07,
+        "other": 9.990762919187546e-07
+      }
+    },
+    {
+      "frame": 518,
+      "timestamp": 1461919.140343333,
+      "total_frame_time": 0.0014525000005960464,
+      "fps": 688.4681580651574,
+      "brain_nodes": 1089,
+      "timing_breakdown": {
+        "brain_stats": 0.0014508329331874847,
+        "graph_access": 7.909256964921951e-07,
+        "other": 8.761417120695114e-07
+      }
+    },
+    {
+      "frame": 519,
+      "timestamp": 1461919.34937625,
+      "total_frame_time": 0.0015530840028077364,
+      "fps": 643.8801753106427,
+      "brain_nodes": 1090,
+      "timing_breakdown": {
+        "brain_stats": 0.0015512499958276749,
+        "graph_access": 7.08969309926033e-07,
+        "other": 1.125037670135498e-06
+      }
+    },
+    {
+      "frame": 520,
+      "timestamp": 1461919.559305625,
+      "total_frame_time": 0.0014502499252557755,
+      "fps": 689.5363223850079,
+      "brain_nodes": 1091,
+      "timing_breakdown": {
+        "brain_stats": 0.0014487081207334995,
+        "graph_access": 5.408655852079391e-07,
+        "other": 1.0009389370679855e-06
+      }
+    },
+    {
+      "frame": 521,
+      "timestamp": 1461919.768137416,
+      "total_frame_time": 0.0014560411218553782,
+      "fps": 686.7937896738368,
+      "brain_nodes": 1092,
+      "timing_breakdown": {
+        "brain_stats": 0.001454374985769391,
+        "graph_access": 6.670597940683365e-07,
+        "other": 9.990762919187546e-07
+      }
+    },
+    {
+      "frame": 522,
+      "timestamp": 1461919.97873825,
+      "total_frame_time": 0.0015207920223474503,
+      "fps": 657.5521079183656,
+      "brain_nodes": 1093,
+      "timing_breakdown": {
+        "brain_stats": 0.0015192078426480293,
+        "graph_access": 5.83939254283905e-07,
+        "other": 1.000240445137024e-06
+      }
+    },
+    {
+      "frame": 523,
+      "timestamp": 1461920.18924675,
+      "total_frame_time": 0.0014377918560057878,
+      "fps": 695.5109641377566,
+      "brain_nodes": 1094,
+      "timing_breakdown": {
+        "brain_stats": 0.0014359590131789446,
+        "graph_access": 7.080379873514175e-07,
+        "other": 1.1248048394918442e-06
+      }
+    },
+    {
+      "frame": 524,
+      "timestamp": 1461920.407815416,
+      "total_frame_time": 0.0016045412048697472,
+      "fps": 623.2311123983741,
+      "brain_nodes": 1095,
+      "timing_breakdown": {
+        "brain_stats": 0.0016025409568101168,
+        "graph_access": 7.092021405696869e-07,
+        "other": 1.291045919060707e-06
+      }
+    },
+    {
+      "frame": 525,
+      "timestamp": 1461920.618660583,
+      "total_frame_time": 0.0016421249601989985,
+      "fps": 608.9670544188162,
+      "brain_nodes": 1096,
+      "timing_breakdown": {
+        "brain_stats": 0.0016399160958826542,
+        "graph_access": 6.658956408500671e-07,
+        "other": 1.542968675494194e-06
+      }
+    },
+    {
+      "frame": 526,
+      "timestamp": 1461920.836047958,
+      "total_frame_time": 0.001472707837820053,
+      "fps": 679.02130641216,
+      "brain_nodes": 1097,
+      "timing_breakdown": {
+        "brain_stats": 0.0014706249348819256,
+        "graph_access": 6.658956408500671e-07,
+        "other": 1.4170072972774506e-06
+      }
+    },
+    {
+      "frame": 527,
+      "timestamp": 1461921.050625375,
+      "total_frame_time": 0.0015748341102153063,
+      "fps": 634.9875161538654,
+      "brain_nodes": 1098,
+      "timing_breakdown": {
+        "brain_stats": 0.001572042005136609,
+        "graph_access": 8.330680429935455e-07,
+        "other": 1.959037035703659e-06
+      }
+    },
+    {
+      "frame": 528,
+      "timestamp": 1461921.266275,
+      "total_frame_time": 0.0014816250186413527,
+      "fps": 674.9346072172824,
+      "brain_nodes": 1099,
+      "timing_breakdown": {
+        "brain_stats": 0.001479417085647583,
+        "graph_access": 6.668269634246826e-07,
+        "other": 1.541106030344963e-06
+      }
+    },
+    {
+      "frame": 529,
+      "timestamp": 1461921.480167958,
+      "total_frame_time": 0.001454582903534174,
+      "fps": 687.482299957134,
+      "brain_nodes": 1100,
+      "timing_breakdown": {
+        "brain_stats": 0.001452833879739046,
+        "graph_access": 5.830079317092896e-07,
+        "other": 1.166015863418579e-06
+      }
+    },
+    {
+      "frame": 530,
+      "timestamp": 1461921.6956375,
+      "total_frame_time": 0.0014419588260352612,
+      "fps": 693.501077800918,
+      "brain_nodes": 1101,
+      "timing_breakdown": {
+        "brain_stats": 0.0014399171341210604,
+        "graph_access": 6.670597940683365e-07,
+        "other": 1.3746321201324463e-06
+      }
+    },
+    {
+      "frame": 531,
+      "timestamp": 1461921.91319275,
+      "total_frame_time": 0.0018700838554650545,
+      "fps": 534.7353794203624,
+      "brain_nodes": 1102,
+      "timing_breakdown": {
+        "brain_stats": 0.0018661250360310078,
+        "graph_access": 9.580980986356735e-07,
+        "other": 3.0007213354110718e-06
+      }
+    },
+    {
+      "frame": 532,
+      "timestamp": 1461922.128402458,
+      "total_frame_time": 0.0015783330891281366,
+      "fps": 633.579823478449,
+      "brain_nodes": 1103,
+      "timing_breakdown": {
+        "brain_stats": 0.0015760839451104403,
+        "graph_access": 7.080379873514175e-07,
+        "other": 1.541106030344963e-06
+      }
+    },
+    {
+      "frame": 533,
+      "timestamp": 1461922.345942916,
+      "total_frame_time": 0.001527333166450262,
+      "fps": 654.7359947169491,
+      "brain_nodes": 1104,
+      "timing_breakdown": {
+        "brain_stats": 0.0015248749405145645,
+        "graph_access": 9.168870747089386e-07,
+        "other": 1.541338860988617e-06
+      }
+    },
+    {
+      "frame": 534,
+      "timestamp": 1461922.561722375,
+      "total_frame_time": 0.001437708968296647,
+      "fps": 695.5510621769084,
+      "brain_nodes": 1105,
+      "timing_breakdown": {
+        "brain_stats": 0.0014358330518007278,
+        "graph_access": 5.830079317092896e-07,
+        "other": 1.292908564209938e-06
+      }
+    },
+    {
+      "frame": 535,
+      "timestamp": 1461922.779244333,
+      "total_frame_time": 0.0015502080786973238,
+      "fps": 645.0746927085578,
+      "brain_nodes": 1106,
+      "timing_breakdown": {
+        "brain_stats": 0.0015477079432457685,
+        "graph_access": 7.501803338527679e-07,
+        "other": 1.7499551177024841e-06
+      }
+    },
+    {
+      "frame": 536,
+      "timestamp": 1461922.998176166,
+      "total_frame_time": 0.0014793751761317253,
+      "fps": 675.96105175619,
+      "brain_nodes": 1107,
+      "timing_breakdown": {
+        "brain_stats": 0.0014776668976992369,
+        "graph_access": 5.830079317092896e-07,
+        "other": 1.125270500779152e-06
+      }
+    },
+    {
+      "frame": 537,
+      "timestamp": 1461923.214773041,
+      "total_frame_time": 0.0014333329163491726,
+      "fps": 697.6746215715813,
+      "brain_nodes": 1108,
+      "timing_breakdown": {
+        "brain_stats": 0.0014316660817712545,
+        "graph_access": 5.83939254283905e-07,
+        "other": 1.0828953236341476e-06
+      }
+    },
+    {
+      "frame": 538,
+      "timestamp": 1461923.477681458,
+      "total_frame_time": 0.0019563750829547644,
+      "fps": 511.149425645758,
+      "brain_nodes": 1109,
+      "timing_breakdown": {
+        "brain_stats": 0.0019539999775588512,
+        "graph_access": 9.580980986356735e-07,
+        "other": 1.4170072972774506e-06
+      }
+    }
+  ],
+  "events_log": [
+    {
+      "timestamp": 1751964334.651891,
+      "elapsed_seconds": 16.56135606765747,
+      "frame": 188,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.101s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964335.0889118,
+      "elapsed_seconds": 16.998376846313477,
+      "frame": 192,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.100s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964335.193152,
+      "elapsed_seconds": 17.102617025375366,
+      "frame": 193,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.100s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964335.2998972,
+      "elapsed_seconds": 17.209362268447876,
+      "frame": 194,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.103s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964335.4068868,
+      "elapsed_seconds": 17.316351890563965,
+      "frame": 195,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.102s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964335.5120268,
+      "elapsed_seconds": 17.421491861343384,
+      "frame": 196,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.101s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964335.618665,
+      "elapsed_seconds": 17.528130054473877,
+      "frame": 197,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.102s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964335.723974,
+      "elapsed_seconds": 17.63343906402588,
+      "frame": 198,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.101s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964335.82917,
+      "elapsed_seconds": 17.738635063171387,
+      "frame": 199,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.101s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964335.9352949,
+      "elapsed_seconds": 17.844759941101074,
+      "frame": 200,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.102s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964336.041928,
+      "elapsed_seconds": 17.951393127441406,
+      "frame": 201,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.102s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964336.148198,
+      "elapsed_seconds": 18.057662963867188,
+      "frame": 202,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.102s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964336.255724,
+      "elapsed_seconds": 18.165189027786255,
+      "frame": 203,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.103s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964336.364068,
+      "elapsed_seconds": 18.27353310585022,
+      "frame": 204,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.104s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964336.4718661,
+      "elapsed_seconds": 18.381331205368042,
+      "frame": 205,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.104s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964336.580989,
+      "elapsed_seconds": 18.490453958511353,
+      "frame": 206,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.105s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964336.690179,
+      "elapsed_seconds": 18.59964418411255,
+      "frame": 207,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.104s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964336.799198,
+      "elapsed_seconds": 18.70866298675537,
+      "frame": 208,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.105s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964336.907315,
+      "elapsed_seconds": 18.81678009033203,
+      "frame": 209,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.104s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964337.015923,
+      "elapsed_seconds": 18.92538809776306,
+      "frame": 210,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.104s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964337.125749,
+      "elapsed_seconds": 19.03521418571472,
+      "frame": 211,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.106s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964337.235285,
+      "elapsed_seconds": 19.144750118255615,
+      "frame": 212,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.105s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964337.345427,
+      "elapsed_seconds": 19.254892110824585,
+      "frame": 213,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.106s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964337.455434,
+      "elapsed_seconds": 19.364899158477783,
+      "frame": 214,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.106s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964337.56851,
+      "elapsed_seconds": 19.477975130081177,
+      "frame": 215,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.107s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964337.679588,
+      "elapsed_seconds": 19.5890531539917,
+      "frame": 216,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.107s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964337.7900522,
+      "elapsed_seconds": 19.699517250061035,
+      "frame": 217,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.106s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964337.901248,
+      "elapsed_seconds": 19.810713052749634,
+      "frame": 218,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.107s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964338.01289,
+      "elapsed_seconds": 19.92235517501831,
+      "frame": 219,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.107s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964338.126163,
+      "elapsed_seconds": 20.035628080368042,
+      "frame": 220,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.109s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964338.2403562,
+      "elapsed_seconds": 20.149821281433105,
+      "frame": 221,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.110s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964338.35251,
+      "elapsed_seconds": 20.261975049972534,
+      "frame": 222,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.108s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964338.46471,
+      "elapsed_seconds": 20.37417507171631,
+      "frame": 223,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.108s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964338.577617,
+      "elapsed_seconds": 20.48708200454712,
+      "frame": 224,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.109s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964338.690528,
+      "elapsed_seconds": 20.599992990493774,
+      "frame": 225,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.109s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964338.804576,
+      "elapsed_seconds": 20.714040994644165,
+      "frame": 226,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.110s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964338.918324,
+      "elapsed_seconds": 20.827789068222046,
+      "frame": 227,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.109s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964339.033552,
+      "elapsed_seconds": 20.94301700592041,
+      "frame": 228,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.111s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964339.148236,
+      "elapsed_seconds": 21.057701110839844,
+      "frame": 229,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.110s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964339.2627242,
+      "elapsed_seconds": 21.172189235687256,
+      "frame": 230,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.110s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964339.377703,
+      "elapsed_seconds": 21.28716802597046,
+      "frame": 231,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.111s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964339.493184,
+      "elapsed_seconds": 21.40264916419983,
+      "frame": 232,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.111s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964339.609473,
+      "elapsed_seconds": 21.518938064575195,
+      "frame": 233,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.112s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964339.7245991,
+      "elapsed_seconds": 21.634064197540283,
+      "frame": 234,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.111s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964339.8406668,
+      "elapsed_seconds": 21.750131845474243,
+      "frame": 235,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.112s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964339.9571042,
+      "elapsed_seconds": 21.86656928062439,
+      "frame": 236,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.112s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964340.073237,
+      "elapsed_seconds": 21.982702016830444,
+      "frame": 237,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.112s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964340.189526,
+      "elapsed_seconds": 22.09899115562439,
+      "frame": 238,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.112s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964340.308362,
+      "elapsed_seconds": 22.217827081680298,
+      "frame": 239,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.115s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964340.425329,
+      "elapsed_seconds": 22.33479404449463,
+      "frame": 240,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.113s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964340.544096,
+      "elapsed_seconds": 22.453561067581177,
+      "frame": 241,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.114s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964340.671683,
+      "elapsed_seconds": 22.581148147583008,
+      "frame": 242,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.122s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964340.795116,
+      "elapsed_seconds": 22.704581022262573,
+      "frame": 243,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.119s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964340.9149241,
+      "elapsed_seconds": 22.824389219284058,
+      "frame": 244,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.116s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964341.034198,
+      "elapsed_seconds": 22.943663120269775,
+      "frame": 245,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.115s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964341.154463,
+      "elapsed_seconds": 23.06392812728882,
+      "frame": 246,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.116s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964341.273588,
+      "elapsed_seconds": 23.183053016662598,
+      "frame": 247,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.115s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964341.393068,
+      "elapsed_seconds": 23.30253314971924,
+      "frame": 248,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.115s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964342.544875,
+      "elapsed_seconds": 24.4543399810791,
+      "frame": 249,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.133s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964342.668117,
+      "elapsed_seconds": 24.577582120895386,
+      "frame": 250,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.117s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964342.7908149,
+      "elapsed_seconds": 24.70027995109558,
+      "frame": 251,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.118s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964342.912438,
+      "elapsed_seconds": 24.821902990341187,
+      "frame": 252,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.117s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964343.034623,
+      "elapsed_seconds": 24.944087982177734,
+      "frame": 253,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.118s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964343.161311,
+      "elapsed_seconds": 25.070775985717773,
+      "frame": 254,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.122s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964343.283228,
+      "elapsed_seconds": 25.19269299507141,
+      "frame": 255,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.117s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964343.410562,
+      "elapsed_seconds": 25.320027112960815,
+      "frame": 256,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.122s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964343.532979,
+      "elapsed_seconds": 25.44244408607483,
+      "frame": 257,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.118s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964343.656689,
+      "elapsed_seconds": 25.56615400314331,
+      "frame": 258,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.119s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964343.780256,
+      "elapsed_seconds": 25.68972110748291,
+      "frame": 259,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.119s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964343.903906,
+      "elapsed_seconds": 25.813371181488037,
+      "frame": 260,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.119s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964344.027261,
+      "elapsed_seconds": 25.936726093292236,
+      "frame": 261,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.119s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964344.151746,
+      "elapsed_seconds": 26.061211109161377,
+      "frame": 262,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.120s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964344.27616,
+      "elapsed_seconds": 26.185625076293945,
+      "frame": 263,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.120s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964344.401387,
+      "elapsed_seconds": 26.31085205078125,
+      "frame": 264,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.121s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964344.526182,
+      "elapsed_seconds": 26.435647010803223,
+      "frame": 265,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.120s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964344.651378,
+      "elapsed_seconds": 26.560842990875244,
+      "frame": 266,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.121s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964344.777386,
+      "elapsed_seconds": 26.686851024627686,
+      "frame": 267,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.122s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964344.902692,
+      "elapsed_seconds": 26.812157154083252,
+      "frame": 268,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.121s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964345.028335,
+      "elapsed_seconds": 26.93780016899109,
+      "frame": 269,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.121s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964345.1539662,
+      "elapsed_seconds": 27.06343126296997,
+      "frame": 270,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.121s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964345.2808251,
+      "elapsed_seconds": 27.190290212631226,
+      "frame": 271,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.123s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964345.40703,
+      "elapsed_seconds": 27.316495180130005,
+      "frame": 272,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.122s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964345.548312,
+      "elapsed_seconds": 27.45777702331543,
+      "frame": 273,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.137s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964345.6755042,
+      "elapsed_seconds": 27.58496928215027,
+      "frame": 274,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.123s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964345.802301,
+      "elapsed_seconds": 27.711766004562378,
+      "frame": 275,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.122s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964345.929992,
+      "elapsed_seconds": 27.839457035064697,
+      "frame": 276,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.123s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964346.058044,
+      "elapsed_seconds": 27.967509031295776,
+      "frame": 277,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.124s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964346.186786,
+      "elapsed_seconds": 28.096251010894775,
+      "frame": 278,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.124s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964346.317452,
+      "elapsed_seconds": 28.226917028427124,
+      "frame": 279,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.126s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964346.44679,
+      "elapsed_seconds": 28.356255054473877,
+      "frame": 280,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.125s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964346.575295,
+      "elapsed_seconds": 28.48476004600525,
+      "frame": 281,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.124s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964346.7039192,
+      "elapsed_seconds": 28.613384246826172,
+      "frame": 282,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.124s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964346.832872,
+      "elapsed_seconds": 28.742336988449097,
+      "frame": 283,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.125s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964346.962469,
+      "elapsed_seconds": 28.871934175491333,
+      "frame": 284,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.125s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964347.0925188,
+      "elapsed_seconds": 29.001983880996704,
+      "frame": 285,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.126s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964347.2223392,
+      "elapsed_seconds": 29.13180422782898,
+      "frame": 286,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.126s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964347.352999,
+      "elapsed_seconds": 29.26246404647827,
+      "frame": 287,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.126s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964347.485607,
+      "elapsed_seconds": 29.395071983337402,
+      "frame": 288,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.128s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964347.616978,
+      "elapsed_seconds": 29.526443004608154,
+      "frame": 289,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.127s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964347.748051,
+      "elapsed_seconds": 29.65751600265503,
+      "frame": 290,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.127s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964347.880403,
+      "elapsed_seconds": 29.789868116378784,
+      "frame": 291,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.128s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964348.0120509,
+      "elapsed_seconds": 29.921515941619873,
+      "frame": 292,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.127s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964348.146251,
+      "elapsed_seconds": 30.055716037750244,
+      "frame": 293,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.130s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964348.280703,
+      "elapsed_seconds": 30.190168142318726,
+      "frame": 294,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.129s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964348.4147809,
+      "elapsed_seconds": 30.324245929718018,
+      "frame": 295,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.129s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964348.547389,
+      "elapsed_seconds": 30.456854104995728,
+      "frame": 296,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.128s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964348.681376,
+      "elapsed_seconds": 30.590841054916382,
+      "frame": 297,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.130s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964348.815543,
+      "elapsed_seconds": 30.725008010864258,
+      "frame": 298,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.130s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964348.949446,
+      "elapsed_seconds": 30.85891103744507,
+      "frame": 299,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.130s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964349.0840719,
+      "elapsed_seconds": 30.993536949157715,
+      "frame": 300,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.130s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964349.2237499,
+      "elapsed_seconds": 31.133214950561523,
+      "frame": 301,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.132s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964349.3588932,
+      "elapsed_seconds": 31.26835823059082,
+      "frame": 302,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.131s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964349.4938,
+      "elapsed_seconds": 31.40326499938965,
+      "frame": 303,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.131s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964349.632323,
+      "elapsed_seconds": 31.54178810119629,
+      "frame": 304,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.134s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964349.7686021,
+      "elapsed_seconds": 31.678067207336426,
+      "frame": 305,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.132s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964349.904416,
+      "elapsed_seconds": 31.813881158828735,
+      "frame": 306,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.131s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964350.04573,
+      "elapsed_seconds": 31.95519518852234,
+      "frame": 307,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.132s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964350.182436,
+      "elapsed_seconds": 32.09190106391907,
+      "frame": 308,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.132s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964350.319901,
+      "elapsed_seconds": 32.229366064071655,
+      "frame": 309,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.133s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964350.4590678,
+      "elapsed_seconds": 32.36853289604187,
+      "frame": 310,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.135s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964350.597266,
+      "elapsed_seconds": 32.506731033325195,
+      "frame": 311,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.134s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964350.735602,
+      "elapsed_seconds": 32.64506697654724,
+      "frame": 312,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.134s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964350.874123,
+      "elapsed_seconds": 32.78358817100525,
+      "frame": 313,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.134s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964351.012907,
+      "elapsed_seconds": 32.92237210273743,
+      "frame": 314,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.134s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964351.151245,
+      "elapsed_seconds": 33.060710191726685,
+      "frame": 315,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.134s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964351.29196,
+      "elapsed_seconds": 33.201425075531006,
+      "frame": 316,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.136s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964351.4325912,
+      "elapsed_seconds": 33.34205627441406,
+      "frame": 317,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.136s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964351.5726578,
+      "elapsed_seconds": 33.48212289810181,
+      "frame": 318,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.136s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964351.712617,
+      "elapsed_seconds": 33.622081995010376,
+      "frame": 319,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.136s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964351.8573172,
+      "elapsed_seconds": 33.76678228378296,
+      "frame": 320,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.139s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964351.99942,
+      "elapsed_seconds": 33.90888500213623,
+      "frame": 321,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.138s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964352.141435,
+      "elapsed_seconds": 34.05089998245239,
+      "frame": 322,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.138s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964352.2837172,
+      "elapsed_seconds": 34.19318222999573,
+      "frame": 323,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.138s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964352.42592,
+      "elapsed_seconds": 34.33538508415222,
+      "frame": 324,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.138s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964352.567959,
+      "elapsed_seconds": 34.47742414474487,
+      "frame": 325,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.138s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964352.7099478,
+      "elapsed_seconds": 34.619412899017334,
+      "frame": 326,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.138s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964352.852265,
+      "elapsed_seconds": 34.76172995567322,
+      "frame": 327,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.138s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964352.995413,
+      "elapsed_seconds": 34.90487813949585,
+      "frame": 328,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.139s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964353.147818,
+      "elapsed_seconds": 35.05728316307068,
+      "frame": 329,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.148s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964353.294288,
+      "elapsed_seconds": 35.20375299453735,
+      "frame": 330,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.141s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964353.4383512,
+      "elapsed_seconds": 35.34781622886658,
+      "frame": 331,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.140s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964353.5835562,
+      "elapsed_seconds": 35.49302124977112,
+      "frame": 332,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.141s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964353.730459,
+      "elapsed_seconds": 35.63992404937744,
+      "frame": 333,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.142s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964353.876336,
+      "elapsed_seconds": 35.78580117225647,
+      "frame": 334,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.141s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964354.020746,
+      "elapsed_seconds": 35.93021106719971,
+      "frame": 335,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.140s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964354.166281,
+      "elapsed_seconds": 36.075746059417725,
+      "frame": 336,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.141s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964354.311679,
+      "elapsed_seconds": 36.22114396095276,
+      "frame": 337,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.141s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964354.456964,
+      "elapsed_seconds": 36.36642909049988,
+      "frame": 338,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.141s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964354.602386,
+      "elapsed_seconds": 36.5118510723114,
+      "frame": 339,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.141s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964354.750891,
+      "elapsed_seconds": 36.66035604476929,
+      "frame": 340,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.144s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964354.897363,
+      "elapsed_seconds": 36.806828022003174,
+      "frame": 341,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.142s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964355.044899,
+      "elapsed_seconds": 36.95436406135559,
+      "frame": 342,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.143s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964355.1965592,
+      "elapsed_seconds": 37.10602426528931,
+      "frame": 343,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.147s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964355.351437,
+      "elapsed_seconds": 37.26090216636658,
+      "frame": 344,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.149s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964355.500122,
+      "elapsed_seconds": 37.409587144851685,
+      "frame": 345,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.144s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964355.6492648,
+      "elapsed_seconds": 37.55872988700867,
+      "frame": 346,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.145s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964355.798002,
+      "elapsed_seconds": 37.7074670791626,
+      "frame": 347,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.144s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964355.947368,
+      "elapsed_seconds": 37.85683298110962,
+      "frame": 348,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.145s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964356.096697,
+      "elapsed_seconds": 38.00616216659546,
+      "frame": 349,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.145s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964356.247382,
+      "elapsed_seconds": 38.15684700012207,
+      "frame": 350,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.146s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964356.400149,
+      "elapsed_seconds": 38.309614181518555,
+      "frame": 351,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.148s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964356.550754,
+      "elapsed_seconds": 38.46021914482117,
+      "frame": 352,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.146s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964356.701615,
+      "elapsed_seconds": 38.611080169677734,
+      "frame": 353,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.147s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964356.852894,
+      "elapsed_seconds": 38.76235914230347,
+      "frame": 354,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.147s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964357.004262,
+      "elapsed_seconds": 38.913727045059204,
+      "frame": 355,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.147s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964357.156296,
+      "elapsed_seconds": 39.06576108932495,
+      "frame": 356,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.148s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964357.309667,
+      "elapsed_seconds": 39.2191321849823,
+      "frame": 357,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.149s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964357.463032,
+      "elapsed_seconds": 39.37249708175659,
+      "frame": 358,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.149s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964357.61677,
+      "elapsed_seconds": 39.52623510360718,
+      "frame": 359,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.149s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964357.770397,
+      "elapsed_seconds": 39.6798620223999,
+      "frame": 360,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.149s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964357.925527,
+      "elapsed_seconds": 39.83499217033386,
+      "frame": 361,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.151s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964358.0798662,
+      "elapsed_seconds": 39.98933124542236,
+      "frame": 362,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.150s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964358.236727,
+      "elapsed_seconds": 40.14619207382202,
+      "frame": 363,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.152s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964358.3912342,
+      "elapsed_seconds": 40.30069923400879,
+      "frame": 364,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.150s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964358.544992,
+      "elapsed_seconds": 40.45445704460144,
+      "frame": 365,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.149s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964358.704538,
+      "elapsed_seconds": 40.61400318145752,
+      "frame": 366,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.155s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964358.859699,
+      "elapsed_seconds": 40.769164085388184,
+      "frame": 367,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.151s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964359.01487,
+      "elapsed_seconds": 40.92433500289917,
+      "frame": 368,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.151s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964359.17037,
+      "elapsed_seconds": 41.079835176467896,
+      "frame": 369,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.151s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964359.3263302,
+      "elapsed_seconds": 41.23579525947571,
+      "frame": 370,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.152s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964359.482342,
+      "elapsed_seconds": 41.391807079315186,
+      "frame": 371,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.152s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964359.6397598,
+      "elapsed_seconds": 41.549224853515625,
+      "frame": 372,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.153s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964359.801482,
+      "elapsed_seconds": 41.710947036743164,
+      "frame": 373,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.157s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964359.961351,
+      "elapsed_seconds": 41.87081599235535,
+      "frame": 374,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.156s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964360.138366,
+      "elapsed_seconds": 42.0478310585022,
+      "frame": 375,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.172s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964360.3056672,
+      "elapsed_seconds": 42.21513223648071,
+      "frame": 376,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.162s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964360.4720352,
+      "elapsed_seconds": 42.381500244140625,
+      "frame": 377,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.161s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964360.6414049,
+      "elapsed_seconds": 42.550869941711426,
+      "frame": 378,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.164s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964360.807744,
+      "elapsed_seconds": 42.71720910072327,
+      "frame": 379,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.162s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964360.9744499,
+      "elapsed_seconds": 42.883914947509766,
+      "frame": 380,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.162s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964361.142121,
+      "elapsed_seconds": 43.05158615112305,
+      "frame": 381,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.163s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964361.311123,
+      "elapsed_seconds": 43.220587968826294,
+      "frame": 382,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.165s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964361.475127,
+      "elapsed_seconds": 43.384592056274414,
+      "frame": 383,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.159s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964361.636296,
+      "elapsed_seconds": 43.54576110839844,
+      "frame": 384,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.157s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964361.79677,
+      "elapsed_seconds": 43.70623517036438,
+      "frame": 385,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.156s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964361.957516,
+      "elapsed_seconds": 43.8669810295105,
+      "frame": 386,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.156s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964362.11862,
+      "elapsed_seconds": 44.02808499336243,
+      "frame": 387,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.157s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964362.280821,
+      "elapsed_seconds": 44.19028615951538,
+      "frame": 388,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.158s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964362.44208,
+      "elapsed_seconds": 44.351545095443726,
+      "frame": 389,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.157s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964362.6035142,
+      "elapsed_seconds": 44.51297926902771,
+      "frame": 390,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.157s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964362.767241,
+      "elapsed_seconds": 44.676706075668335,
+      "frame": 391,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.159s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964362.929535,
+      "elapsed_seconds": 44.83899998664856,
+      "frame": 392,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.158s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964363.092093,
+      "elapsed_seconds": 45.00155806541443,
+      "frame": 393,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.158s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964363.262719,
+      "elapsed_seconds": 45.172183990478516,
+      "frame": 394,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.166s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964363.426998,
+      "elapsed_seconds": 45.33646297454834,
+      "frame": 395,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.160s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964363.591004,
+      "elapsed_seconds": 45.50046896934509,
+      "frame": 396,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.160s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964363.756095,
+      "elapsed_seconds": 45.66556000709534,
+      "frame": 397,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.161s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964363.922166,
+      "elapsed_seconds": 45.83163118362427,
+      "frame": 398,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.162s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964364.0886059,
+      "elapsed_seconds": 45.99807095527649,
+      "frame": 399,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.162s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964364.253705,
+      "elapsed_seconds": 46.16317009925842,
+      "frame": 400,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.161s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964364.4199731,
+      "elapsed_seconds": 46.32943820953369,
+      "frame": 401,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.162s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964364.585973,
+      "elapsed_seconds": 46.49543809890747,
+      "frame": 402,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.162s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964364.752087,
+      "elapsed_seconds": 46.66155219078064,
+      "frame": 403,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.162s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964364.919764,
+      "elapsed_seconds": 46.82922911643982,
+      "frame": 404,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.163s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964365.087156,
+      "elapsed_seconds": 46.99662113189697,
+      "frame": 405,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.163s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964365.254966,
+      "elapsed_seconds": 47.16443109512329,
+      "frame": 406,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.163s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964365.4230149,
+      "elapsed_seconds": 47.33247995376587,
+      "frame": 407,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.164s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964365.593687,
+      "elapsed_seconds": 47.5031521320343,
+      "frame": 408,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.166s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964365.763083,
+      "elapsed_seconds": 47.672548055648804,
+      "frame": 409,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.164s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964365.9334762,
+      "elapsed_seconds": 47.84294128417969,
+      "frame": 410,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.166s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964366.102508,
+      "elapsed_seconds": 48.0119731426239,
+      "frame": 411,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.165s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964366.2729442,
+      "elapsed_seconds": 48.18240928649902,
+      "frame": 412,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.166s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964366.4441862,
+      "elapsed_seconds": 48.35365128517151,
+      "frame": 413,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.166s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964366.614708,
+      "elapsed_seconds": 48.52417302131653,
+      "frame": 414,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.166s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964366.786444,
+      "elapsed_seconds": 48.69590902328491,
+      "frame": 415,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.167s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964366.9575438,
+      "elapsed_seconds": 48.86700892448425,
+      "frame": 416,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.167s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964367.1283672,
+      "elapsed_seconds": 49.037832260131836,
+      "frame": 417,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.166s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964367.3001568,
+      "elapsed_seconds": 49.20962190628052,
+      "frame": 418,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.167s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964367.490837,
+      "elapsed_seconds": 49.40030217170715,
+      "frame": 419,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.186s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964367.676587,
+      "elapsed_seconds": 49.58605217933655,
+      "frame": 420,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.181s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964367.853274,
+      "elapsed_seconds": 49.762739181518555,
+      "frame": 421,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.172s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964368.0288582,
+      "elapsed_seconds": 49.93832325935364,
+      "frame": 422,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.171s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964368.206835,
+      "elapsed_seconds": 50.116300106048584,
+      "frame": 423,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.173s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964368.3849669,
+      "elapsed_seconds": 50.294431924819946,
+      "frame": 424,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.174s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964368.5585542,
+      "elapsed_seconds": 50.468019247055054,
+      "frame": 425,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.169s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964368.733642,
+      "elapsed_seconds": 50.643107175827026,
+      "frame": 426,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.171s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964368.9093409,
+      "elapsed_seconds": 50.81880593299866,
+      "frame": 427,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.171s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964369.085091,
+      "elapsed_seconds": 50.994556188583374,
+      "frame": 428,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.171s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964369.261346,
+      "elapsed_seconds": 51.17081117630005,
+      "frame": 429,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.172s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964369.436198,
+      "elapsed_seconds": 51.34566307067871,
+      "frame": 430,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.170s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964369.6139562,
+      "elapsed_seconds": 51.52342128753662,
+      "frame": 431,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.173s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964369.79128,
+      "elapsed_seconds": 51.70074510574341,
+      "frame": 432,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.173s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964369.968935,
+      "elapsed_seconds": 51.87840008735657,
+      "frame": 433,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.173s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964370.147,
+      "elapsed_seconds": 52.05646514892578,
+      "frame": 434,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.174s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964370.325289,
+      "elapsed_seconds": 52.23475408554077,
+      "frame": 435,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.174s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964370.5066838,
+      "elapsed_seconds": 52.41614890098572,
+      "frame": 436,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.177s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964370.6891189,
+      "elapsed_seconds": 52.598583936691284,
+      "frame": 437,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.178s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964370.867262,
+      "elapsed_seconds": 52.776726961135864,
+      "frame": 438,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.174s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964371.049891,
+      "elapsed_seconds": 52.95935606956482,
+      "frame": 439,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.178s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964371.23057,
+      "elapsed_seconds": 53.1400351524353,
+      "frame": 440,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.175s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964371.413093,
+      "elapsed_seconds": 53.32255816459656,
+      "frame": 441,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.176s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964371.6011431,
+      "elapsed_seconds": 53.510608196258545,
+      "frame": 442,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.183s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964371.784561,
+      "elapsed_seconds": 53.69402599334717,
+      "frame": 443,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.179s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964371.966562,
+      "elapsed_seconds": 53.87602710723877,
+      "frame": 444,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.178s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964372.147439,
+      "elapsed_seconds": 54.05690407752991,
+      "frame": 445,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.176s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964372.329603,
+      "elapsed_seconds": 54.239068031311035,
+      "frame": 446,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.178s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964372.512834,
+      "elapsed_seconds": 54.42229914665222,
+      "frame": 447,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.179s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964372.700755,
+      "elapsed_seconds": 54.610219955444336,
+      "frame": 448,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.179s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964372.882807,
+      "elapsed_seconds": 54.792272090911865,
+      "frame": 449,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.177s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964373.066808,
+      "elapsed_seconds": 54.97627305984497,
+      "frame": 450,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.179s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964373.253463,
+      "elapsed_seconds": 55.162928104400635,
+      "frame": 451,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.182s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964373.436867,
+      "elapsed_seconds": 55.34633207321167,
+      "frame": 452,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.179s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964373.62255,
+      "elapsed_seconds": 55.53201508522034,
+      "frame": 453,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.181s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964373.8082628,
+      "elapsed_seconds": 55.71772789955139,
+      "frame": 454,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.181s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964373.99327,
+      "elapsed_seconds": 55.902734994888306,
+      "frame": 455,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.180s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964374.1964211,
+      "elapsed_seconds": 56.10588622093201,
+      "frame": 456,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.197s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964374.3930519,
+      "elapsed_seconds": 56.30251693725586,
+      "frame": 457,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.190s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964374.5829902,
+      "elapsed_seconds": 56.49245524406433,
+      "frame": 458,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.185s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964374.7686558,
+      "elapsed_seconds": 56.678120851516724,
+      "frame": 459,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.181s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964374.955617,
+      "elapsed_seconds": 56.865082025527954,
+      "frame": 460,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.182s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964375.142325,
+      "elapsed_seconds": 57.05178999900818,
+      "frame": 461,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.182s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964375.3383439,
+      "elapsed_seconds": 57.24780893325806,
+      "frame": 462,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.191s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964375.5281081,
+      "elapsed_seconds": 57.437573194503784,
+      "frame": 463,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.185s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964375.717983,
+      "elapsed_seconds": 57.627448081970215,
+      "frame": 464,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.185s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964375.905928,
+      "elapsed_seconds": 57.81539297103882,
+      "frame": 465,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.183s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964376.099757,
+      "elapsed_seconds": 58.00922203063965,
+      "frame": 466,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.189s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964376.289218,
+      "elapsed_seconds": 58.19868302345276,
+      "frame": 467,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.185s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964376.479608,
+      "elapsed_seconds": 58.38907313346863,
+      "frame": 468,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.186s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964376.672703,
+      "elapsed_seconds": 58.582168102264404,
+      "frame": 469,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.188s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964376.864533,
+      "elapsed_seconds": 58.77399802207947,
+      "frame": 470,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.187s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964377.054655,
+      "elapsed_seconds": 58.96412014961243,
+      "frame": 471,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.186s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964377.2450502,
+      "elapsed_seconds": 59.15451526641846,
+      "frame": 472,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.186s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964377.435343,
+      "elapsed_seconds": 59.34480810165405,
+      "frame": 473,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.186s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964377.627491,
+      "elapsed_seconds": 59.53695607185364,
+      "frame": 474,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.188s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964377.820076,
+      "elapsed_seconds": 59.729541063308716,
+      "frame": 475,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.188s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964378.012567,
+      "elapsed_seconds": 59.92203211784363,
+      "frame": 476,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.188s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964378.210796,
+      "elapsed_seconds": 60.12026119232178,
+      "frame": 477,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.192s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964378.4055,
+      "elapsed_seconds": 60.31496500968933,
+      "frame": 478,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.190s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964378.5993228,
+      "elapsed_seconds": 60.508787870407104,
+      "frame": 479,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.189s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964378.792419,
+      "elapsed_seconds": 60.701884031295776,
+      "frame": 480,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.188s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964378.9865751,
+      "elapsed_seconds": 60.896040201187134,
+      "frame": 481,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.190s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964379.182676,
+      "elapsed_seconds": 61.09214115142822,
+      "frame": 482,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.192s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964379.376966,
+      "elapsed_seconds": 61.286431074142456,
+      "frame": 483,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.190s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964379.575487,
+      "elapsed_seconds": 61.484951972961426,
+      "frame": 484,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.194s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964379.769994,
+      "elapsed_seconds": 61.67945909500122,
+      "frame": 485,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.190s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964379.9721658,
+      "elapsed_seconds": 61.88163089752197,
+      "frame": 486,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.196s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964380.1703522,
+      "elapsed_seconds": 62.07981729507446,
+      "frame": 487,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.194s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964380.370837,
+      "elapsed_seconds": 62.28030204772949,
+      "frame": 488,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.196s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964380.568325,
+      "elapsed_seconds": 62.477790117263794,
+      "frame": 489,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.193s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964380.767155,
+      "elapsed_seconds": 62.67662000656128,
+      "frame": 490,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.194s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964380.9680362,
+      "elapsed_seconds": 62.877501249313354,
+      "frame": 491,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.196s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964381.165799,
+      "elapsed_seconds": 63.07526397705078,
+      "frame": 492,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.193s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964381.3639219,
+      "elapsed_seconds": 63.27338695526123,
+      "frame": 493,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.194s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964381.563794,
+      "elapsed_seconds": 63.47325897216797,
+      "frame": 494,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.195s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964381.764738,
+      "elapsed_seconds": 63.67420315742493,
+      "frame": 495,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.196s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964381.964549,
+      "elapsed_seconds": 63.874014139175415,
+      "frame": 496,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.195s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964382.185935,
+      "elapsed_seconds": 64.09540009498596,
+      "frame": 497,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.217s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964382.4113972,
+      "elapsed_seconds": 64.32086229324341,
+      "frame": 498,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.220s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964382.622675,
+      "elapsed_seconds": 64.53214001655579,
+      "frame": 499,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.204s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964382.8272908,
+      "elapsed_seconds": 64.73675584793091,
+      "frame": 500,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.200s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964383.030895,
+      "elapsed_seconds": 64.9403600692749,
+      "frame": 501,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.199s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964383.237916,
+      "elapsed_seconds": 65.147381067276,
+      "frame": 502,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.202s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964383.443914,
+      "elapsed_seconds": 65.35337901115417,
+      "frame": 503,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.202s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964383.649796,
+      "elapsed_seconds": 65.5592610836029,
+      "frame": 504,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.201s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964383.855103,
+      "elapsed_seconds": 65.76456809043884,
+      "frame": 505,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.201s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964384.0596511,
+      "elapsed_seconds": 65.9691162109375,
+      "frame": 506,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.200s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964384.263592,
+      "elapsed_seconds": 66.17305707931519,
+      "frame": 507,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.199s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964384.468458,
+      "elapsed_seconds": 66.37792301177979,
+      "frame": 508,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.200s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964384.6756108,
+      "elapsed_seconds": 66.58507585525513,
+      "frame": 509,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.203s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964384.8808901,
+      "elapsed_seconds": 66.79035520553589,
+      "frame": 510,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.201s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964385.0861042,
+      "elapsed_seconds": 66.99556922912598,
+      "frame": 511,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.201s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964385.294705,
+      "elapsed_seconds": 67.2041699886322,
+      "frame": 512,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.203s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964385.5033758,
+      "elapsed_seconds": 67.41284084320068,
+      "frame": 513,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.204s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964385.7103832,
+      "elapsed_seconds": 67.61984825134277,
+      "frame": 514,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.202s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964385.917821,
+      "elapsed_seconds": 67.82728600502014,
+      "frame": 515,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.203s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964386.125899,
+      "elapsed_seconds": 68.03536415100098,
+      "frame": 516,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.203s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964386.334178,
+      "elapsed_seconds": 68.24364304542542,
+      "frame": 517,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.204s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964386.543136,
+      "elapsed_seconds": 68.45260095596313,
+      "frame": 518,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.204s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964386.7521422,
+      "elapsed_seconds": 68.66160726547241,
+      "frame": 519,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.204s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964386.9622211,
+      "elapsed_seconds": 68.87168622016907,
+      "frame": 520,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.205s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964387.171015,
+      "elapsed_seconds": 69.08048009872437,
+      "frame": 521,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.204s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964387.38153,
+      "elapsed_seconds": 69.2909951210022,
+      "frame": 522,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.206s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964387.5920992,
+      "elapsed_seconds": 69.50156426429749,
+      "frame": 523,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.206s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964387.803236,
+      "elapsed_seconds": 69.71270108222961,
+      "frame": 524,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.207s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964388.0204911,
+      "elapsed_seconds": 69.92995619773865,
+      "frame": 525,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.205s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964388.236635,
+      "elapsed_seconds": 70.14610004425049,
+      "frame": 526,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.211s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964388.453142,
+      "elapsed_seconds": 70.3626070022583,
+      "frame": 527,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.210s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964388.6676428,
+      "elapsed_seconds": 70.57710790634155,
+      "frame": 528,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.210s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964388.8820312,
+      "elapsed_seconds": 70.79149627685547,
+      "frame": 529,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.208s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964389.09744,
+      "elapsed_seconds": 71.00690507888794,
+      "frame": 530,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.210s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964389.311986,
+      "elapsed_seconds": 71.22145104408264,
+      "frame": 531,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.209s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964389.530227,
+      "elapsed_seconds": 71.43969202041626,
+      "frame": 532,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.210s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964389.746357,
+      "elapsed_seconds": 71.65582203865051,
+      "frame": 533,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.211s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964389.963165,
+      "elapsed_seconds": 71.87263011932373,
+      "frame": 534,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.210s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964390.179923,
+      "elapsed_seconds": 72.08938813209534,
+      "frame": 535,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.211s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964390.399376,
+      "elapsed_seconds": 72.30884099006653,
+      "frame": 536,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.213s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964390.616367,
+      "elapsed_seconds": 72.5258321762085,
+      "frame": 537,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.211s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964390.8338869,
+      "elapsed_seconds": 72.74335193634033,
+      "frame": 538,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.212s",
+      "data": {}
+    },
+    {
+      "timestamp": 1751964391.1009212,
+      "elapsed_seconds": 73.0103862285614,
+      "frame": 539,
+      "type": "slow_prediction",
+      "description": "Brain prediction took 0.216s",
+      "data": {}
+    }
+  ],
+  "brain_snapshots": []
+}

@@ -1,0 +1,235 @@
+{
+  "current_parameters": {
+    "similarity_threshold": 0.7990190661990484,
+    "activation_spread_iterations": 3.0,
+    "consolidation_frequency": 50.0,
+    "forgetting_threshold": 0.1,
+    "connection_learning_rate": 0.050396301103986345,
+    "exploration_rate": 0.10177429780959804,
+    "time_budget_base": 0.1,
+    "prediction_confidence_threshold": 0.5,
+    "sensory_importance_threshold": 0.3,
+    "dimension_clustering_threshold": 0.5,
+    "bandwidth_adaptation_rate": 0.05
+  },
+  "adaptation_statistics": {
+    "total_adaptations": 128,
+    "successful_adaptations": 100,
+    "adaptation_success_rate": 0.78125,
+    "current_parameters": {
+      "similarity_threshold": 0.7990190661990484,
+      "activation_spread_iterations": 3.0,
+      "consolidation_frequency": 50.0,
+      "forgetting_threshold": 0.1,
+      "connection_learning_rate": 0.050396301103986345,
+      "exploration_rate": 0.10177429780959804,
+      "time_budget_base": 0.1,
+      "prediction_confidence_threshold": 0.5,
+      "sensory_importance_threshold": 0.3,
+      "dimension_clustering_threshold": 0.5,
+      "bandwidth_adaptation_rate": 0.05
+    },
+    "sensory_insights": {
+      "bandwidth_tier": "medium",
+      "total_dimensions": 22,
+      "high_variance_dimensions": [],
+      "high_change_dimensions": [
+        0,
+        1,
+        3,
+        4,
+        7,
+        13
+      ],
+      "stable_dimensions": [
+        2,
+        5,
+        6,
+        8,
+        9,
+        12,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        21
+      ],
+      "avg_variance": 0.0576693747931804,
+      "avg_change_frequency": 0.13045454545454546
+    },
+    "parameter_performance_summary": {
+      "similarity_threshold": {
+        "best_score": 1.302247680925091,
+        "avg_score": 0.8176764207585933,
+        "values_tested": 3,
+        "best_value": 0.786149
+      },
+      "activation_spread_iterations": {
+        "best_score": 1.1631954994369522,
+        "avg_score": 1.1631954994369522,
+        "values_tested": 1,
+        "best_value": 3
+      },
+      "consolidation_frequency": {
+        "best_score": 1.1631954994369522,
+        "avg_score": 1.1631954994369522,
+        "values_tested": 1,
+        "best_value": 50
+      },
+      "forgetting_threshold": {
+        "best_score": 1.1631954994369522,
+        "avg_score": 1.1631954994369522,
+        "values_tested": 1,
+        "best_value": 0.1
+      },
+      "connection_learning_rate": {
+        "best_score": 1.1631954994369522,
+        "avg_score": 0.5815977497184761,
+        "values_tested": 2,
+        "best_value": 0.05590489999999998
+      },
+      "exploration_rate": {
+        "best_score": 1.1919432990244752,
+        "avg_score": 0.7851273151842068,
+        "values_tested": 3,
+        "best_value": 0.1222436621360703
+      },
+      "time_budget_base": {
+        "best_score": 1.1631954994369522,
+        "avg_score": 1.1631954994369522,
+        "values_tested": 1,
+        "best_value": 0.1
+      },
+      "prediction_confidence_threshold": {
+        "best_score": 1.1631954994369522,
+        "avg_score": 1.1631954994369522,
+        "values_tested": 1,
+        "best_value": 0.5
+      },
+      "sensory_importance_threshold": {
+        "best_score": 1.1631954994369522,
+        "avg_score": 1.1631954994369522,
+        "values_tested": 1,
+        "best_value": 0.3
+      },
+      "dimension_clustering_threshold": {
+        "best_score": 1.1631954994369522,
+        "avg_score": 1.1631954994369522,
+        "values_tested": 1,
+        "best_value": 0.5
+      },
+      "bandwidth_adaptation_rate": {
+        "best_score": 1.1631954994369522,
+        "avg_score": 1.1631954994369522,
+        "values_tested": 1,
+        "best_value": 0.05
+      }
+    }
+  },
+  "sensory_insights": {
+    "bandwidth_tier": "medium",
+    "total_dimensions": 22,
+    "high_variance_dimensions": [],
+    "high_change_dimensions": [
+      0,
+      1,
+      3,
+      4,
+      7,
+      13
+    ],
+    "stable_dimensions": [
+      2,
+      5,
+      6,
+      8,
+      9,
+      12,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      21
+    ],
+    "avg_variance": 0.0576693747931804,
+    "avg_change_frequency": 0.13045454545454546
+  },
+  "parameter_performance_summary": {
+    "similarity_threshold": {
+      "best_score": 1.302247680925091,
+      "avg_score": 0.8176764207585933,
+      "values_tested": 3,
+      "best_value": 0.786149
+    },
+    "activation_spread_iterations": {
+      "best_score": 1.1631954994369522,
+      "avg_score": 1.1631954994369522,
+      "values_tested": 1,
+      "best_value": 3
+    },
+    "consolidation_frequency": {
+      "best_score": 1.1631954994369522,
+      "avg_score": 1.1631954994369522,
+      "values_tested": 1,
+      "best_value": 50
+    },
+    "forgetting_threshold": {
+      "best_score": 1.1631954994369522,
+      "avg_score": 1.1631954994369522,
+      "values_tested": 1,
+      "best_value": 0.1
+    },
+    "connection_learning_rate": {
+      "best_score": 1.1631954994369522,
+      "avg_score": 0.5815977497184761,
+      "values_tested": 2,
+      "best_value": 0.05590489999999998
+    },
+    "exploration_rate": {
+      "best_score": 1.1919432990244752,
+      "avg_score": 0.7851273151842068,
+      "values_tested": 3,
+      "best_value": 0.1222436621360703
+    },
+    "time_budget_base": {
+      "best_score": 1.1631954994369522,
+      "avg_score": 1.1631954994369522,
+      "values_tested": 1,
+      "best_value": 0.1
+    },
+    "prediction_confidence_threshold": {
+      "best_score": 1.1631954994369522,
+      "avg_score": 1.1631954994369522,
+      "values_tested": 1,
+      "best_value": 0.5
+    },
+    "sensory_importance_threshold": {
+      "best_score": 1.1631954994369522,
+      "avg_score": 1.1631954994369522,
+      "values_tested": 1,
+      "best_value": 0.3
+    },
+    "dimension_clustering_threshold": {
+      "best_score": 1.1631954994369522,
+      "avg_score": 1.1631954994369522,
+      "values_tested": 1,
+      "best_value": 0.5
+    },
+    "bandwidth_adaptation_rate": {
+      "best_score": 1.1631954994369522,
+      "avg_score": 1.1631954994369522,
+      "values_tested": 1,
+      "best_value": 0.05
+    }
+  },
+  "metadata": {
+    "save_timestamp": "2025-07-07T21:16:30.753962",
+    "session_id": "session_20250707_210740_9debef",
+    "total_adaptations": 128,
+    "successful_adaptations": 100
+  }
+}
