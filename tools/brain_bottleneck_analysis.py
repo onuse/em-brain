@@ -5,7 +5,8 @@ Comprehensive profiling to identify the real 200ms prediction bottleneck
 """
 
 import sys
-sys.path.append('.')
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import time
 from simulation.brainstem_sim import GridWorldBrainstem
 from core.communication import SensoryPacket

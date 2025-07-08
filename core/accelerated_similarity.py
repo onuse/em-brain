@@ -124,7 +124,7 @@ class AcceleratedSimilarityEngine:
         
         # Context caching for performance
         self._context_cache = {} if enable_caching else None
-        self._max_cache_size = 1000
+        self._max_cache_size = 5000  # Increased cache size for better performance with large memories
         
         # Spatial indexing components
         self._spatial_index = None

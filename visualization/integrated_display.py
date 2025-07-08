@@ -195,25 +195,19 @@ class IntegratedDisplay:
             # Get mood data from brain system
             robot_mood = None
             try:
-                # Try to get mood from motivation system
-                motivation_stats = self.brainstem.brain_client.get_motivation_statistics()
-                if motivation_stats and hasattr(self.brainstem.brain_client, 'motivation_system'):
-                    from drives.base_drive import DriveContext
-                    context = DriveContext(
-                        current_sensory=sensor_packet.sensor_values,
-                        robot_health=self.brainstem.simulation.robot.health,
-                        robot_energy=self.brainstem.simulation.robot.energy,
-                        robot_position=self.brainstem.simulation.robot.position,
-                        robot_orientation=self.brainstem.simulation.robot.orientation,
-                        recent_experiences=[],  # Empty for now
-                        prediction_errors=[prediction_error],
-                        time_since_last_food=0,  # Default
-                        time_since_last_damage=0,  # Default
-                        threat_level="normal",
-                        step_count=step_count
-                    )
-                    robot_mood = self.brainstem.brain_client.motivation_system.calculate_robot_mood(context)
-            except Exception:
+                # Access motivation system through predictor
+                predictor = self.brainstem.brain_client.get_predictor()
+                if hasattr(predictor, 'motivation_system'):
+                    motivation_stats = predictor.motivation_system.get_motivation_statistics()
+                    if 'mood' in motivation_stats:
+                        robot_mood = motivation_stats['mood']
+                        # Debug print occasionally to verify mood is changing
+                        if step_count % 500 == 0:
+                            print(f"🧠 Robot mood: {robot_mood.get('mood_descriptor', 'unknown')} (satisfaction: {robot_mood.get('overall_satisfaction', 0.0):.2f}, urgency: {robot_mood.get('overall_urgency', 0.0):.2f})")
+            except Exception as e:
+                # Debug: print error occasionally to diagnose issues
+                if step_count % 1000 == 0:
+                    print(f"Warning: Could not get robot mood: {e}")
                 pass  # Use defaults if mood system unavailable
             
             self.brain_monitor.update(
@@ -224,14 +218,27 @@ class IntegratedDisplay:
                 brain_client=self.brainstem.brain_client,
                 robot_mood=robot_mood
             )
-            # Debug print every 50 steps
-            if step_count % 50 == 0:
+            # Debug print occasionally (reduced frequency)
+            if step_count % 500 == 0:
                 print(f"Integrated display: updating brain monitor at step {step_count}")
         else:
             # Debug: Still update monitor even without graph to test rendering
             step_count = self.brainstem.get_simulation_stats()['step_count']
-            self.brain_monitor.update(None, prediction_error, motor_commands, step_count)
-            if step_count % 50 == 0:
+            
+            # Get mood data even without brain graph
+            robot_mood = None
+            try:
+                predictor = self.brainstem.brain_client.get_predictor()
+                if hasattr(predictor, 'motivation_system'):
+                    motivation_stats = predictor.motivation_system.get_motivation_statistics()
+                    if 'mood' in motivation_stats:
+                        robot_mood = motivation_stats['mood']
+            except Exception:
+                pass
+            
+            self.brain_monitor.update(None, prediction_error, motor_commands, step_count, 
+                                    brain_client=self.brainstem.brain_client, robot_mood=robot_mood)
+            if step_count % 500 == 0:
                 print(f"Integrated display: no brain graph available at step {step_count}")
             
             # Note: Experience creation is handled by the brain interface, not here

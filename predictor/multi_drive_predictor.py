@@ -278,7 +278,7 @@ class MultiDrivePredictor:
                     result = future.result(timeout=time_budget)
                     traversal_results.append(result)
                 except Exception as e:
-                    print(f"Traversal failed: {e}")
+                    print(f"Traversal failed with error: {type(e).__name__}: {e}")
             
             # Second phase: Continue with more traversals if time allows
             elapsed = time.time() - start_time
@@ -295,12 +295,22 @@ class MultiDrivePredictor:
                 
                 # Collect additional results with remaining time
                 remaining_time = time_budget - (time.time() - start_time)
-                for future in as_completed(additional_futures, timeout=max(0.01, remaining_time)):
-                    try:
-                        result = future.result(timeout=0.01)
-                        traversal_results.append(result)
-                    except Exception:
-                        break  # Time budget exceeded, stop collecting
+                try:
+                    for future in as_completed(additional_futures, timeout=max(0.01, remaining_time)):
+                        try:
+                            result = future.result(timeout=0.01)
+                            traversal_results.append(result)
+                        except Exception:
+                            break  # Time budget exceeded, stop collecting
+                except TimeoutError:
+                    # Some futures didn't complete in time - that's OK, use what we have
+                    for future in additional_futures:
+                        if future.done():
+                            try:
+                                result = future.result()
+                                traversal_results.append(result)
+                            except Exception:
+                                pass  # Skip failed futures
         
         return traversal_results, len(traversal_results)
     

@@ -20,6 +20,7 @@ class GridWorldVisualizer:
         'wall': (50, 50, 50),           # Dark gray
         'food': (0, 200, 0),            # Green
         'danger': (200, 0, 0),          # Red
+        'plant': (0, 150, 50),          # Dark green
         'robot': (0, 100, 255),         # Blue
         'robot_orientation': (255, 255, 255),  # White
         'sensor_ray': (255, 255, 0),    # Yellow
@@ -91,6 +92,8 @@ class GridWorldVisualizer:
             return self.COLORS['food']
         elif cell_value == self.simulation.DANGER:
             return self.COLORS['danger']
+        elif cell_value == self.simulation.PLANT:
+            return self.COLORS['plant']
         elif cell_value == self.simulation.ROBOT:
             return self.COLORS['robot']
         else:

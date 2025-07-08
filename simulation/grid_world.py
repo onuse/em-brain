@@ -38,12 +38,13 @@ class GridWorldSimulation:
     WALL = 1.0
     FOOD = 0.5
     DANGER = -1.0
+    PLANT = 0.3
     ROBOT = 0.8
     
     # Movement directions: [dx, dy] for each orientation
     DIRECTIONS = [(0, -1), (1, 0), (0, 1), (-1, 0)]  # N, E, S, W
     
-    def __init__(self, width: int = 20, height: int = 20, seed: Optional[int] = None):
+    def __init__(self, width: int = 40, height: int = 40, seed: Optional[int] = None):
         """Initialize the grid world simulation."""
         if seed is not None:
             random.seed(seed)
@@ -67,27 +68,98 @@ class GridWorldSimulation:
         world[:, 0] = self.WALL    # Left wall
         world[:, -1] = self.WALL   # Right wall
         
-        # Add random internal obstacles (10-15% coverage)
-        obstacle_count = random.randint(20, 40)
-        for _ in range(obstacle_count):
-            x, y = random.randint(1, self.width-2), random.randint(1, self.height-2)
-            world[x, y] = self.WALL
+        # Add random internal obstacles with connectivity checks
+        # Scale obstacle count with world size (aim for 8-12% coverage)
+        total_cells = (self.width - 2) * (self.height - 2)
+        obstacle_count = int(total_cells * 0.10)  # 10% coverage
         
-        # Add food sources (5-8% coverage)
-        food_count = random.randint(15, 25)
-        for _ in range(food_count):
+        placed_obstacles = 0
+        attempts = 0
+        max_attempts = obstacle_count * 3
+        
+        while placed_obstacles < obstacle_count and attempts < max_attempts:
+            x, y = random.randint(1, self.width-2), random.randint(1, self.height-2)
+            
+            # Don't place obstacles that would create isolated 1x1 cells
+            if self._would_create_isolated_cell(world, x, y):
+                attempts += 1
+                continue
+                
+            world[x, y] = self.WALL
+            placed_obstacles += 1
+            attempts += 1
+        
+        # Add food sources (scale with world size - 3-5% coverage)
+        food_count = int(total_cells * 0.04)  # 4% coverage
+        placed_food = 0
+        while placed_food < food_count:
             x, y = random.randint(1, self.width-2), random.randint(1, self.height-2)
             if world[x, y] == self.EMPTY:  # Only place on empty cells
                 world[x, y] = self.FOOD
+                placed_food += 1
         
-        # Add danger zones (2-3% coverage)
-        danger_count = random.randint(5, 10)
-        for _ in range(danger_count):
+        # Add danger zones (1-2% coverage)
+        danger_count = int(total_cells * 0.015)  # 1.5% coverage
+        placed_danger = 0
+        while placed_danger < danger_count:
             x, y = random.randint(1, self.width-2), random.randint(1, self.height-2)
             if world[x, y] == self.EMPTY:  # Only place on empty cells
                 world[x, y] = self.DANGER
+                placed_danger += 1
+        
+        # Add plants for smell sensations (3-4% coverage)
+        plant_count = int(total_cells * 0.035)  # 3.5% coverage
+        placed_plants = 0
+        while placed_plants < plant_count:
+            x, y = random.randint(1, self.width-2), random.randint(1, self.height-2)
+            if world[x, y] == self.EMPTY:  # Only place on empty cells
+                world[x, y] = self.PLANT
+                placed_plants += 1
         
         return world
+    
+    def _would_create_isolated_cell(self, world: np.ndarray, x: int, y: int) -> bool:
+        """Check if placing a wall at (x,y) would create isolated 1x1 cells."""
+        if world[x, y] != self.EMPTY:
+            return False  # Can't place on non-empty cell anyway
+        
+        # Check all 8 neighbors to see if placing a wall here would isolate any empty cells
+        for dx in [-1, 0, 1]:
+            for dy in [-1, 0, 1]:
+                if dx == 0 and dy == 0:
+                    continue  # Skip the center cell
+                
+                check_x, check_y = x + dx, y + dy
+                
+                # Check bounds
+                if not (1 <= check_x < self.width-1 and 1 <= check_y < self.height-1):
+                    continue
+                
+                # If neighbor is empty, check if it would become isolated
+                if world[check_x, check_y] == self.EMPTY:
+                    # Count how many of its neighbors would be walls if we place wall at (x,y)
+                    wall_neighbors = 0
+                    for ddx in [-1, 0, 1]:
+                        for ddy in [-1, 0, 1]:
+                            if ddx == 0 and ddy == 0:
+                                continue
+                            
+                            neighbor_x, neighbor_y = check_x + ddx, check_y + ddy
+                            
+                            # Check if this neighbor would be a wall
+                            if (neighbor_x == x and neighbor_y == y):
+                                wall_neighbors += 1  # Our proposed wall
+                            elif (0 <= neighbor_x < self.width and 0 <= neighbor_y < self.height):
+                                if world[neighbor_x, neighbor_y] == self.WALL:
+                                    wall_neighbors += 1
+                            else:
+                                wall_neighbors += 1  # Out of bounds = wall
+                    
+                    # If cell would have 7 or 8 wall neighbors, it would be isolated/trapped
+                    if wall_neighbors >= 7:
+                        return True
+        
+        return False
     
     def _find_safe_starting_position(self) -> Tuple[int, int]:
         """Find a safe empty cell to start the robot."""
@@ -110,8 +182,8 @@ class GridWorldSimulation:
     
     def get_sensor_readings(self) -> List[float]:
         """
-        Get comprehensive sensor readings simulating PiCar-X sensors.
-        Returns 22 floating-point values: 4 distance + 13 vision + 5 internal.
+        Get comprehensive sensor readings simulating robot sensors.
+        Returns 24 floating-point values: 4 distance + 13 vision + 2 smell + 5 internal.
         """
         # Distance sensors (ultrasonic simulation)
         distance_sensors = self._calculate_distance_sensors()
@@ -119,10 +191,13 @@ class GridWorldSimulation:
         # Vision features (camera simulation)
         vision_features = self._calculate_vision_features()
         
+        # Smell sensors (chemical/scent detection)
+        smell_sensors = self._calculate_smell_sensors()
+        
         # Internal state sensors
         internal_state = self._get_robot_internal_state()
         
-        return distance_sensors + vision_features + internal_state
+        return distance_sensors + vision_features + smell_sensors + internal_state
     
     def _calculate_distance_sensors(self) -> List[float]:
         """Calculate distance sensor readings in 4 directions."""
@@ -243,6 +318,53 @@ class GridWorldSimulation:
         ])
         
         return vision_data
+    
+    def _calculate_smell_sensors(self) -> List[float]:
+        """Calculate smell sensor readings from nearby plants."""
+        x, y = self.robot.position
+        smell_range = 3  # Plants can be smelled within 3 cells
+        
+        # Find all plants within smell range
+        plant_scents = []
+        
+        for dx in range(-smell_range, smell_range + 1):
+            for dy in range(-smell_range, smell_range + 1):
+                check_x, check_y = x + dx, y + dy
+                
+                if 0 <= check_x < self.width and 0 <= check_y < self.height:
+                    if self.world[check_x, check_y] == self.PLANT:
+                        # Calculate distance to plant
+                        distance = (dx*dx + dy*dy) ** 0.5
+                        if distance <= smell_range:
+                            # Smell intensity decreases with distance
+                            intensity = max(0.0, 1.0 - (distance / smell_range))
+                            plant_scents.append((dx, dy, intensity))
+        
+        # Calculate smell direction and intensity
+        if not plant_scents:
+            return [0.0, 0.0]  # No plants nearby: no direction, no intensity
+        
+        # Find strongest scent
+        strongest_scent = max(plant_scents, key=lambda s: s[2])
+        dx, dy, max_intensity = strongest_scent
+        
+        # Convert direction to angle (0-1 range representing 0-360 degrees)
+        import math
+        if dx == 0 and dy == 0:
+            direction_angle = 0.0  # Plant is right here
+        else:
+            # Calculate angle in radians, then normalize to 0-1
+            angle_rad = math.atan2(dy, dx)
+            angle_deg = math.degrees(angle_rad)
+            if angle_deg < 0:
+                angle_deg += 360
+            direction_angle = angle_deg / 360.0
+        
+        # Average intensity of all nearby plants
+        total_intensity = sum(s[2] for s in plant_scents)
+        average_intensity = total_intensity / len(plant_scents)
+        
+        return [direction_angle, average_intensity]
     
     def _get_robot_internal_state(self) -> List[float]:
         """Get robot's internal state sensors."""
@@ -371,6 +493,11 @@ class GridWorldSimulation:
         elif cell_value == self.DANGER:  # Danger
             self.robot.health = max(0.0, self.robot.health - 0.002)  # Very light damage: 0.2% per step
             self.robot.time_since_damage = 0
+            
+        elif cell_value == self.PLANT:  # Plant
+            # Plants provide no direct effect - they're just for smell sensations
+            # Robot can walk through plants without consuming or damaging them
+            pass
         
         # Natural energy depletion
         self.robot.energy = max(0.0, self.robot.energy - 0.00002)  # Very slow energy drain (50,000 steps)

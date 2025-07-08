@@ -220,8 +220,7 @@ class EnhancedRunLogger:
             return result
         finally:
             duration = self.timer.end_timer("brain_prediction")
-            if duration and duration > 0.1:  # Log slow predictions
-                self.log_event("slow_prediction", f"Brain prediction took {duration:.3f}s")
+            # Removed redundant slow prediction logging - let performance summaries handle it
     
     def log_event(self, event_type: str, description: str, data: Optional[Dict] = None):
         """Log an event with timing"""

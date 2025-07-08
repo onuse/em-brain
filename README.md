@@ -143,15 +143,17 @@ This launches the complete brain system in a 2D grid world where you can observe
 ### Project Structure
 ```
 brain/
-├── demo_robot_brain.py     # Main demonstration
-├── core/                   # Brain system components
-├── predictor/              # Prediction engines
-├── drives/                 # Motivation system
-├── simulation/             # Grid world environment
-├── visualization/          # Real-time monitoring
-├── tests/                  # Test suite (28 tests)
-├── tools/                  # Analysis and profiling
-└── docs/                   # Detailed documentation
+├── demo_robot_brain.py          # Main demonstration
+├── brain_prediction_profiler.py # Core profiling system
+├── enhanced_run_logger.py       # Enhanced logging utilities
+├── core/                        # Brain system components
+├── predictor/                   # Prediction engines
+├── drives/                      # Motivation system
+├── simulation/                  # Grid world environment
+├── visualization/               # Real-time monitoring
+├── tests/                       # Test suite (28 tests)
+├── tools/                       # Analysis and profiling tools
+└── docs/                        # Detailed documentation
 ```
 
 ### Running Tests

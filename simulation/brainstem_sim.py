@@ -18,7 +18,7 @@ class GridWorldBrainstem:
     Provides sensor readings and executes motor commands in the grid world via socket communication.
     """
     
-    def __init__(self, world_width: int = 20, world_height: int = 20, seed: int = None,
+    def __init__(self, world_width: int = 40, world_height: int = 40, seed: int = None,
                  brain_host: str = "localhost", brain_port: int = 8080, use_sockets: bool = True):
         """
         Initialize the brainstem simulation.

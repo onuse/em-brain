@@ -12,6 +12,7 @@ This is the single consolidated demo that showcases ALL brain capabilities worki
 • Real-time visual brain state monitoring and analysis
 • Cross-session learning accumulation and memory consolidation
 • High-performance prediction pipeline (70+ FPS capable)
+• Enhanced 40x40 world with plant-based smell sensors
 
 This consolidates and replaces all other demo files in the project.
 """
@@ -38,6 +39,7 @@ def main():
     print("• Persistent memory (remembers across sessions)")
     print("• Real-time visual brain state monitoring")
     print("• Cross-session learning accumulation")
+    print("• Enhanced 40x40 world with plant-based smell sensors")
     print()
     print("⏱️  Survival Parameters (Balanced for Learning):")
     print("• Collision damage: 0.5% per wall hit (200 collisions to die)")
@@ -54,34 +56,25 @@ def main():
     print("=" * 60)
     
     # Initialize enhanced logging system
-    print("\\n📝 Initializing enhanced logging system...")
     enhanced_logger = EnhancedRunLogger()
     
     # Initialize the complete brain system
-    print("\\n🧠 Initializing complete brain system...")
-    brainstem = GridWorldBrainstem(
-        world_width=12,  # Smaller world for better screen fit
-        world_height=12, 
-        seed=42, 
-        use_sockets=False  # Use local brain directly for best performance
-    )
+    print("🧠 Initializing brain system...")
+    brainstem = GridWorldBrainstem(seed=42, use_sockets=False)
     
     # Start persistent memory session
-    session_id = brainstem.brain_client.start_memory_session("Ultimate 2D Brain Demo")
-    print(f"📝 Started persistent memory session: {session_id}")
+    session_id = brainstem.brain_client.start_memory_session("Robot Brain Demo")
     
     # Show what was loaded from previous sessions
     stats = brainstem.brain_client.get_brain_statistics()
     if stats['graph_stats']['total_nodes'] > 0:
         print(f"📚 Loaded {stats['graph_stats']['total_nodes']} experiences from previous sessions")
-        print(f"   Previous adaptations: {stats['adaptive_tuning_stats']['total_adaptations']}")
-        print(f"   Actuators discovered: {stats['actuator_discovery_stats']['total_actuators_discovered']}")
     else:
         print("🆕 Starting with fresh brain - no previous experiences")
     
-    # Initialize visualization with brain monitoring
-    print("🎮 Setting up visualization with brain monitoring...")
-    display = IntegratedDisplay(brainstem, cell_size=25)  # Smaller cells for better fit
+    # Initialize visualization
+    print("🎮 Setting up visualization...")
+    display = IntegratedDisplay(brainstem, cell_size=15)
     
     # Connect visualization to brain system for real predictions
     def brain_prediction_callback(state):
@@ -121,18 +114,10 @@ def main():
     brain_graph = brainstem.brain_client.get_world_graph()
     display.set_brain_graph(brain_graph)
     
-    print(f"🖥️  Window size: {display.window_width}x{display.window_height}")
-    print("   Left: 2D grid world with robot navigation")
-    print("   Right: Real-time brain state monitoring")
+    print("🚀 Launching robot brain...")
     print()
     
     try:
-        print("🚀 Launching complete brain system...")
-        print("   Watch the robot learn and develop goals in real-time!")
-        print("   Brain state updates continuously on the right panel")
-        print("   Close window or press ESC to save and exit")
-        print()
-        
         # Run the complete brain simulation
         display.run(
             auto_step=True,

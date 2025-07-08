@@ -298,6 +298,29 @@ class MotivationSystem:
             stats['average_recent_confidence'] = sum(d['confidence'] for d in recent_decisions) / len(recent_decisions)
             stats['average_recent_urgency'] = sum(d['urgency'] for d in recent_decisions) / len(recent_decisions)
         
+        # Include current mood using recent robot state
+        if self.action_history:
+            # Use the most recent robot state for mood calculation
+            recent_decision = self.action_history[-1]
+            robot_state = recent_decision.get('robot_state', {})
+            
+            # Create context from recent robot state
+            from .base_drive import DriveContext
+            context = DriveContext(
+                current_sensory=[],
+                robot_health=robot_state.get('health', 1.0),
+                robot_energy=robot_state.get('energy', 1.0),
+                robot_position=robot_state.get('position', (0, 0)),
+                robot_orientation=0,
+                recent_experiences=[],
+                prediction_errors=[],
+                time_since_last_food=0,
+                time_since_last_damage=0,
+                threat_level=robot_state.get('threat_level', 'normal'),
+                step_count=recent_decision.get('step', 0)
+            )
+            stats['mood'] = self.calculate_robot_mood(context)
+        
         return stats
     
     def calculate_robot_mood(self, context) -> Dict[str, float]:

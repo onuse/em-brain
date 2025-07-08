@@ -72,8 +72,8 @@ class BrainStateMonitor:
         self.brain_client = brain_client
         self.current_robot_mood = robot_mood
         
-        # Debug: Print update info occasionally
-        if step % 20 == 0:  # Every 20 steps
+        # Debug: Print update info occasionally (reduced frequency)
+        if step % 200 == 0:  # Every 200 steps instead of 20
             node_count = graph.node_count() if graph else 0
             print(f"Brain monitor update: step {step}, {node_count} nodes, error {prediction_error:.3f}")
         
