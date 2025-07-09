@@ -13,6 +13,7 @@ from .single_traversal import SingleTraversal, TraversalResult
 from .consensus_resolver import ConsensusResolver, ConsensusResult
 from drives import create_default_motivation_system, DriveContext, MotivationSystem
 from brain_prediction_profiler import profile_section
+from core.decision_logger import log_brain_decision
 
 
 class MultiDrivePredictor:
@@ -39,7 +40,7 @@ class MultiDrivePredictor:
             enable_parallel_traversals: Enable parallel graph traversals for CPU optimization
             max_workers: Maximum worker threads (defaults to CPU count)
         """
-        self.base_time_budget = base_time_budget
+        self.base_time_budget = base_time_budget * 3.0  # 3x more thinking time = more experience-based actions
         self.single_traversal = SingleTraversal(max_depth, randomness_factor)
         self.consensus_resolver = ConsensusResolver(action_similarity_threshold)
         
@@ -51,8 +52,8 @@ class MultiDrivePredictor:
         if enable_parallel_traversals:
             print(f"  Max workers: {self.max_workers} (CPU cores: {os.cpu_count()})")
         
-        # Initialize motivation system
-        self.motivation_system = motivation_system or create_default_motivation_system()
+        # Initialize motivation system with world dimensions for proper exploration
+        self.motivation_system = motivation_system or create_default_motivation_system(world_width=40, world_height=40)
         
         # Threat-responsive time scaling
         self.threat_multipliers = {
@@ -154,6 +155,26 @@ class MultiDrivePredictor:
             motivation_result = self.motivation_system.evaluate_action_candidates(
                 action_candidates, drive_context
             )
+            
+            # Log the decision for analysis
+            try:
+                # Get full brain statistics and add predictor-specific info
+                brain_stats = world_graph.get_graph_statistics()
+                brain_stats["predictor_type"] = "multi_drive"
+                brain_stats["traversal_count"] = traversal_count
+                
+                # Add motivation system reference so logger can extract current drive weights
+                motivation_result.motivation_system = self.motivation_system
+                
+                log_brain_decision(
+                    motivation_result,
+                    drive_context,
+                    brain_stats,
+                    step_count
+                )
+            except Exception as e:
+                # Don't let logging errors break the prediction
+                pass
         
         # Create prediction packet with chosen action
         with profile_section("prediction_packet_creation"):

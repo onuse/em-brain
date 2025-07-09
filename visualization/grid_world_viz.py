@@ -3,6 +3,10 @@ Grid world visualization using PyGame.
 Displays the robot, environment, sensors, and navigation state in real-time.
 """
 
+import warnings
+# Suppress pygame's pkg_resources deprecation warning
+warnings.filterwarnings("ignore", message="pkg_resources is deprecated as an API")
+
 import pygame
 import numpy as np
 from typing import Tuple, List, Dict, Any, Optional

@@ -8,6 +8,12 @@ import random
 from typing import List, Tuple, Dict, Optional
 from dataclasses import dataclass
 import time
+import sys
+import os
+
+# Add the parent directory to the path to import core modules
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from core.sensor_semantics import SensorSemantics, SensorDescriptor, SensorModality, SensorPurpose
 
 
 @dataclass
@@ -57,6 +63,9 @@ class GridWorldSimulation:
         self.step_count = 0
         self.total_food_consumed = 0
         self.total_collisions = 0
+        
+        # Initialize sensor semantics for brain-brainstem communication
+        self.sensor_semantics = self._create_sensor_semantics()
         
     def _generate_world(self) -> np.ndarray:
         """Generate a random grid world with walls, food, and dangers."""
@@ -162,14 +171,36 @@ class GridWorldSimulation:
         return False
     
     def _find_safe_starting_position(self) -> Tuple[int, int]:
-        """Find a safe empty cell to start the robot."""
-        for _ in range(100):  # Try up to 100 times
-            x = random.randint(1, self.width-2)
-            y = random.randint(1, self.height-2)
+        """Find a safe empty cell to start the robot, avoiding wall-adjacent positions."""
+        # First, try to find positions that are not immediately next to walls
+        for _ in range(200):  # More attempts for better starting positions
+            x = random.randint(3, self.width-4)  # Stay away from edges
+            y = random.randint(3, self.height-4)  # Stay away from edges
+            
+            if self.world[x, y] == self.EMPTY:
+                # Check if this position has some open space around it
+                open_neighbors = 0
+                for dx in [-1, 0, 1]:
+                    for dy in [-1, 0, 1]:
+                        if dx == 0 and dy == 0:
+                            continue
+                        check_x, check_y = x + dx, y + dy
+                        if (0 <= check_x < self.width and 0 <= check_y < self.height and 
+                            self.world[check_x, check_y] == self.EMPTY):
+                            open_neighbors += 1
+                
+                # Prefer positions with at least 4 open neighbors (room to move)
+                if open_neighbors >= 4:
+                    return (x, y)
+        
+        # Fallback: any empty cell not too close to edges
+        for _ in range(100):
+            x = random.randint(2, self.width-3)
+            y = random.randint(2, self.height-3)
             if self.world[x, y] == self.EMPTY:
                 return (x, y)
         
-        # Fallback: find first empty cell
+        # Second fallback: find first empty cell
         for x in range(1, self.width-1):
             for y in range(1, self.height-1):
                 if self.world[x, y] == self.EMPTY:
@@ -179,6 +210,123 @@ class GridWorldSimulation:
         x, y = self.width // 2, self.height // 2
         self.world[x, y] = self.EMPTY
         return (x, y)
+    
+    def _create_sensor_semantics(self) -> SensorSemantics:
+        """Create semantic descriptions for all sensors in this brainstem."""
+        semantics = SensorSemantics()
+        
+        # Distance sensors (indices 0-3)
+        semantics.register_sensor(SensorDescriptor(
+            index=0, name="distance_front", modality=SensorModality.DISTANCE,
+            purposes={SensorPurpose.NAVIGATION, SensorPurpose.THREAT_DETECTION},
+            value_range=(0.0, 1.0), description="Distance sensor pointing forward",
+            change_frequency="high"
+        ))
+        semantics.register_sensor(SensorDescriptor(
+            index=1, name="distance_left", modality=SensorModality.DISTANCE,
+            purposes={SensorPurpose.NAVIGATION, SensorPurpose.THREAT_DETECTION},
+            value_range=(0.0, 1.0), description="Distance sensor pointing left",
+            change_frequency="high"
+        ))
+        semantics.register_sensor(SensorDescriptor(
+            index=2, name="distance_right", modality=SensorModality.DISTANCE,
+            purposes={SensorPurpose.NAVIGATION, SensorPurpose.THREAT_DETECTION},
+            value_range=(0.0, 1.0), description="Distance sensor pointing right",
+            change_frequency="high"
+        ))
+        semantics.register_sensor(SensorDescriptor(
+            index=3, name="distance_back", modality=SensorModality.DISTANCE,
+            purposes={SensorPurpose.NAVIGATION, SensorPurpose.THREAT_DETECTION},
+            value_range=(0.0, 1.0), description="Distance sensor pointing backward",
+            change_frequency="high"
+        ))
+        
+        # Vision sensors (indices 4-16) - 3x3 grid + environmental features
+        for i in range(4, 13):  # 3x3 grid vision
+            semantics.register_sensor(SensorDescriptor(
+                index=i, name=f"vision_grid_{i-4}", modality=SensorModality.VISION,
+                purposes={SensorPurpose.NAVIGATION, SensorPurpose.EXPLORATION, SensorPurpose.FOOD_DETECTION},
+                value_range=(-1.0, 1.0), description=f"Vision sensor for grid position {i-4}",
+                change_frequency="high"
+            ))
+        
+        # Environmental vision features (indices 13-16)
+        semantics.register_sensor(SensorDescriptor(
+            index=13, name="nearest_food_direction", modality=SensorModality.VISION,
+            purposes={SensorPurpose.FOOD_DETECTION, SensorPurpose.SURVIVAL},
+            value_range=(0.0, 1.0), description="Direction to nearest food source",
+            change_frequency="medium"
+        ))
+        semantics.register_sensor(SensorDescriptor(
+            index=14, name="nearest_danger_direction", modality=SensorModality.VISION,
+            purposes={SensorPurpose.THREAT_DETECTION, SensorPurpose.SURVIVAL},
+            value_range=(0.0, 1.0), description="Direction to nearest danger",
+            change_frequency="medium"
+        ))
+        semantics.register_sensor(SensorDescriptor(
+            index=15, name="food_density", modality=SensorModality.VISION,
+            purposes={SensorPurpose.FOOD_DETECTION, SensorPurpose.EXPLORATION},
+            value_range=(0.0, 1.0), description="Density of food in visible area",
+            change_frequency="medium"
+        ))
+        semantics.register_sensor(SensorDescriptor(
+            index=16, name="danger_density", modality=SensorModality.VISION,
+            purposes={SensorPurpose.THREAT_DETECTION, SensorPurpose.SURVIVAL},
+            value_range=(0.0, 1.0), description="Density of danger in visible area",
+            change_frequency="medium"
+        ))
+        
+        # Chemical sensors (indices 17-18) - smell
+        semantics.register_sensor(SensorDescriptor(
+            index=17, name="smell_direction", modality=SensorModality.CHEMICAL,
+            purposes={SensorPurpose.FOOD_DETECTION, SensorPurpose.SURVIVAL, SensorPurpose.EXPLORATION},
+            value_range=(0.0, 1.0), description="Direction to strongest scent (food preferred)",
+            change_frequency="medium", is_critical=False  # Not critical but very useful
+        ))
+        semantics.register_sensor(SensorDescriptor(
+            index=18, name="smell_intensity", modality=SensorModality.CHEMICAL,
+            purposes={SensorPurpose.FOOD_DETECTION, SensorPurpose.SURVIVAL, SensorPurpose.EXPLORATION},
+            value_range=(0.0, 1.0), description="Intensity of strongest scent nearby",
+            change_frequency="medium", is_critical=False  # Not critical but very useful
+        ))
+        
+        # Internal state sensors (indices 19-23)
+        semantics.register_sensor(SensorDescriptor(
+            index=19, name="health", modality=SensorModality.INTERNAL,
+            purposes={SensorPurpose.SURVIVAL, SensorPurpose.SELF_STATE},
+            value_range=(0.0, 1.0), description="Current health level (0=dead, 1=perfect)",
+            change_frequency="low", is_critical=True
+        ))
+        semantics.register_sensor(SensorDescriptor(
+            index=20, name="energy", modality=SensorModality.INTERNAL,
+            purposes={SensorPurpose.SURVIVAL, SensorPurpose.ENERGY_MANAGEMENT, SensorPurpose.SELF_STATE},
+            value_range=(0.0, 1.0), description="Current energy level (0=empty, 1=full)",
+            change_frequency="low", is_critical=True
+        ))
+        semantics.register_sensor(SensorDescriptor(
+            index=21, name="orientation", modality=SensorModality.INTERNAL,
+            purposes={SensorPurpose.NAVIGATION, SensorPurpose.SELF_STATE},
+            value_range=(0.0, 1.0), description="Current orientation (0=North, 0.25=East, etc.)",
+            change_frequency="medium"
+        ))
+        semantics.register_sensor(SensorDescriptor(
+            index=22, name="time_since_food", modality=SensorModality.TEMPORAL,
+            purposes={SensorPurpose.SURVIVAL, SensorPurpose.ENERGY_MANAGEMENT},
+            value_range=(0.0, 1.0), description="Normalized time since last food consumption",
+            change_frequency="low"
+        ))
+        semantics.register_sensor(SensorDescriptor(
+            index=23, name="time_since_damage", modality=SensorModality.TEMPORAL,
+            purposes={SensorPurpose.SURVIVAL, SensorPurpose.THREAT_DETECTION},
+            value_range=(0.0, 1.0), description="Normalized time since last damage taken",
+            change_frequency="low"
+        ))
+        
+        return semantics
+    
+    def get_sensor_semantics(self) -> SensorSemantics:
+        """Get the sensor semantics for brain-brainstem communication."""
+        return self.sensor_semantics
     
     def get_sensor_readings(self) -> List[float]:
         """
@@ -320,11 +468,12 @@ class GridWorldSimulation:
         return vision_data
     
     def _calculate_smell_sensors(self) -> List[float]:
-        """Calculate smell sensor readings from nearby plants."""
+        """Calculate smell sensor readings from nearby food and plants."""
         x, y = self.robot.position
-        smell_range = 3  # Plants can be smelled within 3 cells
+        smell_range = 5  # Food and plants can be smelled within 5 cells (extended range)
         
-        # Find all plants within smell range
+        # Find all food and plants within smell range
+        food_scents = []
         plant_scents = []
         
         for dx in range(-smell_range, smell_range + 1):
@@ -332,26 +481,34 @@ class GridWorldSimulation:
                 check_x, check_y = x + dx, y + dy
                 
                 if 0 <= check_x < self.width and 0 <= check_y < self.height:
-                    if self.world[check_x, check_y] == self.PLANT:
-                        # Calculate distance to plant
-                        distance = (dx*dx + dy*dy) ** 0.5
-                        if distance <= smell_range:
-                            # Smell intensity decreases with distance
-                            intensity = max(0.0, 1.0 - (distance / smell_range))
+                    cell_value = self.world[check_x, check_y]
+                    distance = (dx*dx + dy*dy) ** 0.5
+                    
+                    if distance <= smell_range:
+                        # Smell intensity decreases with distance
+                        intensity = max(0.0, 1.0 - (distance / smell_range))
+                        
+                        if cell_value == self.FOOD:
+                            # Food has stronger smell intensity (survival advantage)
+                            food_scents.append((dx, dy, intensity * 2.0))  # 2x stronger
+                        elif cell_value == self.PLANT:
                             plant_scents.append((dx, dy, intensity))
         
-        # Calculate smell direction and intensity
-        if not plant_scents:
-            return [0.0, 0.0]  # No plants nearby: no direction, no intensity
+        # Prioritize food scents over plant scents (evolutionary advantage)
+        all_scents = food_scents + plant_scents
         
-        # Find strongest scent
-        strongest_scent = max(plant_scents, key=lambda s: s[2])
+        # Calculate smell direction and intensity
+        if not all_scents:
+            return [0.0, 0.0]  # No scents nearby: no direction, no intensity
+        
+        # Find strongest scent (food will naturally be stronger)
+        strongest_scent = max(all_scents, key=lambda s: s[2])
         dx, dy, max_intensity = strongest_scent
         
         # Convert direction to angle (0-1 range representing 0-360 degrees)
         import math
         if dx == 0 and dy == 0:
-            direction_angle = 0.0  # Plant is right here
+            direction_angle = 0.0  # Source is right here
         else:
             # Calculate angle in radians, then normalize to 0-1
             angle_rad = math.atan2(dy, dx)
@@ -360,11 +517,11 @@ class GridWorldSimulation:
                 angle_deg += 360
             direction_angle = angle_deg / 360.0
         
-        # Average intensity of all nearby plants
-        total_intensity = sum(s[2] for s in plant_scents)
-        average_intensity = total_intensity / len(plant_scents)
+        # Average intensity of all nearby scents
+        total_intensity = sum(s[2] for s in all_scents)
+        average_intensity = total_intensity / len(all_scents)
         
-        return [direction_angle, average_intensity]
+        return [direction_angle, min(1.0, average_intensity)]  # Cap at 1.0
     
     def _get_robot_internal_state(self) -> List[float]:
         """Get robot's internal state sensors."""
@@ -475,7 +632,7 @@ class GridWorldSimulation:
     
     def _handle_collision(self):
         """Handle collision with wall or boundary."""
-        self.robot.health = max(0.0, self.robot.health - 0.005)  # Very light collision damage: 0.5%
+        self.robot.health = max(0.0, self.robot.health - 0.001)  # Ultra-light collision damage: 0.1% (1000 hits to die)
         self.total_collisions += 1
     
     def _process_environment_effects(self):
@@ -491,7 +648,7 @@ class GridWorldSimulation:
             self.total_food_consumed += 1
             
         elif cell_value == self.DANGER:  # Danger
-            self.robot.health = max(0.0, self.robot.health - 0.002)  # Very light damage: 0.2% per step
+            self.robot.health = max(0.0, self.robot.health - 0.0005)  # Ultra-light damage: 0.05% per step (2000 steps to die)
             self.robot.time_since_damage = 0
             
         elif cell_value == self.PLANT:  # Plant
@@ -499,12 +656,12 @@ class GridWorldSimulation:
             # Robot can walk through plants without consuming or damaging them
             pass
         
-        # Natural energy depletion
-        self.robot.energy = max(0.0, self.robot.energy - 0.00002)  # Very slow energy drain (50,000 steps)
+        # Natural energy depletion - ultra-slow for extended exploration
+        self.robot.energy = max(0.0, self.robot.energy - 0.000005)  # Ultra-slow energy drain (200,000 steps = ~5+ minutes)
         
-        # Health deterioration if no energy
+        # Health deterioration if no energy - much slower
         if self.robot.energy <= 0.0:
-            self.robot.health = max(0.0, self.robot.health - 0.0001)  # Very slow starvation
+            self.robot.health = max(0.0, self.robot.health - 0.00002)  # Ultra-slow starvation (50,000 steps)
         
         # Update time counters
         self.robot.time_since_food += 1

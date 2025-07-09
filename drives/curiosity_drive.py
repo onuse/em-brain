@@ -6,6 +6,7 @@ The robot wants to understand and predict its world better.
 import math
 from typing import Dict, List
 from .base_drive import BaseDrive, DriveContext, ActionEvaluation
+from collections import defaultdict
 
 
 class CuriosityDrive(BaseDrive):
@@ -18,37 +19,48 @@ class CuriosityDrive(BaseDrive):
     - Avoid repetitive, predictable situations
     """
     
-    def __init__(self, base_weight: float = 0.4):
+    def __init__(self, base_weight: float = 0.35):
         super().__init__("Curiosity", base_weight)
         self.recent_prediction_errors = []
         self.prediction_improvement_rate = 0.0
         self.learning_stagnation_penalty = 0.0
         
+        # Pure novelty-seeking: track experience familiarity
+        self.experience_familiarity = defaultdict(float)  # Track what's been explored
+        self.sensor_pattern_familiarity = defaultdict(float)  # Track sensor patterns
+        self.motor_pattern_familiarity = defaultdict(float)  # Track motor patterns
+        self.familiarity_decay_rate = 0.01  # Gradual forgetting to allow re-exploration
+        
     def evaluate_action(self, action: Dict[str, float], context: DriveContext) -> ActionEvaluation:
-        """Evaluate action based on learning potential and prediction uncertainty."""
+        """Evaluate action based on pure novelty-seeking and learning potential."""
         self.total_evaluations += 1
         
-        # Base curiosity score from prediction uncertainty
-        uncertainty_score = self._calculate_uncertainty_score(context)
+        # Pure novelty score - predict what this action will teach us
+        novelty_score = self._calculate_pure_novelty_score(action, context)
         
-        # Novelty score based on action uniqueness
-        novelty_score = self._calculate_action_novelty(action, context)
+        # Self-discovery score - how much will this teach us about our capabilities
+        self_discovery_score = self._calculate_self_discovery_score(action, context)
         
-        # Learning opportunity score
-        learning_score = self._calculate_learning_opportunity(action, context)
+        # Environmental novelty score - how much will this teach us about the world
+        environment_novelty_score = self._calculate_environment_novelty_score(action, context)
         
-        # Combine scores (weighted average)
-        curiosity_score = (
-            uncertainty_score * 0.4 +
-            novelty_score * 0.3 +
-            learning_score * 0.3
+        # Sensor exploration score - how much will this teach us about our sensors
+        sensor_exploration_score = self._calculate_sensor_exploration_score(action, context)
+        
+        # Take maximum available novelty (natural progression from self → world → social)
+        curiosity_score = max(
+            novelty_score,
+            self_discovery_score, 
+            environment_novelty_score,
+            sensor_exploration_score
         )
         
         # Confidence based on how much data we have
         confidence = min(1.0, len(context.prediction_errors) / 10.0)
         
         # Generate reasoning
-        reasoning = self._generate_reasoning(uncertainty_score, novelty_score, learning_score)
+        reasoning = self._generate_novelty_reasoning(novelty_score, self_discovery_score, 
+                                                   environment_novelty_score, sensor_exploration_score)
         
         # Urgency based on learning stagnation
         urgency = 0.3 + self.learning_stagnation_penalty * 0.7
@@ -95,7 +107,7 @@ class CuriosityDrive(BaseDrive):
         return self.current_weight
     
     def _calculate_uncertainty_score(self, context: DriveContext) -> float:
-        """Calculate score based on prediction uncertainty."""
+        """Calculate score based on prediction uncertainty - can reach true zero."""
         if not context.prediction_errors:
             return 0.8  # High curiosity when no data
         
@@ -103,7 +115,21 @@ class CuriosityDrive(BaseDrive):
         recent_error = sum(context.prediction_errors[-3:]) / min(3, len(context.prediction_errors))
         
         # Normalize to 0-1 scale (assuming errors typically range 0-2)
-        uncertainty_score = min(1.0, recent_error / 2.0)
+        base_uncertainty = min(1.0, recent_error / 2.0)
+        
+        # REMOVED: Artificial curiosity floor - let drive reach true zero when mastered
+        # Natural curiosity emerges purely from prediction uncertainty
+        
+        # Add small exploration bonus that can decay to zero
+        if len(context.prediction_errors) < 50:
+            # Early learning phase - maintain some exploration
+            exploration_bonus = 0.2 * math.exp(-len(context.prediction_errors) / 25.0)
+        else:
+            # Mature learning phase - exploration bonus can reach zero
+            exploration_bonus = 0.1 * math.exp(-len(context.prediction_errors) / 100.0)
+        
+        # Natural uncertainty - can reach zero when predictions are excellent
+        uncertainty_score = base_uncertainty + exploration_bonus
         
         return uncertainty_score
     
@@ -196,8 +222,8 @@ class CuriosityDrive(BaseDrive):
         # Learning stagnation metric (higher = need more curiosity)
         stagnation_metric = self.learning_stagnation_penalty
         
-        # Novelty metric - inversely related to recent prediction accuracy
-        novelty_metric = 0.5  # Baseline novelty
+        # Novelty metric - based purely on prediction variance (can reach zero)
+        novelty_metric = 0.0  # NO baseline - novelty must be earned through variance
         if len(self.recent_prediction_errors) >= 5:
             recent_variance = self._calculate_variance(self.recent_prediction_errors[-5:])
             novelty_metric = min(1.0, recent_variance * 3.0)  # Higher variance = more novelty
@@ -225,23 +251,226 @@ class CuriosityDrive(BaseDrive):
             novelty_metric * 0.3               # Environmental novelty attracts curiosity
         )
         
-        # Apply safety and threat suppression
-        safety_factor = max(0.1, 1.0 - survival_urgency - threat_suppression)
+        # Apply safety and threat suppression (can reduce to zero)
+        safety_factor = max(0.0, 1.0 - survival_urgency - threat_suppression)
         modulated_curiosity = curiosity_promotion * safety_factor
         
         # Apply drive strength curve - maps curiosity need to drive weight
-        # When modulated_curiosity = 0 (no learning needed): drive_strength ≈ 0.15 (quiet baseline)
-        # When modulated_curiosity = 0.5 (moderate): drive_strength ≈ 0.45 (active)
-        # When modulated_curiosity = 1.0 (high need): drive_strength ≈ 0.75 (dominant, but not survival-level)
+        # REMOVED artificial baseline - curiosity can reach true zero when no learning needed
+        # When modulated_curiosity = 0 (no learning needed): drive_strength = 0.0 (true rest)
+        # When modulated_curiosity = 0.5 (moderate): drive_strength ≈ 0.5 (active)
+        # When modulated_curiosity = 1.0 (high need): drive_strength ≈ 0.8 (dominant, but not survival-level)
         
-        base_strength = 0.15  # Baseline curiosity - always some interest in learning
-        max_strength = 0.75   # Maximum curiosity strength (lower than survival max)
+        base_strength = 0.0   # NO baseline - curiosity can be truly zero
+        max_strength = 0.8    # Maximum curiosity strength
         
         # Sigmoid-like curve for smooth, natural response
         curiosity_response = 1.0 / (1.0 + math.exp(-6 * (modulated_curiosity - 0.5)))
         drive_strength = base_strength + (max_strength - base_strength) * curiosity_response
         
         return min(max_strength, max(base_strength, drive_strength))
+    
+    def _calculate_pure_novelty_score(self, action: Dict[str, float], context: DriveContext) -> float:
+        """Calculate pure novelty score based on predicted experience unfamiliarity."""
+        # Predict what experience this action will create
+        predicted_experience = self._predict_experience_signature(action, context)
+        
+        # Check familiarity with this experience type
+        familiarity = self.experience_familiarity[predicted_experience]
+        
+        # Higher novelty for unfamiliar experiences
+        novelty_score = max(0.0, 1.0 - familiarity)
+        
+        return novelty_score
+    
+    def _calculate_self_discovery_score(self, action: Dict[str, float], context: DriveContext) -> float:
+        """Calculate how much this action will teach us about our own capabilities."""
+        # Create motor pattern signature
+        motor_signature = self._create_motor_signature(action)
+        motor_familiarity = self.motor_pattern_familiarity[motor_signature]
+        
+        # Self-discovery is high for unfamiliar motor patterns
+        motor_novelty = max(0.0, 1.0 - motor_familiarity)
+        
+        # Bonus for exploring motor limits/combinations
+        motor_complexity = self._calculate_motor_complexity(action)
+        exploration_bonus = motor_complexity * 0.3
+        
+        return min(1.0, motor_novelty + exploration_bonus)
+    
+    def _calculate_environment_novelty_score(self, action: Dict[str, float], context: DriveContext) -> float:
+        """Calculate how much this action will teach us about the environment."""
+        if not hasattr(context, 'current_sensory') or not context.current_sensory:
+            return 0.5  # Unknown environment = high novelty
+        
+        # Create current environmental signature
+        env_signature = self._create_environment_signature(context.current_sensory)
+        env_familiarity = self.sensor_pattern_familiarity[env_signature]
+        
+        # Environmental novelty for unfamiliar sensor patterns
+        env_novelty = max(0.0, 1.0 - env_familiarity)
+        
+        # Bonus for actions that might change environment significantly
+        if abs(action.get('forward_motor', 0.0)) > 0.5:
+            env_novelty += 0.2  # Moving might discover new areas
+        
+        return min(1.0, env_novelty)
+    
+    def _calculate_sensor_exploration_score(self, action: Dict[str, float], context: DriveContext) -> float:
+        """Calculate how much this action will teach us about our sensors."""
+        if not hasattr(context, 'current_sensory') or not context.current_sensory:
+            return 0.8  # No sensor data = high exploration value
+        
+        # Look for sensor indices we haven't explored much
+        sensor_exploration_score = 0.0
+        sensor_count = len(context.current_sensory)
+        
+        for i in range(sensor_count):
+            sensor_signature = f"sensor_{i}"
+            sensor_familiarity = self.sensor_pattern_familiarity[sensor_signature]
+            
+            # Unfamiliar sensors are interesting
+            if sensor_familiarity < 0.5:
+                sensor_exploration_score += (1.0 - sensor_familiarity) / sensor_count
+        
+        # Actions that might activate different sensors get bonuses
+        if abs(action.get('turn_motor', 0.0)) > 0.3:
+            sensor_exploration_score += 0.2  # Turning changes what we sense
+        
+        return min(1.0, sensor_exploration_score)
+    
+    def _predict_experience_signature(self, action: Dict[str, float], context: DriveContext) -> str:
+        """Create a signature for the predicted experience this action will create."""
+        # Combine action and current context into experience signature
+        motor_sig = self._create_motor_signature(action)
+        
+        if hasattr(context, 'current_sensory') and context.current_sensory:
+            env_sig = self._create_environment_signature(context.current_sensory[:10])  # Use first 10 sensors
+        else:
+            env_sig = "unknown_env"
+            
+        return f"{motor_sig}|{env_sig}"
+    
+    def _create_motor_signature(self, action: Dict[str, float]) -> str:
+        """Create a discretized signature for motor actions."""
+        if not action:
+            return "no_action"
+        
+        # Discretize action values to create meaningful signatures
+        signature_parts = []
+        for key in sorted(action.keys()):
+            value = action[key]
+            if abs(value) > 0.1:  # Only include significant action components
+                discretized = round(value * 4) / 4  # Discretize to 0.25 increments
+                signature_parts.append(f"{key}:{discretized}")
+        
+        return "|".join(signature_parts) if signature_parts else "no_action"
+    
+    def _create_environment_signature(self, sensory_data: List[float]) -> str:
+        """Create a discretized signature for environmental sensor patterns."""
+        if not sensory_data:
+            return "empty_sensors"
+        
+        # Discretize sensor values to create patterns
+        signature_parts = []
+        for i, value in enumerate(sensory_data[:10]):  # Use first 10 sensors for environment
+            discretized = round(value * 4) / 4  # Discretize to 0.25 increments
+            if discretized > 0.1:  # Only include meaningful sensor values
+                signature_parts.append(f"s{i}:{discretized}")
+        
+        return "|".join(signature_parts) if signature_parts else "empty_environment"
+    
+    def _calculate_motor_complexity(self, action: Dict[str, float]) -> float:
+        """Calculate complexity/uniqueness of motor pattern."""
+        if not action:
+            return 0.0
+        
+        # Complex actions use multiple motors simultaneously
+        active_motors = sum(1 for v in action.values() if abs(v) > 0.1)
+        motor_variety = len(set(round(v * 4) for v in action.values() if abs(v) > 0.1))
+        
+        complexity = (active_motors + motor_variety) / 6.0  # Normalize
+        return min(1.0, complexity)
+    
+    def learn_from_experience(self, experience, context: DriveContext):
+        """Learn from experience to update familiarity tracking."""
+        if not hasattr(experience, 'action_taken'):
+            return
+        
+        # Update experience familiarity
+        exp_signature = self._predict_experience_signature(experience.action_taken, context)
+        self.experience_familiarity[exp_signature] = min(1.0, 
+            self.experience_familiarity[exp_signature] + 0.1)
+        
+        # Update motor pattern familiarity
+        motor_signature = self._create_motor_signature(experience.action_taken)
+        self.motor_pattern_familiarity[motor_signature] = min(1.0,
+            self.motor_pattern_familiarity[motor_signature] + 0.1)
+        
+        # Update sensor pattern familiarity
+        if hasattr(experience, 'actual_sensory') and experience.actual_sensory:
+            env_signature = self._create_environment_signature(experience.actual_sensory[:10])
+            self.sensor_pattern_familiarity[env_signature] = min(1.0,
+                self.sensor_pattern_familiarity[env_signature] + 0.1)
+            
+            # Update individual sensor familiarity
+            for i in range(min(len(experience.actual_sensory), 24)):
+                sensor_sig = f"sensor_{i}"
+                self.sensor_pattern_familiarity[sensor_sig] = min(1.0,
+                    self.sensor_pattern_familiarity[sensor_sig] + 0.05)
+        
+        # Gradual decay of all familiarity (allows re-exploration)
+        self._decay_familiarity()
+    
+    def _decay_familiarity(self):
+        """Gradually decay familiarity to allow re-exploration of old patterns."""
+        # Decay experience familiarity
+        for key in list(self.experience_familiarity.keys()):
+            self.experience_familiarity[key] = max(0.0, 
+                self.experience_familiarity[key] - self.familiarity_decay_rate)
+            if self.experience_familiarity[key] <= 0.0:
+                del self.experience_familiarity[key]
+        
+        # Decay motor pattern familiarity
+        for key in list(self.motor_pattern_familiarity.keys()):
+            self.motor_pattern_familiarity[key] = max(0.0,
+                self.motor_pattern_familiarity[key] - self.familiarity_decay_rate)
+            if self.motor_pattern_familiarity[key] <= 0.0:
+                del self.motor_pattern_familiarity[key]
+        
+        # Decay sensor pattern familiarity
+        for key in list(self.sensor_pattern_familiarity.keys()):
+            self.sensor_pattern_familiarity[key] = max(0.0,
+                self.sensor_pattern_familiarity[key] - self.familiarity_decay_rate)
+            if self.sensor_pattern_familiarity[key] <= 0.0:
+                del self.sensor_pattern_familiarity[key]
+    
+    def _generate_novelty_reasoning(self, novelty: float, self_discovery: float, 
+                                  environment_novelty: float, sensor_exploration: float) -> str:
+        """Generate human-readable reasoning for novelty-seeking."""
+        scores = {
+            'general_novelty': novelty,
+            'self_discovery': self_discovery,
+            'environment_novelty': environment_novelty,
+            'sensor_exploration': sensor_exploration
+        }
+        
+        dominant_type = max(scores.keys(), key=lambda k: scores[k])
+        dominant_score = scores[dominant_type]
+        
+        if dominant_score > 0.7:
+            if dominant_type == 'self_discovery':
+                return f"High self-discovery potential ({dominant_score:.2f}) - exploring motor capabilities"
+            elif dominant_type == 'environment_novelty':
+                return f"High environmental novelty ({dominant_score:.2f}) - exploring world patterns"
+            elif dominant_type == 'sensor_exploration':
+                return f"High sensor exploration value ({dominant_score:.2f}) - learning about sensors"
+            else:
+                return f"High general novelty ({dominant_score:.2f}) - unfamiliar experience"
+        elif dominant_score > 0.4:
+            return f"Moderate {dominant_type.replace('_', ' ')} ({dominant_score:.2f})"
+        else:
+            return f"Low novelty ({dominant_score:.2f}) - familiar patterns"
     
     def evaluate_experience_valence(self, experience, context: DriveContext) -> float:
         """
@@ -383,6 +612,10 @@ class CuriosityDrive(BaseDrive):
             'prediction_improvement_rate': self.prediction_improvement_rate,
             'learning_stagnation_penalty': self.learning_stagnation_penalty,
             'recent_prediction_errors_count': len(self.recent_prediction_errors),
-            'average_recent_error': sum(self.recent_prediction_errors[-5:]) / min(5, len(self.recent_prediction_errors)) if self.recent_prediction_errors else 0.0
+            'average_recent_error': sum(self.recent_prediction_errors[-5:]) / min(5, len(self.recent_prediction_errors)) if self.recent_prediction_errors else 0.0,
+            'experience_patterns_tracked': len(self.experience_familiarity),
+            'motor_patterns_tracked': len(self.motor_pattern_familiarity),
+            'sensor_patterns_tracked': len(self.sensor_pattern_familiarity),
+            'familiarity_decay_rate': self.familiarity_decay_rate
         })
         return stats

@@ -6,6 +6,7 @@ The robot wants to stay alive, healthy, and energized.
 import math
 from typing import Dict, List
 from .base_drive import BaseDrive, DriveContext, ActionEvaluation
+from collections import defaultdict
 
 
 class SurvivalDrive(BaseDrive):
@@ -19,12 +20,17 @@ class SurvivalDrive(BaseDrive):
     - Minimize risky behaviors when health is low
     """
     
-    def __init__(self, base_weight: float = 0.4):
+    def __init__(self, base_weight: float = 0.15):
         super().__init__("Survival", base_weight)
-        self.energy_panic_threshold = 0.2
-        self.health_panic_threshold = 0.3
+        self.energy_panic_threshold = 0.05  # Only panic at 5% energy (was 15%)
+        self.health_panic_threshold = 0.02  # Only panic at 2% health (was 10%)
         self.recent_damage_memory = 5  # Steps to remember recent damage
         self.food_seeking_urgency = 0.0
+        
+        # Drive-specific pain/pleasure learning
+        self.action_pain_associations = defaultdict(float)  # action_signature -> pain_level
+        self.action_pleasure_associations = defaultdict(float)  # action_signature -> pleasure_level  
+        self.learning_rate = 0.1
         
     def evaluate_action(self, action: Dict[str, float], context: DriveContext) -> ActionEvaluation:
         """Evaluate action based on survival implications."""
@@ -44,15 +50,15 @@ class SurvivalDrive(BaseDrive):
         
         # Combine scores based on current survival state
         if context.robot_energy < self.energy_panic_threshold:
-            # Energy crisis - prioritize resource seeking
-            survival_score = resource_score * 0.6 + safety_score * 0.3 + energy_score * 0.1
+            # Energy crisis - prioritize resource seeking but allow exploration
+            survival_score = resource_score * 0.5 + safety_score * 0.2 + energy_score * 0.3
         elif context.robot_health < self.health_panic_threshold:
-            # Health crisis - prioritize safety
-            survival_score = safety_score * 0.6 + health_score * 0.3 + energy_score * 0.1
+            # Health crisis - prioritize safety but not completely
+            survival_score = safety_score * 0.5 + health_score * 0.2 + resource_score * 0.3
         else:
-            # Normal operation - balanced survival
-            survival_score = (energy_score * 0.25 + health_score * 0.25 + 
-                            safety_score * 0.3 + resource_score * 0.2)
+            # Normal operation - much more balanced, allow exploration
+            survival_score = (energy_score * 0.2 + health_score * 0.2 + 
+                            safety_score * 0.3 + resource_score * 0.3)
         
         # Confidence based on how critical survival needs are
         urgency_factor = self._calculate_survival_urgency(context)
@@ -113,9 +119,9 @@ class SurvivalDrive(BaseDrive):
         # Score inversely related to energy cost
         energy_score = max(0.0, 1.0 - (total_energy_cost * energy_penalty_factor * 20))
         
-        # Bonus for brake usage when energy is critically low
-        if context.robot_energy < 0.1 and action.get('brake_motor', 0.0) > 0.5:
-            energy_score = min(1.0, energy_score + 0.3)
+        # Bonus for brake usage when energy is critically low, but reduced
+        if context.robot_energy < 0.05 and action.get('brake_motor', 0.0) > 0.5:
+            energy_score = min(1.0, energy_score + 0.2)
         
         return energy_score
     
@@ -175,10 +181,28 @@ class SurvivalDrive(BaseDrive):
     
     def _calculate_resource_seeking_score(self, action: Dict[str, float], context: DriveContext) -> float:
         """Calculate how well action helps find resources (food/energy)."""
-        # If we haven't had food recently and energy is low, encourage exploration toward food
+        # Start with baseline resource seeking
         resource_score = 0.5  # Neutral baseline
         
-        if context.robot_energy < 0.6 and context.time_since_last_food > 10:
+        # Use discovered smell sensors for food attraction (if available)
+        smell_direction, smell_intensity = self._get_food_smell_data(context)
+        
+        # If we smell food (intensity > 0.1), create intrinsic attraction
+        if smell_intensity > 0.1:
+            # Reward forward movement when smell is detected
+            forward_movement = action.get('forward_motor', 0.0)
+            if forward_movement > 0.2:
+                food_attraction_bonus = smell_intensity * 0.4  # Strong bonus for moving toward food
+                resource_score += food_attraction_bonus
+            
+            # Reward turning toward smell direction (simplified - assume any turning helps exploration)
+            turn_movement = abs(action.get('turn_motor', 0.0))
+            if turn_movement > 0.3:
+                exploration_bonus = smell_intensity * 0.2  # Moderate bonus for exploring when food nearby
+                resource_score += exploration_bonus
+        
+        # Basic resource seeking when energy is low (but not panic level)
+        if context.robot_energy < 0.5 and context.time_since_last_food > 30:
             # Encourage forward movement to find food
             forward_movement = action.get('forward_motor', 0.0)
             if forward_movement > 0.2:
@@ -189,15 +213,38 @@ class SurvivalDrive(BaseDrive):
             if turn_movement > 0.3:
                 resource_score += 0.2
             
-            # Discourage braking when seeking resources
+            # Discourage excessive braking when seeking resources
             brake_penalty = action.get('brake_motor', 0.0) * 0.3
             resource_score -= brake_penalty
         
-        # If energy is very low, this becomes critical
+        # If energy is very low, this becomes more urgent
         if context.robot_energy < self.energy_panic_threshold:
-            resource_score *= 1.5
+            resource_score *= 1.3
         
         return max(0.0, min(1.0, resource_score))
+    
+    def _get_relevant_sensor_purposes(self):
+        """Return sensor purposes relevant to survival drive."""
+        from core.sensor_semantics import SensorPurpose
+        return [
+            SensorPurpose.SURVIVAL,
+            SensorPurpose.FOOD_DETECTION,
+            SensorPurpose.THREAT_DETECTION,
+            SensorPurpose.ENERGY_MANAGEMENT,
+            SensorPurpose.SELF_STATE
+        ]
+    
+    def _get_food_smell_data(self, context: DriveContext) -> tuple[float, float]:
+        """Extract food smell information using discovered sensors."""
+        # Try to get chemical sensors for food detection
+        chemical_sensors = self.extract_sensor_values(context, 'food_detection')
+        
+        if len(chemical_sensors) >= 2:
+            # We have smell direction and intensity
+            return chemical_sensors[0], chemical_sensors[1]  # direction, intensity
+        else:
+            # No chemical sensors discovered yet
+            return 0.0, 0.0
     
     def _calculate_survival_urgency(self, context: DriveContext) -> float:
         """Calculate overall survival urgency [0.0-1.0]."""
@@ -286,12 +333,13 @@ class SurvivalDrive(BaseDrive):
         )
         
         # Apply drive strength curve - maps urgency to drive weight
-        # When urgency = 0 (all good): drive_strength ≈ 0.05 (nearly silent)
-        # When urgency = 0.5 (moderate): drive_strength ≈ 0.35 (noticeable)  
-        # When urgency = 1.0 (critical): drive_strength ≈ 0.85 (dominant)
+        # REMOVED artificial baseline - survival can be truly zero when safe
+        # When urgency = 0 (all good): drive_strength = 0.0 (true safety)
+        # When urgency = 0.5 (moderate): drive_strength ≈ 0.2 (mild concern)  
+        # When urgency = 1.0 (critical): drive_strength ≈ 0.5 (important but not overwhelming)
         
-        base_strength = 0.05  # Minimum background survival awareness
-        max_strength = 0.85   # Maximum drive strength (leave room for cooperation)
+        base_strength = 0.0   # NO artificial baseline - can be truly zero when safe
+        max_strength = 0.5    # Much reduced maximum to prioritize exploration
         
         # Sigmoid-like curve for smooth, natural response
         urgency_response = 1.0 / (1.0 + math.exp(-8 * (combined_urgency - 0.5)))
@@ -337,12 +385,13 @@ class SurvivalDrive(BaseDrive):
         actual = experience.actual_sensory
         predicted = experience.predicted_sensory
         
-        if len(actual) < 19 or len(predicted) < 19:
+        if len(actual) < 21 or len(predicted) < 21:
             return 1.0
         
         # Calculate health and energy changes (survival outcomes)
-        health_change = actual[17] - predicted[17]  # Health change
-        energy_change = actual[18] - predicted[18]  # Energy change
+        # Updated indices: health=19, energy=20 (indices 17-18 are smell sensors)
+        health_change = actual[19] - predicted[19]  # Health change
+        energy_change = actual[20] - predicted[20]  # Energy change
         
         # Calculate survival significance
         survival_significance = 1.0
@@ -379,12 +428,13 @@ class SurvivalDrive(BaseDrive):
         actual = experience.actual_sensory
         predicted = experience.predicted_sensory
         
-        if len(actual) < 19 or len(predicted) < 19:
+        if len(actual) < 21 or len(predicted) < 21:
             return 0.0
         
         # Calculate changes in survival metrics
-        health_change = actual[17] - predicted[17]
-        energy_change = actual[18] - predicted[18]
+        # Updated indices: health=19, energy=20 (indices 17-18 are smell sensors)
+        health_change = actual[19] - predicted[19]
+        energy_change = actual[20] - predicted[20]
         
         # Pain signals for survival drive
         pain_score = 0.0
@@ -438,3 +488,87 @@ class SurvivalDrive(BaseDrive):
             'recent_damage_memory_steps': self.recent_damage_memory
         })
         return stats
+    
+    def evaluate_action_pain_pleasure(self, action: Dict[str, float], context: DriveContext) -> tuple[float, float]:
+        """
+        Evaluate expected pain/pleasure of an action for survival drive.
+        
+        Survival drive considers:
+        - Pain: Actions that historically led to health/energy loss
+        - Pleasure: Actions that historically led to health/energy gain
+        """
+        action_signature = self._create_action_signature(action)
+        
+        # Get learned associations
+        expected_pain = self.action_pain_associations.get(action_signature, 0.0)
+        expected_pleasure = self.action_pleasure_associations.get(action_signature, 0.0)
+        
+        # Add contextual pain/pleasure based on current state
+        contextual_pain = 0.0
+        contextual_pleasure = 0.0
+        
+        # High movement when energy is low = predicted pain
+        if context.robot_energy < 0.3:
+            movement_intensity = abs(action.get('forward_motor', 0.0)) + abs(action.get('turn_motor', 0.0))
+            if movement_intensity > 0.5:
+                contextual_pain = -0.3  # Moderate pain for high energy expenditure when low
+        
+        # Moving towards safety when health is low = predicted pleasure
+        if context.robot_health < 0.5:
+            # Assume braking or slower movement is safer
+            if action.get('brake_motor', 0.0) > 0.3:
+                contextual_pleasure = 0.2  # Mild pleasure for cautious behavior
+        
+        # Combine learned and contextual predictions
+        total_pain = max(-1.0, expected_pain + contextual_pain)
+        total_pleasure = min(1.0, expected_pleasure + contextual_pleasure)
+        
+        return total_pain, total_pleasure
+    
+    def learn_pain_pleasure_association(self, action: Dict[str, float], context: DriveContext, 
+                                      outcome_pain: float, outcome_pleasure: float):
+        """
+        Learn survival-specific pain/pleasure associations from action outcomes.
+        """
+        action_signature = self._create_action_signature(action)
+        
+        # Update pain associations using exponential moving average
+        current_pain = self.action_pain_associations[action_signature]
+        self.action_pain_associations[action_signature] = (
+            current_pain * (1 - self.learning_rate) + outcome_pain * self.learning_rate
+        )
+        
+        # Update pleasure associations
+        current_pleasure = self.action_pleasure_associations[action_signature]
+        self.action_pleasure_associations[action_signature] = (
+            current_pleasure * (1 - self.learning_rate) + outcome_pleasure * self.learning_rate
+        )
+    
+    def _create_action_signature(self, action: Dict[str, float]) -> str:
+        """Create a signature string for an action for association learning."""
+        if not action:
+            return "no_action"
+        
+        # Discretize action values to create meaningful signatures
+        signature_parts = []
+        for key in sorted(action.keys()):
+            value = action[key]
+            if abs(value) > 0.1:  # Only include significant action components
+                discretized = round(value * 4) / 4  # Discretize to 0.25 increments
+                signature_parts.append(f"{key}:{discretized}")
+        
+        return "|".join(signature_parts) if signature_parts else "no_action"
+    
+    def get_pain_pleasure_statistics(self) -> Dict:
+        """Get statistics about this drive's pain/pleasure learning."""
+        total_pain_associations = len([p for p in self.action_pain_associations.values() if p < -0.1])
+        total_pleasure_associations = len([p for p in self.action_pleasure_associations.values() if p > 0.1])
+        
+        return {
+            "learning_implemented": True,
+            "total_pain_associations": total_pain_associations,
+            "total_pleasure_associations": total_pleasure_associations,
+            "total_action_signatures": len(self.action_pain_associations),
+            "strongest_pain_association": min(self.action_pain_associations.values()) if self.action_pain_associations else 0.0,
+            "strongest_pleasure_association": max(self.action_pleasure_associations.values()) if self.action_pleasure_associations else 0.0
+        }

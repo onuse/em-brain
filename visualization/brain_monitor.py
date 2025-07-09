@@ -3,6 +3,10 @@ Brain state monitoring and visualization.
 Displays real-time information about the robot's learning and decision-making process.
 """
 
+import warnings
+# Suppress pygame's pkg_resources deprecation warning
+warnings.filterwarnings("ignore", message="pkg_resources is deprecated as an API")
+
 import pygame
 from typing import List, Dict, Any, Optional, Tuple
 from collections import deque
@@ -59,6 +63,10 @@ class BrainStateMonitor:
         self.show_node_graph = True
         self.show_stats_graph = True
         self.auto_scroll_log = True
+        
+        # Performance optimization
+        self.update_counter = 0
+        self.stats_update_frequency = 10  # Update expensive stats every 10 frames instead of every frame
     
     def update(self, graph: WorldGraph, prediction_error: float = 0.0, 
                recent_action: Dict[str, float] = None, step: int = 0,
@@ -72,18 +80,22 @@ class BrainStateMonitor:
         self.brain_client = brain_client
         self.current_robot_mood = robot_mood
         
+        # Increment update counter for performance optimization
+        self.update_counter += 1
+        
         # Debug: Print update info occasionally (reduced frequency)
         if step % 200 == 0:  # Every 200 steps instead of 20
             node_count = graph.node_count() if graph else 0
             print(f"Brain monitor update: step {step}, {node_count} nodes, error {prediction_error:.3f}")
         
-        # Update statistics history
-        stats = graph.get_graph_statistics()
-        stats['step'] = step
-        stats['prediction_error'] = prediction_error
-        self.graph_stats_history.append(stats)
+        # Update expensive statistics only every N frames for performance
+        if self.update_counter % self.stats_update_frequency == 0:
+            stats = graph.get_graph_statistics()
+            stats['step'] = step
+            stats['prediction_error'] = prediction_error
+            self.graph_stats_history.append(stats)
         
-        # Update prediction history
+        # Always update prediction history (lightweight)
         self.prediction_history.append(prediction_error)
         
         # Update consensus history
@@ -95,21 +107,22 @@ class BrainStateMonitor:
                 'step': step
             })
         
-        # Log significant events
-        if recent_action:
+        # Log significant events (less frequently for performance)
+        if recent_action and self.update_counter % 5 == 0:  # Every 5 frames
             self._log_event(f"Action: {self._format_action(recent_action)}", "info")
         
-        if consensus_result:
+        if consensus_result and self.update_counter % 3 == 0:  # Every 3 frames
             self._log_event(f"Thinking: {consensus_result.consensus_strength} consensus ({consensus_result.agreement_count}/{consensus_result.total_traversals})", "info")
         
         if prediction_error > 2.0:
             self._log_event(f"High prediction error: {prediction_error:.3f}", "warning")
         
-        if stats.get('total_merges', 0) > 0:
+        # Only check for merges when we updated stats
+        if self.update_counter % self.stats_update_frequency == 0:
             latest_stats = list(self.graph_stats_history)
             if len(latest_stats) > 1:
                 prev_merges = latest_stats[-2].get('total_merges', 0)
-                current_merges = stats.get('total_merges', 0)
+                current_merges = latest_stats[-1].get('total_merges', 0)
                 if current_merges > prev_merges:
                     new_merges = current_merges - prev_merges
                     self._log_event(f"Memory consolidation: {new_merges} nodes merged", "success")
@@ -166,7 +179,12 @@ class BrainStateMonitor:
             self.surface.blit(test_text, (15, y + 33))
             return y + 60
         
-        stats = self.current_graph.get_graph_statistics()
+        # Use cached stats if available, otherwise get fresh stats
+        if hasattr(self, '_cached_display_stats') and self.update_counter % self.stats_update_frequency != 0:
+            stats = self._cached_display_stats
+        else:
+            stats = self.current_graph.get_graph_statistics()
+            self._cached_display_stats = stats
         
         # Stats to display
         stat_items = [

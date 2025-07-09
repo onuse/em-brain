@@ -58,13 +58,13 @@ class NoveltyDetector:
         self.world_graph = world_graph
         self.similarity_engine = AcceleratedSimilarityEngine()
         
-        # Novelty thresholds for different dimensions
+        # Novelty thresholds for different dimensions (relaxed for better learning)
         self.dimension_thresholds = {
-            NoveltyDimension.MENTAL_CONTEXT: 0.85,      # High threshold - context should be quite different
-            NoveltyDimension.MOTOR_ACTION: 0.70,        # Medium threshold - actions can be somewhat similar
-            NoveltyDimension.SENSORY_OUTCOME: 0.75,     # Medium-high threshold - outcomes should be fairly different
-            NoveltyDimension.TEMPORAL_PATTERN: 0.60,    # Lower threshold - temporal patterns often repeat
-            NoveltyDimension.PREDICTIVE_ACCURACY: 0.50  # Lower threshold - accuracy often similar
+            NoveltyDimension.MENTAL_CONTEXT: 0.75,      # Relaxed - allow more context variations
+            NoveltyDimension.MOTOR_ACTION: 0.60,        # Relaxed - actions can be more similar
+            NoveltyDimension.SENSORY_OUTCOME: 0.65,     # Relaxed - outcomes can be more similar
+            NoveltyDimension.TEMPORAL_PATTERN: 0.50,    # Relaxed - temporal patterns often repeat
+            NoveltyDimension.PREDICTIVE_ACCURACY: 0.40  # Relaxed - accuracy variations are normal
         }
         
         # Weights for combining dimension scores
@@ -76,9 +76,14 @@ class NoveltyDetector:
             NoveltyDimension.PREDICTIVE_ACCURACY: 0.05  # Least important - prediction quality
         }
         
-        # Adaptive thresholds based on system state
-        self.base_novelty_threshold = 0.75  # Overall novelty threshold for new node creation
+        # Adaptive thresholds based on system state (relaxed for better learning)
+        self.base_novelty_threshold = 0.45  # Lower threshold = more new nodes created (was 0.6)
         self.memory_pressure_factor = 1.0   # Increases threshold when memory is full
+        
+        # Maturity-based threshold scaling for infant brains
+        self.enable_maturity_scaling = True
+        self.infant_threshold_multiplier = 0.25  # Even lower threshold for infant brains (more liberal)
+        self.mature_experience_count = 1000  # Brain is considered mature after 1000 experiences (was 200)
         
         # Performance tracking
         self.evaluations_performed = 0
@@ -108,6 +113,10 @@ class NoveltyDetector:
         # Get candidate nodes for comparison
         candidate_nodes = self._get_candidate_nodes(experience_signature, search_radius)
         
+        # Debug logging (commented out for production)
+        # if self.evaluations_performed <= 10:
+        #     print(f"DEBUG: Found {len(candidate_nodes)} candidate nodes for comparison")
+        
         if not candidate_nodes:
             # No existing nodes to compare against - definitely novel
             return NoveltyScore(
@@ -136,6 +145,10 @@ class NoveltyDetector:
                 for dim in NoveltyDimension
             )
             
+            # Debug logging for first few candidates (commented out for production)
+            # if self.evaluations_performed <= 3 and len(candidate_nodes) > 0:
+            #     print(f"DEBUG: Candidate similarity = {overall_similarity:.4f}, Mental context sim = {similarity_scores[NoveltyDimension.MENTAL_CONTEXT]:.4f}")
+            
             if overall_similarity > best_similarity:
                 best_similarity = overall_similarity
                 best_match = candidate
@@ -155,6 +168,10 @@ class NoveltyDetector:
         # Calculate confidence based on how clear the decision is
         confidence = self._calculate_confidence(overall_novelty, dimension_scores)
         
+        # Debug logging for development (commented out for production)
+        # if self.evaluations_performed <= 10:  # Only log first 10 evaluations
+        #     print(f"DEBUG: Novelty={overall_novelty:.3f}, Threshold={self.base_novelty_threshold * self.memory_pressure_factor:.3f}, Recommendation={recommendation}")
+        
         return NoveltyScore(
             overall_novelty=overall_novelty,
             dimension_scores=novelty_dimension_scores,
@@ -170,12 +187,22 @@ class NoveltyDetector:
         # Strategy 1: Get nodes with similar mental contexts
         similar_context_nodes = self.world_graph.find_similar_nodes(
             experience_signature.mental_context,
-            similarity_threshold=0.5,  # Lower threshold for broader search
+            similarity_threshold=0.3,  # Lowered threshold for broader search
             max_results=search_radius // 2
         )
         
+        # Debug logging (commented out for production)
+        # if self.evaluations_performed <= 10:
+        #     print(f"DEBUG: Mental context search found {len(similar_context_nodes)} nodes (threshold=0.3)")
+        #     print(f"DEBUG: World graph has {self.world_graph.node_count()} nodes")
+        #     print(f"DEBUG: Search radius // 2 = {search_radius // 2}")
+        
         # Strategy 2: Get recent temporal nodes
         recent_nodes = self.world_graph.get_recent_nodes(search_radius // 2)
+        
+        # Debug logging (commented out for production)
+        # if self.evaluations_performed <= 10:
+        #     print(f"DEBUG: Recent nodes search found {len(recent_nodes)} nodes")
         
         # Strategy 3: Get nodes with similar drive states
         drive_similar_nodes = self._find_drive_similar_nodes(
@@ -240,10 +267,33 @@ class NoveltyDetector:
             exp1.temporal_context, exp2.temporal_context
         )
         
-        # Predictive accuracy similarity
-        similarities[NoveltyDimension.PREDICTIVE_ACCURACY] = 1.0 - abs(
-            exp1.prediction_accuracy - exp2.prediction_accuracy
-        )
+        # Predictive accuracy similarity (with safeguards)
+        try:
+            acc1 = exp1.prediction_accuracy if exp1.prediction_accuracy is not None else 0.5
+            acc2 = exp2.prediction_accuracy if exp2.prediction_accuracy is not None else 0.5
+            
+            # Debug logging (commented out for production)
+            # if self.evaluations_performed <= 3:
+            #     print(f"DEBUG: acc1={acc1}, acc2={acc2}, type1={type(acc1)}, type2={type(acc2)}")
+            
+            similarities[NoveltyDimension.PREDICTIVE_ACCURACY] = max(0.0, 1.0 - abs(acc1 - acc2))
+        except (TypeError, ValueError) as e:
+            # Fallback for any problematic values
+            # if self.evaluations_performed <= 3:
+            #     print(f"DEBUG: Exception in predictive accuracy: {e}")
+            similarities[NoveltyDimension.PREDICTIVE_ACCURACY] = 0.5
+        
+        # Debug logging to find problematic dimension (commented out for production)
+        # if self.evaluations_performed <= 3:
+        #     for dim, sim in similarities.items():
+        #         if sim < 0 or sim != sim:  # Check for negative or NaN values
+        #             print(f"DEBUG: Dimension {dim} has problematic similarity: {sim}")
+        #             if dim == NoveltyDimension.MOTOR_ACTION:
+        #                 print(f"  Motor action 1: {exp1.motor_action}")
+        #                 print(f"  Motor action 2: {exp2.motor_action}")
+        #             elif dim == NoveltyDimension.SENSORY_OUTCOME:
+        #                 print(f"  Sensory outcome 1: {exp1.sensory_outcome}")
+        #                 print(f"  Sensory outcome 2: {exp2.sensory_outcome}")
         
         return similarities
     
@@ -319,19 +369,43 @@ class NoveltyDetector:
         # Adjust threshold based on memory pressure
         effective_threshold = self.base_novelty_threshold * self.memory_pressure_factor
         
+        # Apply maturity-based scaling for infant brains
+        if self.enable_maturity_scaling:
+            experience_count = self.world_graph.node_count()
+            if experience_count < self.mature_experience_count:
+                # Infant brain - use much lower threshold (more liberal about creating new experiences)
+                maturity_ratio = experience_count / self.mature_experience_count
+                infant_multiplier = self.infant_threshold_multiplier + (1.0 - self.infant_threshold_multiplier) * maturity_ratio
+                effective_threshold *= infant_multiplier
+                
+                # Also relax the other thresholds for infant brains
+                merge_threshold = 0.3 * infant_multiplier
+                strengthen_threshold = 0.5 * infant_multiplier
+                connection_threshold = 0.7 * infant_multiplier
+            else:
+                # Mature brain - use normal thresholds
+                merge_threshold = 0.3
+                strengthen_threshold = 0.5
+                connection_threshold = 0.7
+        else:
+            # Normal thresholds when maturity scaling is disabled
+            merge_threshold = 0.3
+            strengthen_threshold = 0.5
+            connection_threshold = 0.7
+        
         if overall_novelty > effective_threshold:
             return "create_new"
         
         # Check if we should merge completely
-        if overall_novelty < 0.3 and best_match is not None:
+        if overall_novelty < merge_threshold and best_match is not None:
             return "merge_complete"
         
         # Check if we should strengthen existing node
-        if overall_novelty < 0.5 and best_match is not None:
+        if overall_novelty < strengthen_threshold and best_match is not None:
             return "strengthen_existing"
         
         # Check for partial consolidation (create connections but new node)
-        if overall_novelty < 0.7 and best_match is not None:
+        if overall_novelty < connection_threshold and best_match is not None:
             return "create_with_connections"
         
         return "create_new"
@@ -401,8 +475,9 @@ class NoveltyDetector:
         """Update memory pressure factor based on current memory usage."""
         if max_nodes > 0:
             usage_ratio = node_count / max_nodes
-            # Increase novelty threshold when memory is getting full
-            self.memory_pressure_factor = 1.0 + (usage_ratio * 0.5)
+            # Increase novelty threshold when memory is getting full, but cap at reasonable level
+            # This ensures the effective threshold never exceeds 1.0 (max possible novelty)
+            self.memory_pressure_factor = 1.0 + min(0.3, usage_ratio * 0.3)
         else:
             self.memory_pressure_factor = 1.0
     

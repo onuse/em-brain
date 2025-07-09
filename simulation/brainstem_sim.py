@@ -46,9 +46,9 @@ class GridWorldBrainstem:
             # Fallback to local brain for backwards compatibility
             from core.brain_interface import BrainInterface
             from predictor.multi_drive_predictor import MultiDrivePredictor
-            # Use the complete brain system with all capabilities
+            # Use the complete brain system with all capabilities and GPU acceleration
             predictor = MultiDrivePredictor(base_time_budget=0.1)
-            self.brain_client = BrainInterface(predictor, enable_persistence=True)
+            self.brain_client = BrainInterface(predictor, enable_persistence=True, use_gpu=True)
         
     def get_sensor_readings(self) -> SensoryPacket:
         """
@@ -114,6 +114,7 @@ class GridWorldBrainstem:
             'sensors': [
                 {'id': 'distance_sensors', 'type': 'distance', 'data_size': 4},
                 {'id': 'vision_features', 'type': 'camera_features', 'data_size': 13},
+                {'id': 'smell_sensors', 'type': 'chemical', 'data_size': 2},
                 {'id': 'internal_state', 'type': 'internal', 'data_size': 5}
             ],
             'actuators': [
@@ -121,7 +122,7 @@ class GridWorldBrainstem:
                 {'id': 'turn_motor', 'type': 'motor', 'range': [-1.0, 1.0]},
                 {'id': 'brake_motor', 'type': 'motor', 'range': [0.0, 1.0]}
             ],
-            'total_sensor_size': 22,
+            'total_sensor_size': 24,
             'simulation_mode': True
         }
     
@@ -170,14 +171,20 @@ class GridWorldBrainstem:
                     'range': [0.0, 1.0],
                     'description': '3x3 grid around robot + environmental features'
                 },
+                'smell_sensors': {
+                    'indices': [17, 18],
+                    'meanings': ['plant_direction', 'plant_intensity'],
+                    'range': [0.0, 1.0],
+                    'description': 'Chemical/scent detection sensors'
+                },
                 'internal_state': {
-                    'indices': [17, 18, 19, 20, 21],
+                    'indices': [19, 20, 21, 22, 23],
                     'meanings': ['health', 'energy', 'orientation', 'time_since_food', 'time_since_damage'],
                     'range': [0.0, 1.0],
                     'description': 'Robot internal sensors'
                 }
             },
-            'total_sensors': 22,
+            'total_sensors': 24,
             'cell_values': {
                 0.0: 'Empty',
                 1.0: 'Wall', 

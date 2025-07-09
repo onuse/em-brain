@@ -18,13 +18,33 @@ This consolidates and replaces all other demo files in the project.
 """
 
 import time
+import warnings
+
+# Suppress pygame's pkg_resources deprecation warning
+warnings.filterwarnings("ignore", message="pkg_resources is deprecated as an API")
+
 import pygame
 from simulation.brainstem_sim import GridWorldBrainstem
 from visualization.integrated_display import IntegratedDisplay
 from enhanced_run_logger import EnhancedRunLogger
+# Decision logging imports
+from core.decision_logger import start_decision_logging, stop_decision_logging
+# Brain evolution tracking imports
+from core.brain_evolution_tracker import BrainEvolutionTracker
+from core.learning_velocity_monitor import LearningVelocityMonitor
+
 
 
 def main():
+    # Start decision logging
+    logger = start_decision_logging()
+    
+    # Initialize brain evolution tracker
+    evolution_tracker = BrainEvolutionTracker(session_name="demo_robot_brain", track_every_n_steps=5)
+    
+    # Initialize learning velocity monitor
+    learning_monitor = LearningVelocityMonitor(session_name="demo_robot_brain")
+
     """Launch the ultimate 2D brain demonstration."""
     print("🧠 ROBOT BRAIN DEMO")
     print("=" * 60)
@@ -76,11 +96,34 @@ def main():
     print("🎮 Setting up visualization...")
     display = IntegratedDisplay(brainstem, cell_size=15)
     
+    # Prediction error tracking
+    prediction_error_tracker = {'last_prediction': None, 'last_sensory': None, 'current_error': 0.0}
+    
+    def calculate_prediction_error(predicted_sensory, actual_sensory):
+        """Calculate prediction error between predicted and actual sensory values."""
+        if not predicted_sensory or not actual_sensory:
+            return 0.0
+        
+        if len(predicted_sensory) != len(actual_sensory):
+            return 1.0  # Maximum error for mismatched lengths
+        
+        # Simple Euclidean distance
+        squared_diffs = [(p - a) ** 2 for p, a in zip(predicted_sensory, actual_sensory)]
+        return (sum(squared_diffs) / len(squared_diffs)) ** 0.5
+    
     # Connect visualization to brain system for real predictions
     def brain_prediction_callback(state):
         """Use the brain system to generate motor commands instead of random actions."""
         # Log frame with timing
         enhanced_logger.log_frame_with_timing(brainstem.brain_client, state)
+        
+        # Calculate prediction error from last cycle
+        if prediction_error_tracker['last_prediction'] and prediction_error_tracker['last_sensory']:
+            current_error = calculate_prediction_error(
+                prediction_error_tracker['last_prediction'].expected_sensory,
+                prediction_error_tracker['last_sensory']
+            )
+            prediction_error_tracker['current_error'] = current_error
         
         # Create sensory packet from current state
         from core.communication import SensoryPacket
@@ -92,6 +135,12 @@ def main():
             timestamp=datetime.now()
         )
         
+        # Extract robot state from the simulation state
+        robot_position = state.get('position', (0, 0))
+        robot_orientation = state.get('orientation', 0)
+        robot_health = state.get('health', 0.0)
+        robot_energy = state.get('energy', 0.0)
+        
         # Get brain prediction with current mental context
         mental_context = state['sensors'][:8] if len(state['sensors']) >= 8 else state['sensors']
         
@@ -100,8 +149,47 @@ def main():
             brainstem.brain_client.process_sensory_input,
             sensory_packet, 
             mental_context, 
-            threat_level="normal"
+            threat_level="normal",
+            robot_position=robot_position,
+            robot_orientation=robot_orientation
         )
+        
+        # Capture brain evolution snapshot
+        brain_stats = brainstem.brain_client.get_brain_statistics()
+        decision_context = {
+            'step_count': brainstem.sequence_counter,
+            'robot_position': robot_position,
+            'robot_orientation': robot_orientation,
+            'robot_health': robot_health,
+            'robot_energy': robot_energy,
+            'chosen_action': prediction.motor_action if prediction else {},
+            'recent_prediction_error': prediction_error_tracker['current_error'],
+            'confidence': 0.8,  # Placeholder - would come from prediction system
+            'drive_weights': {},  # Will be populated if multi-drive predictor
+            'total_drive_pressure': 0.0,
+            'dominant_drive': 'unknown'
+        }
+        
+        # Extract drive information if available
+        if hasattr(brainstem.brain_client.predictor, 'motivation_system'):
+            motivation_system = brainstem.brain_client.predictor.motivation_system
+            decision_context['drive_weights'] = {name: drive.current_weight for name, drive in motivation_system.drives.items()}
+            decision_context['total_drive_pressure'] = sum(decision_context['drive_weights'].values())
+            
+            # Find dominant drive
+            if decision_context['drive_weights']:
+                dominant_drive = max(decision_context['drive_weights'].keys(), key=lambda k: decision_context['drive_weights'][k])
+                decision_context['dominant_drive'] = dominant_drive
+        
+        # Capture evolution snapshot
+        evolution_snapshot = evolution_tracker.capture_snapshot(brain_stats, decision_context, brainstem.sequence_counter)
+        
+        # Capture learning velocity snapshot
+        learning_snapshot = learning_monitor.capture_learning_snapshot(brain_stats, decision_context, brainstem.sequence_counter)
+        
+        # Store prediction and sensory data for next cycle's error calculation
+        prediction_error_tracker['last_prediction'] = prediction
+        prediction_error_tracker['last_sensory'] = state['sensors']
         
         return prediction.motor_action if prediction else {
             'forward_motor': 0.0, 'turn_motor': 0.0, 'brake_motor': 0.0
@@ -131,6 +219,75 @@ def main():
         import traceback
         traceback.print_exc()
     finally:
+        # Stop decision logging
+        summary = stop_decision_logging()
+        if summary:
+            print(f'📊 Decision log summary: {summary["problem_analysis"]["total_problems"]} problems detected')
+        
+        # Generate and save brain evolution analysis
+        print("\\n🧠 BRAIN EVOLUTION ANALYSIS")
+        print("=" * 60)
+        
+        # Print live status
+        evolution_tracker.print_live_status()
+        
+        # Print learning velocity status
+        learning_monitor.print_learning_status()
+        
+        # Generate comprehensive evolution analysis
+        evolution_analysis = evolution_tracker.analyze_brain_evolution()
+        if 'error' not in evolution_analysis:
+            print(f"\\n📈 EVOLUTION INSIGHTS:")
+            for insight in evolution_analysis['insights']:
+                print(f"   {insight}")
+            
+            # Print key metrics
+            neural_dev = evolution_analysis['neural_development']
+            print(f"\\n🧠 Neural Development:")
+            print(f"   Growth: {neural_dev['initial_nodes']} → {neural_dev['final_nodes']} nodes")
+            print(f"   Pattern: {neural_dev['growth_pattern']}")
+            
+            learning_dyn = evolution_analysis['learning_dynamics']
+            print(f"\\n🎯 Learning Dynamics:")
+            print(f"   Error improvement: {learning_dyn['total_improvement']:.3f}")
+            print(f"   Learning efficiency: {learning_dyn['learning_efficiency']:.3f}")
+            
+            behavioral = evolution_analysis['behavioral_emergence']
+            print(f"\\n🌟 Behavioral Emergence:")
+            print(f"   Complexity trend: {behavioral['complexity_trend']}")
+            print(f"   Behavior maturity: {behavioral['behavior_maturity']:.1%}")
+        
+        # Generate and save learning velocity analysis
+        learning_analysis = learning_monitor.analyze_learning_patterns()
+        if 'error' not in learning_analysis:
+            print(f"\\n🎯 LEARNING VELOCITY INSIGHTS:")
+            for insight in learning_analysis['learning_insights']:
+                print(f"   {insight}")
+            
+            print(f"\\n🔧 OPTIMIZATION RECOMMENDATIONS:")
+            for recommendation in learning_analysis['optimization_recommendations']:
+                print(f"   {recommendation}")
+            
+            # Print key learning metrics
+            velocity_analysis = learning_analysis['learning_velocity_analysis']
+            print(f"\\n📈 Learning Velocity:")
+            print(f"   Current velocity: {velocity_analysis['final_velocity']:.3f}")
+            print(f"   Velocity trend: {velocity_analysis['velocity_trend']}")
+            print(f"   Error reduction rate: {velocity_analysis['error_reduction_rate']:.3f}")
+            
+            confidence_analysis = learning_analysis['confidence_evolution']
+            print(f"\\n💪 Confidence Evolution:")
+            print(f"   Confidence growth: {confidence_analysis['confidence_growth']:.3f}")
+            print(f"   Confidence maturity: {confidence_analysis['confidence_maturity']:.1%}")
+        
+        # Save evolution reports
+        evolution_tracker.save_evolution_report()
+        evolution_tracker.save_snapshots()
+        
+        # Save learning velocity reports
+        learning_monitor.save_learning_report()
+        learning_monitor.save_learning_snapshots()
+
         print("\\n💾 Saving complete brain state...")
         
         # Save current brain state
@@ -155,7 +312,7 @@ def main():
         final_stats = brainstem.brain_client.get_brain_statistics()
         print(f"\\n📊 FINAL BRAIN STATISTICS:")
         print(f"   🧠 Total experiences: {final_stats['graph_stats']['total_nodes']}")
-        print(f"   🔄 Memory merges: {final_stats['graph_stats']['total_merges']}")
+        print(f"   🔄 Memory merges: {final_stats['graph_stats'].get('total_merges', 0)}")
         print(f"   📈 Parameter adaptations: {final_stats['adaptive_tuning_stats']['total_adaptations']}")
         print(f"   🎯 Actuators discovered: {final_stats['actuator_discovery_stats']['total_actuators_discovered']}")
         print(f"   📂 Emergent categories: {final_stats['actuator_discovery_stats']['emergent_categories_formed']}")

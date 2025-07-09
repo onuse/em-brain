@@ -1,7 +1,5 @@
 *.gz
-# Python bytecode and cache
-__pycache__/
-.pytest_cache/
+*cache*/
 *.py[cod]
 *$py.class
 *.pyc
@@ -12,3 +10,8 @@ robot_memory*/
 .claude*/
 run_logs/
 debug_output/
+*.log
+*logs*/
+*output*/
+*.backup
+

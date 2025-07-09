@@ -12,7 +12,7 @@ from collections import defaultdict
 try:
     from sklearn.neighbors import NearestNeighbors, BallTree
     SKLEARN_AVAILABLE = True
-    print("Spatial Indexing: scikit-learn available")
+    # Spatial indexing available (silent)
 except ImportError:
     SKLEARN_AVAILABLE = False
     print("Spatial Indexing: scikit-learn not available, using grid-based fallback")
@@ -24,10 +24,6 @@ try:
     MPS_AVAILABLE = torch.backends.mps.is_available()
     MPS_BUILT = torch.backends.mps.is_built()
     
-    print(f"PyTorch Acceleration: PyTorch {torch.__version__} available")
-    print(f"  MPS Built: {'Yes' if MPS_BUILT else 'No'}")
-    print(f"  MPS Available: {'Yes' if MPS_AVAILABLE else 'No'}")
-    
     # Test MPS functionality
     MPS_FUNCTIONAL = False
     if MPS_AVAILABLE:
@@ -36,12 +32,12 @@ try:
             test_tensor = torch.tensor([1.0, 2.0, 3.0]).to('mps')
             _ = test_tensor + 1
             MPS_FUNCTIONAL = True
-            print(f"  MPS Functional: Yes")
         except Exception as e:
-            print(f"  MPS Functional: No ({e})")
             MPS_FUNCTIONAL = False
-    else:
-        print(f"  MPS Functional: No (not available)")
+    
+    # Only print if MPS is functional (the good news)
+    if MPS_FUNCTIONAL:
+        print(f"GPU Acceleration: PyTorch MPS available")
         
 except ImportError:
     TORCH_AVAILABLE = False
@@ -63,10 +59,8 @@ try:
     METAL_AVAILABLE = False  # Disabled for now
     METAL_FUNCTIONAL = False  # Disabled for now
     
-    print(f"Accelerated Similarity: JAX {jax.__version__} available (CPU-only mode)")
-    print(f"  Backend: {jax.default_backend()}")
-    print(f"  Metal Support: Disabled (to avoid warnings)")
-    print(f"  GPU/Acceleration: CPU Optimized")
+    # JAX available but using CPU-only mode (PyTorch MPS is preferred)
+    # Silent initialization to avoid confusing output
     
 except ImportError:
     JAX_AVAILABLE = False
@@ -127,12 +121,9 @@ class AcceleratedSimilarityEngine:
         else:
             method_name = "NumPy"
         
-        print(f"AcceleratedSimilarityEngine initialized:")
-        print(f"  Method: {method_name}")
-        print(f"  Caching: {'Enabled' if enable_caching else 'Disabled'}")
-        print(f"  Spatial Indexing: {'Enabled' if self.enable_spatial_indexing else 'Disabled'}")
-        if self.enable_spatial_indexing:
-            print(f"  Index Threshold: {spatial_index_threshold} contexts")
+        # Only print if using GPU acceleration (the interesting case)
+        if self.enable_pytorch:
+            print(f"Similarity Engine: {method_name} acceleration enabled")
     
     def _init_acceleration(self):
         """Initialize the appropriate acceleration method"""
@@ -187,7 +178,7 @@ class AcceleratedSimilarityEngine:
         try:
             _ = self._pytorch_similarity_search(dummy_context, dummy_contexts)
             _ = self._pytorch_similarity_with_filtering(dummy_context, dummy_contexts, 0.5, 5)
-            print("  PyTorch MPS warmup: Complete")
+            # MPS warmup successful (silent)
         except Exception as e:
             print(f"  PyTorch MPS warmup warning: {e}")
             # Fall back to JAX/NumPy on MPS failure
@@ -463,8 +454,6 @@ class AcceleratedSimilarityEngine:
             self._spatial_index = BallTree(all_contexts_array, metric='euclidean')
             self._indexed_contexts = all_contexts_array.copy()
             self._index_dirty = False
-            
-            print(f"Spatial index built: {len(all_contexts_array)} contexts indexed")
             
         except Exception as e:
             print(f"Failed to build spatial index: {e}")

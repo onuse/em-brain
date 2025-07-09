@@ -9,6 +9,7 @@ import importlib
 import pkgutil
 from .base_drive import BaseDrive, DriveContext, ActionEvaluation
 from .action_proficiency import ActionMaturationSystem
+from core.experience_based_actions import ExperienceBasedActionSystem
 
 
 @dataclass
@@ -42,6 +43,13 @@ class MotivationSystem:
         self.world_graph = world_graph
         self.action_maturation = ActionMaturationSystem(world_graph) if world_graph else None
         self.enable_maturation = True  # Can be toggled for comparison
+        
+        # Experience-based action system
+        self.experience_actions = ExperienceBasedActionSystem(world_graph) if world_graph else None
+        self.enable_experience_actions = True  # Can be toggled for comparison
+        
+        # Drive-specific pain/pleasure learning (replaces global system)
+        # Each drive now handles its own pain/pleasure associations
         
     def add_drive(self, drive: BaseDrive):
         """Add a drive to the motivation system."""
@@ -102,7 +110,18 @@ class MotivationSystem:
             
             for drive_name, drive in self.drives.items():
                 evaluation = drive.evaluate_action(action, context)
+                
+                # Get drive-specific pain/pleasure predictions
+                expected_pain, expected_pleasure = drive.evaluate_action_pain_pleasure(action, context)
+                evaluation.expected_pain = expected_pain
+                evaluation.expected_pleasure = expected_pleasure
+                
                 drive_evaluations[drive_name] = evaluation
+            
+            # Calculate aggregated pain/pleasure bias from all drives
+            pain_pleasure_bias = 0.0
+            for evaluation in drive_evaluations.values():
+                pain_pleasure_bias += evaluation.get_pain_pleasure_bias()
             
             # Calculate weighted total score
             total_score = 0.0
@@ -119,11 +138,15 @@ class MotivationSystem:
                 total_weight += drive.current_weight
                 max_urgency = max(max_urgency, evaluation.urgency)
             
-            # Normalize score
+            # Normalize score and apply pain/pleasure bias
             if total_weight > 0:
                 normalized_score = total_score / total_weight
             else:
                 normalized_score = 0.0
+            
+            # Apply pain/pleasure learning bias (can override drive preferences)
+            final_score = normalized_score + (pain_pleasure_bias * 0.5)
+            final_score = max(0.0, min(1.0, final_score))  # Clamp to valid range
             
             # Find dominant drive
             dominant_drive = max(drive_contributions.keys(), 
@@ -137,15 +160,31 @@ class MotivationSystem:
             dominant_eval = drive_evaluations[dominant_drive]
             reasoning = f"{dominant_drive}: {dominant_eval.reasoning}"
             
+            # Add drive-specific pain/pleasure reasoning if bias was applied
+            if abs(pain_pleasure_bias) > 0.1:
+                bias_type = "avoidance" if pain_pleasure_bias < 0 else "seeking"
+                reasoning += f" (drive-specific {bias_type}: {pain_pleasure_bias:.2f})"
+                
+                # Add detailed drive pain/pleasure breakdown
+                drive_pain_pleasure_details = []
+                for drive_name, evaluation in drive_evaluations.items():
+                    if abs(evaluation.get_pain_pleasure_bias()) > 0.05:
+                        drive_bias = evaluation.get_pain_pleasure_bias()
+                        drive_pain_pleasure_details.append(f"{drive_name}: {drive_bias:.2f}")
+                
+                if drive_pain_pleasure_details:
+                    reasoning += f" [{', '.join(drive_pain_pleasure_details)}]"
+            
             candidate_results.append({
                 'action': action,
-                'score': normalized_score,
+                'score': final_score,  # Use final score with pain/pleasure bias
                 'drive_contributions': drive_contributions,
                 'dominant_drive': dominant_drive,
                 'confidence': overall_confidence,
                 'reasoning': reasoning,
                 'urgency': max_urgency,
-                'evaluations': drive_evaluations
+                'evaluations': drive_evaluations,
+                'pain_pleasure_bias': pain_pleasure_bias
             })
         
         # Select best action
@@ -173,8 +212,8 @@ class MotivationSystem:
         """
         Generate diverse action candidates for evaluation.
         
-        Uses maturation-influenced generation if available, otherwise falls back
-        to static template generation.
+        Prioritizes experience-based actions, then maturation-influenced actions,
+        with fallback to static template generation.
         
         Args:
             context: Current situation context
@@ -183,14 +222,35 @@ class MotivationSystem:
         Returns:
             List of potential motor actions
         """
-        # Use maturation system if available and enabled
-        if self.action_maturation and self.enable_maturation:
-            return self.action_maturation.generate_maturation_influenced_actions(
-                context, num_candidates
-            )
+        candidates = []
         
-        # Fallback to static template generation
-        return self._generate_static_action_candidates(context, num_candidates)
+        # Method 1: Experience-based actions (highest priority)
+        if self.experience_actions and self.enable_experience_actions:
+            experience_actions = self.experience_actions.generate_experience_based_actions(
+                context, max(2, num_candidates // 2)  # Use half the candidates for experience
+            )
+            
+            for exp_action in experience_actions:
+                candidates.append(exp_action.motor_action)
+            
+            # Learn motor patterns from recent experiences
+            self.experience_actions.learn_motor_patterns(context)
+        
+        # Method 2: Maturation-influenced actions (medium priority)
+        remaining_candidates = num_candidates - len(candidates)
+        if remaining_candidates > 0 and self.action_maturation and self.enable_maturation:
+            maturation_actions = self.action_maturation.generate_maturation_influenced_actions(
+                context, remaining_candidates
+            )
+            candidates.extend(maturation_actions)
+        
+        # Method 3: Static template actions (fallback)
+        remaining_candidates = num_candidates - len(candidates)
+        if remaining_candidates > 0:
+            static_actions = self._generate_static_action_candidates(context, remaining_candidates)
+            candidates.extend(static_actions)
+        
+        return candidates[:num_candidates]
     
     def _generate_static_action_candidates(self, context: DriveContext,
                                          num_candidates: int = 5) -> List[Dict[str, float]]:
@@ -256,6 +316,20 @@ class MotivationSystem:
         Returns:
             MotivationResult with chosen action
         """
+        # Check for natural homeostatic rest first
+        if self.is_in_homeostatic_rest(context):
+            rest_action = self.get_homeostatic_action(context)
+            return MotivationResult(
+                chosen_action=rest_action,
+                total_score=0.05,  # Low score indicates rest state
+                drive_contributions={'homeostatic_rest': 0.05},
+                dominant_drive='homeostatic_rest',
+                confidence=0.9,  # High confidence in rest decision
+                reasoning='Natural homeostatic rest - all drives satisfied',
+                urgency=0.0,
+                alternative_actions=[]
+            )
+        
         # Generate action candidates if not provided
         if custom_candidates is None:
             action_candidates = self.generate_action_candidates(context)
@@ -430,36 +504,39 @@ class MotivationSystem:
     
     def is_in_homeostatic_rest(self, context) -> bool:
         """
-        Determine if robot is in homeostatic balance (your brilliant insight).
+        Determine if robot is in natural homeostatic balance.
         
-        When all drives are satisfied (low pain), robot can enter rest state.
-        This is pure pain-driven behavior - action only when pain signals demand it.
+        Natural rest emerges when all drives have low activation - no artificial thresholds.
         """
-        mood = self.calculate_robot_mood(context)
+        # Calculate total drive pressure (sum of all drive weights)
+        total_drive_pressure = sum(drive.current_weight for drive in self.drives.values())
         
-        # Homeostatic rest criteria:
-        # 1. High overall satisfaction (drives content)
-        # 2. Low overall urgency (no pressing needs)
-        # 3. Reasonable confidence (not anxious/uncertain)
+        # Natural rest threshold - adapts to typical drive pressure
+        if not hasattr(self, 'typical_drive_pressure'):
+            self.typical_drive_pressure = 0.5  # Initial estimate
+            self.rest_threshold_samples = []
         
-        satisfaction_threshold = 0.6  # High satisfaction
-        urgency_threshold = 0.2       # Low urgency
-        confidence_threshold = 0.3    # Reasonable confidence
+        # Update typical drive pressure (rolling average)
+        self.rest_threshold_samples.append(total_drive_pressure)
+        if len(self.rest_threshold_samples) > 50:
+            self.rest_threshold_samples = self.rest_threshold_samples[-25:]
+            self.typical_drive_pressure = sum(self.rest_threshold_samples) / len(self.rest_threshold_samples)
         
-        return (mood['overall_satisfaction'] > satisfaction_threshold and
-                mood['overall_urgency'] < urgency_threshold and
-                mood['overall_confidence'] > confidence_threshold)
+        # Natural rest when drive pressure is significantly below typical
+        natural_rest_threshold = self.typical_drive_pressure * 0.2  # 20% of typical pressure
+        
+        return total_drive_pressure < natural_rest_threshold
     
     def get_homeostatic_action(self, context) -> Dict[str, float]:
         """
-        Generate minimal action when in homeostatic rest.
+        Generate minimal action when in natural homeostatic rest.
         
-        When all drives are satisfied, robot takes minimal action to maintain state.
+        When all drives are naturally satisfied, robot takes minimal action.
         """
         return {
             'forward_motor': 0.0,  # Stay still
-            'turn_motor': 0.0,     # No turning
-            'brake_motor': 0.1     # Light brake to maintain position
+            'turn_motor': 0.0,     # No turning  
+            'brake_motor': 0.05    # Very light brake to maintain position
         }
     
     def get_pain_pressure_summary(self, context) -> Dict[str, float]:
@@ -565,9 +642,83 @@ class MotivationSystem:
         
         status = "enabled" if self.enable_maturation else "disabled"
         print(f"🧠 Action maturation system {status}")
+    
+    def toggle_experience_actions(self, enabled: bool):
+        """Toggle experience-based action generation."""
+        self.enable_experience_actions = enabled
+        status = "enabled" if enabled else "disabled"
+        print(f"🧠 Experience-based actions {status}")
+    
+    def get_experience_action_statistics(self) -> Dict[str, Any]:
+        """Get statistics about experience-based action generation."""
+        if self.experience_actions:
+            return self.experience_actions.get_experience_action_statistics()
+        return {
+            "total_experience_actions": 0,
+            "successful_experience_actions": 0,
+            "experience_action_success_rate": 0.0,
+            "total_motor_patterns": 0,
+            "pattern_usage_stats": {},
+            "avg_pattern_success_rate": 0.0
+        }
+    
+    def get_pain_pleasure_statistics(self) -> Dict[str, Any]:
+        """Get statistics about drive-specific pain/pleasure learning."""
+        stats = {
+            "drive_specific_learning": True,
+            "total_drives": len(self.drives),
+            "drive_pain_pleasure_stats": {}
+        }
+        
+        # Get stats from each drive
+        for drive_name, drive in self.drives.items():
+            if hasattr(drive, 'get_pain_pleasure_statistics'):
+                stats["drive_pain_pleasure_stats"][drive_name] = drive.get_pain_pleasure_statistics()
+            else:
+                stats["drive_pain_pleasure_stats"][drive_name] = {
+                    "learning_implemented": False,
+                    "associations_learned": 0
+                }
+        
+        return stats
+    
+    def learn_from_action_outcome(self, action: Dict[str, float], context: DriveContext, 
+                                 outcome_experiences: List[Any]):
+        """
+        Learn from action outcomes using drive-specific pain/pleasure evaluation.
+        
+        This replaces the global pain/pleasure learning with drive-specific learning.
+        Each drive evaluates the outcome and learns its own associations.
+        
+        Args:
+            action: The action that was taken
+            context: The context when the action was taken
+            outcome_experiences: List of experiences resulting from the action
+        """
+        for drive_name, drive in self.drives.items():
+            # Each drive evaluates the outcome for its own domain
+            total_pain = 0.0
+            total_pleasure = 0.0
+            
+            for experience in outcome_experiences:
+                # Get drive-specific pain/pleasure from the experience
+                valence = drive.evaluate_experience_valence(experience, context)
+                
+                if valence < 0:
+                    total_pain += valence
+                elif valence > 0:
+                    total_pleasure += valence
+            
+            # Normalize by number of experiences
+            if outcome_experiences:
+                total_pain /= len(outcome_experiences)
+                total_pleasure /= len(outcome_experiences)
+            
+            # Let the drive learn from this outcome
+            drive.learn_pain_pleasure_association(action, context, total_pain, total_pleasure)
 
 
-def create_default_motivation_system(world_graph=None) -> MotivationSystem:
+def create_default_motivation_system(world_graph=None, world_width=40, world_height=40) -> MotivationSystem:
     """Create a motivation system with the three core drives."""
     from .curiosity_drive import CuriosityDrive
     from .survival_drive import SurvivalDrive
@@ -578,6 +729,6 @@ def create_default_motivation_system(world_graph=None) -> MotivationSystem:
     # Add the three core drives
     system.add_drive(CuriosityDrive(base_weight=0.4))
     system.add_drive(SurvivalDrive(base_weight=0.4)) 
-    system.add_drive(ExplorationDrive(base_weight=0.2))
+    system.add_drive(ExplorationDrive(base_weight=0.2, world_width=world_width, world_height=world_height))
     
     return system

@@ -51,11 +51,11 @@ class NodeConsolidationEngine:
     def __init__(self, world_graph: WorldGraph):
         self.world_graph = world_graph
         
-        # Consolidation parameters
-        self.min_strength_for_consolidation = 10.0  # Minimum strength to consolidate with
-        self.max_strength_boost = 20.0  # Maximum strength increase per consolidation
-        self.connection_strength_multiplier = 0.8  # How strong new connections are
-        self.reinforcement_decay_rate = 0.95  # How quickly reinforcement effects decay
+        # Consolidation parameters (relaxed for better learning)
+        self.min_strength_for_consolidation = 5.0  # Much lower threshold = more consolidation (emergent behavior)
+        self.max_strength_boost = 15.0  # Smaller boost per consolidation (was 20.0)
+        self.connection_strength_multiplier = 0.6  # Weaker connections = more diverse (was 0.8)
+        self.reinforcement_decay_rate = 0.98  # Slower decay = longer memory (was 0.95)
         
         # Reinforcement learning parameters
         self.positive_reinforcement_rate = 1.5  # Multiplier for successful predictions

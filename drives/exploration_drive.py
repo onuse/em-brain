@@ -19,7 +19,7 @@ class ExplorationDrive(BaseDrive):
     - Seek variety in experiences and locations
     """
     
-    def __init__(self, base_weight: float = 0.2):
+    def __init__(self, base_weight: float = 0.3, world_width: int = 40, world_height: int = 40):
         super().__init__("Exploration", base_weight)
         self.visited_positions: Set[Tuple[int, int]] = set()
         self.position_visit_counts: Dict[Tuple[int, int], int] = {}
@@ -27,6 +27,17 @@ class ExplorationDrive(BaseDrive):
         self.exploration_radius = 0  # How far we've explored from start
         self.backtracking_penalty = 0.0
         self.novelty_seeking_boost = 0.0
+        
+        # World bounds awareness for complete mapping
+        self.world_width = world_width
+        self.world_height = world_height
+        self.world_bounds = (0, 0, world_width - 1, world_height - 1)  # (min_x, min_y, max_x, max_y)
+        self.total_world_positions = world_width * world_height
+        self.exploration_completion_threshold = 0.85  # 85% coverage considered "complete"
+        
+        # Frontier detection for systematic exploration
+        self.frontier_positions: Set[Tuple[int, int]] = set()
+        self.frontier_update_counter = 0
         
     def evaluate_action(self, action: Dict[str, float], context: DriveContext) -> ActionEvaluation:
         """Evaluate action based on exploration potential."""
@@ -113,28 +124,50 @@ class ExplorationDrive(BaseDrive):
         else:
             self.novelty_seeking_boost = max(0.0, self.novelty_seeking_boost - 0.02)
         
-        # Adjust drive weight based on exploration state
+        # Natural drive weight based on exploration potential (can reach zero)
         total_unique_positions = len(self.visited_positions)
+        exploration_completion = self.get_exploration_completion_ratio()
         
-        if total_unique_positions < 5:
-            # Early exploration - boost drive
-            weight_multiplier = 1.4
-        elif self.backtracking_penalty > 0.5:
-            # Stuck in small area - boost drive significantly
-            weight_multiplier = 1.8
-        elif total_unique_positions > 20:
-            # Well explored - reduce drive
-            weight_multiplier = 0.7
+        # Calculate exploration potential (higher = more to explore)
+        if exploration_completion >= self.exploration_completion_threshold:
+            # Exploration is complete - drive naturally goes to zero
+            exploration_potential = 0.0
+        elif exploration_completion >= 0.8:
+            # Very close to completion - minimal exploration drive
+            exploration_potential = 0.1
         else:
-            # Normal exploration
-            weight_multiplier = 1.0
+            # Calculate based on frontiers and novelty
+            frontier_count = len(self.frontier_positions)
+            max_possible_frontiers = min(100, self.total_world_positions * 0.1)  # Rough estimate
+            frontier_ratio = frontier_count / max(1, max_possible_frontiers)
+            
+            # Early exploration gets higher potential
+            if total_unique_positions < 10:
+                base_potential = 1.0
+            else:
+                # NO artificial floor - exploration potential based purely on frontiers
+                base_potential = frontier_ratio  # Can reach zero when no frontiers
+            
+            # Backtracking penalty increases exploration potential
+            if self.backtracking_penalty > 0.5:
+                stagnation_boost = 1.0 + self.backtracking_penalty
+            else:
+                stagnation_boost = 1.0
+            
+            exploration_potential = min(1.0, base_potential * stagnation_boost)
         
-        self.current_weight = min(0.8, self.base_weight * weight_multiplier)
+        # Natural weight - no artificial minimums, can be zero
+        self.current_weight = self.base_weight * exploration_potential
         return self.current_weight
     
     def _update_position_tracking(self, position: Tuple[int, int]):
         """Update tracking of visited positions."""
         self.visited_positions.add(position)
+        
+        # Update frontier detection periodically
+        self.frontier_update_counter += 1
+        if self.frontier_update_counter % 5 == 0:  # Update every 5 positions
+            self._update_frontier_detection()
     
     def _calculate_novelty_score(self, action: Dict[str, float], context: DriveContext) -> float:
         """Calculate how likely this action leads to new/unexplored areas."""
@@ -148,18 +181,28 @@ class ExplorationDrive(BaseDrive):
         for pos in predicted_positions:
             visit_count = self.position_visit_counts.get(pos, 0)
             
+            # Base novelty score
             if visit_count == 0:
                 # Never been here - highest novelty
-                novelty_scores.append(1.0)
+                base_score = 1.0
             elif visit_count == 1:
                 # Been here once - high novelty
-                novelty_scores.append(0.8)
+                base_score = 0.8
             elif visit_count <= 3:
                 # Somewhat familiar - medium novelty
-                novelty_scores.append(0.5)
+                base_score = 0.5
             else:
                 # Very familiar - low novelty
-                novelty_scores.append(0.1)
+                base_score = 0.1
+            
+            # Frontier bonus - positions adjacent to explored areas get extra novelty
+            frontier_bonus = 0.0
+            if pos in self.frontier_positions:
+                frontier_bonus = 0.3  # Significant bonus for frontier positions
+            
+            # Combine base score with frontier bonus
+            total_score = min(1.0, base_score + frontier_bonus)
+            novelty_scores.append(total_score)
         
         # Average novelty of predicted destinations
         return sum(novelty_scores) / len(novelty_scores) if novelty_scores else 0.5
@@ -401,4 +444,69 @@ class ExplorationDrive(BaseDrive):
         self.exploration_radius = 0
         self.backtracking_penalty = 0.0
         self.novelty_seeking_boost = 0.0
+        self.frontier_positions.clear()
+        self.frontier_update_counter = 0
         self.reset_drive()
+    
+    def _update_frontier_detection(self):
+        """Update frontier positions - unvisited areas adjacent to visited areas."""
+        self.frontier_positions.clear()
+        
+        # For each visited position, check its neighbors
+        for x, y in self.visited_positions:
+            # Check 8-directional neighbors (including diagonals)
+            for dx in [-1, 0, 1]:
+                for dy in [-1, 0, 1]:
+                    if dx == 0 and dy == 0:
+                        continue  # Skip the center position
+                    
+                    neighbor_x, neighbor_y = x + dx, y + dy
+                    
+                    # Check if neighbor is within world bounds
+                    if (0 <= neighbor_x < self.world_width and 
+                        0 <= neighbor_y < self.world_height):
+                        
+                        neighbor_pos = (neighbor_x, neighbor_y)
+                        
+                        # If neighbor is unvisited, it's a frontier
+                        if neighbor_pos not in self.visited_positions:
+                            self.frontier_positions.add(neighbor_pos)
+    
+    def get_exploration_completion_ratio(self) -> float:
+        """Get the ratio of world explored (0.0 to 1.0)."""
+        return len(self.visited_positions) / self.total_world_positions
+    
+    def is_exploration_complete(self) -> bool:
+        """Check if exploration is sufficiently complete."""
+        return self.get_exploration_completion_ratio() >= self.exploration_completion_threshold
+    
+    def get_nearest_frontier(self, current_pos: Tuple[int, int]) -> Tuple[int, int]:
+        """Get the nearest frontier position to current position."""
+        if not self.frontier_positions:
+            return None
+        
+        min_distance = float('inf')
+        nearest_frontier = None
+        
+        for frontier_pos in self.frontier_positions:
+            distance = math.sqrt((current_pos[0] - frontier_pos[0])**2 + 
+                               (current_pos[1] - frontier_pos[1])**2)
+            if distance < min_distance:
+                min_distance = distance
+                nearest_frontier = frontier_pos
+        
+        return nearest_frontier
+    
+    def get_exploration_status(self) -> Dict[str, any]:
+        """Get comprehensive exploration status for debugging."""
+        completion_ratio = self.get_exploration_completion_ratio()
+        return {
+            'visited_positions': len(self.visited_positions),
+            'total_world_positions': self.total_world_positions,
+            'completion_ratio': completion_ratio,
+            'completion_percentage': completion_ratio * 100,
+            'frontier_positions': len(self.frontier_positions),
+            'is_complete': self.is_exploration_complete(),
+            'exploration_radius': self.exploration_radius,
+            'backtracking_penalty': self.backtracking_penalty
+        }

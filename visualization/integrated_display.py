@@ -3,6 +3,10 @@ Integrated display system combining grid world visualization and brain monitorin
 Provides a comprehensive real-time view of the robot's world and mind.
 """
 
+import warnings
+# Suppress pygame's pkg_resources deprecation warning
+warnings.filterwarnings("ignore", message="pkg_resources is deprecated as an API")
+
 import pygame
 import time
 from typing import Dict, Any, Optional, Callable

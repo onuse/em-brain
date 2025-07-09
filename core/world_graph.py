@@ -45,10 +45,22 @@ class WorldGraph:
         # Accelerated similarity search
         self.similarity_engine = get_similarity_engine()
         self._context_cache_dirty = True              # Whether context cache needs rebuild
+        
+        # Performance optimization caching
+        self._stats_cache = None                      # Cached graph statistics
+        self._stats_cache_dirty = True                # Whether stats cache needs rebuild
+        self._strongest_nodes_cache = None            # Cached strongest nodes list
+        self._strongest_nodes_cache_dirty = True      # Whether strongest nodes cache needs rebuild
     
     def has_nodes(self) -> bool:
         """Check if graph has any nodes (for bootstrap detection)."""
         return len(self.nodes) > 0
+    
+    def _invalidate_caches(self):
+        """Invalidate performance caches when graph structure changes."""
+        self._stats_cache_dirty = True
+        self._strongest_nodes_cache_dirty = True
+        self._context_cache_dirty = True
     
     def add_node(self, experience: ExperienceNode) -> str:
         """Add a new experience node to the graph with optimized connection formation."""
@@ -69,6 +81,9 @@ class WorldGraph:
         # Activate the new memory (fast)
         experience.activate(strength=1.0)
         self.latest_node_id = node_id
+        
+        # Invalidate caches since graph structure changed
+        self._invalidate_caches()
         
         # OPTIMIZATION: Only do expensive operations every N additions
         # This moves O(n²) operations from critical path
@@ -92,14 +107,14 @@ class WorldGraph:
                 
                 # Create bidirectional connections if similarity is high enough
                 if similarity > self.similarity_threshold:
-                    connection_strength = similarity * 0.6  # Strong initial connection
+                    connection_strength = similarity * 0.9  # Much stronger connections (emergent behavior)
                     
                     new_node.connection_weights[existing_node.node_id] = connection_strength
                     existing_node.connection_weights[new_node.node_id] = connection_strength
                 
                 # Create weaker connections for moderate similarity
                 elif similarity > 0.4:
-                    connection_strength = similarity * 0.3  # Weaker connection
+                    connection_strength = similarity * 0.5  # Stronger even for moderate similarity
                     
                     new_node.connection_weights[existing_node.node_id] = connection_strength
                     existing_node.connection_weights[new_node.node_id] = connection_strength
@@ -280,9 +295,19 @@ class WorldGraph:
         return all_nodes[:count]
     
     def get_strongest_nodes(self, count: int) -> List[ExperienceNode]:
-        """Get the N strongest nodes (most important memories)."""
+        """Get the N strongest nodes (most important memories) - cached for performance."""
+        # Return cached strongest nodes if available and valid
+        if not self._strongest_nodes_cache_dirty and self._strongest_nodes_cache is not None:
+            return self._strongest_nodes_cache[:count]
+        
+        # Calculate and cache strongest nodes
         all_nodes = list(self.nodes.values())
         all_nodes.sort(key=lambda n: n.strength, reverse=True)
+        
+        # Cache the full sorted list
+        self._strongest_nodes_cache = all_nodes
+        self._strongest_nodes_cache_dirty = False
+        
         return all_nodes[:count]
     
     def node_count(self) -> int:
@@ -314,6 +339,9 @@ class WorldGraph:
         
         node.strength = new_strength
         node.access_node()  # Update access tracking
+        
+        # Invalidate caches since node strength changed
+        self._invalidate_caches()
         
         self._update_strength_index(node_id, new_strength)
     
@@ -394,10 +422,15 @@ class WorldGraph:
         return sequence
     
     def get_graph_statistics(self) -> Dict[str, Any]:
-        """Get summary statistics about the graph."""
+        """Get summary statistics about the graph (cached for performance)."""
+        # Return cached statistics if available and valid
+        if not self._stats_cache_dirty and self._stats_cache is not None:
+            return self._stats_cache
+        
         if not self.nodes:
             base_stats = {"total_nodes": 0}
         else:
+            # Calculate expensive statistics only when cache is dirty
             strengths = [node.strength for node in self.nodes.values()]
             context_lengths = [len(node.mental_context) for node in self.nodes.values()]
             access_counts = [node.times_accessed for node in self.nodes.values()]
@@ -418,6 +451,10 @@ class WorldGraph:
         similarity_stats = self.similarity_engine.get_performance_stats()
         base_stats["similarity_engine"] = similarity_stats
         
+        # Cache the results
+        self._stats_cache = base_stats
+        self._stats_cache_dirty = False
+        
         return base_stats
     
     # Neural-like dynamics methods
@@ -426,7 +463,7 @@ class WorldGraph:
                                activation_threshold: float = 0.3) -> List[ExperienceNode]:
         """
         Spreading activation through the memory network - emergent associative memory.
-        No special 'AssociativeMemory' class needed!
+        Enhanced with action-relevance and pain/pleasure biases.
         """
         if not self.nodes:
             return []
@@ -437,9 +474,23 @@ class WorldGraph:
         # Phase 1: Find initial activation points based on context similarity
         for node in self.nodes.values():
             similarity = self._calculate_context_similarity(trigger_context, node.mental_context)
-            if similarity > 0.5:  # Initial activation threshold
+            if similarity > 0.4:  # Slightly lower threshold for more associations
                 # Combine similarity with node's accessibility
                 initial_activation = similarity * node.get_accessibility()
+                
+                # Boost activation for nodes with actions (more useful for motor planning)
+                if node.action_taken:
+                    initial_activation *= 1.2
+                
+                # Apply pain/pleasure biases
+                if hasattr(node, 'pain_signal'):
+                    # Painful experiences get higher activation (avoidance is important)
+                    initial_activation *= (1.0 + abs(node.pain_signal) * 0.3)
+                
+                if hasattr(node, 'pleasure_signal'):
+                    # Pleasurable experiences get moderate boost (approach is good)
+                    initial_activation *= (1.0 + node.pleasure_signal * 0.2)
+                
                 activated_nodes[node.node_id] = initial_activation
                 
                 # Activate the node (increases its activation level)
@@ -458,6 +509,12 @@ class WorldGraph:
                         if connected_id in self.nodes:
                             spread_activation = activation * connection_strength * 0.7
                             
+                            # Boost spread for temporal connections (recent experiences)
+                            connected_node = self.nodes[connected_id]
+                            if (node.temporal_successor == connected_id or 
+                                node.temporal_predecessor == connected_id):
+                                spread_activation *= 1.3
+                            
                             # Accumulate activation (multiple sources can activate same node)
                             if connected_id not in activated_nodes:
                                 new_activations[connected_id] = spread_activation
@@ -474,13 +531,25 @@ class WorldGraph:
         for node_id, activation in activated_nodes.items():
             if activation > activation_threshold:
                 node = self.nodes[node_id]
-                active_node_list.append((node, activation))
+                
+                # Calculate final relevance score
+                relevance_score = activation
+                
+                # Boost nodes with low prediction error (successful experiences)
+                if node.prediction_error < 0.3:
+                    relevance_score *= 1.4
+                
+                # Boost nodes with recent access
+                if node.last_access_time and (time.time() - node.last_access_time) < 30:
+                    relevance_score *= 1.2
+                
+                active_node_list.append((node, relevance_score))
         
-        # Sort by activation level and return top nodes (natural working memory limit)
+        # Sort by relevance score and return top nodes (natural working memory limit)
         active_node_list.sort(key=lambda x: x[1], reverse=True)
         
-        # Return top 7 nodes (natural working memory capacity)
-        return [node for node, activation in active_node_list[:7]]
+        # Return top 10 nodes (expanded working memory for motor planning)
+        return [node for node, activation in active_node_list[:10]]
     
     def step_time(self):
         """
