@@ -14,7 +14,7 @@ import shutil
 from datetime import datetime
 from core.brain_interface import BrainInterface
 from core.communication import SensoryPacket
-from prediction.action.multi_drive_predictor import MultiDrivePredictor
+from prediction.action.multi_motivator_predictor import MultiMotivatorPredictor
 
 
 def test_complete_brain_system():
@@ -27,7 +27,7 @@ def test_complete_brain_system():
     
     try:
         # Initialize brain with all systems
-        predictor = MultiDrivePredictor(base_time_budget=0.05)
+        predictor = MultiMotivatorPredictor(base_time_budget=0.05)
         brain = BrainInterface(predictor, memory_path=temp_dir, enable_persistence=True)
         
         # Start memory session

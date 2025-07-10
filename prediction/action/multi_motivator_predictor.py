@@ -1,6 +1,6 @@
 """
-Multi-Drive Predictor - Integrates multiple competing drives with the prediction system.
-Replaces single curiosity drive with a comprehensive motivation system.
+Multi-Motivator Predictor - Integrates multiple competing motivators with the prediction system.
+Replaces single curiosity motivator with a comprehensive motivation system.
 """
 
 import time
@@ -11,7 +11,7 @@ from core.world_graph import WorldGraph
 from core.communication import PredictionPacket
 from .single_traversal import SingleTraversal, TraversalResult
 from .consensus_resolver import ConsensusResolver, ConsensusResult
-from drives import create_default_motivation_system, DriveContext, MotivationSystem
+from motivators import create_default_motivation_system, MotivatorContext, MotivationSystem
 # Profiler removed during cleanup
 from contextlib import nullcontext
 def profile_section(name):
@@ -19,7 +19,7 @@ def profile_section(name):
 from monitoring.decision_logger import log_brain_decision
 
 
-class MultiDrivePredictor:
+class MultiMotivatorPredictor:
     """
     Prediction engine that uses multiple competing drives to guide action selection.
     
@@ -136,7 +136,7 @@ class MultiDrivePredictor:
         
         # Create drive context
         with profile_section("drive_context_creation"):
-            drive_context = DriveContext(
+            drive_context = MotivatorContext(
                 current_sensory=current_context,
                 robot_health=robot_health,
                 robot_energy=robot_energy,
@@ -200,7 +200,7 @@ class MultiDrivePredictor:
         
         # Add metadata
         prediction.consensus_strength = "motivation_driven"
-        prediction.traversal_paths = [f"drive:{motivation_result.dominant_drive}"]
+        prediction.traversal_paths = [f"drive:{motivation_result.dominant_motivator}"]
         prediction.threat_level = threat_level
         prediction.traversal_count = traversal_count
         prediction.time_budget_used = thinking_time
@@ -215,7 +215,7 @@ class MultiDrivePredictor:
         )
         
         # Update statistics
-        self._update_statistics(consensus_result, thinking_time, motivation_result.dominant_drive)
+        self._update_statistics(consensus_result, thinking_time, motivation_result.dominant_motivator)
         
         return consensus_result
     
@@ -227,7 +227,7 @@ class MultiDrivePredictor:
         from datetime import datetime
         
         # Create minimal drive context for bootstrap
-        drive_context = DriveContext(
+        drive_context = MotivatorContext(
             current_sensory=[],
             robot_health=robot_health,
             robot_energy=robot_energy,
@@ -260,13 +260,13 @@ class MultiDrivePredictor:
         )
         
         bootstrap_prediction.consensus_strength = "bootstrap_motivation"
-        bootstrap_prediction.traversal_paths = [f"bootstrap:{motivation_result.dominant_drive}"]
+        bootstrap_prediction.traversal_paths = [f"bootstrap:{motivation_result.dominant_motivator}"]
         bootstrap_prediction.threat_level = threat_level
         bootstrap_prediction.traversal_count = 0
         bootstrap_prediction.time_budget_used = 0.0
         
         # Update drive dominance tracking
-        self.drive_dominance_history.append(motivation_result.dominant_drive)
+        self.drive_dominance_history.append(motivation_result.dominant_motivator)
         if len(self.drive_dominance_history) > 100:
             self.drive_dominance_history = self.drive_dominance_history[-50:]
         
@@ -449,7 +449,7 @@ class MultiDrivePredictor:
         
         return []  # Empty prediction for bootstrap case
     
-    def _update_statistics(self, consensus_result: ConsensusResult, thinking_time: float, dominant_drive: str):
+    def _update_statistics(self, consensus_result: ConsensusResult, thinking_time: float, dominant_motivator: str):
         """Update internal statistics tracking."""
         self.total_predictions += 1
         
@@ -470,7 +470,7 @@ class MultiDrivePredictor:
             self.traversal_count_history = self.traversal_count_history[-50:]
         
         # Track drive dominance
-        self.drive_dominance_history.append(dominant_drive)
+        self.drive_dominance_history.append(dominant_motivator)
         if len(self.drive_dominance_history) > 100:
             self.drive_dominance_history = self.drive_dominance_history[-50:]
     
@@ -503,7 +503,7 @@ class MultiDrivePredictor:
                 drive_counts[drive] = drive_counts.get(drive, 0) + 1
             
             stats['drive_dominance_counts'] = drive_counts
-            stats['most_dominant_drive'] = max(drive_counts.keys(), key=lambda d: drive_counts[d])
+            stats['most_dominant_motivator'] = max(drive_counts.keys(), key=lambda d: drive_counts[d])
         
         # Motivation system statistics
         stats['motivation_system'] = self.motivation_system.get_motivation_statistics()
@@ -527,7 +527,7 @@ class MultiDrivePredictor:
         print("🚀 MultiDrivePredictor: Initializing GPU predictors in drive system...")
         
         # Initialize predictors in each drive
-        for drive_name, drive in self.motivation_system.drives.items():
+        for drive_name, drive in self.motivation_system.motivators.items():
             if hasattr(drive, 'initialize_gpu_predictor'):
                 try:
                     drive.initialize_gpu_predictor(world_graph)

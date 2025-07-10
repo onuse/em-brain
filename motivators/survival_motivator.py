@@ -5,7 +5,7 @@ The robot wants to stay alive, healthy, and energized.
 
 import math
 from typing import Dict, List
-from .base_drive import BaseDrive, DriveContext, ActionEvaluation
+from .base_motivator import BaseMotivator, MotivatorContext, ActionEvaluation
 from collections import defaultdict
 
 # Import GPU sensory predictor for predictive danger assessment
@@ -17,7 +17,7 @@ except ImportError:
     GPU_PREDICTION_AVAILABLE = False
 
 
-class SurvivalDrive(BaseDrive):
+class SurvivalMotivator(BaseMotivator):
     """
     Drive to maintain health, energy, and avoid damage.
     
@@ -57,7 +57,7 @@ class SurvivalDrive(BaseDrive):
         else:
             self.predictive_safety_enabled = False
         
-    def evaluate_action(self, action: Dict[str, float], context: DriveContext) -> ActionEvaluation:
+    def evaluate_action(self, action: Dict[str, float], context: MotivatorContext) -> ActionEvaluation:
         """Evaluate action based on survival implications."""
         self.total_evaluations += 1
         
@@ -106,7 +106,7 @@ class SurvivalDrive(BaseDrive):
         
         return evaluation
     
-    def update_drive_state(self, context: DriveContext, world_graph=None) -> float:
+    def update_drive_state(self, context: MotivatorContext, world_graph=None) -> float:
         """Update survival drive based on current robot state."""
         # Initialize GPU predictor if world graph is available and not already initialized
         if world_graph and not self.predictive_safety_enabled:
@@ -128,7 +128,7 @@ class SurvivalDrive(BaseDrive):
         self.current_weight = survival_strength
         return self.current_weight
     
-    def _calculate_energy_preservation_score(self, action: Dict[str, float], context: DriveContext) -> float:
+    def _calculate_energy_preservation_score(self, action: Dict[str, float], context: MotivatorContext) -> float:
         """Calculate how well action preserves energy."""
         # Lower energy consumption is better for survival
         forward_cost = abs(action.get('forward_motor', 0.0)) * 0.01
@@ -154,7 +154,7 @@ class SurvivalDrive(BaseDrive):
         
         return energy_score
     
-    def _calculate_health_protection_score(self, action: Dict[str, float], context: DriveContext) -> float:
+    def _calculate_health_protection_score(self, action: Dict[str, float], context: MotivatorContext) -> float:
         """Calculate how well action protects health."""
         # Avoid risky maneuvers when health is low
         health_score = 1.0
@@ -180,7 +180,7 @@ class SurvivalDrive(BaseDrive):
         
         return max(0.0, min(1.0, health_score))
     
-    def _calculate_safety_score(self, action: Dict[str, float], context: DriveContext) -> float:
+    def _calculate_safety_score(self, action: Dict[str, float], context: MotivatorContext) -> float:
         """Calculate how safe this action is - using PREDICTIVE assessment if available."""
         # Use predictive assessment if available
         if self.predictive_safety_enabled and self.gpu_predictor:
@@ -189,7 +189,7 @@ class SurvivalDrive(BaseDrive):
             # Fallback to rule-based assessment
             return self._calculate_rule_based_safety_score(action, context)
     
-    def _calculate_predictive_safety_score(self, action: Dict[str, float], context: DriveContext) -> float:
+    def _calculate_predictive_safety_score(self, action: Dict[str, float], context: MotivatorContext) -> float:
         """Calculate safety by PREDICTING health/energy outcomes of this action."""
         try:
             # Predict what would happen if we take this action
@@ -236,7 +236,7 @@ class SurvivalDrive(BaseDrive):
             # Fallback to rule-based assessment if prediction fails
             return self._calculate_rule_based_safety_score(action, context)
     
-    def _calculate_rule_based_safety_score(self, action: Dict[str, float], context: DriveContext) -> float:
+    def _calculate_rule_based_safety_score(self, action: Dict[str, float], context: MotivatorContext) -> float:
         """Fallback rule-based safety calculation."""
         # Base safety score
         safety_score = 0.7
@@ -264,7 +264,7 @@ class SurvivalDrive(BaseDrive):
         
         return max(0.0, min(1.0, safety_score))
     
-    def _calculate_resource_seeking_score(self, action: Dict[str, float], context: DriveContext) -> float:
+    def _calculate_resource_seeking_score(self, action: Dict[str, float], context: MotivatorContext) -> float:
         """Calculate how well action helps find resources - using PREDICTIVE assessment if available."""
         # Use predictive assessment if available
         if self.predictive_safety_enabled and self.gpu_predictor:
@@ -273,7 +273,7 @@ class SurvivalDrive(BaseDrive):
             # Fallback to rule-based assessment
             return self._calculate_rule_based_resource_score(action, context)
     
-    def _calculate_predictive_resource_score(self, action: Dict[str, float], context: DriveContext) -> float:
+    def _calculate_predictive_resource_score(self, action: Dict[str, float], context: MotivatorContext) -> float:
         """Calculate resource seeking by PREDICTING energy outcomes of this action."""
         try:
             # Predict what would happen if we take this action
@@ -311,7 +311,7 @@ class SurvivalDrive(BaseDrive):
             # Fallback to rule-based assessment if prediction fails
             return self._calculate_rule_based_resource_score(action, context)
     
-    def _calculate_rule_based_resource_score(self, action: Dict[str, float], context: DriveContext) -> float:
+    def _calculate_rule_based_resource_score(self, action: Dict[str, float], context: MotivatorContext) -> float:
         """Fallback rule-based resource seeking calculation."""
         # Start with baseline resource seeking
         resource_score = 0.5  # Neutral baseline
@@ -366,7 +366,7 @@ class SurvivalDrive(BaseDrive):
             SensorPurpose.SELF_STATE
         ]
     
-    def _get_food_smell_data(self, context: DriveContext) -> tuple[float, float]:
+    def _get_food_smell_data(self, context: MotivatorContext) -> tuple[float, float]:
         """Extract food smell information using discovered sensors."""
         # Try to get chemical sensors for food detection
         chemical_sensors = self.extract_sensor_values(context, 'food_detection')
@@ -378,7 +378,7 @@ class SurvivalDrive(BaseDrive):
             # No chemical sensors discovered yet
             return 0.0, 0.0
     
-    def _calculate_survival_urgency(self, context: DriveContext) -> float:
+    def _calculate_survival_urgency(self, context: MotivatorContext) -> float:
         """Calculate overall survival urgency [0.0-1.0]."""
         # Energy urgency
         energy_urgency = 0.0
@@ -411,7 +411,7 @@ class SurvivalDrive(BaseDrive):
         overall_urgency = max(energy_urgency, health_urgency, threat_urgency, damage_urgency)
         return min(1.0, overall_urgency)
     
-    def _calculate_fluid_survival_strength(self, context: DriveContext) -> float:
+    def _calculate_fluid_survival_strength(self, context: MotivatorContext) -> float:
         """
         Calculate fluid, continuous drive strength based on watched metrics.
         
@@ -480,7 +480,7 @@ class SurvivalDrive(BaseDrive):
         return min(max_strength, max(base_strength, drive_strength))
     
     def _generate_reasoning(self, energy_score: float, health_score: float, 
-                          safety_score: float, resource_score: float, context: DriveContext) -> str:
+                          safety_score: float, resource_score: float, context: MotivatorContext) -> str:
         """Generate human-readable reasoning for survival evaluation."""
         urgency = self._calculate_survival_urgency(context)
         
@@ -507,7 +507,7 @@ class SurvivalDrive(BaseDrive):
             prediction_type = "predictive" if self.predictive_safety_enabled else "rule-based"
             return f"Good survival status - {prediction_type} assessment"
     
-    def evaluate_experience_significance(self, experience, context: DriveContext) -> float:
+    def evaluate_experience_significance(self, experience, context: MotivatorContext) -> float:
         """
         Survival drive evaluates experiences based on health/energy outcomes.
         
@@ -549,7 +549,7 @@ class SurvivalDrive(BaseDrive):
         
         return survival_significance
     
-    def evaluate_experience_valence(self, experience, context: DriveContext) -> float:
+    def evaluate_experience_valence(self, experience, context: MotivatorContext) -> float:
         """
         Survival drive's pain/pleasure evaluation.
         
@@ -596,7 +596,7 @@ class SurvivalDrive(BaseDrive):
         
         return max(-1.0, min(1.0, pain_score))
     
-    def get_current_mood_contribution(self, context: DriveContext) -> Dict[str, float]:
+    def get_current_mood_contribution(self, context: MotivatorContext) -> Dict[str, float]:
         """Survival drive's contribution to robot mood."""
         urgency = self._calculate_survival_urgency(context)
         
@@ -623,7 +623,7 @@ class SurvivalDrive(BaseDrive):
         })
         return stats
     
-    def evaluate_action_pain_pleasure(self, action: Dict[str, float], context: DriveContext) -> tuple[float, float]:
+    def evaluate_action_pain_pleasure(self, action: Dict[str, float], context: MotivatorContext) -> tuple[float, float]:
         """
         Evaluate expected pain/pleasure of an action for survival drive.
         
@@ -659,7 +659,7 @@ class SurvivalDrive(BaseDrive):
         
         return total_pain, total_pleasure
     
-    def learn_pain_pleasure_association(self, action: Dict[str, float], context: DriveContext, 
+    def learn_pain_pleasure_association(self, action: Dict[str, float], context: MotivatorContext, 
                                       outcome_pain: float, outcome_pleasure: float):
         """
         Learn survival-specific pain/pleasure associations from action outcomes.

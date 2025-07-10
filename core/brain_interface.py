@@ -54,8 +54,8 @@ class BrainInterface:
         if predictor is None:
             if adaptive_gpu_switching:
                 # Start with CPU predictor for fresh brains, switch to GPU when mature
-                from predictor.multi_drive_predictor import MultiDrivePredictor
-                self.predictor = MultiDrivePredictor(base_time_budget=0.1)
+                from prediction.action.multi_motivator_predictor import MultiMotivatorPredictor
+                self.predictor = MultiMotivatorPredictor(base_time_budget=0.1)
                 self.gpu_predictor = None  # Will be created when needed
                 self.gpu_switch_threshold = 10000  # Switch to GPU when brain has 10000+ experiences (much higher for testing)
             else:
@@ -277,7 +277,7 @@ class BrainInterface:
                 with profile_section("drive_experience_evaluation"):
                     drive_pain_pleasure_signals = {}
                     
-                    for drive_name, drive in self.predictor.motivation_system.drives.items():
+                    for drive_name, drive in self.predictor.motivation_system.motivators.items():
                         # Evaluate significance for memory strengthening
                         significance = drive.evaluate_experience_significance(experience, context)
                         if significance > 1.0:
@@ -383,7 +383,7 @@ class BrainInterface:
     
     def _create_drive_context(self, actual_health: float, actual_energy: float):
         """Create drive context for experience evaluation."""
-        from drives.base_drive import DriveContext
+        from motivators.base_motivator import DriveContext
         
         return DriveContext(
             current_sensory=self.last_sensory.sensor_values if self.last_sensory else [],

@@ -103,14 +103,14 @@ class DecisionLogger:
             frame_info: Optional frame/performance information
         """
         # Extract drive weights and pain/pleasure information
-        drive_weights = {}
+        motivator_weights = {}
         drive_contributions = getattr(motivation_result, 'drive_contributions', {})
         drive_pain_pleasure_predictions = {}
         
         # Try to get current drive weights and pain/pleasure predictions if available
         if hasattr(motivation_result, 'motivation_system'):
-            for drive_name, drive in motivation_result.motivation_system.drives.items():
-                drive_weights[drive_name] = getattr(drive, 'current_weight', 0.0)
+            for drive_name, drive in motivation_result.motivation_system.motivators.items():
+                motivator_weights[drive_name] = getattr(drive, 'current_weight', 0.0)
                 
                 # Get drive-specific pain/pleasure predictions if available
                 if hasattr(drive, 'evaluate_action_pain_pleasure'):
@@ -144,15 +144,15 @@ class DecisionLogger:
             # Decision results
             "chosen_action": getattr(motivation_result, 'chosen_action', {}),
             "total_score": getattr(motivation_result, 'total_score', 0.0),
-            "dominant_drive": getattr(motivation_result, 'dominant_drive', 'unknown'),
+            "dominant_motivator": getattr(motivation_result, 'dominant_motivator', 'unknown'),
             "confidence": getattr(motivation_result, 'confidence', 0.0),
             "reasoning": getattr(motivation_result, 'reasoning', ''),
             "urgency": getattr(motivation_result, 'urgency', 0.0),
             
             # Drive information
             "drive_contributions": drive_contributions,
-            "drive_weights": drive_weights,
-            "total_drive_pressure": sum(drive_weights.values()) if drive_weights else 0.0,
+            "motivator_weights": motivator_weights,
+            "total_motivator_pressure": sum(motivator_weights.values()) if motivator_weights else 0.0,
             
             # Mood and satisfaction data
             "mood_data": mood_data,
@@ -210,10 +210,10 @@ class DecisionLogger:
             analysis["flags"].append("very_high_urgency")
         
         # Check for drive balance issues
-        drive_weights = decision_context.get('drive_weights', {})
-        if drive_weights:
-            max_weight = max(drive_weights.values())
-            min_weight = min(drive_weights.values())
+        motivator_weights = decision_context.get('motivator_weights', {})
+        if motivator_weights:
+            max_weight = max(motivator_weights.values())
+            min_weight = min(motivator_weights.values())
             if max_weight > 0.8 and min_weight < 0.05:
                 analysis["flags"].append("extreme_drive_imbalance")
         
@@ -238,14 +238,14 @@ class DecisionLogger:
                 analysis["flags"].append("learning_stagnation")
         
         # Check for homeostatic rest
-        total_pressure = decision_context.get('total_drive_pressure', 1.0)
+        total_pressure = decision_context.get('total_motivator_pressure', 1.0)
         if total_pressure < 0.1:
             analysis["flags"].append("near_homeostatic_rest")
         
         # Performance indicators
         analysis["indicators"] = {
-            "decision_complexity": len(drive_weights),
-            "drive_diversity": len([w for w in drive_weights.values() if w > 0.1]) if drive_weights else 0,
+            "decision_complexity": len(motivator_weights),
+            "drive_diversity": len([w for w in motivator_weights.values() if w > 0.1]) if motivator_weights else 0,
             "learning_activity": len(prediction_errors) if prediction_errors else 0,
             "robot_wellness": (decision_context.get('robot_health', 0) + decision_context.get('robot_energy', 0)) / 2.0,
             "emotional_state": decision_context.get('mood_descriptor', 'unknown'),
@@ -282,13 +282,13 @@ class DecisionLogger:
     def _update_session_tracking(self, log_entry: Dict[str, Any]):
         """Update session-level tracking information."""
         # Track drive dominance
-        dominant_drive = log_entry.get('dominant_drive', 'unknown')
-        self.drive_dominance_history.append(dominant_drive)
+        dominant_motivator = log_entry.get('dominant_motivator', 'unknown')
+        self.drive_dominance_history.append(dominant_motivator)
         if len(self.drive_dominance_history) > 100:
             self.drive_dominance_history = self.drive_dominance_history[-50:]
         
         # Track total pressure
-        total_pressure = log_entry.get('total_drive_pressure', 0.0)
+        total_pressure = log_entry.get('total_motivator_pressure', 0.0)
         self.total_pressure_history.append(total_pressure)
         if len(self.total_pressure_history) > 100:
             self.total_pressure_history = self.total_pressure_history[-50:]
@@ -307,9 +307,9 @@ class DecisionLogger:
                     "step_count": log_entry['step_count'],
                     "problem_type": flag,
                     "context": {
-                        "dominant_drive": log_entry.get('dominant_drive'),
+                        "dominant_motivator": log_entry.get('dominant_motivator'),
                         "total_score": log_entry.get('total_score'),
-                        "drive_weights": log_entry.get('drive_weights'),
+                        "motivator_weights": log_entry.get('motivator_weights'),
                         "reasoning": log_entry.get('reasoning')
                     }
                 }
@@ -338,7 +338,7 @@ class DecisionLogger:
             
             "drive_analysis": {
                 "dominance_counts": drive_counts,
-                "most_dominant_drive": max(drive_counts.keys(), key=lambda k: drive_counts[k]) if drive_counts else None,
+                "most_dominant_motivator": max(drive_counts.keys(), key=lambda k: drive_counts[k]) if drive_counts else None,
                 "drive_switches": len([i for i in range(1, len(self.drive_dominance_history)) 
                                      if self.drive_dominance_history[i] != self.drive_dominance_history[i-1]])
             },
@@ -380,8 +380,8 @@ class DecisionLogger:
             recommendations.append("Learning stagnation detected - robot may need new challenges or environment changes")
         
         if drive_counts and max(drive_counts.values()) / sum(drive_counts.values()) > 0.8:
-            dominant_drive = max(drive_counts.keys(), key=lambda k: drive_counts[k])
-            recommendations.append(f"{dominant_drive} drive is dominating - check balance with other drives")
+            dominant_motivator = max(drive_counts.keys(), key=lambda k: drive_counts[k])
+            recommendations.append(f"{dominant_motivator} drive is dominating - check balance with other drives")
         
         if not recommendations:
             recommendations.append("No major issues detected - system appears to be functioning well")

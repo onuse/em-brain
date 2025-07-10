@@ -36,9 +36,9 @@ class DriveSnapshot:
     step_count: int
     
     # Drive weights and pressures
-    drive_weights: Dict[str, float]
-    total_drive_pressure: float
-    dominant_drive: str
+    motivator_weights: Dict[str, float]
+    total_motivator_pressure: float
+    dominant_motivator: str
     
     # Drive dynamics
     drive_entropy: float           # Diversity of drive activation
@@ -112,26 +112,26 @@ class DriveCorrelationAnalyzer:
         
         try:
             # Extract drive information
-            drive_weights = decision_context.get('drive_weights', {})
-            if not drive_weights:
+            motivator_weights = decision_context.get('motivator_weights', {})
+            if not motivator_weights:
                 return None  # No drive information available
             
             # Update drive tracking
-            self.drive_names.update(drive_weights.keys())
-            for drive_name, weight in drive_weights.items():
+            self.drive_names.update(motivator_weights.keys())
+            for drive_name, weight in motivator_weights.items():
                 self.drive_weight_history[drive_name].append(weight)
             
             # Calculate drive dynamics
-            total_drive_pressure = sum(drive_weights.values())
-            dominant_drive = max(drive_weights.keys(), key=lambda k: drive_weights[k]) if drive_weights else 'unknown'
+            total_motivator_pressure = sum(motivator_weights.values())
+            dominant_motivator = max(motivator_weights.keys(), key=lambda k: motivator_weights[k]) if motivator_weights else 'unknown'
             
-            drive_entropy = self._calculate_drive_entropy(drive_weights)
-            drive_stability = self._calculate_drive_stability(drive_weights)
-            drive_switching_rate = self._calculate_switching_rate(dominant_drive)
+            drive_entropy = self._calculate_drive_entropy(motivator_weights)
+            drive_stability = self._calculate_drive_stability(motivator_weights)
+            drive_switching_rate = self._calculate_switching_rate(dominant_motivator)
             
             # Calculate drive effectiveness
-            drive_outcome_correlation = self._calculate_drive_outcome_correlation(drive_weights, decision_context)
-            drive_learning_correlation = self._calculate_drive_learning_correlation(drive_weights, decision_context)
+            drive_outcome_correlation = self._calculate_drive_outcome_correlation(motivator_weights, decision_context)
+            drive_learning_correlation = self._calculate_drive_learning_correlation(motivator_weights, decision_context)
             
             # Extract context and outcomes
             prediction_error = decision_context.get('recent_prediction_error', 0.0)
@@ -149,9 +149,9 @@ class DriveCorrelationAnalyzer:
             snapshot = DriveSnapshot(
                 timestamp=current_time,
                 step_count=step_count,
-                drive_weights=drive_weights,
-                total_drive_pressure=total_drive_pressure,
-                dominant_drive=dominant_drive,
+                motivator_weights=motivator_weights,
+                total_motivator_pressure=total_motivator_pressure,
+                dominant_motivator=dominant_motivator,
                 drive_entropy=drive_entropy,
                 drive_stability=drive_stability,
                 drive_switching_rate=drive_switching_rate,
@@ -183,18 +183,18 @@ class DriveCorrelationAnalyzer:
             print(f"Error capturing drive snapshot: {e}")
             return None
     
-    def _calculate_drive_entropy(self, drive_weights: Dict[str, float]) -> float:
+    def _calculate_drive_entropy(self, motivator_weights: Dict[str, float]) -> float:
         """Calculate entropy of drive system (higher = more diverse activation)."""
-        if not drive_weights:
+        if not motivator_weights:
             return 0.0
         
-        total_weight = sum(drive_weights.values())
+        total_weight = sum(motivator_weights.values())
         if total_weight == 0:
             return 0.0
         
         # Calculate Shannon entropy
         entropy = 0.0
-        for weight in drive_weights.values():
+        for weight in motivator_weights.values():
             if weight > 0:
                 p = weight / total_weight
                 entropy -= p * np.log2(p)
@@ -211,7 +211,7 @@ class DriveCorrelationAnalyzer:
         drive_variances = []
         
         for drive_name in current_weights.keys():
-            recent_weights = [s.drive_weights.get(drive_name, 0.0) for s in recent_snapshots]
+            recent_weights = [s.motivator_weights.get(drive_name, 0.0) for s in recent_snapshots]
             drive_variances.append(np.var(recent_weights))
         
         # Higher variance = lower stability
@@ -232,7 +232,7 @@ class DriveCorrelationAnalyzer:
         
         return switches / max(1, len(recent_history) - 1)
     
-    def _calculate_drive_outcome_correlation(self, drive_weights: Dict[str, float], 
+    def _calculate_drive_outcome_correlation(self, motivator_weights: Dict[str, float], 
                                            decision_context: Dict[str, Any]) -> Dict[str, float]:
         """Calculate correlation between each drive and positive outcomes."""
         correlations = {}
@@ -245,7 +245,7 @@ class DriveCorrelationAnalyzer:
         outcome_score = (1.0 - error) * confidence * health
         
         # Track outcomes for each drive
-        for drive_name, weight in drive_weights.items():
+        for drive_name, weight in motivator_weights.items():
             self.drive_outcome_tracking[drive_name].append((weight, outcome_score))
             
             # Calculate correlation if we have enough data
@@ -271,7 +271,7 @@ class DriveCorrelationAnalyzer:
         
         return correlations
     
-    def _calculate_drive_learning_correlation(self, drive_weights: Dict[str, float], 
+    def _calculate_drive_learning_correlation(self, motivator_weights: Dict[str, float], 
                                             decision_context: Dict[str, Any]) -> Dict[str, float]:
         """Calculate correlation between each drive and learning progress."""
         correlations = {}
@@ -281,7 +281,7 @@ class DriveCorrelationAnalyzer:
         learning_score = 1.0 - current_error  # Simple learning metric
         
         # Track learning for each drive
-        for drive_name, weight in drive_weights.items():
+        for drive_name, weight in motivator_weights.items():
             self.drive_learning_tracking[drive_name].append((weight, learning_score))
             
             # Calculate correlation if we have enough data
@@ -351,8 +351,8 @@ class DriveCorrelationAnalyzer:
         for drive1 in self.drive_names:
             for drive2 in self.drive_names:
                 if drive1 != drive2:
-                    weights1 = [s.drive_weights.get(drive1, 0.0) for s in recent_snapshots]
-                    weights2 = [s.drive_weights.get(drive2, 0.0) for s in recent_snapshots]
+                    weights1 = [s.motivator_weights.get(drive1, 0.0) for s in recent_snapshots]
+                    weights2 = [s.motivator_weights.get(drive2, 0.0) for s in recent_snapshots]
                     
                     if np.std(weights1) > 0 and np.std(weights2) > 0:
                         if SCIPY_AVAILABLE:
@@ -515,7 +515,7 @@ class DriveCorrelationAnalyzer:
             return {\"error\": \"Insufficient data for switching pattern analysis\"}
         
         # Count dominance sequences
-        dominance_sequence = [s.dominant_drive for s in self.snapshots]
+        dominance_sequence = [s.dominant_motivator for s in self.snapshots]
         
         # Count transitions
         transitions = defaultdict(int)
@@ -643,10 +643,10 @@ class DriveCorrelationAnalyzer:
         latest = self.snapshots[-1]
         print(f"\n🔄 DRIVE INTERACTION STATUS")
         print(f"   Session: {self.session_name}")
-        print(f"   Step: {latest.step_count} | Dominant: {latest.dominant_drive}")
-        print(f"   Drive Pressure: {latest.total_drive_pressure:.3f} | Stability: {latest.drive_stability:.3f}")
+        print(f"   Step: {latest.step_count} | Dominant: {latest.dominant_motivator}")
+        print(f"   Drive Pressure: {latest.total_motivator_pressure:.3f} | Stability: {latest.drive_stability:.3f}")
         print(f"   Switching Rate: {latest.drive_switching_rate:.3f} | Entropy: {latest.drive_entropy:.3f}")
-        print(f"   Drive Weights: {', '.join(f'{k}:{v:.2f}' for k, v in latest.drive_weights.items())}")
+        print(f"   Drive Weights: {', '.join(f'{k}:{v:.2f}' for k, v in latest.motivator_weights.items())}")
         
         if latest.drive_outcome_correlation:
             best_drive = max(latest.drive_outcome_correlation.keys(), 

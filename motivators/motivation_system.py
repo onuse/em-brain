@@ -7,7 +7,7 @@ from typing import Dict, List, Type, Any, Optional
 from dataclasses import dataclass
 import importlib
 import pkgutil
-from .base_drive import BaseDrive, DriveContext, ActionEvaluation
+from .base_motivator import BaseMotivator, MotivatorContext, ActionEvaluation
 from core.experience_based_actions import ExperienceBasedActionSystem
 from core.parallel_action_generator import ParallelActionGenerator
 
@@ -18,7 +18,7 @@ class MotivationResult:
     chosen_action: Dict[str, float]          # Selected motor action
     total_score: float                       # Combined motivation score
     drive_contributions: Dict[str, float]    # How much each drive contributed
-    dominant_drive: str                      # Which drive had the most influence
+    dominant_motivator: str                      # Which drive had the most influence
     confidence: float                        # Overall confidence in decision
     reasoning: str                          # Human-readable explanation
     urgency: float                          # How urgent this action is
@@ -34,7 +34,7 @@ class MotivationSystem:
     """
     
     def __init__(self, world_graph=None):
-        self.drives: Dict[str, BaseDrive] = {}
+        self.drives: Dict[str, BaseMotivator] = {}
         self.drive_history: List[Dict] = []
         self.action_history: List[Dict] = []
         self.total_evaluations = 0
@@ -62,7 +62,7 @@ class MotivationSystem:
         # Drive-specific pain/pleasure learning (replaces global system)
         # Each drive now handles its own pain/pleasure associations
         
-    def add_drive(self, drive: BaseDrive):
+    def add_drive(self, drive: BaseMotivator):
         """Add a drive to the motivation system."""
         if drive.name in self.drives:
             print(f"Warning: Replacing existing drive '{drive.name}'")
@@ -80,16 +80,16 @@ class MotivationSystem:
             print(f"Warning: Drive '{drive_name}' not found")
             return False
     
-    def get_drive(self, drive_name: str) -> Optional[BaseDrive]:
+    def get_drive(self, drive_name: str) -> Optional[BaseMotivator]:
         """Get a specific drive by name."""
-        return self.drives.get(drive_name)
+        return self.motivators.get(drive_name)
     
     def list_drives(self) -> List[str]:
         """Get list of all active drive names."""
-        return list(self.drives.keys())
+        return list(self.motivators.keys())
     
     def evaluate_action_candidates(self, action_candidates: List[Dict[str, float]], 
-                                 context: DriveContext) -> MotivationResult:
+                                 context: MotivatorContext) -> MotivationResult:
         """
         Evaluate multiple action candidates using all active drives.
         
@@ -109,7 +109,7 @@ class MotivationSystem:
         self.total_evaluations += 1
         
         # Update all drive states
-        for drive in self.drives.values():
+        for drive in self.motivators.values():
             drive.update_drive_state(context, world_graph=self.world_graph)
         
         # Evaluate each action candidate
@@ -119,7 +119,7 @@ class MotivationSystem:
             # Get evaluation from each drive
             drive_evaluations: Dict[str, ActionEvaluation] = {}
             
-            for drive_name, drive in self.drives.items():
+            for drive_name, drive in self.motivators.items():
                 evaluation = drive.evaluate_action(action, context)
                 
                 # Get drive-specific pain/pleasure predictions
@@ -160,7 +160,7 @@ class MotivationSystem:
             final_score = max(0.0, min(1.0, final_score))  # Clamp to valid range
             
             # Find dominant drive
-            dominant_drive = max(drive_contributions.keys(), 
+            dominant_motivator = max(drive_contributions.keys(), 
                                key=lambda d: drive_contributions[d])
             
             # Calculate overall confidence
@@ -168,8 +168,8 @@ class MotivationSystem:
             overall_confidence = sum(confidences) / len(confidences)
             
             # Generate combined reasoning
-            dominant_eval = drive_evaluations[dominant_drive]
-            reasoning = f"{dominant_drive}: {dominant_eval.reasoning}"
+            dominant_eval = drive_evaluations[dominant_motivator]
+            reasoning = f"{dominant_motivator}: {dominant_eval.reasoning}"
             
             # Add drive-specific pain/pleasure reasoning if bias was applied
             if abs(pain_pleasure_bias) > 0.1:
@@ -190,7 +190,7 @@ class MotivationSystem:
                 'action': action,
                 'score': final_score,  # Use final score with pain/pleasure bias
                 'drive_contributions': drive_contributions,
-                'dominant_drive': dominant_drive,
+                'dominant_motivator': dominant_motivator,
                 'confidence': overall_confidence,
                 'reasoning': reasoning,
                 'urgency': max_urgency,
@@ -206,7 +206,7 @@ class MotivationSystem:
             chosen_action=best_result['action'],
             total_score=best_result['score'],
             drive_contributions=best_result['drive_contributions'],
-            dominant_drive=best_result['dominant_drive'],
+            dominant_motivator=best_result['dominant_motivator'],
             confidence=best_result['confidence'],
             reasoning=best_result['reasoning'],
             urgency=best_result['urgency'],
@@ -218,7 +218,7 @@ class MotivationSystem:
         
         return motivation_result
     
-    def generate_action_candidates(self, context: DriveContext, 
+    def generate_action_candidates(self, context: MotivatorContext, 
                                  num_candidates: int = 5) -> List[Dict[str, float]]:
         """
         Generate diverse action candidates for evaluation.
@@ -305,7 +305,7 @@ class MotivationSystem:
             }
         }
     
-    def _generate_static_action_candidates(self, context: DriveContext,
+    def _generate_static_action_candidates(self, context: MotivatorContext,
                                          num_candidates: int = 5) -> List[Dict[str, float]]:
         """Generate action candidates using the original static template approach."""
         import random
@@ -357,7 +357,7 @@ class MotivationSystem:
         
         return candidates[:num_candidates]
     
-    def make_decision(self, context: DriveContext, 
+    def make_decision(self, context: MotivatorContext, 
                      custom_candidates: Optional[List[Dict[str, float]]] = None) -> MotivationResult:
         """
         Make a complete motivation-driven decision.
@@ -376,7 +376,7 @@ class MotivationSystem:
                 chosen_action=rest_action,
                 total_score=0.05,  # Low score indicates rest state
                 drive_contributions={'homeostatic_rest': 0.05},
-                dominant_drive='homeostatic_rest',
+                dominant_motivator='homeostatic_rest',
                 confidence=0.9,  # High confidence in rest decision
                 reasoning='Natural homeostatic rest - all drives satisfied',
                 urgency=0.0,
@@ -394,13 +394,13 @@ class MotivationSystem:
         
         return result
     
-    def _log_decision(self, result: MotivationResult, context: DriveContext):
+    def _log_decision(self, result: MotivationResult, context: MotivatorContext):
         """Log decision for analysis and debugging."""
         decision_log = {
             'step': context.step_count,
             'chosen_action': result.chosen_action,
             'total_score': result.total_score,
-            'dominant_drive': result.dominant_drive,
+            'dominant_motivator': result.dominant_motivator,
             'drive_contributions': result.drive_contributions,
             'confidence': result.confidence,
             'urgency': result.urgency,
@@ -422,14 +422,14 @@ class MotivationSystem:
         """Get comprehensive statistics about the motivation system."""
         stats = {
             'total_drives': len(self.drives),
-            'active_drives': list(self.drives.keys()),
+            'active_drives': list(self.motivators.keys()),
             'total_evaluations': self.total_evaluations,
             'decision_history_length': len(self.action_history)
         }
         
         # Drive-specific statistics
         drive_stats = {}
-        for drive_name, drive in self.drives.items():
+        for drive_name, drive in self.motivators.items():
             drive_stats[drive_name] = drive.get_drive_info()
         
         stats['drive_statistics'] = drive_stats
@@ -437,9 +437,9 @@ class MotivationSystem:
         # Recent decision patterns
         if self.action_history:
             recent_decisions = self.action_history[-10:]
-            dominant_drives = [d['dominant_drive'] for d in recent_decisions]
+            dominant_motivators = [d['dominant_motivator'] for d in recent_decisions]
             drive_dominance = {}
-            for drive in dominant_drives:
+            for drive in dominant_motivators:
                 drive_dominance[drive] = drive_dominance.get(drive, 0) + 1
             
             stats['recent_drive_dominance'] = drive_dominance
@@ -453,8 +453,8 @@ class MotivationSystem:
             robot_state = recent_decision.get('robot_state', {})
             
             # Create context from recent robot state
-            from .base_drive import DriveContext
-            context = DriveContext(
+            from .base_motivator import MotivatorContext
+            context = MotivatorContext(
                 current_sensory=[],
                 robot_health=robot_state.get('health', 1.0),
                 robot_energy=robot_state.get('energy', 1.0),
@@ -496,7 +496,7 @@ class MotivationSystem:
         total_confidence = 0.0
         drive_moods = {}
         
-        for drive_name, drive in self.drives.items():
+        for drive_name, drive in self.motivators.items():
             mood_contrib = drive.get_current_mood_contribution(context)
             drive_moods[drive_name] = mood_contrib
             
@@ -507,7 +507,7 @@ class MotivationSystem:
             total_confidence += mood_contrib['confidence'] * weight
         
         # Normalize by total weight
-        total_weight = sum(drive.current_weight for drive in self.drives.values())
+        total_weight = sum(drive.current_weight for drive in self.motivators.values())
         if total_weight > 0:
             avg_satisfaction = total_satisfaction / total_weight
             avg_urgency = total_urgency / total_weight
@@ -562,23 +562,23 @@ class MotivationSystem:
         Natural rest emerges when all drives have low activation - no artificial thresholds.
         """
         # Calculate total drive pressure (sum of all drive weights)
-        total_drive_pressure = sum(drive.current_weight for drive in self.drives.values())
+        total_motivator_pressure = sum(drive.current_weight for drive in self.motivators.values())
         
         # Natural rest threshold - adapts to typical drive pressure
-        if not hasattr(self, 'typical_drive_pressure'):
-            self.typical_drive_pressure = 0.5  # Initial estimate
+        if not hasattr(self, 'typical_motivator_pressure'):
+            self.typical_motivator_pressure = 0.5  # Initial estimate
             self.rest_threshold_samples = []
         
         # Update typical drive pressure (rolling average)
-        self.rest_threshold_samples.append(total_drive_pressure)
+        self.rest_threshold_samples.append(total_motivator_pressure)
         if len(self.rest_threshold_samples) > 50:
             self.rest_threshold_samples = self.rest_threshold_samples[-25:]
-            self.typical_drive_pressure = sum(self.rest_threshold_samples) / len(self.rest_threshold_samples)
+            self.typical_motivator_pressure = sum(self.rest_threshold_samples) / len(self.rest_threshold_samples)
         
         # Natural rest when drive pressure is significantly below typical
-        natural_rest_threshold = self.typical_drive_pressure * 0.2  # 20% of typical pressure
+        natural_rest_threshold = self.typical_motivator_pressure * 0.2  # 20% of typical pressure
         
-        return total_drive_pressure < natural_rest_threshold
+        return total_motivator_pressure < natural_rest_threshold
     
     def get_homeostatic_action(self, context) -> Dict[str, float]:
         """
@@ -600,7 +600,7 @@ class MotivationSystem:
         """
         pain_pressures = {}
         
-        for drive_name, drive in self.drives.items():
+        for drive_name, drive in self.motivators.items():
             mood = drive.get_current_mood_contribution(context)
             
             # Pain pressure = combination of dissatisfaction and urgency
@@ -615,7 +615,7 @@ class MotivationSystem:
     
     def reset_system(self):
         """Reset the entire motivation system."""
-        for drive in self.drives.values():
+        for drive in self.motivators.values():
             drive.reset_drive()
         
         self.drive_history.clear()
@@ -640,13 +640,13 @@ class MotivationSystem:
                 try:
                     module = importlib.import_module(name)
                     
-                    # Look for classes that inherit from BaseDrive
+                    # Look for classes that inherit from BaseMotivator
                     for attr_name in dir(module):
                         attr = getattr(module, attr_name)
                         
                         if (isinstance(attr, type) and 
-                            issubclass(attr, BaseDrive) and 
-                            attr != BaseDrive):
+                            issubclass(attr, BaseMotivator) and 
+                            attr != BaseMotivator):
                             
                             # Instantiate and add the drive
                             drive_instance = attr()
@@ -716,7 +716,7 @@ class MotivationSystem:
         }
         
         # Get stats from each drive
-        for drive_name, drive in self.drives.items():
+        for drive_name, drive in self.motivators.items():
             if hasattr(drive, 'get_pain_pleasure_statistics'):
                 stats["drive_pain_pleasure_stats"][drive_name] = drive.get_pain_pleasure_statistics()
             else:
@@ -727,7 +727,7 @@ class MotivationSystem:
         
         return stats
     
-    def record_action_execution(self, action: Dict[str, float], context: DriveContext):
+    def record_action_execution(self, action: Dict[str, float], context: MotivatorContext):
         """
         Notify all drives that an action was executed for learning purposes.
         
@@ -738,14 +738,14 @@ class MotivationSystem:
             action: The action that was executed
             context: The context when the action was executed
         """
-        for drive_name, drive in self.drives.items():
+        for drive_name, drive in self.motivators.items():
             try:
                 drive.record_action_execution(action, context)
             except Exception as e:
                 # Don't let drive recording errors break the system
                 print(f"Warning: {drive_name} drive action recording failed: {e}")
 
-    def learn_from_action_outcome(self, action: Dict[str, float], context: DriveContext, 
+    def learn_from_action_outcome(self, action: Dict[str, float], context: MotivatorContext, 
                                  outcome_experiences: List[Any]):
         """
         Learn from action outcomes using drive-specific pain/pleasure evaluation.
@@ -758,7 +758,7 @@ class MotivationSystem:
             context: The context when the action was taken
             outcome_experiences: List of experiences resulting from the action
         """
-        for drive_name, drive in self.drives.items():
+        for drive_name, drive in self.motivators.items():
             # Each drive evaluates the outcome for its own domain
             total_pain = 0.0
             total_pleasure = 0.0
@@ -783,15 +783,15 @@ class MotivationSystem:
 
 def create_default_motivation_system(world_graph=None, world_width=40, world_height=40) -> MotivationSystem:
     """Create a motivation system with the three refactored drives: Curiosity, Mastery, and Survival."""
-    from .curiosity_drive import CuriosityDrive
-    from .mastery_drive import MasteryDrive
-    from .survival_drive import SurvivalDrive
+    from .curiosity_motivator import CuriosityMotivator
+    from .mastery_motivator import MasteryMotivator
+    from .survival_motivator import SurvivalMotivator
     
     system = MotivationSystem(world_graph=world_graph)
     
-    # Add the three refactored drives
-    system.add_drive(CuriosityDrive(base_weight=0.35))   # Pure experience node creation
-    system.add_drive(MasteryDrive(base_weight=0.25))     # Prediction accuracy and competence
-    system.add_drive(SurvivalDrive(base_weight=0.40))    # Health/energy/safety
+    # Add the three refactored motivators
+    system.add_drive(CuriosityMotivator(base_weight=0.35))   # Pure experience node creation
+    system.add_drive(MasteryMotivator(base_weight=0.25))     # Prediction accuracy and competence
+    system.add_drive(SurvivalMotivator(base_weight=0.40))    # Health/energy/safety
     
     return system

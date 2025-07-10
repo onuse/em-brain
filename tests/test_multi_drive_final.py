@@ -57,7 +57,7 @@ def test_drives_working():
         result = motivation_system.make_decision(context)
         
         print(f"\n📊 {scenario['name']}:")
-        print(f"   Dominant drive: {result.dominant_drive}")
+        print(f"   Dominant drive: {result.dominant_motivator}")
         print(f"   Chosen action: forward={result.chosen_action.get('forward_motor', 0):.2f}, "
               f"turn={result.chosen_action.get('turn_motor', 0):.2f}, "
               f"brake={result.chosen_action.get('brake_motor', 0):.2f}")

@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class DriveContext:
+class MotivatorContext:
     """Context information available to all drives for decision making."""
     current_sensory: List[float]         # Current sensor readings
     robot_health: float                  # Robot health [0.0-1.0]
@@ -58,7 +58,7 @@ class ActionEvaluation:
         return self.expected_pleasure + self.expected_pain  # Pain is negative, pleasure is positive
 
 
-class BaseDrive(ABC):
+class BaseMotivator(ABC):
     """
     Abstract base class for all robot drives/motivations.
     
@@ -85,7 +85,7 @@ class BaseDrive(ABC):
         self.sensor_semantics = None  # Will be set via initialize_with_brainstem
         
     @abstractmethod
-    def evaluate_action(self, action: Dict[str, float], context: DriveContext) -> ActionEvaluation:
+    def evaluate_action(self, action: Dict[str, float], context: MotivatorContext) -> ActionEvaluation:
         """
         Evaluate how well a potential action satisfies this drive.
         
@@ -99,7 +99,7 @@ class BaseDrive(ABC):
         pass
     
     @abstractmethod
-    def update_drive_state(self, context: DriveContext, world_graph=None) -> float:
+    def update_drive_state(self, context: MotivatorContext, world_graph=None) -> float:
         """
         Update internal drive state based on current context.
         
@@ -141,7 +141,7 @@ class BaseDrive(ABC):
             if len(self.activation_history) > 100:
                 self.activation_history = self.activation_history[-50:]
     
-    def evaluate_experience_significance(self, experience, context: DriveContext) -> float:
+    def evaluate_experience_significance(self, experience, context: MotivatorContext) -> float:
         """
         Evaluate how significant this experience is for this drive.
         
@@ -155,7 +155,7 @@ class BaseDrive(ABC):
         # Base implementation - drives should override for domain-specific significance
         return 1.0
     
-    def evaluate_experience_valence(self, experience, context: DriveContext) -> float:
+    def evaluate_experience_valence(self, experience, context: MotivatorContext) -> float:
         """
         Evaluate whether this experience was good (+) or bad (-) for this drive.
         
@@ -172,7 +172,7 @@ class BaseDrive(ABC):
         # Base implementation - drives should override for domain-specific valence
         return 0.0
     
-    def evaluate_action_pain_pleasure(self, action: Dict[str, float], context: DriveContext) -> tuple[float, float]:
+    def evaluate_action_pain_pleasure(self, action: Dict[str, float], context: MotivatorContext) -> tuple[float, float]:
         """
         Evaluate the expected pain and pleasure of an action for this drive.
         
@@ -191,7 +191,7 @@ class BaseDrive(ABC):
         # Base implementation - drives should override for domain-specific pain/pleasure prediction
         return 0.0, 0.0
     
-    def learn_pain_pleasure_association(self, action: Dict[str, float], context: DriveContext, 
+    def learn_pain_pleasure_association(self, action: Dict[str, float], context: MotivatorContext, 
                                       outcome_pain: float, outcome_pleasure: float):
         """
         Learn from pain/pleasure outcomes to improve future action predictions.
@@ -208,7 +208,7 @@ class BaseDrive(ABC):
         # Base implementation - drives can override for domain-specific learning
         pass
     
-    def record_action_execution(self, action: Dict[str, float], context: DriveContext):
+    def record_action_execution(self, action: Dict[str, float], context: MotivatorContext):
         """
         Record that an action was executed to update drive-specific learning.
         
@@ -222,7 +222,7 @@ class BaseDrive(ABC):
         # Base implementation - drives can override for domain-specific recording
         pass
     
-    def get_current_mood_contribution(self, context: DriveContext) -> Dict[str, float]:
+    def get_current_mood_contribution(self, context: MotivatorContext) -> Dict[str, float]:
         """
         Get this drive's contribution to overall robot mood.
         
@@ -270,7 +270,7 @@ class BaseDrive(ABC):
         """Get sensor indices that serve a specific purpose for this drive."""
         return self.discovered_sensors.get(purpose_name, [])
     
-    def extract_sensor_values(self, context: DriveContext, purpose_name: str) -> List[float]:
+    def extract_sensor_values(self, context: MotivatorContext, purpose_name: str) -> List[float]:
         """Extract sensor values for a specific purpose from the context."""
         if not hasattr(context, 'current_sensory') or not context.current_sensory:
             return []

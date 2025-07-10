@@ -7,7 +7,7 @@ Verifies that multiple drives compete and cooperate to guide robot behavior.
 import asyncio
 from datetime import datetime
 from drives import create_default_motivation_system, DriveContext
-from prediction.action.multi_drive_predictor import MultiDrivePredictor
+from prediction.action.multi_motivator_predictor import MultiMotivatorPredictor
 from core.brain_interface import BrainInterface
 from core.communication import SensoryPacket
 from simulation.brainstem_sim import GridWorldBrainstem
@@ -51,12 +51,12 @@ def test_motivation_system_basics():
     
     print(f"✅ Chosen action: {result.chosen_action}")
     print(f"   Total score: {result.total_score:.3f}")
-    print(f"   Dominant drive: {result.dominant_drive}")
+    print(f"   Dominant drive: {result.dominant_motivator}")
     print(f"   Confidence: {result.confidence:.3f}")
     print(f"   Reasoning: {result.reasoning}")
     print(f"   Drive contributions: {result.drive_contributions}")
     
-    return result.dominant_drive is not None
+    return result.dominant_motivator is not None
 
 
 def test_drive_competition():
@@ -122,7 +122,7 @@ def test_drive_competition():
         results[scenario["name"]] = result
         
         print(f"📊 {scenario['name']}:")
-        print(f"   Dominant drive: {result.dominant_drive}")
+        print(f"   Dominant drive: {result.dominant_motivator}")
         print(f"   Drive scores: {result.drive_contributions}")
         print(f"   Action: forward={result.chosen_action.get('forward_motor', 0):.2f}, "
               f"turn={result.chosen_action.get('turn_motor', 0):.2f}, "
@@ -131,12 +131,12 @@ def test_drive_competition():
         
         # Check if expectation matches (if specified)
         expected = scenario.get("expected_dominant")
-        if expected and result.dominant_drive == expected:
+        if expected and result.dominant_motivator == expected:
             print(f"   ✅ Expected {expected} to dominate - CORRECT")
         elif expected:
-            print(f"   ⚠️  Expected {expected}, got {result.dominant_drive}")
+            print(f"   ⚠️  Expected {expected}, got {result.dominant_motivator}")
         else:
-            print(f"   ✅ Open scenario - {result.dominant_drive} dominated")
+            print(f"   ✅ Open scenario - {result.dominant_motivator} dominated")
         
         print()
     
@@ -149,7 +149,7 @@ def test_multi_drive_predictor():
     print("==========================================")
     
     # Create multi-drive predictor
-    predictor = MultiDrivePredictor(
+    predictor = MultiMotivatorPredictor(
         base_time_budget=0.02,  # Fast for testing
     )
     
@@ -220,7 +220,7 @@ async def test_full_simulation():
     )
     
     # Create multi-drive predictor  
-    predictor = MultiDrivePredictor(
+    predictor = MultiMotivatorPredictor(
         base_time_budget=0.02,
     )
     brain = BrainInterface(predictor)

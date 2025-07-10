@@ -16,7 +16,7 @@ import math
 import time
 from typing import Dict, List, Set, Tuple, Optional
 from collections import defaultdict
-from .base_drive import BaseDrive, DriveContext, ActionEvaluation
+from .base_motivator import BaseMotivator, MotivatorContext, ActionEvaluation
 from core.world_graph import WorldGraph
 
 # Import GPU sensory predictor for predictive novelty assessment
@@ -28,7 +28,7 @@ except ImportError:
     GPU_PREDICTION_AVAILABLE = False
 
 
-class CuriosityDrive(BaseDrive):
+class CuriosityMotivator(BaseMotivator):
     """
     Refactored Curiosity Drive focused on pure experience node creation.
     
@@ -83,7 +83,7 @@ class CuriosityDrive(BaseDrive):
             self.predictive_novelty_enabled = False
     
             
-    def evaluate_action(self, action: Dict[str, float], context: DriveContext) -> ActionEvaluation:
+    def evaluate_action(self, action: Dict[str, float], context: MotivatorContext) -> ActionEvaluation:
         """
         Evaluate action based on its potential to create novel experiences.
         """
@@ -130,7 +130,7 @@ class CuriosityDrive(BaseDrive):
             urgency=urgency
         )
     
-    def _calculate_spatial_novelty(self, action: Dict[str, float], context: DriveContext) -> float:
+    def _calculate_spatial_novelty(self, action: Dict[str, float], context: MotivatorContext) -> float:
         """
         Calculate spatial novelty using memory-based approach.
         
@@ -144,7 +144,7 @@ class CuriosityDrive(BaseDrive):
             # Fallback to improved familiarity-based approach
             return self._calculate_familiarity_based_spatial_novelty(action, context)
     
-    def _calculate_memory_based_spatial_novelty(self, action: Dict[str, float], context: DriveContext) -> float:
+    def _calculate_memory_based_spatial_novelty(self, action: Dict[str, float], context: MotivatorContext) -> float:
         """
         Calculate spatial novelty based on memory search difficulty.
         
@@ -163,7 +163,7 @@ class CuriosityDrive(BaseDrive):
         
         return memory_based_novelty
     
-    def _calculate_familiarity_based_spatial_novelty(self, action: Dict[str, float], context: DriveContext) -> float:
+    def _calculate_familiarity_based_spatial_novelty(self, action: Dict[str, float], context: MotivatorContext) -> float:
         """
         Fallback spatial novelty calculation using familiarity counters.
         (Improved version of the original approach)
@@ -304,7 +304,7 @@ class CuriosityDrive(BaseDrive):
             print(f"Warning: Memory-based novelty search failed: {e}")
             return 0.5
     
-    def _calculate_action_novelty(self, action: Dict[str, float], context: DriveContext) -> float:
+    def _calculate_action_novelty(self, action: Dict[str, float], context: MotivatorContext) -> float:
         """
         Calculate action novelty using memory-based approach.
         
@@ -318,7 +318,7 @@ class CuriosityDrive(BaseDrive):
             # Fallback to improved familiarity-based approach
             return self._calculate_familiarity_based_action_novelty(action, context)
     
-    def _calculate_memory_based_action_novelty(self, action: Dict[str, float], context: DriveContext) -> float:
+    def _calculate_memory_based_action_novelty(self, action: Dict[str, float], context: MotivatorContext) -> float:
         """
         Calculate action novelty based on memory search difficulty.
         
@@ -334,7 +334,7 @@ class CuriosityDrive(BaseDrive):
         
         return memory_based_novelty
     
-    def _calculate_familiarity_based_action_novelty(self, action: Dict[str, float], context: DriveContext) -> float:
+    def _calculate_familiarity_based_action_novelty(self, action: Dict[str, float], context: MotivatorContext) -> float:
         """
         Fallback action novelty calculation using familiarity counters.
         (Improved version with coarser quantization)
@@ -346,7 +346,7 @@ class CuriosityDrive(BaseDrive):
         familiarity = self.action_familiarity.get(action_sig, 0.0)
         return 1.0 - familiarity
     
-    def _create_action_experience_pattern(self, action: Dict[str, float], context: DriveContext) -> List[float]:
+    def _create_action_experience_pattern(self, action: Dict[str, float], context: MotivatorContext) -> List[float]:
         """
         Create an action experience pattern for memory-based novelty detection.
         
@@ -379,7 +379,7 @@ class CuriosityDrive(BaseDrive):
         
         return pattern
     
-    def _calculate_sensory_novelty(self, action: Dict[str, float], context: DriveContext) -> float:
+    def _calculate_sensory_novelty(self, action: Dict[str, float], context: MotivatorContext) -> float:
         """Calculate sensory novelty using memory-based approach for consistency."""
         # Use memory-based novelty for consistency with other novelty calculations
         if self.memory_based_novelty_enabled and self.world_graph:
@@ -394,7 +394,7 @@ class CuriosityDrive(BaseDrive):
             # Fallback to reactive assessment
             return self._calculate_reactive_sensory_novelty(action, context)
     
-    def _calculate_predictive_sensory_novelty(self, action: Dict[str, float], context: DriveContext) -> float:
+    def _calculate_predictive_sensory_novelty(self, action: Dict[str, float], context: MotivatorContext) -> float:
         """Calculate novelty of PREDICTED sensory experience from taking this action."""
         try:
             # Predict what sensory experience this action would produce
@@ -422,7 +422,7 @@ class CuriosityDrive(BaseDrive):
             # Fallback to reactive assessment if prediction fails
             return self._calculate_reactive_sensory_novelty(action, context)
     
-    def _calculate_reactive_sensory_novelty(self, action: Dict[str, float], context: DriveContext) -> float:
+    def _calculate_reactive_sensory_novelty(self, action: Dict[str, float], context: MotivatorContext) -> float:
         """Fallback reactive sensory novelty calculation."""
         # Create sensory signature from current context
         sensory_sig = tuple(context.current_sensory[:8]) if len(context.current_sensory) >= 8 else tuple(context.current_sensory)
@@ -431,7 +431,7 @@ class CuriosityDrive(BaseDrive):
         familiarity = self.sensory_familiarity.get(sensory_sig, 0.0)
         return 1.0 - familiarity
     
-    def _calculate_environmental_novelty(self, action: Dict[str, float], context: DriveContext) -> float:
+    def _calculate_environmental_novelty(self, action: Dict[str, float], context: MotivatorContext) -> float:
         """Calculate environmental novelty using memory-based approach for consistency."""
         # Use memory-based novelty for consistency with spatial and action novelty
         if self.memory_based_novelty_enabled and self.world_graph:
@@ -448,7 +448,7 @@ class CuriosityDrive(BaseDrive):
             combined_familiarity = (familiarity + sensory_familiarity) / 2.0
             return 1.0 - combined_familiarity
     
-    def _calculate_boredom_penalty(self, context: DriveContext, base_novelty: float) -> float:
+    def _calculate_boredom_penalty(self, context: MotivatorContext, base_novelty: float) -> float:
         """
         Calculate boredom penalty for familiar actions.
         
@@ -464,7 +464,7 @@ class CuriosityDrive(BaseDrive):
         
         return 0.0
     
-    def _calculate_boredom_from_experiences(self, world_graph: Optional[WorldGraph], context: DriveContext) -> float:
+    def _calculate_boredom_from_experiences(self, world_graph: Optional[WorldGraph], context: MotivatorContext) -> float:
         """
         Calculate emergent boredom based on accumulated experiences.
         
@@ -538,7 +538,7 @@ class CuriosityDrive(BaseDrive):
         else:
             return f"Low novelty - familiar situation ({max_novelty:.2f})"
     
-    def update_drive_state(self, context: DriveContext, world_graph: Optional[WorldGraph] = None) -> float:
+    def update_drive_state(self, context: MotivatorContext, world_graph: Optional[WorldGraph] = None) -> float:
         """
         Update curiosity drive state based on current context.
         
@@ -570,7 +570,7 @@ class CuriosityDrive(BaseDrive):
         
         return self.current_weight
     
-    def _update_familiarity_tracking(self, context: DriveContext):
+    def _update_familiarity_tracking(self, context: MotivatorContext):
         """Update familiarity tracking for different experience types."""
         # Update spatial familiarity
         pos = context.robot_position
@@ -603,7 +603,7 @@ class CuriosityDrive(BaseDrive):
             if self.sensory_familiarity[sensory_sig] < 0.01:
                 del self.sensory_familiarity[sensory_sig]
     
-    def _calculate_overall_novelty_potential(self, context: DriveContext) -> float:
+    def _calculate_overall_novelty_potential(self, context: MotivatorContext) -> float:
         """Calculate overall novelty potential in current situation using memory-based approach."""
         # Use memory-based novelty for consistency with action evaluation
         if self.memory_based_novelty_enabled and self.world_graph:
@@ -693,7 +693,7 @@ class CuriosityDrive(BaseDrive):
         else:
             return "idle"
     
-    def record_action_execution(self, action: Dict[str, float], context: DriveContext):
+    def record_action_execution(self, action: Dict[str, float], context: MotivatorContext):
         """Record that an action was executed to update familiarity and memory."""
         # Update action familiarity (fallback system)
         action_sig = self._create_action_signature(action)
@@ -720,7 +720,7 @@ class CuriosityDrive(BaseDrive):
         predicted_sig = tuple(predicted_sensory)
         self.sensory_familiarity[predicted_sig] = min(1.0, self.sensory_familiarity[predicted_sig] + 0.05)
     
-    def evaluate_experience_valence(self, experience, context: DriveContext) -> float:
+    def evaluate_experience_valence(self, experience, context: MotivatorContext) -> float:
         """
         Curiosity drive's pain/pleasure evaluation.
         
@@ -745,7 +745,7 @@ class CuriosityDrive(BaseDrive):
         else:
             return -0.3  # Mild boredom pain from repetition
     
-    def get_current_mood_contribution(self, context: DriveContext) -> Dict[str, float]:
+    def get_current_mood_contribution(self, context: MotivatorContext) -> Dict[str, float]:
         """Curiosity drive's contribution to robot mood."""
         # Calculate novelty satisfaction
         current_novelty = self._calculate_overall_novelty_potential(context)

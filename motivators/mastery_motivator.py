@@ -16,7 +16,7 @@ import math
 import time
 from typing import Dict, List, Tuple, Optional
 from collections import defaultdict, deque
-from .base_drive import BaseDrive, DriveContext, ActionEvaluation
+from .base_motivator import BaseMotivator, MotivatorContext, ActionEvaluation
 from core.world_graph import WorldGraph
 
 # Import GPU sensory predictor for predictive mastery assessment
@@ -28,7 +28,7 @@ except ImportError:
     GPU_PREDICTION_AVAILABLE = False
 
 
-class MasteryDrive(BaseDrive):
+class MasteryMotivator(BaseMotivator):
     """
     Mastery Drive focused on competence and skill development.
     
@@ -89,7 +89,7 @@ class MasteryDrive(BaseDrive):
         else:
             self.predictive_mastery_enabled = False
             
-    def evaluate_action(self, action: Dict[str, float], context: DriveContext) -> ActionEvaluation:
+    def evaluate_action(self, action: Dict[str, float], context: MotivatorContext) -> ActionEvaluation:
         """
         Evaluate action based on its potential to improve competence and mastery.
         """
@@ -135,7 +135,7 @@ class MasteryDrive(BaseDrive):
             urgency=urgency
         )
     
-    def _calculate_accuracy_improvement_potential(self, action: Dict[str, float], context: DriveContext) -> float:
+    def _calculate_accuracy_improvement_potential(self, action: Dict[str, float], context: MotivatorContext) -> float:
         """
         Calculate potential for improving prediction accuracy - using PREDICTIVE assessment if available.
         
@@ -148,7 +148,7 @@ class MasteryDrive(BaseDrive):
             # Fallback to reactive assessment
             return self._calculate_reactive_accuracy_improvement(action, context)
     
-    def _calculate_predictive_accuracy_improvement(self, action: Dict[str, float], context: DriveContext) -> float:
+    def _calculate_predictive_accuracy_improvement(self, action: Dict[str, float], context: MotivatorContext) -> float:
         """
         Predict how much this action will improve our prediction accuracy.
         
@@ -188,7 +188,7 @@ class MasteryDrive(BaseDrive):
             # Fallback to reactive assessment if prediction fails
             return self._calculate_reactive_accuracy_improvement(action, context)
     
-    def _calculate_predicted_learning_value(self, prediction: SensoryPrediction, context: DriveContext) -> float:
+    def _calculate_predicted_learning_value(self, prediction: SensoryPrediction, context: MotivatorContext) -> float:
         """Calculate how much learning value this predicted outcome would provide."""
         # Learning value is higher when:
         # 1. Prediction uncertainty is moderate (not too easy, not impossible)
@@ -208,7 +208,7 @@ class MasteryDrive(BaseDrive):
         
         return learning_value
     
-    def _calculate_predicted_competence_gain(self, prediction: SensoryPrediction, context: DriveContext) -> float:
+    def _calculate_predicted_competence_gain(self, prediction: SensoryPrediction, context: MotivatorContext) -> float:
         """Calculate how much competence this predicted outcome would develop."""
         # Competence gain is higher when:
         # 1. We're practicing skills at appropriate difficulty
@@ -237,7 +237,7 @@ class MasteryDrive(BaseDrive):
         
         return competence_gain
     
-    def _calculate_predicted_pattern_completion(self, prediction: SensoryPrediction, context: DriveContext) -> float:
+    def _calculate_predicted_pattern_completion(self, prediction: SensoryPrediction, context: MotivatorContext) -> float:
         """Calculate how much this predicted outcome would complete patterns."""
         # Pattern completion is higher when:
         # 1. The prediction fills in missing pieces of understanding
@@ -263,7 +263,7 @@ class MasteryDrive(BaseDrive):
         
         return min(1.0, pattern_completion)
     
-    def _calculate_reactive_accuracy_improvement(self, action: Dict[str, float], context: DriveContext) -> float:
+    def _calculate_reactive_accuracy_improvement(self, action: Dict[str, float], context: MotivatorContext) -> float:
         """Fallback reactive accuracy improvement calculation."""
         if not context.prediction_errors:
             return 0.5  # Unknown potential
@@ -283,7 +283,7 @@ class MasteryDrive(BaseDrive):
         
         return min(1.0, improvement_potential)
     
-    def _calculate_skill_development_potential(self, action: Dict[str, float], context: DriveContext) -> float:
+    def _calculate_skill_development_potential(self, action: Dict[str, float], context: MotivatorContext) -> float:
         """
         Calculate potential for developing skills in current context.
         
@@ -306,7 +306,7 @@ class MasteryDrive(BaseDrive):
         else:
             return 0.1  # Already mastered
     
-    def _calculate_consistency_potential(self, action: Dict[str, float], context: DriveContext) -> float:
+    def _calculate_consistency_potential(self, action: Dict[str, float], context: MotivatorContext) -> float:
         """
         Calculate potential for improving consistency of performance.
         
@@ -331,7 +331,7 @@ class MasteryDrive(BaseDrive):
         
         return consistency_potential
     
-    def _calculate_flow_potential(self, action: Dict[str, float], context: DriveContext) -> float:
+    def _calculate_flow_potential(self, action: Dict[str, float], context: MotivatorContext) -> float:
         """
         Calculate potential for achieving flow state.
         
@@ -358,7 +358,7 @@ class MasteryDrive(BaseDrive):
         
         return min(1.0, skill_challenge_match + engagement_boost)
     
-    def _calculate_mastery_focus_boost(self, action: Dict[str, float], context: DriveContext) -> float:
+    def _calculate_mastery_focus_boost(self, action: Dict[str, float], context: MotivatorContext) -> float:
         """
         Calculate boost for actions that align with current mastery focus.
         """
@@ -402,7 +402,7 @@ class MasteryDrive(BaseDrive):
         else:
             return f"Limited mastery potential ({max_potential:.2f}) - already competent"
     
-    def _calculate_mastery_urgency(self, context: DriveContext) -> float:
+    def _calculate_mastery_urgency(self, context: MotivatorContext) -> float:
         """Calculate urgency based on improvement opportunities."""
         # Higher urgency when there are clear improvement opportunities
         if context.prediction_errors:
@@ -417,7 +417,7 @@ class MasteryDrive(BaseDrive):
         
         return min(1.0, error_urgency + improvement_urgency)
     
-    def update_drive_state(self, context: DriveContext, world_graph: Optional[WorldGraph] = None) -> float:
+    def update_drive_state(self, context: MotivatorContext, world_graph: Optional[WorldGraph] = None) -> float:
         """
         Update mastery drive state based on current context.
         
@@ -444,7 +444,7 @@ class MasteryDrive(BaseDrive):
         
         return self.current_weight
     
-    def _update_skill_tracking(self, context: DriveContext):
+    def _update_skill_tracking(self, context: MotivatorContext):
         """Update skill levels based on current performance."""
         context_sig = self._create_context_signature(context)
         
@@ -469,7 +469,7 @@ class MasteryDrive(BaseDrive):
         # Update practice sessions
         self.practice_sessions[context_sig] += 1
     
-    def _update_flow_indicators(self, context: DriveContext):
+    def _update_flow_indicators(self, context: MotivatorContext):
         """Update flow state indicators."""
         if not self.accuracy_history:
             return
@@ -498,7 +498,7 @@ class MasteryDrive(BaseDrive):
             self.flow_indicators['challenge_level'] * 0.5
         )
     
-    def _update_mastery_focus(self, context: DriveContext):
+    def _update_mastery_focus(self, context: MotivatorContext):
         """Update mastery focus based on current opportunities."""
         context_sig = self._create_context_signature(context)
         current_skill = self.skill_levels.get(context_sig, 0.0)
@@ -513,7 +513,7 @@ class MasteryDrive(BaseDrive):
                     self.current_focus_area = sig
                     break
     
-    def _calculate_overall_mastery_opportunity(self, context: DriveContext) -> float:
+    def _calculate_overall_mastery_opportunity(self, context: MotivatorContext) -> float:
         """Calculate overall mastery opportunity in current situation."""
         # Base opportunity on prediction errors and skill levels
         if context.prediction_errors:
@@ -542,7 +542,7 @@ class MasteryDrive(BaseDrive):
         
         return max(0.1, overall_opportunity)  # Maintain minimum drive
     
-    def _create_context_signature(self, context: DriveContext) -> str:
+    def _create_context_signature(self, context: MotivatorContext) -> str:
         """Create a signature for the current context for skill tracking."""
         # Combine position and basic sensory context
         pos_sig = f"{context.robot_position[0]}_{context.robot_position[1]}"
@@ -552,7 +552,7 @@ class MasteryDrive(BaseDrive):
         
         return f"{pos_sig}_{sensory_sig}"
     
-    def record_mastery_attempt(self, action: Dict[str, float], context: DriveContext, success: bool):
+    def record_mastery_attempt(self, action: Dict[str, float], context: MotivatorContext, success: bool):
         """Record a mastery attempt and its outcome."""
         context_sig = self._create_context_signature(context)
         
@@ -562,7 +562,7 @@ class MasteryDrive(BaseDrive):
             current_skill = self.skill_levels.get(context_sig, 0.0)
             self.skill_levels[context_sig] = min(1.0, current_skill + 0.05)
     
-    def evaluate_experience_valence(self, experience, context: DriveContext) -> float:
+    def evaluate_experience_valence(self, experience, context: MotivatorContext) -> float:
         """
         Mastery drive's pain/pleasure evaluation.
         
@@ -592,7 +592,7 @@ class MasteryDrive(BaseDrive):
         
         return 0.0
     
-    def get_current_mood_contribution(self, context: DriveContext) -> Dict[str, float]:
+    def get_current_mood_contribution(self, context: MotivatorContext) -> Dict[str, float]:
         """Mastery drive's contribution to robot mood."""
         # Calculate mastery satisfaction
         context_sig = self._create_context_signature(context)

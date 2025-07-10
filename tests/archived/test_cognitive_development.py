@@ -14,9 +14,9 @@ from typing import List, Dict
 # Add project root to path
 sys.path.append('.')
 
-from drives.cognitive_development import CognitiveDevelopmentSystem
-from drives.development_types import DevelopmentalStage
-from drives.action_proficiency import ActionMaturationSystem
+from motivators.cognitive_development import CognitiveDevelopmentSystem
+from motivators.development_types import DevelopmentalStage
+from motivators.action_proficiency import ActionMaturationSystem
 from simulation.brainstem_sim import GridWorldBrainstem
 
 

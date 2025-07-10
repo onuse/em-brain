@@ -12,8 +12,8 @@ from typing import List, Dict
 # Add project root to path
 sys.path.append('.')
 
-from drives.motivation_system import create_default_motivation_system
-from drives.base_drive import DriveContext
+from motivators.motivation_system import create_default_motivation_system
+from motivators.base_motivator import DriveContext
 from simulation.brainstem_sim import GridWorldBrainstem
 
 
@@ -105,7 +105,7 @@ class ActionMaturationExperiment:
                 'prediction_accuracy': prediction_accuracy,
                 'execution_success': execution_success,
                 'decision_time': decision_time,
-                'dominant_drive': motivation_result.dominant_drive,
+                'dominant_motivator': motivation_result.dominant_motivator,
                 'confidence': motivation_result.confidence
             })
             

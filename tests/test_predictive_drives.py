@@ -9,9 +9,9 @@ rule-based to predictive intelligence using the GPU sensory prediction system.
 import sys
 sys.path.append('.')
 
-from drives.curiosity_drive import CuriosityDrive  
-from drives.survival_drive import SurvivalDrive
-from drives.base_drive import DriveContext
+from motivators.curiosity_drive import CuriosityDrive  
+from motivators.survival_drive import SurvivalDrive
+from motivators.base_motivator import DriveContext
 from core.world_graph import WorldGraph
 from core.experience_node import ExperienceNode
 import numpy as np

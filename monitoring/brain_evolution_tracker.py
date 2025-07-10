@@ -34,9 +34,9 @@ class BrainSnapshot:
     network_density: float
     
     # Drive system
-    drive_weights: Dict[str, float]
-    drive_pressure: float
-    dominant_drive: str
+    motivator_weights: Dict[str, float]
+    motivator_pressure: float
+    dominant_motivator: str
     drive_entropy: float  # Measure of drive system complexity
     
     # Learning metrics
@@ -118,10 +118,10 @@ class BrainEvolutionTracker:
             network_density = self._calculate_network_density(graph_stats)
             
             # Extract drive system metrics
-            drive_weights = decision_context.get('drive_weights', {})
-            drive_pressure = decision_context.get('total_drive_pressure', 0.0)
-            dominant_drive = decision_context.get('dominant_drive', 'unknown')
-            drive_entropy = self._calculate_drive_entropy(drive_weights)
+            motivator_weights = decision_context.get('motivator_weights', {})
+            motivator_pressure = decision_context.get('total_motivator_pressure', 0.0)
+            dominant_motivator = decision_context.get('dominant_motivator', 'unknown')
+            drive_entropy = self._calculate_drive_entropy(motivator_weights)
             
             # Extract learning metrics
             prediction_error = decision_context.get('recent_prediction_error', 0.0)
@@ -154,9 +154,9 @@ class BrainEvolutionTracker:
                 total_nodes=total_nodes,
                 node_growth_rate=node_growth_rate,
                 network_density=network_density,
-                drive_weights=drive_weights,
-                drive_pressure=drive_pressure,
-                dominant_drive=dominant_drive,
+                motivator_weights=motivator_weights,
+                motivator_pressure=motivator_pressure,
+                dominant_motivator=dominant_motivator,
                 drive_entropy=drive_entropy,
                 prediction_error=prediction_error,
                 learning_velocity=learning_velocity,
@@ -210,19 +210,19 @@ class BrainEvolutionTracker:
         avg_access_count = graph_stats.get('avg_access_count', 0)
         return avg_access_count / total_nodes if total_nodes > 0 else 0.0
     
-    def _calculate_drive_entropy(self, drive_weights: Dict[str, float]) -> float:
+    def _calculate_drive_entropy(self, motivator_weights: Dict[str, float]) -> float:
         """Calculate entropy of drive system (higher = more complex behavior)."""
-        if not drive_weights:
+        if not motivator_weights:
             return 0.0
         
         # Normalize weights
-        total_weight = sum(drive_weights.values())
+        total_weight = sum(motivator_weights.values())
         if total_weight == 0:
             return 0.0
         
         # Calculate Shannon entropy
         entropy = 0.0
-        for weight in drive_weights.values():
+        for weight in motivator_weights.values():
             if weight > 0:
                 p = weight / total_weight
                 entropy -= p * np.log2(p)
@@ -318,7 +318,7 @@ class BrainEvolutionTracker:
         self.behavioral_complexity_trend.append(complexity_score)
         
         # Update drive correlation matrix
-        for drive_name, weight in snapshot.drive_weights.items():
+        for drive_name, weight in snapshot.motivator_weights.items():
             self.drive_correlation_matrix[drive_name].append(weight)
     
     def analyze_brain_evolution(self) -> Dict[str, Any]:
@@ -363,22 +363,22 @@ class BrainEvolutionTracker:
     
     def _analyze_drive_system_evolution(self) -> Dict[str, Any]:
         """Analyze how the drive system evolves over time."""
-        drive_pressures = [s.drive_pressure for s in self.snapshots]
+        motivator_pressures = [s.motivator_pressure for s in self.snapshots]
         drive_entropies = [s.drive_entropy for s in self.snapshots]
         
         # Analyze drive dominance patterns
         drive_dominance = defaultdict(int)
         for snapshot in self.snapshots:
-            drive_dominance[snapshot.dominant_drive] += 1
+            drive_dominance[snapshot.dominant_motivator] += 1
         
         return {
-            "pressure_trend": "increasing" if drive_pressures[-1] > drive_pressures[0] else "decreasing",
-            "average_pressure": np.mean(drive_pressures),
-            "pressure_stability": 1.0 / (1.0 + np.std(drive_pressures)),
+            "pressure_trend": "increasing" if motivator_pressures[-1] > motivator_pressures[0] else "decreasing",
+            "average_pressure": np.mean(motivator_pressures),
+            "pressure_stability": 1.0 / (1.0 + np.std(motivator_pressures)),
             "entropy_trend": "increasing" if drive_entropies[-1] > drive_entropies[0] else "decreasing",
             "average_entropy": np.mean(drive_entropies),
-            "dominant_drive_distribution": dict(drive_dominance),
-            "drive_switching_frequency": len(set(s.dominant_drive for s in self.snapshots))
+            "dominant_motivator_distribution": dict(drive_dominance),
+            "drive_switching_frequency": len(set(s.dominant_motivator for s in self.snapshots))
         }
     
     def _analyze_learning_dynamics(self) -> Dict[str, Any]:
@@ -477,10 +477,10 @@ class BrainEvolutionTracker:
             insights.append("⚠️ Learning regression detected - error increased significantly")
         
         # Drive system insights
-        drive_pressures = [s.drive_pressure for s in self.snapshots]
-        if min(drive_pressures) < 0.1:
+        motivator_pressures = [s.motivator_pressure for s in self.snapshots]
+        if min(motivator_pressures) < 0.1:
             insights.append("😴 Homeostatic rest achieved - drive pressure reached low levels")
-        elif np.std(drive_pressures) > 0.3:
+        elif np.std(motivator_pressures) > 0.3:
             insights.append("🔄 Highly dynamic drive system - pressure varies significantly")
         
         # Behavioral insights
@@ -536,7 +536,7 @@ class BrainEvolutionTracker:
         print(f"\n🧠 BRAIN EVOLUTION STATUS")
         print(f"   Session: {self.session_name}")
         print(f"   Step: {latest.step_count} | Nodes: {latest.total_nodes}")
-        print(f"   Drive Pressure: {latest.drive_pressure:.3f} | Dominant: {latest.dominant_drive}")
+        print(f"   Drive Pressure: {latest.motivator_pressure:.3f} | Dominant: {latest.dominant_motivator}")
         print(f"   Learning Velocity: {latest.learning_velocity:.3f} | Error: {latest.prediction_error:.3f}")
         print(f"   Behavioral Complexity: {list(self.behavioral_complexity_trend)[-1]:.3f}")
         print(f"   Position: ({latest.robot_position[0]:.1f}, {latest.robot_position[1]:.1f})")

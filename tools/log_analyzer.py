@@ -76,7 +76,7 @@ class LogAnalyzer:
             return {"oscillation_detected": False, "reason": "Insufficient data"}
         
         # Look for repetitive patterns in drive dominance
-        dominance_sequence = [entry.get('dominant_drive', 'unknown') for entry in self.data]
+        dominance_sequence = [entry.get('dominant_motivator', 'unknown') for entry in self.data]
         
         oscillation_patterns = []
         for i in range(len(dominance_sequence) - window_size + 1):
@@ -140,13 +140,13 @@ class LogAnalyzer:
         
         for entry in self.data:
             step = entry['step_count']
-            drive_weights = entry.get('drive_weights', {})
+            motivator_weights = entry.get('motivator_weights', {})
             
-            for drive_name, weight in drive_weights.items():
+            for drive_name, weight in motivator_weights.items():
                 drive_data[drive_name].append({
                     'step': step,
                     'weight': weight,
-                    'dominant': entry.get('dominant_drive') == drive_name
+                    'dominant': entry.get('dominant_motivator') == drive_name
                 })
         
         analysis = {}
@@ -211,10 +211,10 @@ class LogAnalyzer:
         total_pressures = []
         
         for entry in self.data:
-            total_pressure = entry.get('total_drive_pressure', 0.0)
+            total_pressure = entry.get('total_motivator_pressure', 0.0)
             total_pressures.append(total_pressure)
             
-            if entry.get('dominant_drive') == 'homeostatic_rest':
+            if entry.get('dominant_motivator') == 'homeostatic_rest':
                 rest_events.append({
                     'step': entry['step_count'],
                     'total_pressure': total_pressure,
@@ -257,10 +257,10 @@ class LogAnalyzer:
                 problems.append({
                     'step': entry['step_count'],
                     'problem_types': flags,
-                    'dominant_drive': entry.get('dominant_drive'),
+                    'dominant_motivator': entry.get('dominant_motivator'),
                     'total_score': entry.get('total_score'),
                     'reasoning': entry.get('reasoning'),
-                    'drive_weights': entry.get('drive_weights', {}),
+                    'motivator_weights': entry.get('motivator_weights', {}),
                     'context': {
                         'recent_error': entry.get('recent_prediction_error', 0),
                         'total_nodes': entry.get('total_nodes', 0),

@@ -12,9 +12,9 @@ from typing import Dict, List
 sys.path.append('.')
 
 from prediction.sensory_predictor import SensoryPredictor
-from drives.predictive_survival_drive import PredictiveSurvivalDrive
-from drives.survival_drive import SurvivalDrive
-from drives.base_drive import DriveContext
+from motivators.predictive_survival_drive import PredictiveSurvivalDrive
+from motivators.survival_drive import SurvivalDrive
+from motivators.base_motivator import DriveContext
 from simulation.brainstem_sim import GridWorldBrainstem
 
 

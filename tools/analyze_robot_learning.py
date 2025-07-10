@@ -179,34 +179,34 @@ def analyze_drive_evolution(decisions: List[Dict[str, Any]]):
     print(f"\n🚗 Drive Evolution Analysis")
     print("-" * 25)
     
-    dominant_drives = []
-    drive_pressures = []
+    dominant_motivators = []
+    motivator_pressures = []
     
     for decision in decisions:
-        if 'dominant_drive' in decision:
-            dominant_drives.append(decision['dominant_drive'])
-        if 'total_drive_pressure' in decision:
-            drive_pressures.append(decision['total_drive_pressure'])
+        if 'dominant_motivator' in decision:
+            dominant_motivators.append(decision['dominant_motivator'])
+        if 'total_motivator_pressure' in decision:
+            motivator_pressures.append(decision['total_motivator_pressure'])
     
-    if dominant_drives:
+    if dominant_motivators:
         from collections import Counter
-        drive_counter = Counter(dominant_drives)
+        drive_counter = Counter(dominant_motivators)
         
         print(f"   Drive distribution:")
         for drive, count in drive_counter.most_common():
-            print(f"     {drive}: {count}/{len(dominant_drives)} ({count/len(dominant_drives)*100:.1f}%)")
+            print(f"     {drive}: {count}/{len(dominant_motivators)} ({count/len(dominant_motivators)*100:.1f}%)")
         
         # Check for drive switching
-        drive_switches = sum(1 for i in range(1, len(dominant_drives)) if dominant_drives[i] != dominant_drives[i-1])
+        drive_switches = sum(1 for i in range(1, len(dominant_motivators)) if dominant_motivators[i] != dominant_motivators[i-1])
         print(f"   Drive switches: {drive_switches}")
         
         if drive_switches > 0:
             print(f"   ✅ Drive adaptation detected")
     
-    if drive_pressures:
-        print(f"   Initial drive pressure: {drive_pressures[0]:.3f}")
-        print(f"   Final drive pressure: {drive_pressures[-1]:.3f}")
-        print(f"   Average drive pressure: {np.mean(drive_pressures):.3f}")
+    if motivator_pressures:
+        print(f"   Initial drive pressure: {motivator_pressures[0]:.3f}")
+        print(f"   Final drive pressure: {motivator_pressures[-1]:.3f}")
+        print(f"   Average drive pressure: {np.mean(motivator_pressures):.3f}")
 
 def check_parallel_action_generation(decisions: List[Dict[str, Any]]):
     """Check if parallel action generation is being used."""

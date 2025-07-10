@@ -45,9 +45,9 @@ class GridWorldBrainstem:
         else:
             # Fallback to local brain for backwards compatibility
             from core.brain_interface import BrainInterface
-            from prediction.action.multi_drive_predictor import MultiDrivePredictor
+            from prediction.action.multi_motivator_predictor import MultiMotivatorPredictor
             # Use the complete brain system with all capabilities and GPU acceleration
-            predictor = MultiDrivePredictor(base_time_budget=0.1)
+            predictor = MultiMotivatorPredictor(base_time_budget=0.1)
             self.brain_client = BrainInterface(predictor, enable_persistence=True, use_gpu=True)
         
     def get_sensor_readings(self) -> SensoryPacket:

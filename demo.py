@@ -183,21 +183,21 @@ def main():
             'chosen_action': prediction.motor_action if prediction else {},
             'recent_prediction_error': prediction_error_tracker['current_error'],
             'confidence': 0.8,  # Placeholder - would come from prediction system
-            'drive_weights': {},  # Will be populated if multi-drive predictor
-            'total_drive_pressure': 0.0,
-            'dominant_drive': 'unknown'
+            'motivator_weights': {},  # Will be populated if multi-drive predictor
+            'total_motivator_pressure': 0.0,
+            'dominant_motivator': 'unknown'
         }
         
         # Extract drive information if available
         if hasattr(brainstem.brain_client.predictor, 'motivation_system'):
             motivation_system = brainstem.brain_client.predictor.motivation_system
-            decision_context['drive_weights'] = {name: drive.current_weight for name, drive in motivation_system.drives.items()}
-            decision_context['total_drive_pressure'] = sum(decision_context['drive_weights'].values())
+            decision_context['motivator_weights'] = {name: drive.current_weight for name, drive in motivation_system.motivators.items()}
+            decision_context['total_motivator_pressure'] = sum(decision_context['motivator_weights'].values())
             
             # Find dominant drive
-            if decision_context['drive_weights']:
-                dominant_drive = max(decision_context['drive_weights'].keys(), key=lambda k: decision_context['drive_weights'][k])
-                decision_context['dominant_drive'] = dominant_drive
+            if decision_context['motivator_weights']:
+                dominant_motivator = max(decision_context['motivator_weights'].keys(), key=lambda k: decision_context['motivator_weights'][k])
+                decision_context['dominant_motivator'] = dominant_motivator
         
         # Capture evolution snapshot
         evolution_snapshot = evolution_tracker.capture_snapshot(brain_stats, decision_context, brainstem.sequence_counter)

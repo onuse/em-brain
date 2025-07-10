@@ -12,7 +12,7 @@ This project explores **emergent intelligence** - the idea that complex, intelli
 Memory phenomena emerge naturally from neural-like dynamics - no special "memory classes" needed. The system develops working memory, long-term consolidation, associative recall, and natural forgetting through simple connection strengthening and spreading activation.
 
 **🎯 Motivation-Driven Behavior**  
-Multiple competing drives (survival, curiosity, exploration) generate goals and actions dynamically. The robot develops its own objectives based on its experiences and current state, not predetermined scripts.
+Multiple competing motivators (survival, curiosity, exploration) generate goals and actions dynamically. The robot develops its own objectives based on its experiences and current state, not predetermined scripts.
 
 **🌍 World-Agnostic Design**  
 The brain makes no assumptions about its environment. It learns sensory dimensions, discovers actuator effects, and adapts to any simulation or real-world setup automatically.
@@ -45,34 +45,34 @@ Experiences connect through **neural-like dynamics**:
 - **Spreading activation** makes related memories accessible
 - **Natural decay** causes unused memories to fade
 
-### Multi-Drive Motivation System
+### Multi-Motivator System
 ```
-Survival Drive ──┐
-Curiosity Drive ─┼── Action Selection ── Motor Commands
-Exploration Drive─┘
+Survival Motivator ──┐
+Curiosity Motivator ─┼── Action Selection ── Motor Commands
+Exploration Motivator─┘
 ```
 
-**Competing drives** evaluate situations and propose actions:
-- **Survival Drive**: Seeks food, avoids damage, maintains health
-- **Curiosity Drive**: Explores surprising or unpredictable areas  
-- **Exploration Drive**: Maps unknown territories and discovers new experiences
+**Competing motivators** evaluate situations and propose actions:
+- **Survival Motivator**: Seeks food, avoids damage, maintains health
+- **Curiosity Motivator**: Explores surprising or unpredictable areas  
+- **Exploration Motivator**: Maps unknown territories and discovers new experiences
 
 The motivation system **dynamically generates goals** based on:
 - Current robot state (health, energy, position)
 - Recent experiences and prediction errors
-- Drive-specific evaluation of environmental opportunities
+- Motivator-specific evaluation of environmental opportunities
 
 ### Prediction Pipeline
 ```
-Current State → Experience Traversal → Drive Evaluation → Action → Outcome
+Current State → Experience Traversal → Motivator Evaluation → Action → Outcome
                       ↓                     ↓              ↓
                  Memory Recall      Goal Generation    Experience
                  Pattern Matching   Action Candidates  Creation
 ```
 
 1. **Graph Traversal**: Parallel search through experience memory to find relevant past situations
-2. **Drive Evaluation**: Multiple drives assess the situation and propose action candidates  
-3. **Consensus Resolution**: Best action selected based on drive priorities and confidence
+2. **Motivator Evaluation**: Multiple motivators assess the situation and propose action candidates  
+3. **Consensus Resolution**: Best action selected based on motivator priorities and confidence
 4. **Execution**: Action performed and outcome observed
 5. **Learning**: New experience created and integrated into memory graph
 
@@ -97,7 +97,7 @@ Centralized settings system with configurable memory paths, GPU preferences, and
 - **Associative Memory**: Similar contexts trigger related memories automatically  
 - **Memory Consolidation**: Important experiences strengthen over time
 - **Natural Forgetting**: Unused memories fade without explicit pruning
-- **Goal Generation**: Drives create temporary objectives based on current needs
+- **Goal Generation**: Motivators create temporary objectives based on current needs
 
 ### Performance Optimizations
 - **Parallel Graph Traversals**: ThreadPoolExecutor utilizes multiple CPU cores
@@ -122,7 +122,7 @@ python3 demo.py
 This launches the complete brain system in a 2D grid world where you can observe:
 - Real-time memory formation and retrieval
 - Goal-driven behavior emergence  
-- Multi-drive decision making
+- Multi-motivator decision making
 - Adaptive parameter tuning
 - Cross-session learning accumulation
 - Brain evolution tracking and analysis
@@ -156,7 +156,7 @@ brain/
 ├── prediction/                  # Prediction engines
 │   ├── action/                  # Action prediction (motor commands)
 │   └── sensory/                 # Sensory prediction (outcome forecasting)
-├── drives/                      # Motivation system
+├── motivators/                  # Motivation system
 ├── monitoring/                  # Decision logging and analysis
 ├── simulation/                  # Grid world environment
 ├── visualization/               # Real-time monitoring
@@ -195,7 +195,7 @@ This system demonstrates several key concepts in AI research:
 
 **Emergent Intelligence**: Complex behavior arising from simple interacting components  
 **Temporal Memory**: Neural-inspired memory dynamics without explicit temporal modeling  
-**Multi-Objective Decision Making**: Competing drives creating sophisticated goal hierarchies  
+**Multi-Objective Decision Making**: Competing motivators creating sophisticated goal hierarchies  
 **Lifelong Learning**: Persistent knowledge accumulation across multiple sessions  
 **World-Agnostic AI**: Domain-independent intelligence that adapts to any environment
 
@@ -203,7 +203,7 @@ This system demonstrates several key concepts in AI research:
 
 This project explores fundamental questions about intelligence, memory, and goal formation. Contributions welcome in:
 - Memory dynamics and consolidation algorithms
-- Drive system design and multi-objective optimization  
+- Motivator system design and multi-objective optimization  
 - Performance optimization and scalability
 - Real-world robotics integration
 - Emergent behavior analysis

@@ -9,8 +9,8 @@ leveraging the massively parallel GPU sensory prediction system.
 import sys
 sys.path.append('.')
 
-from drives.curiosity_drive import CuriosityDrive
-from drives.base_drive import DriveContext
+from motivators.curiosity_drive import CuriosityDrive
+from motivators.base_motivator import DriveContext
 from core.world_graph import WorldGraph
 from core.experience_node import ExperienceNode
 import numpy as np

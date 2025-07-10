@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from collections import defaultdict
 from core.world_graph import WorldGraph
 from core.experience_node import ExperienceNode
-from drives.base_drive import DriveContext
+from motivators.base_motivator import MotivatorContext
 
 
 @dataclass
@@ -68,7 +68,7 @@ class ExperienceBasedActionSystem:
         self.successful_experience_actions = 0
         self.pattern_usage_stats = defaultdict(int)
         
-    def generate_experience_based_actions(self, context: DriveContext, 
+    def generate_experience_based_actions(self, context: MotivatorContext, 
                                         num_candidates: int = 3) -> List[ExperienceBasedAction]:
         """
         Generate action candidates based on stored experiences.
@@ -115,7 +115,7 @@ class ExperienceBasedActionSystem:
         return experience_actions[:num_candidates]
     
     def _retrieve_similar_experiences(self, current_context: List[float], 
-                                    context: DriveContext) -> List[Tuple[ExperienceNode, float]]:
+                                    context: MotivatorContext) -> List[Tuple[ExperienceNode, float]]:
         """Retrieve experiences similar to current context."""
         # Use world graph's similarity search
         similar_nodes = self.world_graph.find_similar_nodes(
@@ -142,7 +142,7 @@ class ExperienceBasedActionSystem:
         return similar_experiences
     
     def _extract_action_from_experience(self, experience: ExperienceNode, 
-                                      similarity: float, context: DriveContext) -> Optional[ExperienceBasedAction]:
+                                      similarity: float, context: MotivatorContext) -> Optional[ExperienceBasedAction]:
         """Extract a motor action from a stored experience."""
         if not experience.action_taken:
             return None
@@ -176,7 +176,7 @@ class ExperienceBasedActionSystem:
         )
     
     def _adapt_action_to_context(self, original_action: Dict[str, float], 
-                               context: DriveContext) -> Dict[str, float]:
+                               context: MotivatorContext) -> Dict[str, float]:
         """Adapt a stored action to current context."""
         adapted_action = original_action.copy()
         
@@ -214,7 +214,7 @@ class ExperienceBasedActionSystem:
         return adapted_action
     
     def _generate_pattern_based_actions(self, current_context: List[float], 
-                                      context: DriveContext, num_actions: int) -> List[ExperienceBasedAction]:
+                                      context: MotivatorContext, num_actions: int) -> List[ExperienceBasedAction]:
         """Generate actions based on learned motor patterns."""
         if not self.motor_patterns or num_actions <= 0:
             return []
@@ -262,7 +262,7 @@ class ExperienceBasedActionSystem:
         return pattern_actions
     
     def _generate_associative_actions(self, current_context: List[float], 
-                                    context: DriveContext, num_actions: int) -> List[ExperienceBasedAction]:
+                                    context: MotivatorContext, num_actions: int) -> List[ExperienceBasedAction]:
         """Generate actions using associative memory recall."""
         if num_actions <= 0:
             return []
@@ -300,7 +300,7 @@ class ExperienceBasedActionSystem:
         
         return associative_actions
     
-    def learn_motor_patterns(self, context: DriveContext):
+    def learn_motor_patterns(self, context: MotivatorContext):
         """Learn motor patterns from recent successful experiences."""
         # Get recent successful experiences
         recent_nodes = self.world_graph.get_recent_nodes(20)

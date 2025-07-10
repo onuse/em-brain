@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from collections import defaultdict
 from core.world_graph import WorldGraph
 from core.experience_node import ExperienceNode
-from drives.base_drive import DriveContext
+from motivators.base_motivator import DriveContext
 
 
 @dataclass

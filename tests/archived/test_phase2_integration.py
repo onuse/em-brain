@@ -16,17 +16,17 @@ sys.path.append('.')
 
 from core.hybrid_world_graph import HybridWorldGraph
 from core.vectorized_novelty_detection import VectorizedNoveltyDetector
-from drives.vectorized_motivation_system import VectorizedMotivationSystem
+from motivators.vectorized_motivation_system import VectorizedMotivationSystem
 from predictor.vectorized_triple_predictor import VectorizedTriplePredictor
-from drives.base_drive import DriveContext
+from motivators.base_motivator import DriveContext
 from core.novelty_detection import ExperienceSignature
 
 
 def create_test_drives():
     """Create test drives for motivation system."""
-    from drives.curiosity_drive import CuriosityDrive
-    from drives.survival_drive import SurvivalDrive
-    from drives.exploration_drive import ExplorationDrive
+    from motivators.curiosity_drive import CuriosityDrive
+    from motivators.survival_drive import SurvivalDrive
+    from motivators.exploration_drive import ExplorationDrive
     
     drives = {
         'curiosity': CuriosityDrive(),

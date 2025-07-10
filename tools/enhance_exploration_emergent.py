@@ -8,8 +8,8 @@ from accumulated experiences.
 import sys
 sys.path.append('.')
 
-from drives.exploration_drive import ExplorationDrive
-from drives.base_drive import DriveContext
+from motivators.exploration_drive import ExplorationDrive
+from motivators.base_motivator import DriveContext
 from core.world_graph import WorldGraph
 
 def enhance_exploration_drive_with_emergent_boredom():
