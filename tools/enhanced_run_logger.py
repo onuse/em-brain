@@ -81,7 +81,7 @@ class EnhancedRunLogger:
     
     def __init__(self, log_directory: str = "./logs/run_logs"):
         self.log_dir = Path(log_directory)
-        self.log_dir.mkdir(exist_ok=True)
+        self.log_dir.mkdir(parents=True, exist_ok=True)
         
         self.session_start = datetime.now()
         self.session_id = self.session_start.strftime("run_%Y%m%d_%H%M%S")

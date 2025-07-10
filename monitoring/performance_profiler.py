@@ -18,7 +18,7 @@ class RenderProfiler:
     
     def __init__(self, output_dir: str = "./profiling_results"):
         self.output_dir = Path(output_dir)
-        self.output_dir.mkdir(exist_ok=True)
+        self.output_dir.mkdir(parents=True, exist_ok=True)
         
         # Timing data
         self.render_times = defaultdict(lambda: deque(maxlen=1000))

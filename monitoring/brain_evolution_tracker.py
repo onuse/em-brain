@@ -91,7 +91,7 @@ class BrainEvolutionTracker:
         
         # Output paths
         self.output_dir = Path("logs/brain_evolution")
-        self.output_dir.mkdir(exist_ok=True)
+        self.output_dir.mkdir(parents=True, exist_ok=True)
         
         print(f"🧠 Brain Evolution Tracker initialized: {self.session_name}")
         print(f"   Tracking every {track_every_n_steps} steps")

@@ -14,7 +14,6 @@ This is the single consolidated demo that showcases ALL brain capabilities worki
 • High-performance prediction pipeline (70+ FPS capable)
 • Enhanced 40x40 world with plant-based smell sensors
 
-This consolidates and replaces all other demo files in the project.
 """
 
 import time
@@ -46,29 +45,8 @@ def main():
     learning_monitor = LearningVelocityMonitor(session_name="demo_robot_brain")
 
     """Launch the ultimate 2D brain demonstration."""
-    print("🧠 ROBOT BRAIN DEMO")
     print("=" * 60)
-    print("THE definitive demonstration of the complete robot brain system")
-    print()
-    print("🎯 This demo includes ALL capabilities:")
-    print("• Unified emergent memory system")
-    print("• Multi-drive motivation (survival, curiosity, exploration)")
-    print("• Drive-generated temporary goals")
-    print("• Adaptive parameter tuning based on prediction accuracy")
-    print("• Universal actuator discovery (learns motor effects)")
-    print("• Persistent memory (remembers across sessions)")
-    print("• Real-time visual brain state monitoring")
-    print("• Cross-session learning accumulation")
-    print("• Enhanced 40x40 world with plant-based smell sensors")
-    print()
-    print("⏱️  Survival Parameters (Balanced for Learning):")
-    print("• Collision damage: 0.5% per wall hit (200 collisions to die)")
-    print("• Red square damage: 0.2% per step (500 red squares to die)")
-    print("• Energy decay: 50,000 steps to starvation (~4+ hours real-time)")
-    print("• Expected robot lifespan: 10-20 minutes real-time")
-    print("• Enough time for complex learning and goal development")
-    print()
-    print("🎮 Controls:")
+    print("Controls:")
     print("• SPACE: Pause/Resume simulation")
     print("• R: Reset robot (keeps learned memories)")
     print("• S: Toggle sensor ray visualization")
@@ -361,28 +339,12 @@ def main():
 
 
 if __name__ == "__main__":
-    print("🌟 ULTIMATE 2D BRAIN DEMO")
     print("=" * 60)
-    print()
-    print("This is THE comprehensive demonstration of the complete")
-    print("emergent intelligence robot brain system.")
-    print()
-    print("Everything is integrated here:")
-    print("• Complete multi-drive motivation system")
-    print("• Drive-generated goals and objectives")
-    print("• Adaptive learning and parameter tuning")  
-    print("• Universal actuator effect discovery")
-    print("• Persistent cross-session memory")
-    print("• Real-time brain state visualization")
-    print()
-    print("The robot starts as a 'newborn' and develops intelligent")
-    print("behavior through pure experience and emergent phenomena.")
-    print("No hardcoded behaviors - everything emerges naturally.")
-    print()
+    print("2D BRAIN DEMO")
     
     try:
         main()
-        print("✅ Ultimate brain demo completed successfully!")
+        print("Brain demo completed successfully!")
     except Exception as e:
         print(f"❌ Demo failed: {e}")
         import traceback

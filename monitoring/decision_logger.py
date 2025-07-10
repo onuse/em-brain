@@ -27,7 +27,7 @@ class DecisionLogger:
     
     def __init__(self, log_dir: str = "logs/decision_logs", session_name: Optional[str] = None):
         self.log_dir = Path(log_dir)
-        self.log_dir.mkdir(exist_ok=True)
+        self.log_dir.mkdir(parents=True, exist_ok=True)
         
         # Create session-specific log file
         if session_name is None:

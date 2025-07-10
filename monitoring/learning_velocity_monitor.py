@@ -90,7 +90,7 @@ class LearningVelocityMonitor:
         
         # Output paths
         self.output_dir = Path("logs/learning_velocity")
-        self.output_dir.mkdir(exist_ok=True)
+        self.output_dir.mkdir(parents=True, exist_ok=True)
         
         print(f"🎯 Learning Velocity Monitor initialized: {self.session_name}")
         print(f"   History size: {history_size}")

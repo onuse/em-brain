@@ -98,7 +98,7 @@ class DriveCorrelationAnalyzer:
         
         # Output paths
         self.output_dir = Path("drive_correlation_logs")
-        self.output_dir.mkdir(exist_ok=True)
+        self.output_dir.mkdir(parents=True, exist_ok=True)
         
         print(f"🔄 Drive Correlation Analyzer initialized: {self.session_name}")
         print(f"   History size: {history_size}")

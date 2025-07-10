@@ -256,7 +256,7 @@ def save_graph_debug_info(graph: WorldGraph, base_filename: str) -> Dict[str, bo
     
     # Create output directory if it doesn't exist
     output_dir = Path("debug_output")
-    output_dir.mkdir(exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
     
     # Full graph as JSON
     json_path = output_dir / f"{base_filename}_full.json"

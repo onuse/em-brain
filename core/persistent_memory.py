@@ -98,7 +98,7 @@ class PersistentMemoryManager:
         if memory_root_path is None:
             memory_root_path = get_settings().get_memory_path()
         self.memory_root = Path(memory_root_path)
-        self.memory_root.mkdir(exist_ok=True)
+        self.memory_root.mkdir(parents=True, exist_ok=True)
         
         # Storage paths
         self.graphs_path = self.memory_root / "graphs"
@@ -110,7 +110,7 @@ class PersistentMemoryManager:
         # Create subdirectories
         for path in [self.graphs_path, self.archives_path, self.sessions_path, 
                      self.adaptive_params_path, self.metadata_path]:
-            path.mkdir(exist_ok=True)
+            path.mkdir(parents=True, exist_ok=True)
         
         # Memory management
         self.current_session_id: Optional[str] = None
