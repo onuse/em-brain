@@ -87,6 +87,9 @@ Brain learns motor effects by observing correlations between commands and sensor
 **💾 Persistent Memory**  
 Cross-session learning through compressed graph storage, allowing the robot to build increasingly sophisticated behavior over multiple lifetimes.
 
+**⚙️ Configuration Management**  
+Centralized settings system with configurable memory paths, GPU preferences, and system parameters through `settings.json`.
+
 ## 🚀 Key Features
 
 ### Emergent Phenomena
@@ -113,7 +116,7 @@ Cross-session learning through compressed graph storage, allowing the robot to b
 
 ### Quick Demo
 ```bash
-python3 demo_robot_brain.py
+python3 demo.py
 ```
 
 This launches the complete brain system in a 2D grid world where you can observe:
@@ -122,37 +125,45 @@ This launches the complete brain system in a 2D grid world where you can observe
 - Multi-drive decision making
 - Adaptive parameter tuning
 - Cross-session learning accumulation
+- Brain evolution tracking and analysis
+- Comprehensive decision logging
 
 ### Controls
 - **SPACE**: Pause/Resume simulation
 - **R**: Reset robot (keeps learned memories)
-- **Q**: Quit and save session
+- **S**: Toggle sensor ray visualization
+- **ESC**: Exit (saves all learning)
 - **Mouse**: Click to inspect brain state
 
 ## 📊 Performance
 
-**Optimized Performance Metrics:**
-- **13-17ms** average prediction time (down from 200ms)
-- **70+ FPS** theoretical operation rate
-- **15.2x** performance improvement through optimization
-- **Multi-threaded** parallel processing with 8 worker threads
-- **GPU-accelerated** similarity search when available
+**Performance Characteristics:**
+- **Real-time operation** with millisecond-scale prediction times
+- **High-throughput** parallel processing capabilities
+- **Multi-threaded** execution with configurable worker pools
+- **GPU-accelerated** computation when available
+- **Scalable architecture** supporting large memory graphs
 
 ## 🧪 Development
 
 ### Project Structure
 ```
 brain/
-├── demo_robot_brain.py          # Main demonstration
-├── brain_prediction_profiler.py # Core profiling system
-├── enhanced_run_logger.py       # Enhanced logging utilities
+├── demo.py                      # Main demonstration
+├── settings.json                # System configuration
+├── robot_memory/                # Persistent memory storage
 ├── core/                        # Brain system components
-├── predictor/                   # Prediction engines
+├── prediction/                  # Prediction engines
+│   ├── action/                  # Action prediction (motor commands)
+│   └── sensory/                 # Sensory prediction (outcome forecasting)
 ├── drives/                      # Motivation system
+├── monitoring/                  # Decision logging and analysis
 ├── simulation/                  # Grid world environment
 ├── visualization/               # Real-time monitoring
-├── tests/                       # Test suite (28 tests)
-├── tools/                       # Analysis and profiling tools
+├── network/                     # Distributed brain communication
+├── tests/                       # Comprehensive test suite
+├── tools/                       # Analysis and profiling utilities
+├── logs/                        # Runtime logs and analysis data
 └── docs/                        # Detailed documentation
 ```
 
@@ -160,6 +171,18 @@ brain/
 ```bash
 python3 -m pytest tests/
 ```
+
+### Configuration
+
+The system uses a centralized configuration file:
+```bash
+cat settings.json
+```
+
+Key configuration options:
+- **Memory path**: Where persistent robot memories are stored
+- **GPU settings**: Whether to use GPU acceleration
+- **System parameters**: Time budgets and performance tuning
 
 ### Performance Analysis
 ```bash
@@ -190,7 +213,9 @@ This project explores fundamental questions about intelligence, memory, and goal
 - `docs/design_document.md` - Detailed system architecture
 - `docs/implementation_roadmap.md` - Development progression
 - `docs/bootstrap_sequence.md` - System initialization process
-- `tools/` - Performance analysis and debugging tools
+- `monitoring/` - Decision logging and brain evolution tracking
+- `tools/` - Performance analysis and debugging utilities
+- `logs/` - Runtime data and analysis results
 
 ---
 
