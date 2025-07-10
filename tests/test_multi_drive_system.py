@@ -7,7 +7,7 @@ Verifies that multiple drives compete and cooperate to guide robot behavior.
 import asyncio
 from datetime import datetime
 from drives import create_default_motivation_system, DriveContext
-from predictor.multi_drive_predictor import MultiDrivePredictor
+from prediction.action.multi_drive_predictor import MultiDrivePredictor
 from core.brain_interface import BrainInterface
 from core.communication import SensoryPacket
 from simulation.brainstem_sim import GridWorldBrainstem

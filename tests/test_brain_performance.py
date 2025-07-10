@@ -18,7 +18,7 @@ def load_real_brain_data():
     print("Loading real brain data...")
     
     # Check for saved brain data
-    memory_dir = "./robot_memory"
+    memory_dir = "./logs/robot_memory"
     graphs_dir = os.path.join(memory_dir, "graphs")
     
     if not os.path.exists(graphs_dir):

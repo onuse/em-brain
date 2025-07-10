@@ -99,12 +99,13 @@ class BaseDrive(ABC):
         pass
     
     @abstractmethod
-    def update_drive_state(self, context: DriveContext) -> float:
+    def update_drive_state(self, context: DriveContext, world_graph=None) -> float:
         """
         Update internal drive state based on current context.
         
         Args:
             context: Current situation context
+            world_graph: Optional world graph for advanced drives
             
         Returns:
             Updated drive weight based on current needs [0.0-1.0]
@@ -205,6 +206,20 @@ class BaseDrive(ABC):
             outcome_pleasure: The actual pleasure experienced [0.0 to 1.0]
         """
         # Base implementation - drives can override for domain-specific learning
+        pass
+    
+    def record_action_execution(self, action: Dict[str, float], context: DriveContext):
+        """
+        Record that an action was executed to update drive-specific learning.
+        
+        This allows drives to track action familiarity, success rates, and other
+        execution-related learning for their specific domain.
+        
+        Args:
+            action: The action that was executed
+            context: The context when the action was executed
+        """
+        # Base implementation - drives can override for domain-specific recording
         pass
     
     def get_current_mood_contribution(self, context: DriveContext) -> Dict[str, float]:

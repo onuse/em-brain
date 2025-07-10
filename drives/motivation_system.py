@@ -8,8 +8,8 @@ from dataclasses import dataclass
 import importlib
 import pkgutil
 from .base_drive import BaseDrive, DriveContext, ActionEvaluation
-from .action_proficiency import ActionMaturationSystem
 from core.experience_based_actions import ExperienceBasedActionSystem
+from core.parallel_action_generator import ParallelActionGenerator
 
 
 @dataclass
@@ -41,12 +41,23 @@ class MotivationSystem:
         
         # Action proficiency and maturation system
         self.world_graph = world_graph
-        self.action_maturation = ActionMaturationSystem(world_graph) if world_graph else None
+        # Action maturation system removed - functionality moved to drives
         self.enable_maturation = True  # Can be toggled for comparison
         
         # Experience-based action system
         self.experience_actions = ExperienceBasedActionSystem(world_graph) if world_graph else None
         self.enable_experience_actions = True  # Can be toggled for comparison
+        
+        # Parallel action generation system (highest priority)
+        self.parallel_action_generator = None
+        if world_graph and hasattr(world_graph, 'vectorized_backend') and world_graph.vectorized_backend.size > 10:
+            try:
+                self.parallel_action_generator = ParallelActionGenerator(world_graph)
+                print(f"🚀 MotivationSystem: Parallel action generation enabled ({world_graph.vectorized_backend.size} experiences)")
+            except Exception as e:
+                print(f"⚠️  MotivationSystem: Could not enable parallel action generation: {e}")
+        
+        self.enable_parallel_actions = True  # Can be toggled for comparison
         
         # Drive-specific pain/pleasure learning (replaces global system)
         # Each drive now handles its own pain/pleasure associations
@@ -99,7 +110,7 @@ class MotivationSystem:
         
         # Update all drive states
         for drive in self.drives.values():
-            drive.update_drive_state(context)
+            drive.update_drive_state(context, world_graph=self.world_graph)
         
         # Evaluate each action candidate
         candidate_results = []
@@ -212,8 +223,8 @@ class MotivationSystem:
         """
         Generate diverse action candidates for evaluation.
         
-        Prioritizes experience-based actions, then maturation-influenced actions,
-        with fallback to static template generation.
+        Prioritizes parallel action generation, then experience-based actions,
+        then maturation-influenced actions, with fallback to static template generation.
         
         Args:
             context: Current situation context
@@ -224,10 +235,39 @@ class MotivationSystem:
         """
         candidates = []
         
-        # Method 1: Experience-based actions (highest priority)
-        if self.experience_actions and self.enable_experience_actions:
+        # Method 0: Parallel action generation (highest priority) - THE BREAKTHROUGH
+        if self.parallel_action_generator and self.enable_parallel_actions:
+            try:
+                # Use current sensory context for parallel search
+                current_context = context.current_sensory[:8] if len(context.current_sensory) >= 8 else context.current_sensory
+                
+                # Pad context to 8 dimensions if needed
+                while len(current_context) < 8:
+                    current_context.append(0.0)
+                
+                # Generate massive number of candidates from experience history
+                parallel_result = self.parallel_action_generator.generate_massive_action_candidates(
+                    current_context, max_candidates=num_candidates * 3  # Get extra for diversity
+                )
+                
+                # Convert to MotivationSystem format and get best candidates
+                best_candidates = parallel_result.get_best_candidates(num_candidates)
+                for candidate in best_candidates:
+                    candidates.append(candidate.action)
+                
+                # If we got enough candidates from parallel generation, we're done
+                if len(candidates) >= num_candidates:
+                    print(f"🚀 Generated {len(candidates)} parallel action candidates (quality: {best_candidates[0].get_quality_score():.3f})")
+                    return candidates[:num_candidates]
+                
+            except Exception as e:
+                print(f"⚠️  Parallel action generation failed: {e}")
+        
+        # Method 1: Experience-based actions (fallback)
+        remaining_candidates = num_candidates - len(candidates)
+        if remaining_candidates > 0 and self.experience_actions and self.enable_experience_actions:
             experience_actions = self.experience_actions.generate_experience_based_actions(
-                context, max(2, num_candidates // 2)  # Use half the candidates for experience
+                context, max(2, remaining_candidates // 2)  # Use half the remaining candidates for experience
             )
             
             for exp_action in experience_actions:
@@ -236,13 +276,7 @@ class MotivationSystem:
             # Learn motor patterns from recent experiences
             self.experience_actions.learn_motor_patterns(context)
         
-        # Method 2: Maturation-influenced actions (medium priority)
-        remaining_candidates = num_candidates - len(candidates)
-        if remaining_candidates > 0 and self.action_maturation and self.enable_maturation:
-            maturation_actions = self.action_maturation.generate_maturation_influenced_actions(
-                context, remaining_candidates
-            )
-            candidates.extend(maturation_actions)
+        # Method 2: Maturation-influenced actions (removed - functionality moved to drives)
         
         # Method 3: Static template actions (fallback)
         remaining_candidates = num_candidates - len(candidates)
@@ -251,6 +285,25 @@ class MotivationSystem:
             candidates.extend(static_actions)
         
         return candidates[:num_candidates]
+    
+    def get_action_generation_status(self) -> Dict[str, Any]:
+        """Get status of action generation systems."""
+        return {
+            'parallel_action_generator': {
+                'enabled': self.parallel_action_generator is not None,
+                'active': self.enable_parallel_actions,
+                'experiences': self.parallel_action_generator.vectorized_backend.size if self.parallel_action_generator else 0,
+                'device': str(self.parallel_action_generator.device) if self.parallel_action_generator else 'none'
+            },
+            'experience_based_actions': {
+                'enabled': self.experience_actions is not None,
+                'active': self.enable_experience_actions
+            },
+            'maturation_system': {
+                'enabled': False,  # Removed - functionality moved to drives
+                'active': False
+            }
+        }
     
     def _generate_static_action_candidates(self, context: DriveContext,
                                          num_candidates: int = 5) -> List[Dict[str, float]]:
@@ -616,22 +669,14 @@ class MotivationSystem:
             prediction_accuracy: How accurate our prediction was (0.0 to 1.0)
             execution_success: Whether the action was executed successfully
         """
-        if self.action_maturation:
-            self.action_maturation.record_action_outcome(
-                action, prediction_accuracy, execution_success
-            )
+        # Action maturation recording removed - functionality moved to drives
     
     def get_maturation_status(self) -> Dict[str, Any]:
         """Get comprehensive maturation and proficiency status."""
-        if not self.action_maturation:
-            return {
-                'maturation_enabled': False,
-                'message': 'Action maturation system not available (no world_graph provided)'
-            }
-        
-        status = self.action_maturation.get_maturation_status()
-        status['maturation_enabled'] = self.enable_maturation
-        return status
+        return {
+            'maturation_enabled': False,
+            'message': 'Action maturation system removed - functionality moved to drives'
+        }
     
     def toggle_maturation(self, enabled: bool = None):
         """Toggle maturation system on/off for comparison testing."""
@@ -682,6 +727,24 @@ class MotivationSystem:
         
         return stats
     
+    def record_action_execution(self, action: Dict[str, float], context: DriveContext):
+        """
+        Notify all drives that an action was executed for learning purposes.
+        
+        This should be called immediately after an action is executed to allow
+        drives to update their action familiarity, success tracking, etc.
+        
+        Args:
+            action: The action that was executed
+            context: The context when the action was executed
+        """
+        for drive_name, drive in self.drives.items():
+            try:
+                drive.record_action_execution(action, context)
+            except Exception as e:
+                # Don't let drive recording errors break the system
+                print(f"Warning: {drive_name} drive action recording failed: {e}")
+
     def learn_from_action_outcome(self, action: Dict[str, float], context: DriveContext, 
                                  outcome_experiences: List[Any]):
         """
@@ -719,16 +782,16 @@ class MotivationSystem:
 
 
 def create_default_motivation_system(world_graph=None, world_width=40, world_height=40) -> MotivationSystem:
-    """Create a motivation system with the three core drives."""
+    """Create a motivation system with the three refactored drives: Curiosity, Mastery, and Survival."""
     from .curiosity_drive import CuriosityDrive
+    from .mastery_drive import MasteryDrive
     from .survival_drive import SurvivalDrive
-    from .exploration_drive import ExplorationDrive
     
     system = MotivationSystem(world_graph=world_graph)
     
-    # Add the three core drives
-    system.add_drive(CuriosityDrive(base_weight=0.4))
-    system.add_drive(SurvivalDrive(base_weight=0.4)) 
-    system.add_drive(ExplorationDrive(base_weight=0.2, world_width=world_width, world_height=world_height))
+    # Add the three refactored drives
+    system.add_drive(CuriosityDrive(base_weight=0.35))   # Pure experience node creation
+    system.add_drive(MasteryDrive(base_weight=0.25))     # Prediction accuracy and competence
+    system.add_drive(SurvivalDrive(base_weight=0.40))    # Health/energy/safety
     
     return system

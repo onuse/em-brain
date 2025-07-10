@@ -45,7 +45,7 @@ class GridWorldBrainstem:
         else:
             # Fallback to local brain for backwards compatibility
             from core.brain_interface import BrainInterface
-            from predictor.multi_drive_predictor import MultiDrivePredictor
+            from prediction.action.multi_drive_predictor import MultiDrivePredictor
             # Use the complete brain system with all capabilities and GPU acceleration
             predictor = MultiDrivePredictor(base_time_budget=0.1)
             self.brain_client = BrainInterface(predictor, enable_persistence=True, use_gpu=True)

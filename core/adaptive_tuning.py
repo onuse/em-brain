@@ -250,13 +250,15 @@ class AdaptiveParameterTuner:
             # High bandwidth: need more processing power
             params['activation_spread_iterations'] = min(5, params['activation_spread_iterations'] + 1)
             params['time_budget_base'] = min(0.2, params['time_budget_base'] + 0.02)
-            params['similarity_threshold'] = max(0.6, params['similarity_threshold'] - 0.05)
+            # MEMORY FIX: Don't adapt similarity_threshold - keep it low for memory diversity
+            # params['similarity_threshold'] = max(0.6, params['similarity_threshold'] - 0.05)
             
         elif self.detected_bandwidth_tier == "low":
             # Low bandwidth: can be more efficient
             params['activation_spread_iterations'] = max(2, params['activation_spread_iterations'] - 1)
             params['time_budget_base'] = max(0.05, params['time_budget_base'] - 0.01)
-            params['similarity_threshold'] = min(0.8, params['similarity_threshold'] + 0.02)
+            # MEMORY FIX: Don't adapt similarity_threshold - keep it low for memory diversity
+            # params['similarity_threshold'] = min(0.8, params['similarity_threshold'] + 0.02)
         
         return params
     
@@ -266,13 +268,15 @@ class AdaptiveParameterTuner:
             # Increase exploration and learning
             params['exploration_rate'] = min(0.7, params['exploration_rate'] + 0.1)
             params['connection_learning_rate'] = min(0.2, params['connection_learning_rate'] + 0.02)
-            params['similarity_threshold'] = max(0.5, params['similarity_threshold'] - 0.05)
+            # MEMORY FIX: Don't adapt similarity_threshold - keep it low for memory diversity
+            # params['similarity_threshold'] = max(0.5, params['similarity_threshold'] - 0.05)
             
         elif prediction_error < 0.2:  # Low error
             # Decrease exploration, increase exploitation
             params['exploration_rate'] = max(0.1, params['exploration_rate'] - 0.05)
             params['connection_learning_rate'] = max(0.05, params['connection_learning_rate'] - 0.01)
-            params['similarity_threshold'] = min(0.8, params['similarity_threshold'] + 0.02)
+            # MEMORY FIX: Don't adapt similarity_threshold - keep it low for memory diversity
+            # params['similarity_threshold'] = min(0.8, params['similarity_threshold'] + 0.02)
         
         return params
     

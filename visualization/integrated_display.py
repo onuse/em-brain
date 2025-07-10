@@ -41,7 +41,7 @@ class IntegratedDisplay:
         
         # Total window size
         self.window_width = grid_width + brain_panel_width
-        self.window_height = max(grid_height, 600)
+        self.window_height = max(grid_height + 100, 600)
         
         # Initialize pygame
         pygame.init()
@@ -294,7 +294,7 @@ class IntegratedDisplay:
     def _render_frame(self):
         """Render a complete frame of the visualization."""
         # Clear screen
-        self.screen.fill((0, 0, 0))
+        #self.screen.fill((0, 0, 0)) #removed this due to flickering
         
         # Render grid world (left side)
         self.grid_viz.render()

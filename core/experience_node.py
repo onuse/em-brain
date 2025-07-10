@@ -52,6 +52,12 @@ class ExperienceNode:
     last_accessed: datetime = field(default_factory=datetime.now)  # Legacy - use last_activation_time instead
     merge_count: int = 0                  # How many nodes have been merged into this one
     
+    # Dual-tier memory architecture support
+    memory_tier: Optional[str] = None     # "experience" or "knowledge" tier
+    creation_time: float = field(default_factory=time.time)  # When this node was created
+    promoted_from_experience: bool = False  # Was this promoted from Tier 1 to Tier 2?
+    promotion_time: Optional[float] = None   # When was this node promoted?
+    
     def __hash__(self) -> int:
         return hash(self.node_id)
     

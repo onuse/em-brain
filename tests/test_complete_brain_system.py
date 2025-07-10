@@ -14,7 +14,7 @@ import shutil
 from datetime import datetime
 from core.brain_interface import BrainInterface
 from core.communication import SensoryPacket
-from predictor.multi_drive_predictor import MultiDrivePredictor
+from prediction.action.multi_drive_predictor import MultiDrivePredictor
 
 
 def test_complete_brain_system():

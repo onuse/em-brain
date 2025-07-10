@@ -8,8 +8,8 @@ where multiple drives compete and cooperate to guide behavior.
 from .base_drive import BaseDrive, DriveContext, ActionEvaluation
 from .motivation_system import MotivationSystem, MotivationResult, create_default_motivation_system
 from .curiosity_drive import CuriosityDrive
+from .mastery_drive import MasteryDrive
 from .survival_drive import SurvivalDrive
-from .exploration_drive import ExplorationDrive
 
 __all__ = [
     'BaseDrive',
@@ -19,6 +19,6 @@ __all__ = [
     'MotivationResult',
     'create_default_motivation_system',
     'CuriosityDrive',
-    'SurvivalDrive', 
-    'ExplorationDrive'
+    'MasteryDrive',
+    'SurvivalDrive'
 ]

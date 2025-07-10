@@ -105,10 +105,12 @@ class VectorizedBackend:
         self._predicted_sensory = None    # [capacity, sensory_dim]
         self._prediction_errors = None    # [capacity]
         
-        # Sparse connection matrix
-        self._connection_indices = None   # COO format indices
-        self._connection_values = None    # COO format values
+        # Sparse connection matrix (COO format)
+        self._connection_indices = None   # [2, num_connections] tensor
+        self._connection_values = None    # [num_connections] tensor
         self._connection_shape = None     # (capacity, capacity)
+        self._connection_capacity = 10000  # Initial capacity for connections
+        self._connection_count = 0        # Current number of connections
         
         # Index mapping for backward compatibility
         self._node_id_to_index = {}       # Map original node IDs to tensor indices
@@ -368,9 +370,129 @@ class VectorizedBackend:
         return float(self._prediction_errors[index].cpu().item())
     
     def get_connection_weights(self, index: int) -> Dict[str, float]:
-        """Get connection weights for specific experience (placeholder)."""
-        # TODO: Implement sparse matrix connections
-        return {}
+        """Get connection weights for specific experience using sparse matrix."""
+        if self._connection_indices is None or self._connection_values is None:
+            return {}
+        
+        # Find all connections where this index is the source
+        source_mask = (self._connection_indices[0] == index)
+        if not source_mask.any():
+            return {}
+        
+        # Get target indices and weights
+        target_indices = self._connection_indices[1][source_mask]
+        weights = self._connection_values[source_mask]
+        
+        # Convert to node ID -> weight mapping
+        connections = {}
+        for target_idx, weight in zip(target_indices.cpu().numpy(), weights.cpu().numpy()):
+            if target_idx < self.size:
+                target_node_id = self._index_to_node_id.get(target_idx)
+                if target_node_id:
+                    connections[target_node_id] = float(weight)
+        
+        return connections
+    
+    def _initialize_connections(self):
+        """Initialize sparse connection matrix tensors."""
+        if self._connection_indices is None:
+            self._connection_indices = torch.zeros(
+                (2, self._connection_capacity), 
+                dtype=torch.long, 
+                device=self.device
+            )
+            self._connection_values = torch.zeros(
+                self._connection_capacity,
+                dtype=torch.float32,
+                device=self.device
+            )
+            self._connection_shape = (self.capacity, self.capacity)
+            self._connection_count = 0
+    
+    def add_connection(self, source_index: int, target_index: int, weight: float = 1.0):
+        """Add a connection between two experiences in the sparse matrix."""
+        self._initialize_connections()
+        
+        # Check if we need to expand connection capacity
+        if self._connection_count >= self._connection_capacity:
+            self._expand_connection_capacity()
+        
+        # Add the connection
+        self._connection_indices[0, self._connection_count] = source_index
+        self._connection_indices[1, self._connection_count] = target_index
+        self._connection_values[self._connection_count] = weight
+        self._connection_count += 1
+    
+    def _expand_connection_capacity(self):
+        """Expand the connection matrix capacity."""
+        old_capacity = self._connection_capacity
+        self._connection_capacity *= 2
+        
+        # Create new tensors with expanded capacity
+        new_indices = torch.zeros(
+            (2, self._connection_capacity),
+            dtype=torch.long,
+            device=self.device
+        )
+        new_values = torch.zeros(
+            self._connection_capacity,
+            dtype=torch.float32,
+            device=self.device
+        )
+        
+        # Copy existing data
+        new_indices[:, :old_capacity] = self._connection_indices
+        new_values[:old_capacity] = self._connection_values
+        
+        # Replace with new tensors
+        self._connection_indices = new_indices
+        self._connection_values = new_values
+    
+    def get_connected_indices(self, source_index: int) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Get indices and weights of all nodes connected to the source index."""
+        if self._connection_indices is None or self._connection_count == 0:
+            return torch.empty(0, dtype=torch.long, device=self.device), \
+                   torch.empty(0, dtype=torch.float32, device=self.device)
+        
+        # Find connections where source_index is the source
+        valid_connections = self._connection_indices[:, :self._connection_count]
+        source_mask = (valid_connections[0] == source_index)
+        
+        if not source_mask.any():
+            return torch.empty(0, dtype=torch.long, device=self.device), \
+                   torch.empty(0, dtype=torch.float32, device=self.device)
+        
+        # Get target indices and weights
+        target_indices = valid_connections[1][source_mask]
+        weights = self._connection_values[:self._connection_count][source_mask]
+        
+        return target_indices, weights
+    
+    def batch_get_connected_indices(self, source_indices: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Get connections for multiple source indices efficiently."""
+        if self._connection_indices is None or self._connection_count == 0:
+            return torch.empty(0, dtype=torch.long, device=self.device), \
+                   torch.empty(0, dtype=torch.long, device=self.device), \
+                   torch.empty(0, dtype=torch.float32, device=self.device)
+        
+        # Get valid connections
+        valid_connections = self._connection_indices[:, :self._connection_count]
+        valid_values = self._connection_values[:self._connection_count]
+        
+        # Find connections where source is in our list
+        source_mask = torch.isin(valid_connections[0], source_indices)
+        
+        if not source_mask.any():
+            return torch.empty(0, dtype=torch.long, device=self.device), \
+                   torch.empty(0, dtype=torch.long, device=self.device), \
+                   torch.empty(0, dtype=torch.float32, device=self.device)
+        
+        # Get results
+        source_results = valid_connections[0][source_mask]
+        target_results = valid_connections[1][source_mask]
+        weight_results = valid_values[source_mask]
+        
+        return source_results, target_results, weight_results
     
     def get_experience_node(self, index: int) -> ExperienceNode:
         """Convert vectorized experience back to ExperienceNode."""

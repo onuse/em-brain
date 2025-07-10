@@ -51,11 +51,11 @@ class NodeConsolidationEngine:
     def __init__(self, world_graph: WorldGraph):
         self.world_graph = world_graph
         
-        # Consolidation parameters (relaxed for better learning)
-        self.min_strength_for_consolidation = 5.0  # Much lower threshold = more consolidation (emergent behavior)
-        self.max_strength_boost = 15.0  # Smaller boost per consolidation (was 20.0)
-        self.connection_strength_multiplier = 0.6  # Weaker connections = more diverse (was 0.8)
-        self.reinforcement_decay_rate = 0.98  # Slower decay = longer memory (was 0.95)
+        # Consolidation parameters (further relaxed for richer memory diversity)
+        self.min_strength_for_consolidation = 3.0  # Even lower threshold = more memory diversity
+        self.max_strength_boost = 10.0  # Smaller boost per consolidation for more gradual learning
+        self.connection_strength_multiplier = 0.4  # Weaker connections = more diverse memories
+        self.reinforcement_decay_rate = 0.99  # Slower decay = longer memory retention
         
         # Reinforcement learning parameters
         self.positive_reinforcement_rate = 1.5  # Multiplier for successful predictions

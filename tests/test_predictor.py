@@ -6,9 +6,9 @@ Tests single traversal, consensus resolution, and triple prediction.
 import pytest
 from core.world_graph import WorldGraph
 from core.experience_node import ExperienceNode
-from predictor.single_traversal import SingleTraversal, TraversalResult
-from predictor.consensus_resolver import ConsensusResolver, ConsensusResult  
-from predictor.triple_predictor import TriplePredictor
+from prediction.action.single_traversal import SingleTraversal, TraversalResult
+from prediction.action.consensus_resolver import ConsensusResolver, ConsensusResult  
+from prediction.action.triple_predictor import TriplePredictor
 
 
 def create_test_sensory_vector(length: int = 5, base_value: float = 1.0) -> list:

@@ -14,10 +14,12 @@ Key Features:
 from typing import List, Dict, Optional, Any, Tuple
 import time
 import random
+import torch
 
 from core.world_graph import WorldGraph
 from core.experience_node import ExperienceNode
 from core.vectorized_backend import VectorizedBackend, VectorizedExperience
+from core.async_graph_maintenance import get_global_maintenance
 
 
 class HybridWorldGraph(WorldGraph):
@@ -54,6 +56,10 @@ class HybridWorldGraph(WorldGraph):
         # Only print if using GPU (the interesting case)
         if str(self.vectorized_backend.device) != 'cpu':
             print(f"Brain Memory: GPU acceleration enabled ({self.vectorized_backend.device})")
+        
+        # Register for asynchronous maintenance
+        self.maintenance = get_global_maintenance()
+        self.maintenance.register_graph(self)
     
     def add_experience(self, mental_context: List[float], action_taken: Dict[str, float],
                       predicted_sensory: List[float], actual_sensory: List[float],
@@ -84,6 +90,179 @@ class HybridWorldGraph(WorldGraph):
             # Continue with object-based storage only
         
         return experience_node
+    
+    def add_node(self, experience: ExperienceNode) -> str:
+        """Add experience node to both object-based and vectorized storage with sparse connections."""
+        # Call parent add_node first to create object-based connections
+        node_id = super().add_node(experience)
+        
+        # Add to vectorized backend
+        try:
+            vectorized_index = self.vectorized_backend.add_experience(experience)
+            self.vectorized_indices[experience.node_id] = vectorized_index
+            
+            # Build sparse matrix connections for this new node
+            self._build_sparse_connections_for_node(experience, vectorized_index)
+            
+            # Trigger maintenance if needed (non-blocking)
+            if self.vectorized_backend.size % 100 == 0:  # Check every 100 nodes
+                self.trigger_maintenance_if_needed()
+            
+        except Exception as e:
+            print(f"Warning: Could not add to vectorized backend: {e}")
+        
+        return node_id
+    
+    def _build_sparse_connections_for_node(self, experience: ExperienceNode, source_index: int):
+        """Build sparse matrix connections for a newly added node."""
+        # Add temporal connections
+        if experience.temporal_predecessor:
+            pred_index = self.vectorized_indices.get(experience.temporal_predecessor)
+            if pred_index is not None:
+                # Bidirectional temporal connection
+                self.vectorized_backend.add_connection(pred_index, source_index, 1.0)
+                self.vectorized_backend.add_connection(source_index, pred_index, 1.0)
+        
+        if experience.temporal_successor:
+            succ_index = self.vectorized_indices.get(experience.temporal_successor)
+            if succ_index is not None:
+                # Bidirectional temporal connection
+                self.vectorized_backend.add_connection(source_index, succ_index, 1.0)
+                self.vectorized_backend.add_connection(succ_index, source_index, 1.0)
+        
+        # Add prediction source connections
+        for source_id in experience.prediction_sources:
+            source_pred_index = self.vectorized_indices.get(source_id)
+            if source_pred_index is not None:
+                # Prediction connection (source -> target)
+                self.vectorized_backend.add_connection(source_pred_index, source_index, 1.0)
+        
+        # Add similarity connections
+        for similar_id in experience.similar_contexts:
+            similar_index = self.vectorized_indices.get(similar_id)
+            if similar_index is not None:
+                # Bidirectional similarity connection
+                self.vectorized_backend.add_connection(source_index, similar_index, 0.8)
+                self.vectorized_backend.add_connection(similar_index, source_index, 0.8)
+        
+        # Add weighted connections
+        for connected_id, weight in experience.connection_weights.items():
+            connected_index = self.vectorized_indices.get(connected_id)
+            if connected_index is not None:
+                # Weighted connection
+                self.vectorized_backend.add_connection(source_index, connected_index, weight)
+    
+    def get_connected_nodes_vectorized(self, node_id: str) -> List[Tuple[str, float]]:
+        """Get connected nodes using sparse matrix traversal."""
+        if node_id not in self.vectorized_indices:
+            return []
+        
+        source_index = self.vectorized_indices[node_id]
+        target_indices, weights = self.vectorized_backend.get_connected_indices(source_index)
+        
+        # Convert indices back to node IDs
+        connected_nodes = []
+        for target_idx, weight in zip(target_indices.cpu().numpy(), weights.cpu().numpy()):
+            target_node_id = self.vectorized_backend._index_to_node_id.get(target_idx)
+            if target_node_id and target_node_id in self.nodes:
+                connected_nodes.append((target_node_id, float(weight)))
+        
+        return connected_nodes
+    
+    def batch_get_connected_nodes_vectorized(self, node_ids: List[str]) -> Dict[str, List[Tuple[str, float]]]:
+        """Get connected nodes for multiple nodes using batch sparse matrix operations."""
+        # Convert node IDs to indices
+        source_indices = []
+        valid_node_ids = []
+        
+        for node_id in node_ids:
+            if node_id in self.vectorized_indices:
+                source_indices.append(self.vectorized_indices[node_id])
+                valid_node_ids.append(node_id)
+        
+        if not source_indices:
+            return {}
+        
+        # Batch query
+        source_indices_tensor = torch.tensor(source_indices, dtype=torch.long, device=self.vectorized_backend.device)
+        sources, targets, weights = self.vectorized_backend.batch_get_connected_indices(source_indices_tensor)
+        
+        # Group results by source node
+        results = {node_id: [] for node_id in valid_node_ids}
+        
+        for source_idx, target_idx, weight in zip(sources.cpu().numpy(), targets.cpu().numpy(), weights.cpu().numpy()):
+            # Find source node ID
+            source_node_id = self.vectorized_backend._index_to_node_id.get(source_idx)
+            target_node_id = self.vectorized_backend._index_to_node_id.get(target_idx)
+            
+            if source_node_id and target_node_id and source_node_id in results:
+                results[source_node_id].append((target_node_id, float(weight)))
+        
+        return results
+    
+    def vectorized_graph_traversal(self, start_node_id: str, max_depth: int = 3, 
+                                  weight_threshold: float = 0.1) -> List[List[str]]:
+        """Perform graph traversal using sparse matrix operations."""
+        if start_node_id not in self.vectorized_indices:
+            return []
+        
+        # BFS traversal using sparse matrix
+        current_layer = [start_node_id]
+        all_paths = []
+        visited = set()
+        
+        for depth in range(max_depth):
+            if not current_layer:
+                break
+            
+            # Batch get connections for current layer
+            connections = self.batch_get_connected_nodes_vectorized(current_layer)
+            next_layer = []
+            
+            for node_id in current_layer:
+                if node_id in visited:
+                    continue
+                visited.add(node_id)
+                
+                # Add current path
+                path = [node_id]
+                if depth > 0:
+                    all_paths.append(path)
+                
+                # Get connections above threshold
+                for connected_id, weight in connections.get(node_id, []):
+                    if weight >= weight_threshold and connected_id not in visited:
+                        next_layer.append(connected_id)
+            
+            current_layer = next_layer
+        
+        return all_paths
+    
+    def schedule_maintenance(self, task_type: str = "tensor_consolidation"):
+        """Schedule a maintenance task for this graph."""
+        if task_type == "tensor_consolidation":
+            self.maintenance.schedule_tensor_consolidation()
+        elif task_type == "connection_cleanup":
+            self.maintenance.schedule_connection_cleanup()
+        elif task_type == "memory_defrag":
+            self.maintenance.schedule_memory_defrag()
+    
+    def get_maintenance_stats(self) -> Dict[str, Any]:
+        """Get maintenance statistics."""
+        return self.maintenance.get_maintenance_stats()
+    
+    def trigger_maintenance_if_needed(self):
+        """Trigger maintenance if performance degradation is detected."""
+        # Check if we have too many weak connections
+        backend = self.vectorized_backend
+        if backend._connection_count > 10000:  # Threshold for connection cleanup
+            self.schedule_maintenance("connection_cleanup")
+        
+        # Check if tensors need consolidation
+        if backend.size > 0:
+            usage_ratio = backend.size / backend.capacity
+            if usage_ratio < 0.5:  # Less than 50% usage
+                self.schedule_maintenance("tensor_consolidation")
     
     def find_similar_experiences(self, query_context: List[float], 
                                similarity_threshold: float = 0.7,

@@ -36,10 +36,10 @@ class WorldGraph:
         # Neural-like dynamics settings
         self.global_activation_decay = 0.995          # How fast activation decays globally
         self.connection_learning_rate = 0.1           # Rate of connection strengthening
-        self.similarity_threshold = 0.7               # Threshold for creating connections
+        self.similarity_threshold = 0.35              # Threshold for creating connections (lowered for richer memories)
         self.activation_spread_iterations = 3         # How many waves of activation spread
         self.forgetting_enabled = True                # Whether to forget unused memories
-        self.consolidation_frequency = 50             # Steps between consolidation cycles
+        self.consolidation_frequency = 100            # Steps between consolidation cycles (less frequent for richer memories)
         self.steps_since_consolidation = 0
         
         # Accelerated similarity search
@@ -51,15 +51,28 @@ class WorldGraph:
         self._stats_cache_dirty = True                # Whether stats cache needs rebuild
         self._strongest_nodes_cache = None            # Cached strongest nodes list
         self._strongest_nodes_cache_dirty = True      # Whether strongest nodes cache needs rebuild
+        
+        # Lazy update tracking for performance
+        self._pending_stats_updates = 0               # Number of changes since last stats calculation
+        self._lazy_update_threshold = 50              # Recalculate stats after this many changes
+        self._approximate_stats = None                # Fast approximate statistics
     
     def has_nodes(self) -> bool:
         """Check if graph has any nodes (for bootstrap detection)."""
         return len(self.nodes) > 0
     
     def _invalidate_caches(self):
-        """Invalidate performance caches when graph structure changes."""
-        self._stats_cache_dirty = True
-        self._strongest_nodes_cache_dirty = True
+        """Mark caches as needing update using lazy evaluation."""
+        # Instead of immediately invalidating, track pending updates
+        self._pending_stats_updates += 1
+        
+        # Only mark as dirty if we've accumulated enough changes
+        if self._pending_stats_updates >= self._lazy_update_threshold:
+            self._stats_cache_dirty = True
+            self._strongest_nodes_cache_dirty = True
+            self._pending_stats_updates = 0
+        
+        # Context cache still needs immediate invalidation for correctness
         self._context_cache_dirty = True
     
     def add_node(self, experience: ExperienceNode) -> str:
@@ -421,31 +434,69 @@ class WorldGraph:
         
         return sequence
     
-    def get_graph_statistics(self) -> Dict[str, Any]:
-        """Get summary statistics about the graph (cached for performance)."""
+    def get_graph_statistics(self, approximate: bool = False) -> Dict[str, Any]:
+        """Get summary statistics about the graph (cached for performance).
+        
+        Args:
+            approximate: If True, return fast approximate stats instead of exact calculations
+        """
+        # For approximate stats, return quickly without expensive calculations
+        if approximate and self._approximate_stats is not None:
+            return self._approximate_stats
+        
         # Return cached statistics if available and valid
         if not self._stats_cache_dirty and self._stats_cache is not None:
             return self._stats_cache
         
         if not self.nodes:
             base_stats = {"total_nodes": 0}
+            self._stats_cache = base_stats
+            self._stats_cache_dirty = False
+            return base_stats
         else:
-            # Calculate expensive statistics only when cache is dirty
-            strengths = [node.strength for node in self.nodes.values()]
-            context_lengths = [len(node.mental_context) for node in self.nodes.values()]
-            access_counts = [node.times_accessed for node in self.nodes.values()]
+            # For large graphs with pending updates, use approximations
+            if len(self.nodes) > 1000 and self._pending_stats_updates > 0:
+                # Use incremental approximations based on recent changes
+                if self._approximate_stats is None:
+                    # First time - do full calculation
+                    self._calculate_exact_stats()
+                    self._approximate_stats = self._stats_cache.copy()
+                else:
+                    # Update approximations incrementally
+                    self._approximate_stats["total_nodes"] = len(self.nodes)
+                    self._approximate_stats["total_merges"] = self.total_merges_performed
+                    self._approximate_stats["temporal_chain_length"] = len(self.temporal_chain)
+                    # Keep other stats as approximations
+                
+                return self._approximate_stats
             
-            base_stats = {
-                "total_nodes": len(self.nodes),
-                "total_merges": self.total_merges_performed,
-                "avg_strength": sum(strengths) / len(strengths),
-                "max_strength": max(strengths),
-                "min_strength": min(strengths),
-                "avg_context_length": sum(context_lengths) / len(context_lengths),
-                "temporal_chain_length": len(self.temporal_chain),
-                "avg_access_count": sum(access_counts) / len(access_counts),
-                "total_accesses": sum(access_counts)
-            }
+            # Calculate expensive statistics only when really needed
+            self._calculate_exact_stats()
+        
+        return self._stats_cache
+    
+    def _calculate_exact_stats(self):
+        """Calculate exact statistics (expensive operation)."""
+        if not self.nodes:
+            self._stats_cache = {"total_nodes": 0}
+            return
+        
+        # Calculate expensive statistics
+        strengths = [node.strength for node in self.nodes.values()]
+        context_lengths = [len(node.mental_context) for node in self.nodes.values()]
+        access_counts = [node.times_accessed for node in self.nodes.values()]
+        
+        base_stats = {
+            "total_nodes": len(self.nodes),
+            "total_merges": self.total_merges_performed,
+            "avg_strength": sum(strengths) / len(strengths),
+            "max_strength": max(strengths),
+            "min_strength": min(strengths),
+            "avg_context_length": sum(context_lengths) / len(context_lengths),
+            "temporal_chain_length": len(self.temporal_chain),
+            "avg_access_count": sum(access_counts) / len(access_counts),
+            "total_accesses": sum(access_counts)
+        }
         
         # Add similarity engine performance stats
         similarity_stats = self.similarity_engine.get_performance_stats()
@@ -454,8 +505,7 @@ class WorldGraph:
         # Cache the results
         self._stats_cache = base_stats
         self._stats_cache_dirty = False
-        
-        return base_stats
+        self._approximate_stats = base_stats.copy()
     
     # Neural-like dynamics methods
     

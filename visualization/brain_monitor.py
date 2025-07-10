@@ -13,7 +13,7 @@ from collections import deque
 from datetime import datetime
 from core.world_graph import WorldGraph
 from core.experience_node import ExperienceNode
-from predictor.consensus_resolver import ConsensusResult
+from prediction.action.consensus_resolver import ConsensusResult
 
 
 class BrainStateMonitor:
@@ -67,6 +67,8 @@ class BrainStateMonitor:
         # Performance optimization
         self.update_counter = 0
         self.stats_update_frequency = 10  # Update expensive stats every 10 frames instead of every frame
+        self.graph_viz_update_frequency = 5  # Update graph visualization every 5 frames
+        self.stats_graph_update_frequency = 15  # Update statistics graph every 15 frames
     
     def update(self, graph: WorldGraph, prediction_error: float = 0.0, 
                recent_action: Dict[str, float] = None, step: int = 0,
@@ -179,12 +181,19 @@ class BrainStateMonitor:
             self.surface.blit(test_text, (15, y + 33))
             return y + 60
         
-        # Use cached stats if available, otherwise get fresh stats
+        # Use cached or approximate stats for performance
         if hasattr(self, '_cached_display_stats') and self.update_counter % self.stats_update_frequency != 0:
             stats = self._cached_display_stats
         else:
-            stats = self.current_graph.get_graph_statistics()
+            # Use approximate stats for better performance during rapid updates
+            stats = self.current_graph.get_graph_statistics(approximate=True)
             self._cached_display_stats = stats
+        
+        # Handle empty stats gracefully
+        if not stats or 'total_nodes' not in stats or stats['total_nodes'] == 0:
+            no_data_text = self.font_normal.render("No meaningful data yet", True, self.COLORS['text'])
+            self.surface.blit(no_data_text, (10, y))
+            return y + 30
         
         # Stats to display
         stat_items = [
@@ -327,8 +336,12 @@ class BrainStateMonitor:
         pygame.draw.rect(self.surface, self.COLORS['panel'], graph_rect)
         pygame.draw.rect(self.surface, self.COLORS['accent'], graph_rect, 1)
         
-        # Get strongest nodes for visualization
-        strongest_nodes = self.current_graph.get_strongest_nodes(20)
+        # Get strongest nodes for visualization (update less frequently for performance)
+        if hasattr(self, '_cached_strongest_nodes') and self.update_counter % self.graph_viz_update_frequency != 0:
+            strongest_nodes = self._cached_strongest_nodes
+        else:
+            strongest_nodes = self.current_graph.get_strongest_nodes(20)
+            self._cached_strongest_nodes = strongest_nodes
         
         if strongest_nodes:
             # Draw nodes as circles with size based on strength
@@ -363,8 +376,8 @@ class BrainStateMonitor:
                     pygame.draw.circle(self.surface, self.COLORS['text'], 
                                      (center_x, center_y), radius, 1)
         
-        # Graph stats text
-        stats = self.current_graph.get_graph_statistics()
+        # Graph stats text (use approximate for performance)
+        stats = self.current_graph.get_graph_statistics(approximate=True)
         graph_info = f"Showing {min(len(strongest_nodes), 16)} strongest of {stats['total_nodes']} nodes"
         info_text = self.font_small.render(graph_info, True, self.COLORS['text'])
         self.surface.blit(info_text, (graph_rect.left + 5, graph_rect.bottom - 15))

@@ -14,11 +14,16 @@ from core.actuator_discovery import UniversalActuatorDiscovery
 from core.novelty_detection import NoveltyDetector, ExperienceSignature
 from core.vectorized_novelty_detection import VectorizedNoveltyDetector
 from core.node_consolidation import NodeConsolidationEngine
-from predictor.triple_predictor import TriplePredictor
-from predictor.vectorized_triple_predictor import VectorizedTriplePredictor
-from predictor.consensus_resolver import ConsensusResult
-from brain_prediction_profiler import get_brain_profiler, profile_section
-from core.decision_logger import log_brain_decision
+from prediction.action.triple_predictor import TriplePredictor
+from prediction.action.vectorized_triple_predictor import VectorizedTriplePredictor
+from prediction.action.consensus_resolver import ConsensusResult
+# Profiler removed during cleanup - using simple timing if needed
+from contextlib import nullcontext
+def profile_section(name):
+    """Simple no-op replacement for profiler."""
+    return nullcontext()
+from monitoring.decision_logger import log_brain_decision
+from .settings import get_settings
 
 
 class BrainInterface:
@@ -29,7 +34,7 @@ class BrainInterface:
     This interface learns the sensory dimensions from the brainstem and adapts accordingly.
     """
     
-    def __init__(self, predictor: Optional[TriplePredictor] = None, memory_path: str = "./robot_memory", 
+    def __init__(self, predictor: Optional[TriplePredictor] = None, memory_path: Optional[str] = None, 
                  enable_persistence: bool = True, use_gpu: bool = True, 
                  adaptive_gpu_switching: bool = True):
         """
@@ -113,7 +118,7 @@ class BrainInterface:
         Returns:
             Prediction packet with motor actions and expected sensory outcome
         """
-        with get_brain_profiler().start_prediction_timing():
+        with nullcontext():  # Profiler removed
             # Learn sensory dimensions from first encounter
             with profile_section("sensory_length_learning"):
                 if self.sensory_vector_length is None:
@@ -190,6 +195,24 @@ class BrainInterface:
                 # Store for next experience creation
                 self.last_prediction = consensus_result.prediction
                 self.last_sensory = sensory_packet
+                
+                # CRITICAL FIX: Record action execution for drive learning
+                # This allows drives (especially curiosity) to learn action familiarity
+                if hasattr(self.predictor, 'motivation_system') and consensus_result.prediction:
+                    try:
+                        # Create drive context for action recording
+                        context = self._create_drive_context(
+                            actual_health or 1.0, 
+                            actual_energy or 1.0
+                        )
+                        
+                        # Notify all drives that this action is being executed
+                        self.predictor.motivation_system.record_action_execution(
+                            consensus_result.prediction.motor_action, context
+                        )
+                    except Exception as e:
+                        # Don't let action recording errors break predictions
+                        print(f"Warning: Action execution recording failed: {e}")
             
             return consensus_result.prediction
     
@@ -401,8 +424,11 @@ class BrainInterface:
         """Apply adapted parameters to world graph and predictor systems."""
         # Apply memory/graph parameters to world graph
         if hasattr(self.world_graph, 'similarity_threshold'):
-            self.world_graph.similarity_threshold = adapted_params.get('similarity_threshold', 
-                                                                       self.world_graph.similarity_threshold)
+            # MEMORY FIX: Keep similarity_threshold low for richer memories
+            # The adaptive tuner tries to optimize for prediction accuracy, but
+            # lower similarity threshold creates richer memory diversity which
+            # is essential for proper novelty detection and learning
+            self.world_graph.similarity_threshold = 0.35  # Force low threshold for memory richness
         
         if hasattr(self.world_graph, 'activation_spread_iterations'):
             self.world_graph.activation_spread_iterations = int(adapted_params.get('activation_spread_iterations', 

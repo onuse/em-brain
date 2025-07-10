@@ -7,7 +7,7 @@ import pytest
 from datetime import datetime
 from core.brain_interface import BrainInterface
 from core.communication import SensoryPacket
-from predictor.triple_predictor import TriplePredictor
+from prediction.action.triple_predictor import TriplePredictor
 
 
 class TestBrainInterface:

@@ -13,6 +13,7 @@ from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, asdict
 from datetime import datetime
 import threading
+from .settings import get_settings
 from pathlib import Path
 
 from core.world_graph import WorldGraph
@@ -93,7 +94,9 @@ class PersistentMemoryManager:
     Designed for 2TB storage with efficient compression and indexing.
     """
     
-    def __init__(self, memory_root_path: str = "./robot_memory"):
+    def __init__(self, memory_root_path: Optional[str] = None):
+        if memory_root_path is None:
+            memory_root_path = get_settings().get_memory_path()
         self.memory_root = Path(memory_root_path)
         self.memory_root.mkdir(exist_ok=True)
         

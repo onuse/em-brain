@@ -1,0 +1,14 @@
+{
+  "memory": {
+    "persistent_memory_path": "./robot_memory",
+    "enable_persistence": true
+  },
+  "logging": {
+    "log_directory": "./logs"
+  },
+  "system": {
+    "use_gpu": true,
+    "adaptive_gpu_switching": true,
+    "base_time_budget": 0.1
+  }
+}

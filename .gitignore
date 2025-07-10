@@ -14,4 +14,5 @@ debug_output/
 *logs*/
 *output*/
 *.backup
-
+*old*/
+*old*.py

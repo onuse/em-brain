@@ -7,13 +7,11 @@ from .experience_node import ExperienceNode
 from .world_graph import WorldGraph
 from .mental_context import MentalContext
 from .communication import PredictionPacket, SensoryPacket
-from .genome import GenomeData
 
 __all__ = [
     'ExperienceNode',
     'WorldGraph', 
     'MentalContext',
     'PredictionPacket',
-    'SensoryPacket',
-    'GenomeData'
+    'SensoryPacket'
 ]
