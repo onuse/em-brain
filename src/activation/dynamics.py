@@ -3,6 +3,8 @@ Activation Dynamics Engine
 
 Neural-like spreading activation that creates working memory effects.
 Recently accessed and related experiences stay "hot" and influence decisions more.
+
+GPU-accelerated for fast spreading activation across large experience sets.
 """
 
 from typing import Dict, List, Set, Optional, Tuple
@@ -11,6 +13,27 @@ import numpy as np
 from collections import defaultdict
 
 from ..experience import Experience
+
+# GPU acceleration
+try:
+    import torch
+    TORCH_AVAILABLE = True
+    MPS_AVAILABLE = torch.backends.mps.is_available()
+    
+    # Test MPS functionality
+    MPS_FUNCTIONAL = False
+    if MPS_AVAILABLE:
+        try:
+            test_tensor = torch.tensor([1.0, 2.0, 3.0]).to('mps')
+            _ = test_tensor + 1
+            MPS_FUNCTIONAL = True
+        except Exception:
+            MPS_FUNCTIONAL = False
+            
+except ImportError:
+    TORCH_AVAILABLE = False
+    MPS_AVAILABLE = False
+    MPS_FUNCTIONAL = False
 
 
 class ActivationDynamics:
@@ -21,12 +44,23 @@ class ActivationDynamics:
     stay activated and influence decisions more than inactive memories.
     """
     
-    def __init__(self):
+    def __init__(self, use_gpu: bool = True, use_mixed_precision: bool = True):
         """
         Initialize activation dynamics with adaptive parameters.
         
-        No hardcoded parameters - all dynamics emerge from prediction error optimization.
+        Args:
+            use_gpu: Whether to use GPU acceleration for spreading activation
+            use_mixed_precision: Whether to use FP16 for memory efficiency
         """
+        # GPU configuration
+        self.use_gpu = use_gpu and MPS_FUNCTIONAL
+        self.device = 'mps' if self.use_gpu else 'cpu'
+        self.use_mixed_precision = use_mixed_precision and self.use_gpu
+        
+        # Precision configuration - biological neural noise simulation
+        self.compute_dtype = torch.float16 if self.use_mixed_precision else torch.float32
+        self.storage_dtype = torch.float32  # Critical activations stored in FP32
+        
         # Adaptive parameters that adjust based on prediction performance
         self.base_decay_rate = 0.02  # Will adapt based on system performance
         self.spread_strength = 0.1   # Will adapt based on learning success
@@ -44,7 +78,74 @@ class ActivationDynamics:
         self._spread_queue = []  # Experiences to spread activation from
         self._similarity_cache = {}  # Cache similar experience lookups
         
-        print("🧠 ActivationDynamics initialized - adaptive parameters")
+        # GPU tensors for efficient computation
+        self._gpu_activation_levels = None  # Tensor of all activation levels
+        self._gpu_similarity_matrix = None  # Cached similarity connections
+        self._experience_id_to_index = {}   # Map experience IDs to tensor indices
+        self._index_to_experience_id = {}   # Map tensor indices back to experience IDs
+        
+        precision_info = f"FP16 compute, FP32 storage" if self.use_mixed_precision else "FP32"
+        gpu_status = f"GPU acceleration {'enabled' if self.use_gpu else 'disabled'}"
+        print(f"🧠 ActivationDynamics initialized - adaptive parameters ({gpu_status}, {precision_info})")
+    
+    def _rebuild_gpu_tensors(self, all_experiences: Dict[str, Experience]):
+        """Rebuild GPU tensors when experience set changes significantly."""
+        if not self.use_gpu:
+            return
+            
+        try:
+            # Build mapping from experience IDs to tensor indices
+            experience_ids = list(all_experiences.keys())
+            self._experience_id_to_index = {exp_id: i for i, exp_id in enumerate(experience_ids)}
+            self._index_to_experience_id = {i: exp_id for exp_id, i in self._experience_id_to_index.items()}
+            
+            num_experiences = len(experience_ids)
+            if num_experiences == 0:
+                self._gpu_activation_levels = None
+                self._gpu_similarity_matrix = None
+                return
+            
+            # Create activation levels tensor with storage precision
+            activation_levels = []
+            for exp_id in experience_ids:
+                activation_levels.append(all_experiences[exp_id].activation_level)
+            
+            self._gpu_activation_levels = torch.tensor(
+                activation_levels, dtype=self.storage_dtype, device=self.device
+            )
+            
+            # Build similarity matrix from cached connections with storage precision
+            similarity_matrix = torch.zeros((num_experiences, num_experiences), 
+                                           dtype=self.storage_dtype, device=self.device)
+            
+            for i, exp_id_1 in enumerate(experience_ids):
+                experience = all_experiences[exp_id_1]
+                for exp_id_2, similarity in experience.similar_experiences.items():
+                    if exp_id_2 in self._experience_id_to_index:
+                        j = self._experience_id_to_index[exp_id_2]
+                        similarity_matrix[i, j] = similarity
+            
+            self._gpu_similarity_matrix = similarity_matrix
+            
+        except Exception as e:
+            print(f"GPU tensor rebuild failed: {e}, disabling GPU acceleration")
+            self.use_gpu = False
+            self.device = 'cpu'
+    
+    def _sync_gpu_activations_to_experiences(self, all_experiences: Dict[str, Experience]):
+        """Sync GPU activation levels back to experience objects."""
+        if not self.use_gpu or self._gpu_activation_levels is None:
+            return
+            
+        try:
+            activation_levels = self._gpu_activation_levels.cpu().numpy()
+            for i, activation in enumerate(activation_levels):
+                if i in self._index_to_experience_id:
+                    exp_id = self._index_to_experience_id[i]
+                    if exp_id in all_experiences:
+                        all_experiences[exp_id].activation_level = float(activation)
+        except Exception as e:
+            print(f"GPU activation sync failed: {e}")
     
     def adapt_parameters(self, recent_prediction_errors: List[float]):
         """
@@ -124,6 +225,53 @@ class ActivationDynamics:
         if time_delta < 0.1:  # Don't update too frequently
             return
         
+        # Use GPU acceleration for large experience sets
+        if self.use_gpu and len(all_experiences) > 20:
+            self._gpu_update_activations(all_experiences, time_delta)
+        else:
+            self._cpu_update_activations(all_experiences, time_delta)
+        
+        self._last_update = current_time
+    
+    def _gpu_update_activations(self, all_experiences: Dict[str, Experience], time_delta: float):
+        """GPU-accelerated activation updates."""
+        try:
+            # Rebuild tensors if experience set changed significantly
+            if (self._gpu_activation_levels is None or 
+                len(all_experiences) != self._gpu_activation_levels.shape[0]):
+                self._rebuild_gpu_tensors(all_experiences)
+                
+            if self._gpu_activation_levels is None:
+                return  # No experiences to process
+            
+            # Update GPU activation levels from current experience states
+            for exp_id, experience in all_experiences.items():
+                if exp_id in self._experience_id_to_index:
+                    idx = self._experience_id_to_index[exp_id]
+                    self._gpu_activation_levels[idx] = experience.activation_level
+            
+            # Apply decay (vectorized) with mixed precision computation
+            decay_amount = torch.tensor(self.base_decay_rate * time_delta, dtype=self.compute_dtype, device=self.device)
+            activations_compute = self._gpu_activation_levels.to(self.compute_dtype)
+            activations_compute = torch.clamp(activations_compute - decay_amount, min=0.0)
+            self._gpu_activation_levels = activations_compute.to(self.storage_dtype)
+            
+            # Process spreading activation (vectorized)
+            self._gpu_process_spreading_activation()
+            
+            # Apply minimum activation threshold (vectorized)
+            mask = (self._gpu_activation_levels > 0) & (self._gpu_activation_levels < self.min_activation)
+            self._gpu_activation_levels[mask] = 0.0
+            
+            # Sync results back to experience objects
+            self._sync_gpu_activations_to_experiences(all_experiences)
+            
+        except Exception as e:
+            print(f"GPU activation update failed: {e}, falling back to CPU")
+            self._cpu_update_activations(all_experiences, time_delta)
+    
+    def _cpu_update_activations(self, all_experiences: Dict[str, Experience], time_delta: float):
+        """CPU fallback activation updates."""
         # Apply natural decay to all experiences
         self._apply_decay(all_experiences, time_delta)
         
@@ -132,8 +280,48 @@ class ActivationDynamics:
         
         # Cleanup very low activations
         self._cleanup_weak_activations(all_experiences)
-        
-        self._last_update = current_time
+    
+    def _gpu_process_spreading_activation(self):
+        """GPU-accelerated spreading activation."""
+        if not self._spread_queue or self._gpu_similarity_matrix is None:
+            return
+            
+        try:
+            # Process spreading activation for each queued experience
+            for exp_id, source_strength in self._spread_queue:
+                if exp_id in self._experience_id_to_index:
+                    source_idx = self._experience_id_to_index[exp_id]
+                    
+                    # Get similarity connections for this source experience
+                    similarities = self._gpu_similarity_matrix[source_idx]
+                    
+                    # Apply similarity threshold (only spread to reasonably similar)
+                    similarity_mask = similarities > 0.3
+                    
+                    # Calculate spread amounts (vectorized) with mixed precision
+                    source_strength_tensor = torch.tensor(source_strength, dtype=self.compute_dtype, device=self.device)
+                    spread_strength_tensor = torch.tensor(self.spread_strength, dtype=self.compute_dtype, device=self.device)
+                    similarities_compute = similarities.to(self.compute_dtype)
+                    spread_amounts = source_strength_tensor * similarities_compute * spread_strength_tensor
+                    
+                    # Apply minimum spread threshold
+                    spread_mask = spread_amounts > 0.01
+                    
+                    # Combine masks
+                    final_mask = similarity_mask & spread_mask
+                    
+                    # Apply spreading activation with mixed precision
+                    activations_compute = self._gpu_activation_levels.to(self.compute_dtype)
+                    activations_compute[final_mask] += spread_amounts[final_mask]
+                    self._gpu_activation_levels = activations_compute.to(self.storage_dtype)
+            
+            # Clear the queue
+            self._spread_queue.clear()
+            
+        except Exception as e:
+            print(f"GPU spreading activation failed: {e}")
+            # Fallback to CPU processing
+            self._spread_queue.clear()  # Prevent infinite loop
     
     def get_activated_experiences(self, all_experiences: Dict[str, Experience], 
                                 min_activation: float = 0.1) -> List[Experience]:
@@ -329,7 +517,15 @@ class ActivationDynamics:
         
         self._spread_queue.clear()
         self._activation_history.clear()
-        print("🧹 All activations cleared")
+        
+        # Clear GPU tensors
+        if self.use_gpu:
+            self._gpu_activation_levels = None
+            self._gpu_similarity_matrix = None
+            self._experience_id_to_index.clear()
+            self._index_to_experience_id.clear()
+        
+        print("🧹 All activations cleared (including GPU tensors)")
     
     def __str__(self) -> str:
         return f"ActivationDynamics(decay_rate={self.base_decay_rate}, spread_strength={self.spread_strength})"

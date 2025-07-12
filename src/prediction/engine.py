@@ -13,6 +13,7 @@ import time
 from ..experience import Experience
 from ..similarity import SimilarityEngine
 from ..activation import ActivationDynamics
+from .pattern_analyzer import GPUPatternAnalyzer
 
 
 class PredictionEngine:
@@ -27,7 +28,8 @@ class PredictionEngine:
                  min_similar_experiences: int = 3,
                  prediction_confidence_threshold: float = 0.3,
                  success_error_threshold: float = 0.3,
-                 bootstrap_randomness: float = 0.8):
+                 bootstrap_randomness: float = 0.8,
+                 use_pattern_analysis: bool = True):
         """
         Initialize prediction engine.
         
@@ -36,19 +38,32 @@ class PredictionEngine:
             prediction_confidence_threshold: Minimum confidence to trust prediction  
             success_error_threshold: Prediction error threshold for considering success
             bootstrap_randomness: Random action probability when no patterns found
+            use_pattern_analysis: Whether to use GPU pattern analysis for predictions
         """
         self.min_similar_experiences = min_similar_experiences
         self.prediction_confidence_threshold = prediction_confidence_threshold
         self.success_error_threshold = success_error_threshold
         self.bootstrap_randomness = bootstrap_randomness
         
+        # Pattern analysis for intelligent sequence prediction
+        self.use_pattern_analysis = use_pattern_analysis
+        if use_pattern_analysis:
+            self.pattern_analyzer = GPUPatternAnalyzer(use_gpu=True, use_mixed_precision=True)
+        else:
+            self.pattern_analyzer = None
+        
         # Performance tracking
         self.total_predictions = 0
         self.consensus_predictions = 0
+        self.pattern_predictions = 0
         self.random_predictions = 0
         self.prediction_accuracies = []
         
-        print("🔮 PredictionEngine initialized")
+        # Experience stream for pattern analysis
+        self.recent_experiences = []
+        
+        pattern_info = "with pattern analysis" if use_pattern_analysis else "similarity-based only"
+        print(f"🔮 PredictionEngine initialized ({pattern_info})")
     
     def predict_action(self, 
                       current_context: List[float],
@@ -89,6 +104,38 @@ class PredictionEngine:
             max_results=20, min_similarity=0.4
         )
         
+        # Try pattern-based prediction first (if enabled)
+        if self.pattern_analyzer and len(self.recent_experiences) >= 2:
+            # Convert recent experiences to pattern analyzer format
+            converted_sequence = []
+            for exp_data in self.recent_experiences[-3:]:
+                converted_exp = {
+                    'context': np.array(exp_data.get('sensory_input', exp_data.get('context', []))),
+                    'action': np.array(exp_data.get('action_taken', exp_data.get('action', []))),
+                    'outcome': np.array(exp_data.get('outcome', [])),
+                    'timestamp': exp_data.get('timestamp', time.time()),
+                    'experience_id': exp_data.get('experience_id', 'unknown')
+                }
+                converted_sequence.append(converted_exp)
+            
+            pattern_prediction = self.pattern_analyzer.predict_next_experience(
+                np.array(current_context), converted_sequence
+            )
+            
+            if pattern_prediction and pattern_prediction['confidence'] > self.prediction_confidence_threshold:
+                self.pattern_predictions += 1
+                prediction_time = time.time() - start_time
+                
+                details = {
+                    'method': 'pattern_analysis',
+                    'pattern_id': pattern_prediction['pattern_id'],
+                    'pattern_frequency': pattern_prediction['pattern_frequency'],
+                    'num_similar': len(similar_experiences),
+                    'prediction_time': prediction_time
+                }
+                
+                return pattern_prediction['predicted_action'], pattern_prediction['confidence'], details
+        
         if len(similar_experiences) < self.min_similar_experiences:
             # Not enough similar experiences - bootstrap with random action
             return self._bootstrap_random_action(action_dimensions, 
@@ -109,6 +156,39 @@ class PredictionEngine:
         else:
             # Low confidence - blend with random action
             return self._blend_with_random(action, confidence, action_dimensions, details)
+    
+    def add_experience_to_stream(self, experience_data: Dict[str, Any]):
+        """
+        Add experience to pattern analysis stream.
+        
+        Args:
+            experience_data: Dictionary with sensory_input, action_taken, outcome, etc.
+        """
+        if self.pattern_analyzer:
+            self.pattern_analyzer.add_experience_to_stream(experience_data)
+        
+        # Keep recent experiences for pattern prediction
+        self.recent_experiences.append(experience_data)
+        if len(self.recent_experiences) > 50:  # Keep last 50 experiences
+            self.recent_experiences = self.recent_experiences[-25:]
+    
+    def record_prediction_outcome(self, prediction_details: Dict[str, Any], 
+                                prediction_success: float):
+        """
+        Record how well a prediction worked for learning.
+        
+        Args:
+            prediction_details: Details from the prediction
+            prediction_success: How successful the prediction was (0-1)
+        """
+        # Record for pattern analyzer if it was a pattern prediction
+        if (self.pattern_analyzer and 
+            prediction_details.get('method') == 'pattern_analysis' and
+            'pattern_id' in prediction_details):
+            
+            self.pattern_analyzer.record_prediction_outcome(
+                prediction_details['pattern_id'], prediction_success
+            )
     
     def _generate_consensus_prediction(self, 
                                      similar_experiences: List[Tuple[str, float]],
@@ -256,26 +336,43 @@ class PredictionEngine:
             recent_accuracy = np.mean(self.prediction_accuracies[-100:]) if len(self.prediction_accuracies) >= 100 else avg_accuracy
         
         consensus_rate = self.consensus_predictions / max(1, self.total_predictions)
+        pattern_rate = self.pattern_predictions / max(1, self.total_predictions)
         random_rate = self.random_predictions / max(1, self.total_predictions)
         
-        return {
+        base_stats = {
             'total_predictions': self.total_predictions,
             'consensus_predictions': self.consensus_predictions,
+            'pattern_predictions': self.pattern_predictions,
             'random_predictions': self.random_predictions,
             'consensus_rate': consensus_rate,
+            'pattern_rate': pattern_rate,
             'random_rate': random_rate,
             'avg_prediction_accuracy': avg_accuracy,
             'recent_prediction_accuracy': recent_accuracy,
             'prediction_improvement': recent_accuracy - avg_accuracy if len(self.prediction_accuracies) >= 100 else 0.0,
             'learning_curve_length': len(self.prediction_accuracies)
         }
+        
+        # Add pattern analysis statistics if enabled
+        if self.pattern_analyzer:
+            pattern_stats = self.pattern_analyzer.get_pattern_statistics()
+            base_stats['pattern_analysis'] = pattern_stats
+        
+        return base_stats
     
     def reset_statistics(self):
         """Reset all performance statistics (for testing)."""
         self.total_predictions = 0
         self.consensus_predictions = 0
+        self.pattern_predictions = 0
         self.random_predictions = 0
         self.prediction_accuracies.clear()
+        self.recent_experiences = []
+        
+        # Reset pattern analyzer
+        if self.pattern_analyzer:
+            self.pattern_analyzer.reset_patterns()
+        
         print("🧹 PredictionEngine statistics reset")
     
     def __str__(self) -> str:

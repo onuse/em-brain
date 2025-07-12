@@ -55,7 +55,7 @@ class SimilarityEngine:
         
         # Learnable similarity function
         if use_learnable_similarity:
-            self.learnable_similarity = LearnableSimilarity()
+            self.learnable_similarity = LearnableSimilarity(use_gpu=use_gpu)
         else:
             self.learnable_similarity = None
         

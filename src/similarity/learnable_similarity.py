@@ -8,12 +8,54 @@ help predict each other, the similarity function adapts.
 
 This is a fundamental step toward true emergence - letting the system discover
 what similarity means rather than engineering it.
+
+GPU-accelerated for fast gradient computations and large-scale learning.
 """
 
 from typing import List, Dict, Tuple, Optional
 import numpy as np
 import time
 from collections import defaultdict
+
+# GPU acceleration with CUDA/MPS detection
+try:
+    import torch
+    TORCH_AVAILABLE = True
+    
+    # Device selection hierarchy: CUDA > MPS > CPU
+    CUDA_AVAILABLE = torch.cuda.is_available()
+    MPS_AVAILABLE = torch.backends.mps.is_available() if hasattr(torch.backends, 'mps') else False
+    
+    # Test GPU functionality
+    GPU_FUNCTIONAL = False
+    PREFERRED_DEVICE = 'cpu'
+    
+    if CUDA_AVAILABLE:
+        try:
+            test_tensor = torch.tensor([1.0, 2.0, 3.0]).to('cuda')
+            _ = test_tensor + 1
+            GPU_FUNCTIONAL = True
+            PREFERRED_DEVICE = 'cuda'
+            print(f"🚀 GPU acceleration: CUDA available ({torch.cuda.get_device_name()})")
+        except Exception:
+            CUDA_AVAILABLE = False
+    
+    if not GPU_FUNCTIONAL and MPS_AVAILABLE:
+        try:
+            test_tensor = torch.tensor([1.0, 2.0, 3.0]).to('mps')
+            _ = test_tensor + 1
+            GPU_FUNCTIONAL = True
+            PREFERRED_DEVICE = 'mps'
+            print("🚀 GPU acceleration: PyTorch MPS available")
+        except Exception:
+            MPS_AVAILABLE = False
+            
+except ImportError:
+    TORCH_AVAILABLE = False
+    CUDA_AVAILABLE = False
+    MPS_AVAILABLE = False
+    GPU_FUNCTIONAL = False
+    PREFERRED_DEVICE = 'cpu'
 
 
 class LearnableSimilarity:
@@ -24,17 +66,29 @@ class LearnableSimilarity:
     the similarity function is working. If not, it needs to adapt.
     """
     
-    def __init__(self, vector_dimensions: int = None, learning_rate: float = 0.01):
+    def __init__(self, vector_dimensions: int = None, learning_rate: float = 0.01, 
+                 use_gpu: bool = True, use_mixed_precision: bool = True):
         """
         Initialize learnable similarity function.
         
         Args:
             vector_dimensions: Dimensionality of experience vectors (learned if None)
             learning_rate: Initial learning rate (will become adaptive)
+            use_gpu: Whether to use GPU acceleration if available
+            use_mixed_precision: Whether to use FP16 for memory efficiency (more biological!)
         """
         self.vector_dimensions = vector_dimensions
         self.initial_learning_rate = learning_rate
         self.learning_rate = learning_rate  # This will adapt based on learning success
+        
+        # GPU configuration with CUDA/MPS support
+        self.use_gpu = use_gpu and GPU_FUNCTIONAL
+        self.device = PREFERRED_DEVICE if self.use_gpu else 'cpu'
+        self.use_mixed_precision = use_mixed_precision and self.use_gpu
+        
+        # Precision configuration - mimics biological neural noise
+        self.compute_dtype = torch.float16 if self.use_mixed_precision else torch.float32
+        self.storage_dtype = torch.float32  # Always store critical values in FP32
         
         # Meta-learning parameters (Strategy 5)
         self.learning_rate_adaptation_rate = 0.1  # How fast learning rate itself adapts
@@ -42,10 +96,13 @@ class LearnableSimilarity:
         self.max_learning_rate = 0.1
         self.adaptation_success_history = []  # Track how well adaptations work
         
-        # Learnable similarity parameters
-        # Start with identity transformation (like cosine similarity)
+        # Learnable similarity parameters (CPU numpy - will convert to GPU when initialized)
         self.feature_weights = None  # Will be initialized when we see first vector
         self.interaction_matrix = None  # Learns feature interactions
+        
+        # GPU tensors for fast computation
+        self.feature_weights_tensor = None
+        self.interaction_matrix_tensor = None
         
         # Prediction success tracking
         self.similarity_predictions = defaultdict(list)  # similarity_score -> [prediction_success]
@@ -55,7 +112,8 @@ class LearnableSimilarity:
         self.adaptations_performed = 0
         self.similarity_evolution = []  # Track how similarity function changes
         
-        print("LearnableSimilarity initialized - similarity will emerge from prediction success")
+        gpu_status = f"GPU acceleration {'enabled' if self.use_gpu else 'disabled'}"
+        print(f"LearnableSimilarity initialized - similarity will emerge from prediction success ({gpu_status})")
     
     def _initialize_parameters(self, vector_dim: int):
         """Initialize learnable parameters when we see first vector."""
@@ -72,7 +130,25 @@ class LearnableSimilarity:
         # Start as identity (no interactions initially)
         self.interaction_matrix = np.eye(vector_dim) * 0.1
         
-        print(f"Similarity parameters initialized for {vector_dim}D vectors")
+        # Initialize GPU tensors if using GPU
+        if self.use_gpu:
+            try:
+                # Store critical parameters in FP32, compute in FP16 for efficiency
+                self.feature_weights_tensor = torch.tensor(
+                    self.feature_weights, dtype=self.storage_dtype, device=self.device, requires_grad=False
+                )
+                self.interaction_matrix_tensor = torch.tensor(
+                    self.interaction_matrix, dtype=self.storage_dtype, device=self.device, requires_grad=False
+                )
+                
+                precision_info = f"FP16 compute, FP32 storage" if self.use_mixed_precision else "FP32"
+                print(f"Similarity parameters initialized for {vector_dim}D vectors (GPU tensors created, {precision_info})")
+            except Exception as e:
+                print(f"GPU tensor initialization failed: {e}, falling back to CPU")
+                self.use_gpu = False
+                self.device = 'cpu'
+        else:
+            print(f"Similarity parameters initialized for {vector_dim}D vectors (CPU only)")
     
     def compute_similarity(self, vector_a: List[float], vector_b: List[float]) -> float:
         """
@@ -92,6 +168,54 @@ class LearnableSimilarity:
         if self.feature_weights is None:
             self._initialize_parameters(len(vec_a))
         
+        if self.use_gpu and self.feature_weights_tensor is not None:
+            return self._gpu_compute_similarity(vec_a, vec_b)
+        else:
+            return self._cpu_compute_similarity(vec_a, vec_b)
+    
+    def _gpu_compute_similarity(self, vec_a: np.ndarray, vec_b: np.ndarray) -> float:
+        """GPU-accelerated similarity computation with mixed precision."""
+        try:
+            # Convert to GPU tensors with compute precision (FP16 for biological realism)
+            tensor_a = torch.tensor(vec_a, dtype=self.compute_dtype, device=self.device)
+            tensor_b = torch.tensor(vec_b, dtype=self.compute_dtype, device=self.device)
+            
+            # Convert weights to compute precision for operations
+            weights_compute = self.feature_weights_tensor.to(self.compute_dtype)
+            interactions_compute = self.interaction_matrix_tensor.to(self.compute_dtype)
+            
+            # Apply learned feature weighting (FP16 for speed + biological noise)
+            weighted_a = tensor_a * weights_compute
+            weighted_b = tensor_b * weights_compute
+            
+            # Apply learned feature interactions
+            transformed_a = weighted_a + torch.matmul(interactions_compute, tensor_a)
+            transformed_b = weighted_b + torch.matmul(interactions_compute, tensor_b)
+            
+            # Compute similarity in learned space
+            norm_a = torch.norm(transformed_a)
+            norm_b = torch.norm(transformed_b)
+            
+            if norm_a == 0 or norm_b == 0:
+                # Handle zero vectors with distance-based similarity
+                distance = torch.norm(transformed_a - transformed_b)
+                max_distance = torch.sqrt(torch.tensor(2 * len(vec_a), dtype=torch.float32, device=self.device))
+                similarity = torch.clamp(1.0 - (distance / max_distance), min=0.0)
+            else:
+                # Cosine similarity in learned space
+                dot_product = torch.dot(transformed_a, transformed_b)
+                cosine_sim = dot_product / (norm_a * norm_b)
+                # Convert from [-1, 1] to [0, 1]
+                similarity = (cosine_sim + 1.0) / 2.0
+            
+            return float(torch.clamp(similarity, min=0.0, max=1.0).cpu().item())
+            
+        except Exception as e:
+            print(f"GPU similarity computation failed: {e}, falling back to CPU")
+            return self._cpu_compute_similarity(vec_a, vec_b)
+    
+    def _cpu_compute_similarity(self, vec_a: np.ndarray, vec_b: np.ndarray) -> float:
+        """CPU fallback similarity computation."""
         # Apply learned feature weighting
         weighted_a = vec_a * self.feature_weights
         weighted_b = vec_b * self.feature_weights
@@ -109,7 +233,7 @@ class LearnableSimilarity:
         if norm_a == 0 or norm_b == 0:
             # Handle zero vectors with distance-based similarity
             distance = np.linalg.norm(transformed_a - transformed_b)
-            max_distance = np.sqrt(2 * len(vector_a))  # Rough upper bound
+            max_distance = np.sqrt(2 * len(vec_a))  # Rough upper bound
             similarity = max(0.0, 1.0 - (distance / max_distance))
         else:
             # Cosine similarity in learned space
@@ -190,6 +314,78 @@ class LearnableSimilarity:
     def _gradient_adapt(self, recent_outcomes: List[Dict]):
         """Perform gradient-based adaptation of similarity parameters."""
         
+        if self.use_gpu and self.feature_weights_tensor is not None:
+            self._gpu_gradient_adapt(recent_outcomes)
+        else:
+            self._cpu_gradient_adapt(recent_outcomes)
+        
+        # Adapt interaction matrix more conservatively
+        if len(recent_outcomes) >= 20:
+            self._adapt_interaction_matrix(recent_outcomes[-20:])
+    
+    def _gpu_gradient_adapt(self, recent_outcomes: List[Dict]):
+        """GPU-accelerated gradient adaptation with mixed precision."""
+        try:
+            # Collect batch data for vectorized gradient computation
+            queries = []
+            similars = []
+            similarities = []
+            successes = []
+            
+            for outcome in recent_outcomes[-10:]:  # Use recent examples
+                queries.append(outcome['query'])
+                similars.append(outcome['similar'])
+                similarities.append(outcome['similarity'])
+                successes.append(outcome['success'])
+            
+            if not queries:
+                return
+            
+            # Convert to GPU tensors with mixed precision
+            queries_tensor = torch.tensor(np.array(queries), dtype=self.compute_dtype, device=self.device)
+            similars_tensor = torch.tensor(np.array(similars), dtype=self.compute_dtype, device=self.device)
+            similarities_tensor = torch.tensor(similarities, dtype=self.compute_dtype, device=self.device)
+            successes_tensor = torch.tensor(successes, dtype=self.compute_dtype, device=self.device)
+            
+            # Vectorized feature difference computation in FP16 for speed
+            feature_diffs = torch.abs(queries_tensor - similars_tensor)
+            
+            # Vectorized gradient computation with mixed precision
+            learning_rate_tensor = torch.tensor(self.learning_rate, dtype=self.compute_dtype, device=self.device)
+            
+            # Case 1: Good prediction from "dissimilar" experiences
+            good_from_dissimilar = (successes_tensor > 0.7) & (similarities_tensor < 0.5)
+            if torch.any(good_from_dissimilar):
+                gradients_1 = feature_diffs[good_from_dissimilar] * learning_rate_tensor
+                gradients_1 = gradients_1 * (successes_tensor[good_from_dissimilar] - similarities_tensor[good_from_dissimilar]).unsqueeze(1)
+                # Update in storage precision for accuracy
+                weights_compute = self.feature_weights_tensor.to(self.compute_dtype)
+                weights_compute += torch.mean(gradients_1, dim=0)
+                self.feature_weights_tensor = weights_compute.to(self.storage_dtype)
+            
+            # Case 2: Bad prediction from "similar" experiences
+            bad_from_similar = (successes_tensor < 0.3) & (similarities_tensor > 0.7)
+            if torch.any(bad_from_similar):
+                gradients_2 = feature_diffs[bad_from_similar] * learning_rate_tensor
+                gradients_2 = gradients_2 * (similarities_tensor[bad_from_similar] - successes_tensor[bad_from_similar]).unsqueeze(1)
+                # Update in storage precision for accuracy
+                weights_compute = self.feature_weights_tensor.to(self.compute_dtype)
+                weights_compute -= torch.mean(gradients_2, dim=0)
+                self.feature_weights_tensor = weights_compute.to(self.storage_dtype)
+            
+            # Keep weights positive and normalized in storage precision
+            self.feature_weights_tensor = torch.clamp(self.feature_weights_tensor, min=0.1)
+            self.feature_weights_tensor = self.feature_weights_tensor / torch.mean(self.feature_weights_tensor)
+            
+            # Update CPU copy for compatibility
+            self.feature_weights = self.feature_weights_tensor.cpu().numpy()
+            
+        except Exception as e:
+            print(f"GPU gradient adaptation failed: {e}, falling back to CPU")
+            self._cpu_gradient_adapt(recent_outcomes)
+    
+    def _cpu_gradient_adapt(self, recent_outcomes: List[Dict]):
+        """CPU fallback gradient adaptation."""
         # Simple gradient approach: adjust weights to improve similarity-success correlation
         for outcome in recent_outcomes[-10:]:  # Use recent examples
             query = outcome['query']
@@ -216,12 +412,66 @@ class LearnableSimilarity:
         self.feature_weights = np.maximum(0.1, self.feature_weights)
         self.feature_weights = self.feature_weights / np.mean(self.feature_weights)
         
-        # Adapt interaction matrix more conservatively
-        if len(recent_outcomes) >= 20:
-            self._adapt_interaction_matrix(recent_outcomes[-20:])
+        # Update GPU tensor if available
+        if self.use_gpu and self.feature_weights_tensor is not None:
+            try:
+                self.feature_weights_tensor = torch.tensor(
+                    self.feature_weights, dtype=self.storage_dtype, device=self.device, requires_grad=False
+                )
+            except Exception:
+                pass  # Continue with CPU if GPU update fails
     
     def _adapt_interaction_matrix(self, outcomes: List[Dict]):
         """Adapt feature interaction learning."""
+        if self.use_gpu and self.interaction_matrix_tensor is not None:
+            self._gpu_adapt_interaction_matrix(outcomes)
+        else:
+            self._cpu_adapt_interaction_matrix(outcomes)
+    
+    def _gpu_adapt_interaction_matrix(self, outcomes: List[Dict]):
+        """GPU-accelerated interaction matrix adaptation with mixed precision."""
+        try:
+            # Collect successful prediction data
+            successful_queries = []
+            successful_similars = []
+            
+            for outcome in outcomes:
+                if outcome['success'] > 0.6:  # Only learn from successful predictions
+                    successful_queries.append(outcome['query'])
+                    successful_similars.append(outcome['similar'])
+            
+            if not successful_queries:
+                return
+            
+            # Convert to GPU tensors with compute precision
+            queries_tensor = torch.tensor(np.array(successful_queries), dtype=self.compute_dtype, device=self.device)
+            similars_tensor = torch.tensor(np.array(successful_similars), dtype=self.compute_dtype, device=self.device)
+            
+            # Vectorized feature activation computation in FP16
+            feature_activations = queries_tensor * similars_tensor  # Element-wise interaction
+            
+            # Compute outer products for all successful predictions with mixed precision
+            learning_rate_tensor = torch.tensor(self.learning_rate * 0.1, dtype=self.compute_dtype, device=self.device)
+            interaction_matrix_compute = self.interaction_matrix_tensor.to(self.compute_dtype)
+            
+            for i in range(feature_activations.shape[0]):
+                activation = feature_activations[i]
+                update = torch.outer(activation, activation) * learning_rate_tensor
+                interaction_matrix_compute += update
+            
+            # Keep interaction matrix bounded and store in FP32
+            interaction_matrix_compute = torch.clamp(interaction_matrix_compute, min=-1.0, max=1.0)
+            self.interaction_matrix_tensor = interaction_matrix_compute.to(self.storage_dtype)
+            
+            # Update CPU copy
+            self.interaction_matrix = self.interaction_matrix_tensor.cpu().numpy()
+            
+        except Exception as e:
+            print(f"GPU interaction matrix adaptation failed: {e}, falling back to CPU")
+            self._cpu_adapt_interaction_matrix(outcomes)
+    
+    def _cpu_adapt_interaction_matrix(self, outcomes: List[Dict]):
+        """CPU fallback interaction matrix adaptation."""
         # Simple approach: strengthen interactions between features that co-predict
         
         for outcome in outcomes:
@@ -238,6 +488,15 @@ class LearnableSimilarity:
         
         # Keep interaction matrix bounded
         self.interaction_matrix = np.clip(self.interaction_matrix, -1.0, 1.0)
+        
+        # Update GPU tensor if available
+        if self.use_gpu and self.interaction_matrix_tensor is not None:
+            try:
+                self.interaction_matrix_tensor = torch.tensor(
+                    self.interaction_matrix, dtype=self.storage_dtype, device=self.device, requires_grad=False
+                )
+            except Exception:
+                pass  # Continue with CPU if GPU update fails
     
     def _adapt_learning_rate(self, pre_adaptation_performance: float):
         """
@@ -351,6 +610,8 @@ class LearnableSimilarity:
         """Reset the similarity function to start learning fresh."""
         self.feature_weights = None
         self.interaction_matrix = None
+        self.feature_weights_tensor = None
+        self.interaction_matrix_tensor = None
         self.similarity_predictions.clear()
         self.prediction_outcomes.clear()
         self.adaptations_performed = 0
@@ -360,4 +621,4 @@ class LearnableSimilarity:
         self.learning_rate = self.initial_learning_rate
         self.adaptation_success_history.clear()
         
-        print("Similarity learning reset - starting fresh emergence process (including meta-learning)")
+        print("Similarity learning reset - starting fresh emergence process (including meta-learning and GPU tensors)")

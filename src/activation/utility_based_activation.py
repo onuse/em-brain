@@ -7,6 +7,8 @@ arbitrary activation formulas.
 
 Core principle: Experiences that help predict get more activation.
 Working memory emerges from prediction utility, not engineering.
+
+GPU-accelerated for fast utility computation across massive experience sets.
 """
 
 from typing import Dict, List, Tuple, Optional
@@ -15,6 +17,27 @@ import numpy as np
 from collections import defaultdict, deque
 
 from ..experience import Experience
+
+# GPU acceleration
+try:
+    import torch
+    TORCH_AVAILABLE = True
+    MPS_AVAILABLE = torch.backends.mps.is_available()
+    
+    # Test MPS functionality
+    MPS_FUNCTIONAL = False
+    if MPS_AVAILABLE:
+        try:
+            test_tensor = torch.tensor([1.0, 2.0, 3.0]).to('mps')
+            _ = test_tensor + 1
+            MPS_FUNCTIONAL = True
+        except Exception:
+            MPS_FUNCTIONAL = False
+            
+except ImportError:
+    TORCH_AVAILABLE = False
+    MPS_AVAILABLE = False
+    MPS_FUNCTIONAL = False
 
 
 class UtilityBasedActivation:
@@ -28,8 +51,22 @@ class UtilityBasedActivation:
     - Spreading emerges from prediction connections, not engineered formulas
     """
     
-    def __init__(self):
-        """Initialize utility-based activation system."""
+    def __init__(self, use_gpu: bool = True, use_mixed_precision: bool = True):
+        """
+        Initialize utility-based activation system.
+        
+        Args:
+            use_gpu: Whether to use GPU acceleration for utility computations
+            use_mixed_precision: Whether to use FP16 for memory efficiency
+        """
+        # GPU configuration
+        self.use_gpu = use_gpu and MPS_FUNCTIONAL
+        self.device = 'mps' if self.use_gpu else 'cpu'
+        self.use_mixed_precision = use_mixed_precision and self.use_gpu
+        
+        # Precision configuration - biological neural noise simulation
+        self.compute_dtype = torch.float16 if self.use_mixed_precision else torch.float32
+        self.storage_dtype = torch.float32  # Critical utility scores stored in FP32
         
         # Utility tracking - the only "parameters" are learning rates
         self.prediction_utility_history = defaultdict(deque)  # exp_id -> [utility_scores]
@@ -55,7 +92,80 @@ class UtilityBasedActivation:
         self.total_activations = 0
         self.utility_based_decisions = 0
         
-        print("UtilityBasedActivation initialized - activation emerges from prediction utility")
+        # GPU tensors for efficient computation
+        self._gpu_experience_data = None  # Tensor of experience features
+        self._gpu_utility_history = None  # Tensor of historical utilities
+        self._gpu_connection_matrix = None  # Tensor of utility connections
+        self._experience_id_to_index = {}  # Map experience IDs to tensor indices
+        self._index_to_experience_id = {}  # Map tensor indices back to experience IDs
+        
+        precision_info = f"FP16 compute, FP32 storage" if self.use_mixed_precision else "FP32"
+        gpu_status = f"GPU acceleration {'enabled' if self.use_gpu else 'disabled'}"
+        print(f"UtilityBasedActivation initialized - activation emerges from prediction utility ({gpu_status}, {precision_info})")
+    
+    def _build_gpu_tensors(self, all_experiences: Dict[str, Experience], 
+                          similarity_scores: List[Tuple[str, float]]):
+        """Build GPU tensors for efficient utility computation."""
+        if not self.use_gpu:
+            return
+            
+        try:
+            # Get experience IDs from similarity scores (these are the ones we need to process)
+            relevant_exp_ids = [exp_id for exp_id, _ in similarity_scores]
+            
+            # Build mapping from experience IDs to tensor indices
+            self._experience_id_to_index = {exp_id: i for i, exp_id in enumerate(relevant_exp_ids)}
+            self._index_to_experience_id = {i: exp_id for exp_id, i in self._experience_id_to_index.items()}
+            
+            num_experiences = len(relevant_exp_ids)
+            if num_experiences == 0:
+                return
+            
+            # Build experience feature tensor (prediction_error, etc.)
+            experience_features = []
+            historical_utilities = []
+            
+            for exp_id in relevant_exp_ids:
+                experience = all_experiences[exp_id]
+                
+                # Feature vector: [prediction_error, access_count, age, activation_level]
+                age = time.time() - experience.timestamp
+                features = [
+                    1.0 - experience.prediction_error,  # Error boost (inverted)
+                    float(experience.access_count) / 100.0,  # Normalized access count
+                    min(1.0, age / 3600.0),  # Normalized age (hours)
+                    experience.activation_level
+                ]
+                experience_features.append(features)
+                
+                # Historical utility for this experience
+                hist_utility = self._get_historical_utility(exp_id)
+                historical_utilities.append(hist_utility)
+            
+            self._gpu_experience_data = torch.tensor(
+                experience_features, dtype=self.storage_dtype, device=self.device
+            )
+            self._gpu_utility_history = torch.tensor(
+                historical_utilities, dtype=self.storage_dtype, device=self.device
+            )
+            
+            # Build connection matrix with storage precision
+            connection_matrix = torch.zeros((num_experiences, num_experiences), 
+                                          dtype=self.storage_dtype, device=self.device)
+            
+            for i, exp_id_1 in enumerate(relevant_exp_ids):
+                if exp_id_1 in self.utility_connections:
+                    for exp_id_2, connection_strength in self.utility_connections[exp_id_1].items():
+                        if exp_id_2 in self._experience_id_to_index:
+                            j = self._experience_id_to_index[exp_id_2]
+                            connection_matrix[i, j] = connection_strength
+            
+            self._gpu_connection_matrix = connection_matrix
+            
+        except Exception as e:
+            print(f"GPU tensor building failed: {e}, falling back to CPU")
+            self.use_gpu = False
+            self.device = 'cpu'
     
     def activate_by_prediction_utility(self, 
                                      target_context: List[float],
@@ -72,8 +182,123 @@ class UtilityBasedActivation:
         Returns:
             Dict of exp_id -> activation_level based on utility
         """
-        new_activations = {}
         current_time = time.time()
+        
+        # Use GPU acceleration for large experience sets
+        if self.use_gpu and len(similarity_scores) > 10:
+            new_activations = self._gpu_compute_utilities(target_context, all_experiences, similarity_scores)
+        else:
+            new_activations = self._cpu_compute_utilities(target_context, all_experiences, similarity_scores, current_time)
+        
+        # Update current activations with utility-based values
+        self.current_activations.update(new_activations)
+        
+        # Apply natural decay based on time since activation (emergent, not hardcoded)
+        self._apply_utility_based_decay(current_time)
+        
+        return self.current_activations.copy()
+    
+    def _gpu_compute_utilities(self, target_context: List[float],
+                              all_experiences: Dict[str, Experience],
+                              similarity_scores: List[Tuple[str, float]]) -> Dict[str, float]:
+        """GPU-accelerated utility computation."""
+        try:
+            # Build GPU tensors for this computation
+            self._build_gpu_tensors(all_experiences, similarity_scores)
+            
+            if self._gpu_experience_data is None:
+                return {}
+            
+            current_time = time.time()
+            num_experiences = len(similarity_scores)
+            
+            # Convert similarity scores to tensor with compute precision
+            similarities = torch.tensor([sim for _, sim in similarity_scores], 
+                                      dtype=self.compute_dtype, device=self.device)
+            
+            # Vectorized utility computation with mixed precision
+            # Base utility = similarity
+            base_utilities = similarities
+            
+            # Historical utilities (convert to compute precision)
+            historical_utilities = self._gpu_utility_history.to(self.compute_dtype)
+            
+            # Recent success boost (vectorized lookup)
+            current_activations_tensor = torch.zeros(num_experiences, dtype=self.compute_dtype, device=self.device)
+            for i, (exp_id, _) in enumerate(similarity_scores):
+                if exp_id in self.current_activations:
+                    current_activations_tensor[i] = self.current_activations[exp_id]
+            
+            recent_success_boosts = self._gpu_compute_recent_success_boost(current_activations_tensor)
+            
+            # Error boosts (from experience features, convert to compute precision)
+            error_boosts = self._gpu_experience_data[:, 0].to(self.compute_dtype)  # First feature is inverted prediction error
+            
+            # Connection boosts (vectorized)
+            connection_boosts = self._gpu_compute_connection_boost(current_activations_tensor)
+            
+            # Combine utilities (vectorized weighted sum) with mixed precision
+            weight_tensors = {
+                'base': torch.tensor(0.4, dtype=self.compute_dtype, device=self.device),
+                'historical': torch.tensor(0.2, dtype=self.compute_dtype, device=self.device),
+                'success': torch.tensor(0.2, dtype=self.compute_dtype, device=self.device),
+                'error': torch.tensor(0.1, dtype=self.compute_dtype, device=self.device),
+                'connection': torch.tensor(0.1, dtype=self.compute_dtype, device=self.device)
+            }
+            
+            total_utilities = (
+                base_utilities * weight_tensors['base'] +
+                historical_utilities * weight_tensors['historical'] +
+                recent_success_boosts * weight_tensors['success'] +
+                error_boosts * weight_tensors['error'] +
+                connection_boosts * weight_tensors['connection']
+            )
+            
+            # Apply minimum utility threshold and convert to dict
+            max_utility = torch.tensor(1.0, dtype=self.compute_dtype, device=self.device)
+            total_utilities = torch.clamp(total_utilities, max=max_utility)
+            utility_threshold = 0.1
+            
+            new_activations = {}
+            utilities_cpu = total_utilities.cpu().numpy()
+            
+            for i, (exp_id, _) in enumerate(similarity_scores):
+                utility = float(utilities_cpu[i])
+                if utility > utility_threshold:
+                    new_activations[exp_id] = utility
+                    self.activation_timestamps[exp_id] = current_time
+                    self.total_activations += 1
+            
+            return new_activations
+            
+        except Exception as e:
+            print(f"GPU utility computation failed: {e}, falling back to CPU")
+            return self._cpu_compute_utilities(target_context, all_experiences, similarity_scores, time.time())
+    
+    def _gpu_compute_recent_success_boost(self, current_activations: torch.Tensor) -> torch.Tensor:
+        """GPU computation of recent success boost."""
+        # This is a simplified version - in reality we'd need more sophisticated lookup
+        # For now, use current activation as proxy for recent success
+        return current_activations * 0.5
+    
+    def _gpu_compute_connection_boost(self, current_activations: torch.Tensor) -> torch.Tensor:
+        """GPU computation of connection utility boost with mixed precision."""
+        if self._gpu_connection_matrix is None:
+            return torch.zeros_like(current_activations)
+        
+        # Matrix multiplication to compute connection-based utilities with mixed precision
+        # Each experience's boost = sum of (connected_activation * connection_strength)
+        connection_matrix_compute = self._gpu_connection_matrix.to(self.compute_dtype)
+        connection_boosts = torch.matmul(connection_matrix_compute, current_activations)
+        boost_factor = torch.tensor(0.5, dtype=self.compute_dtype, device=self.device)
+        return connection_boosts * boost_factor  # Moderate boost from connections
+    
+    def _cpu_compute_utilities(self, target_context: List[float],
+                              all_experiences: Dict[str, Experience],
+                              similarity_scores: List[Tuple[str, float]],
+                              current_time: float) -> Dict[str, float]:
+        """CPU fallback utility computation."""
+        new_activations = {}
         
         # For each potentially relevant experience, compute its prediction utility
         for exp_id, similarity in similarity_scores:
@@ -87,13 +312,7 @@ class UtilityBasedActivation:
                     self.activation_timestamps[exp_id] = current_time
                     self.total_activations += 1
         
-        # Update current activations with utility-based values
-        self.current_activations.update(new_activations)
-        
-        # Apply natural decay based on time since activation (emergent, not hardcoded)
-        self._apply_utility_based_decay(current_time)
-        
-        return self.current_activations.copy()
+        return new_activations
     
     def _compute_prediction_utility(self, 
                                   exp_id: str, 
@@ -427,8 +646,16 @@ class UtilityBasedActivation:
         self.total_activations = 0
         self.utility_based_decisions = 0
         
+        # Reset GPU tensors
+        if self.use_gpu:
+            self._gpu_experience_data = None
+            self._gpu_utility_history = None
+            self._gpu_connection_matrix = None
+            self._experience_id_to_index.clear()
+            self._index_to_experience_id.clear()
+        
         # Reset meta-learning parameters (Strategy 5)
         self.utility_learning_rate = self.initial_utility_learning_rate
         self.utility_learning_success_history.clear()
         
-        print("UtilityBasedActivation reset - clean slate for emergence (including meta-learning)")
+        print("UtilityBasedActivation reset - clean slate for emergence (including meta-learning and GPU tensors)")

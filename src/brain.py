@@ -43,11 +43,11 @@ class MinimalBrain:
         # Choose activation system: utility-based (emergent) or traditional (engineered)
         self.use_utility_based_activation = use_utility_based_activation
         if use_utility_based_activation:
-            self.activation_dynamics = UtilityBasedActivation()
+            self.activation_dynamics = UtilityBasedActivation(use_gpu=True, use_mixed_precision=True)
         else:
-            self.activation_dynamics = ActivationDynamics()
+            self.activation_dynamics = ActivationDynamics(use_gpu=True, use_mixed_precision=True)
             
-        self.prediction_engine = PredictionEngine()
+        self.prediction_engine = PredictionEngine(use_pattern_analysis=True)
         
         # Brain state
         self.total_experiences = 0
@@ -164,6 +164,17 @@ class MinimalBrain:
             self.recent_learning_outcomes = self.recent_learning_outcomes[-25:]
         
         experience_id = self.experience_storage.add_experience(experience)
+        
+        # Add experience to pattern analysis stream
+        experience_data = {
+            'experience_id': experience_id,
+            'sensory_input': sensory_input,
+            'action_taken': action_taken,
+            'outcome': outcome,
+            'prediction_error': prediction_error,
+            'timestamp': experience.timestamp
+        }
+        self.prediction_engine.add_experience_to_stream(experience_data)
         
         # Activate the new experience (method differs between systems)
         if self.use_utility_based_activation:
