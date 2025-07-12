@@ -16,3 +16,4 @@ debug_output/
 *.backup
 *old*/
 *old*.py
+CLAUDE.md
