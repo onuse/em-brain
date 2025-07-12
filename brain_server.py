@@ -52,6 +52,9 @@ class MinimalBrainServer:
             self.running = False
             self.tcp_server.stop()
             
+            # Finalize brain session (saves final checkpoint)
+            self.brain.finalize_session()
+            
             # Print final stats
             stats = self.brain.get_brain_stats()
             print(f"📊 Final Stats: {stats}")

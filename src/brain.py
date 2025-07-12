@@ -18,8 +18,10 @@ from .similarity import SimilarityEngine
 from .activation import ActivationDynamics
 from .activation.utility_based_activation import UtilityBasedActivation
 from .prediction import PredictionEngine
+from .stream import PureStreamStorage
 from .utils.brain_logger import BrainLogger
 from .utils.adaptive_trigger import AdaptiveTrigger
+from .persistence import PersistenceManager, PersistenceConfig
 
 
 class MinimalBrain:
@@ -33,7 +35,7 @@ class MinimalBrain:
     - Working memory emerges from activation dynamics
     """
     
-    def __init__(self, config=None, enable_logging=True, log_session_name=None, use_utility_based_activation=True):
+    def __init__(self, config=None, enable_logging=True, log_session_name=None, use_utility_based_activation=True, enable_persistence=True):
         """Initialize the minimal brain with all 4 core systems."""
         
         # Core systems (the only hardcoded intelligence)
@@ -48,6 +50,30 @@ class MinimalBrain:
             self.activation_dynamics = ActivationDynamics(use_gpu=True, use_mixed_precision=True)
             
         self.prediction_engine = PredictionEngine(use_pattern_analysis=True)
+        
+        # Stream storage for raw temporal sequences
+        self.stream_storage = PureStreamStorage()
+        
+        # Memory persistence system
+        self.enable_persistence = enable_persistence
+        if enable_persistence:
+            # Create persistence config from settings if available
+            persistence_config = None
+            if config and 'memory' in config:
+                memory_config = config['memory']
+                persistence_config = PersistenceConfig(
+                    memory_root_path=memory_config.get('persistent_memory_path', './robot_memory'),
+                    checkpoint_interval_experiences=memory_config.get('checkpoint_interval_experiences', 1000),
+                    checkpoint_interval_seconds=memory_config.get('checkpoint_interval_seconds', 300),
+                    max_checkpoints=memory_config.get('max_checkpoints', 10),
+                    use_compression=memory_config.get('use_compression', True)
+                )
+            
+            self.persistence_manager = PersistenceManager(persistence_config)
+            # Try to load previous brain state
+            self._load_persistent_state()
+        else:
+            self.persistence_manager = None
         
         # Brain state
         self.total_experiences = 0
@@ -227,6 +253,11 @@ class MinimalBrain:
         # Log comprehensive brain state periodically (less frequent than before)
         if self.logger and self.total_experiences % 50 == 0:
             self.logger.log_brain_state(self, self.total_experiences)
+        
+        # Check if we should create a checkpoint
+        if (self.persistence_manager and 
+            self.persistence_manager.should_create_checkpoint(self.total_experiences + 1)):
+            self._save_checkpoint()
         
         self.total_experiences += 1
         
@@ -635,6 +666,49 @@ class MinimalBrain:
         if self.logger:
             return self.logger.close_session()
         return None
+    
+    def _load_persistent_state(self):
+        """Load brain state from persistent storage if available."""
+        if not self.persistence_manager:
+            return
+        
+        try:
+            checkpoint = self.persistence_manager.load_latest_checkpoint()
+            if checkpoint:
+                self.persistence_manager.restore_brain_state(self, checkpoint)
+                print(f"🧠 Brain memory restored from {checkpoint.checkpoint_id}")
+            else:
+                print("🧠 Starting with fresh brain memory")
+        except Exception as e:
+            print(f"⚠️  Failed to load persistent state: {e}")
+            print("🧠 Starting with fresh brain memory")
+    
+    def _save_checkpoint(self):
+        """Save current brain state to persistent storage."""
+        if not self.persistence_manager:
+            return
+        
+        try:
+            checkpoint_id = self.persistence_manager.save_checkpoint(self)
+            return checkpoint_id
+        except Exception as e:
+            print(f"⚠️  Failed to save checkpoint: {e}")
+            return None
+    
+    def save_brain_state(self) -> Optional[str]:
+        """Manually save brain state (public interface)."""
+        return self._save_checkpoint()
+    
+    def finalize_session(self):
+        """Finalize brain session - call on shutdown."""
+        # Create final checkpoint
+        if self.persistence_manager:
+            self._save_checkpoint()
+            self.persistence_manager.finalize_session()
+        
+        # Close logging
+        if self.logger:
+            self.logger.close_session()
     
     def __str__(self) -> str:
         # Get working memory size (method differs between systems)
