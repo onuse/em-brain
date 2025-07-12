@@ -40,7 +40,7 @@ class MinimalBrain:
         
         # Core systems (the only hardcoded intelligence)
         self.experience_storage = ExperienceStorage()
-        self.similarity_engine = SimilarityEngine(use_gpu=True, use_learnable_similarity=True)
+        self.similarity_engine = SimilarityEngine(use_gpu=True, use_learnable_similarity=True, use_natural_attention=True)
         
         # Choose activation system: utility-based (emergent) or traditional (engineered)
         self.use_utility_based_activation = use_utility_based_activation
@@ -162,7 +162,11 @@ class MinimalBrain:
             The experience ID
         """
         # Compute prediction error
-        if predicted_action:
+        if hasattr(self, '_test_prediction_error'):
+            # Use explicit prediction error for testing
+            prediction_error = self._test_prediction_error
+            delattr(self, '_test_prediction_error')  # Remove after use
+        elif predicted_action:
             # For prediction error, we compare predicted vs actual sensory outcome
             # (what we predicted would happen vs what actually happened)
             prediction_error = self._compute_prediction_error(predicted_action, outcome)
@@ -172,13 +176,19 @@ class MinimalBrain:
         # Compute intrinsic reward for this experience
         intrinsic_reward = self.compute_intrinsic_reward(prediction_error)
         
-        # Create and store experience
+        # Initialize natural memory properties (will be updated as experience is used)
+        initial_utility = 0.5  # Default utility, will adapt based on prediction success
+        initial_cluster_density = 0.0  # Will be computed when similar experiences are found
+        
+        # Create and store experience with natural memory properties
         experience = Experience(
             sensory_input=sensory_input,
             action_taken=action_taken,
             outcome=outcome,
             prediction_error=prediction_error,
-            timestamp=time.time()
+            timestamp=time.time(),
+            prediction_utility=initial_utility,
+            local_cluster_density=initial_cluster_density
         )
         
         # Store the intrinsic reward in the experience (for potential future use)
@@ -220,8 +230,8 @@ class MinimalBrain:
                 if prediction_error > surprise_threshold:
                     self.activation_dynamics.boost_activation_by_prediction_error(experience)
         
-        # Update similarity connections to related experiences
-        self._update_similarity_connections(experience)
+        # Update similarity connections and compute natural clustering properties
+        self._update_similarity_connections_and_clustering(experience)
         
         # Record prediction outcomes for similarity learning
         if predicted_action and len(self.experience_storage._experiences) > 0:
@@ -357,10 +367,8 @@ class MinimalBrain:
             similar_experience = self.experience_storage._experiences[exp_id]
             similar_vector = similar_experience.get_context_vector()
             
-            # Record how well this "similar" experience helped predict
-            self.similarity_engine.record_prediction_outcome(
-                sensory_input, exp_id, similar_vector, prediction_success
-            )
+            # Update this experience's prediction utility based on how well it helped
+            self.similarity_engine.update_experience_utility(similar_experience, prediction_success)
     
     def _compute_prediction_success(self, predicted_outcome: List[float], 
                                   actual_outcome: List[float]) -> float:
@@ -506,38 +514,40 @@ class MinimalBrain:
         )
     
     def _activate_similar_experiences(self, sensory_input: List[float]):
-        """Activate experiences similar to current input (brings them into working memory) - traditional method."""
+        """Activate experiences similar to current input with attention weighting - traditional method."""
         
         if len(self.experience_storage._experiences) == 0:
             return
         
-        # Find similar experiences
-        experience_vectors = []
-        experience_ids = []
-        for exp_id, exp in self.experience_storage._experiences.items():
-            experience_vectors.append(exp.get_context_vector())
-            experience_ids.append(exp_id)
+        # Get all experiences for attention-weighted similarity
+        experiences = list(self.experience_storage._experiences.values())
         
-        similar_experiences = self.similarity_engine.find_similar_experiences(
-            sensory_input, experience_vectors, experience_ids,
-            max_results=10, min_similarity=0.4
+        # Find similar experiences using natural attention weighting
+        similar_results = self.similarity_engine.find_similar_experiences_with_natural_attention(
+            sensory_input, experiences, max_results=10, min_similarity=0.4, retrieval_mode='normal'
         )
         
-        # Activate similar experiences (working memory effect)
-        for exp_id, similarity in similar_experiences:
-            experience = self.experience_storage._experiences[exp_id]
-            activation_strength = similarity * 0.6  # Scale by similarity
+        # Activate similar experiences (working memory effect) 
+        # Higher natural attention experiences get boosted activation
+        for experience, weighted_similarity, base_similarity, natural_attention in similar_results:
+            # Use natural attention weight for activation strength
+            activation_strength = weighted_similarity * 0.6  # Scale by attention-weighted similarity
+            
+            # Boost activation for high-utility/distinctive experiences (natural attention boost)
+            if natural_attention > 0.7:
+                activation_strength *= 1.2  # 20% boost for naturally important memories
+            
             self.activation_dynamics.activate_experience(experience, activation_strength)
     
-    def _update_similarity_connections(self, new_experience: Experience):
-        """Update similarity connections between the new experience and existing ones."""
+    def _update_similarity_connections_and_clustering(self, new_experience: Experience):
+        """Update similarity connections and compute natural clustering properties."""
         
         if len(self.experience_storage._experiences) <= 1:
             return
         
         new_vector = new_experience.get_context_vector()
         
-        # Find a few most similar experiences and cache the connections
+        # Find all similar experiences for clustering analysis
         experience_vectors = []
         experience_ids = []
         for exp_id, exp in self.experience_storage._experiences.items():
@@ -546,16 +556,77 @@ class MinimalBrain:
                 experience_ids.append(exp_id)
         
         if experience_vectors:
-            similar_experiences = self.similarity_engine.find_similar_experiences(
+            # Get all similarities for clustering analysis
+            all_similarities = self.similarity_engine.find_similar_experiences(
                 new_vector, experience_vectors, experience_ids,
-                max_results=5, min_similarity=0.3
+                max_results=len(experience_vectors), min_similarity=0.0
             )
             
-            # Store bidirectional similarity connections
-            for exp_id, similarity in similar_experiences:
-                new_experience.add_similarity(exp_id, similarity)
-                other_experience = self.experience_storage._experiences[exp_id]
-                other_experience.add_similarity(new_experience.experience_id, similarity)
+            # Count close neighbors for cluster density (natural clustering detection)
+            close_neighbors = [sim for _, sim in all_similarities if sim > 0.7]
+            medium_neighbors = [sim for _, sim in all_similarities if sim > 0.5]
+            
+            # Update cluster density based on how many similar experiences exist
+            new_experience.update_cluster_density(
+                num_similar_neighbors=len(close_neighbors),
+                search_radius=0.1 if close_neighbors else 0.05
+            )
+            
+            # Store connections to most similar experiences (top 5)
+            top_similar = all_similarities[:5] if len(all_similarities) >= 5 else all_similarities
+            
+            for exp_id, similarity in top_similar:
+                if similarity > 0.3:  # Only store meaningful connections
+                    new_experience.add_similarity(exp_id, similarity)
+                    other_experience = self.experience_storage._experiences[exp_id]
+                    other_experience.add_similarity(new_experience.experience_id, similarity)
+                    
+                    # Also update cluster density for the other experience
+                    other_neighbors = [s for _, s in self.similarity_engine.find_similar_experiences(
+                        other_experience.get_context_vector(), experience_vectors, experience_ids,
+                        max_results=len(experience_vectors), min_similarity=0.7
+                    )]
+                    other_experience.update_cluster_density(len(other_neighbors), 0.1)
+    
+    def _get_learning_context(self) -> Dict[str, Any]:
+        """Get learning context for adaptive attention scoring."""
+        # Compute current accuracy from recent learning outcomes
+        if len(self.recent_learning_outcomes) > 0:
+            current_accuracy = sum(self.recent_learning_outcomes) / len(self.recent_learning_outcomes)
+        else:
+            current_accuracy = 0.5  # Default moderate accuracy
+        
+        # Compute recent prediction accuracy trend
+        recent_errors = []
+        for exp in list(self.experience_storage._experiences.values())[-10:]:
+            recent_errors.append(exp.prediction_error)
+        
+        recent_accuracy = 1.0 - (sum(recent_errors) / len(recent_errors)) if recent_errors else 0.5
+        
+        return {
+            'current_accuracy': current_accuracy,
+            'recent_accuracy': recent_accuracy,
+            'learning_velocity': self._compute_learning_velocity(),
+            'total_experiences': len(self.experience_storage._experiences)
+        }
+    
+    def _compute_learning_velocity(self) -> float:
+        """Compute how fast learning is improving (accuracy change rate)."""
+        if len(self.recent_learning_outcomes) < 10:
+            return 0.0
+        
+        # Compare first half vs second half of recent outcomes
+        outcomes = list(self.recent_learning_outcomes)
+        first_half = outcomes[:len(outcomes)//2]
+        second_half = outcomes[len(outcomes)//2:]
+        
+        if len(first_half) == 0 or len(second_half) == 0:
+            return 0.0
+        
+        first_avg = sum(first_half) / len(first_half)
+        second_avg = sum(second_half) / len(second_half)
+        
+        return second_avg - first_avg  # Positive = improving, negative = declining
     
     def _get_brain_state(self, prediction_details: Dict[str, Any], confidence: float) -> Dict[str, Any]:
         """Get comprehensive brain state information."""
@@ -571,6 +642,13 @@ class MinimalBrain:
         # Compute current intrinsic reward (the robot's fundamental drive state)
         current_intrinsic_reward = self.compute_intrinsic_reward()
         
+        # Get natural attention system stats
+        attention_stats = {}
+        if hasattr(self.similarity_engine, 'natural_attention_similarity') and self.similarity_engine.natural_attention_similarity:
+            attention_stats = self.similarity_engine.natural_attention_similarity.get_natural_attention_stats(
+                list(self.experience_storage._experiences.values())
+            )
+        
         return {
             'total_experiences': len(self.experience_storage._experiences),
             'working_memory_size': working_memory_size,
@@ -580,7 +658,8 @@ class MinimalBrain:
             'brain_uptime': time.time() - self.brain_start_time,
             'total_predictions': self.total_predictions,
             'intrinsic_reward': current_intrinsic_reward,  # The robot's DNA-equivalent drive state
-            'prediction_error_drive': 'optimal_at_0.3'  # Document the fundamental drive
+            'prediction_error_drive': 'optimal_at_0.3',  # Document the fundamental drive
+            'natural_attention_system': attention_stats  # Natural attention system status
         }
     
     def get_brain_stats(self) -> Dict[str, Any]:

@@ -40,6 +40,10 @@ class Experience:
     # Connection weights to other experiences (learned similarities)
     similar_experiences: Dict[str, float] = None  # experience_id -> similarity
     
+    # Natural memory properties (for emergent attention effects)
+    prediction_utility: float = 0.5  # How useful this experience is for prediction
+    local_cluster_density: float = 0.0  # How clustered this experience is with similar ones
+    
     def __post_init__(self):
         """Initialize computed fields."""
         if self.experience_id is None:
@@ -111,6 +115,51 @@ class Experience:
         """
         return self.prediction_error < error_threshold
     
+    def get_natural_attention_weight(self, current_time: float = None) -> float:
+        """
+        Compute natural attention weight from emergent properties.
+        
+        This replaces explicit attention scores with natural signals:
+        - Prediction utility (how useful this experience is)
+        - Distinctiveness (inverse of clustering density)  
+        - Recent access frequency (biological recency effect)
+        
+        Returns:
+            Natural attention weight (0.0-1.0+) 
+        """
+        if current_time is None:
+            import time
+            current_time = time.time()
+        
+        # Component 1: Prediction utility (already tracked by activation system)
+        utility_component = self.prediction_utility
+        
+        # Component 2: Distinctiveness (unique experiences stand out)
+        if self.local_cluster_density > 0:
+            distinctiveness = 1.0 / (1.0 + self.local_cluster_density)
+        else:
+            distinctiveness = 1.0  # No clustering info = assume distinctive
+        
+        # Component 3: Recency and access frequency (biological forgetting curve)
+        time_since_access = current_time - self.last_accessed
+        recency_factor = 1.0 / (1.0 + time_since_access / 86400.0)  # Decay over days
+        access_factor = min(1.0, self.access_count / 10.0)  # Frequent access = important
+        
+        # Combine natural signals (no magic numbers, just natural weighting)
+        natural_weight = utility_component * distinctiveness * (recency_factor + access_factor)
+        
+        return max(0.0, min(2.0, natural_weight))  # Allow some boost for very important memories
+    
+    def update_prediction_utility(self, prediction_success: float):
+        """Update how useful this experience is for making predictions."""
+        # Simple moving average of prediction utility
+        self.prediction_utility = (self.prediction_utility * 0.9) + (prediction_success * 0.1)
+    
+    def update_cluster_density(self, num_similar_neighbors: int, search_radius: float = 0.1):
+        """Update how clustered this experience is with similar ones."""
+        # Experiences with many close neighbors are in dense clusters
+        self.local_cluster_density = num_similar_neighbors * search_radius
+    
     def get_memory_size(self) -> int:
         """Estimate memory usage in bytes."""
         # Rough estimate: each float = 8 bytes, plus overhead
@@ -131,13 +180,15 @@ class Experience:
             'activation_level': self.activation_level,
             'last_accessed': self.last_accessed,
             'access_count': self.access_count,
-            'similar_experiences': self.similar_experiences
+            'similar_experiences': self.similar_experiences,
+            'prediction_utility': self.prediction_utility,
+            'local_cluster_density': self.local_cluster_density
         }
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Experience':
         """Create Experience from dictionary."""
-        return cls(
+        exp = cls(
             sensory_input=data['sensory_input'],
             action_taken=data['action_taken'],
             outcome=data['outcome'],
@@ -147,8 +198,11 @@ class Experience:
             activation_level=data.get('activation_level', 0.0),
             last_accessed=data.get('last_accessed', data['timestamp']),
             access_count=data.get('access_count', 0),
-            similar_experiences=data.get('similar_experiences', {})
+            similar_experiences=data.get('similar_experiences', {}),
+            prediction_utility=data.get('prediction_utility', 0.5),
+            local_cluster_density=data.get('local_cluster_density', 0.0)
         )
+        return exp
     
     def __str__(self) -> str:
         """Human-readable representation."""

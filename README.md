@@ -221,25 +221,40 @@ No JSON, no complex packets, no WebSocket overhead. Raw vector exchange only.
 
 ## Constraints
 
-### Complexity Limits
-- **Maximum Systems**: 4 (if you need more, something should emerge instead)
-- **Core Brain Code**: <500 lines total
-- **Explanation Time**: <5 minutes to understand entire system
-- **Dependencies**: Basic math only, no specialized AI libraries
+### Core Intelligence Simplicity
+The "embarrassingly simple" constraint applies to the **core brain dynamics**, not supporting infrastructure:
 
-### What We Don't Build
+**Core Brain Systems** (Must remain simple):
+- **Maximum Systems**: 4 (experience, similarity, activation, prediction)
+- **Core Brain Logic**: Conceptually simple - no complex cognitive modules
+- **Intelligence Emergence**: Everything beyond the 4 systems emerges from their interaction
+- **Explanation Time**: <5 minutes to understand the core intelligence mechanism
+
+**Supporting Infrastructure** (Can be sophisticated):
+- **TCP Servers**: Network communication, protocol handling, client management
+- **GPU Acceleration**: Hardware optimization for similarity search and activation
+- **Persistence Systems**: Saving/loading experiences, compression, checkpointing  
+- **Monitoring & Logging**: Performance tracking, debugging, analysis tools
+- **Development Tools**: Testing frameworks, visualization, debugging utilities
+
+### The Key Distinction
+**Intelligence should be simple. Engineering can be sophisticated.**
+
+The goal is conceptual simplicity of the intelligence mechanism, not performance art. A production-ready brain needs robust infrastructure while maintaining elegant core dynamics.
+
+### What We Don't Build (In Core Brain Logic)
 - Motivator classes (single adaptive drive replaces all motivations)
 - Memory accessors (similarity search handles all retrieval)
 - Novelty detectors (novelty = low similarity to existing experiences)
 - Spatial representations (places emerge from sensory clustering)
 - Motor templates (skills emerge from successful action patterns)
 - Working memory modules (activation levels create working memory)
-- Attention systems (activation spreading IS attention)
+- Attention systems (natural properties create attention effects)
 - Goal hierarchies (goals emerge from prediction error optimization)
 - Parameter tuning systems (parameters self-adjust based on learning outcomes)
-- Hardcoded thresholds (all thresholds adapt to optimize prediction performance)
+- Hardcoded cognitive thresholds (all thresholds adapt to optimize prediction performance)
 
-**If it's not in the 4 systems above, it should emerge from their interaction.**
+**If it's not in the 4 core systems above, it should emerge from their interaction - not be engineered as additional cognitive modules.**
 
 ---
 

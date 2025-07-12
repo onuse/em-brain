@@ -9,6 +9,7 @@ from typing import List, Tuple, Optional, Dict, Any
 import numpy as np
 import time
 from .learnable_similarity import LearnableSimilarity
+from .adaptive_attention import AdaptiveAttentionScorer
 
 # Try GPU acceleration (PyTorch MPS preferred)
 try:
@@ -41,23 +42,33 @@ class SimilarityEngine:
     in milliseconds enables intelligent prediction and action selection.
     """
     
-    def __init__(self, use_gpu: bool = True, use_learnable_similarity: bool = True):
+    def __init__(self, use_gpu: bool = True, use_learnable_similarity: bool = True, 
+                 use_natural_attention: bool = True):
         """
         Initialize similarity search engine.
         
         Args:
             use_gpu: Whether to use GPU acceleration if available
             use_learnable_similarity: Whether to use adaptive similarity learning
+            use_natural_attention: Whether to use natural attention weighting
         """
         self.use_gpu = use_gpu and MPS_FUNCTIONAL
         self.device = 'mps' if self.use_gpu else 'cpu'
         self.use_learnable_similarity = use_learnable_similarity
+        self.use_natural_attention = use_natural_attention
         
         # Learnable similarity function
         if use_learnable_similarity:
             self.learnable_similarity = LearnableSimilarity(use_gpu=use_gpu)
         else:
             self.learnable_similarity = None
+        
+        # Natural attention weighting (no explicit scoring, uses emergent properties)
+        if use_natural_attention:
+            from .adaptive_attention import NaturalAttentionSimilarity
+            self.natural_attention_similarity = NaturalAttentionSimilarity(self)
+        else:
+            self.natural_attention_similarity = None
         
         # Performance tracking
         self.total_searches = 0
@@ -69,11 +80,13 @@ class SimilarityEngine:
         self._max_cache_size = 1000
         
         similarity_type = "learnable adaptive" if use_learnable_similarity else "hardcoded cosine"
+        attention_type = " + natural attention" if use_natural_attention else ""
+        
         if self.use_gpu:
-            print(f"SimilarityEngine using {similarity_type} similarity with GPU acceleration")
+            print(f"SimilarityEngine using {similarity_type}{attention_type} similarity with GPU acceleration")
             self._warmup_gpu()
         else:
-            print(f"SimilarityEngine using {similarity_type} similarity with CPU")
+            print(f"SimilarityEngine using {similarity_type}{attention_type} similarity with CPU")
     
     def find_similar_experiences(self, 
                                target_vector: List[float],
@@ -133,6 +146,67 @@ class SimilarityEngine:
         self._cache_result(cache_key, results)
         
         return results
+    
+    def find_similar_experiences_with_natural_attention(self,
+                                                      target_vector: List[float],
+                                                      experiences: List[Any],
+                                                      max_results: int = 10,
+                                                      min_similarity: float = 0.3,
+                                                      retrieval_mode: str = 'normal') -> List[tuple]:
+        """
+        Find similar experiences using natural attention weighting.
+        
+        Uses emergent properties (utility, clustering, access patterns) instead of
+        explicit attention scores to create biological memory suppression effects.
+        
+        Args:
+            target_vector: Vector to find similarities for
+            experiences: List of Experience objects with natural properties
+            max_results: Maximum results to return
+            min_similarity: Minimum similarity threshold  
+            retrieval_mode: 'normal', 'deep', 'hybrid', or 'utility_focused'
+            
+        Returns:
+            List of (experience, weighted_similarity, base_similarity, natural_attention) tuples
+        """
+        if not self.use_natural_attention or self.natural_attention_similarity is None:
+            # Fallback to regular similarity search
+            experience_vectors = []
+            experience_ids = []
+            
+            for i, exp in enumerate(experiences):
+                context_vector = list(exp.sensory_input) + list(exp.action_taken)
+                experience_vectors.append(context_vector)
+                experience_ids.append(f"exp_{i}")
+            
+            base_results = self.find_similar_experiences(
+                target_vector, experience_vectors, experience_ids, max_results, min_similarity
+            )
+            
+            # Convert to natural attention format (no attention weighting)
+            results = []
+            for exp_id, similarity in base_results:
+                exp_index = int(exp_id.split('_')[1])
+                experience = experiences[exp_index]
+                natural_attention = experience.get_natural_attention_weight()
+                results.append((experience, similarity, similarity, natural_attention))
+            
+            return results
+        
+        # Use natural attention-weighted similarity
+        return self.natural_attention_similarity.find_similar_experiences_with_natural_attention(
+            target_vector, experiences, max_results, min_similarity, retrieval_mode
+        )
+    
+    def update_experience_utility(self, experience, prediction_success: float):
+        """
+        Update an experience's prediction utility based on how well it helped with prediction.
+        
+        Args:
+            experience: Experience object to update
+            prediction_success: How successful the prediction was (0.0-1.0)
+        """
+        experience.update_prediction_utility(prediction_success)
     
     def _gpu_compute_similarities(self, target_vector: List[float], 
                                  experience_vectors: List[List[float]]) -> np.ndarray:
@@ -324,6 +398,13 @@ class SimilarityEngine:
         if self.use_learnable_similarity and self.learnable_similarity is not None:
             similarity_stats = self.learnable_similarity.get_similarity_statistics()
             stats['similarity_learning'] = similarity_stats
+        
+        # Add natural attention statistics if available
+        if self.use_natural_attention and self.natural_attention_similarity is not None:
+            # We'll get these when needed from the brain state
+            stats['natural_attention_available'] = True
+        else:
+            stats['natural_attention_available'] = False
         
         return stats
     
