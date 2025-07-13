@@ -4,14 +4,29 @@
 
 ## 🚀 Quick Start
 
-**Run any demo from project root:**
+### Installation
 ```bash
-python3 demo.py                    # Interactive demo launcher
-python3 run_demo.py brain          # Quick brain tests
-python3 run_demo.py text           # ASCII robot simulation  
-python3 run_demo.py wireframe      # Battlezone-style 3D
-python3 run_demo.py spatial        # Spatial learning demo
+# Install core brain dependencies (minimum required)
+pip install numpy torch psutil
+
+# Or install everything including demos
+pip install -r requirements.txt
+
+# Test installation
+python3 test_installation.py
 ```
+
+### Running Demos
+```bash
+python3 demo_runner.py spatial     # Spatial learning demo (recommended first)
+python3 demo_runner.py brain       # Brain functionality demo
+python3 demo.py                    # Interactive demo launcher
+```
+
+**System Requirements:**
+- Python 3.8+ (tested on 3.13.5)
+- 4GB+ RAM (brain scales with available memory)
+- Optional: GPU (MPS/CUDA) for acceleration
 
 ## Philosophy
 

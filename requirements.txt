@@ -1,17 +1,68 @@
 # Minimal Brain Requirements
+# Complete system including all demos and Evolution Phase 2 + Hardware Adaptation
 # Tested with Python 3.13.5
 
-# Core scientific computing
+# ============================================================================
+# CORE BRAIN REQUIREMENTS (Essential for basic brain functionality)
+# ============================================================================
+
+# Scientific computing foundation
 numpy==2.3.1
 
-# GPU acceleration for similarity search
+# GPU acceleration for similarity search and neural activation
 torch==2.7.1
 
-# Optional: For visualization demos (if needed)
-# matplotlib>=3.5.0
+# Hardware adaptation system (CPU, memory monitoring)
+psutil>=5.8.0
 
-# Optional: For network communication (client-server mode)
-# No additional requirements - uses built-in socket module
+# ============================================================================
+# DEMO REQUIREMENTS (For visualization and interactive demos)
+# ============================================================================
 
-# Development tools (optional)
-# pytest>=7.0.0  # For running tests
+# 2D visualization (pygame-based demos: wireframe, 2D debug)
+pygame>=2.1.0
+
+# 3D visualization (battlezone-style OpenGL demos)
+pyglet>=2.0.0
+PyOpenGL>=3.1.6
+
+# Scientific plotting (3D trajectory visualization)
+matplotlib>=3.5.0
+
+# ============================================================================
+# DEVELOPMENT & TESTING (Optional but recommended)
+# ============================================================================
+
+# Testing framework
+pytest>=7.0.0
+
+# ============================================================================
+# INSTALLATION NOTES
+# ============================================================================
+
+# Minimal installation (brain only):
+#   pip install numpy torch psutil
+#
+# Full installation (brain + all demos):
+#   pip install -r requirements.txt
+#
+# Platform-specific notes:
+#   - PyTorch MPS (Apple Silicon): Automatically detected and used
+#   - PyTorch CUDA (NVIDIA): Automatically detected and used  
+#   - OpenGL: May require platform-specific setup for 3D demos
+#   - pygame: May require additional system libraries on some Linux distributions
+#
+# Troubleshooting:
+#   - If OpenGL demos fail: Try running from desktop environment
+#   - If pygame fails: Install system SDL libraries (apt install libsdl2-dev)
+#   - If torch fails: Check Python version compatibility (3.8+ required)
+
+# ============================================================================
+# VERSION COMPATIBILITY
+# ============================================================================
+
+# Python: 3.8+ (tested on 3.13.5)
+# Hardware: CPU + optional GPU (MPS/CUDA)
+# OS: macOS, Linux, Windows
+# Memory: 4GB+ recommended (brain scales with available memory)
+# Storage: 100MB+ for logs and persistent memory
