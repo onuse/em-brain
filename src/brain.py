@@ -18,6 +18,8 @@ from .similarity import SimilarityEngine
 from .activation import ActivationDynamics
 from .activation.utility_based_activation import UtilityBasedActivation
 from .prediction import PredictionEngine
+from .prediction.adaptive_engine import AdaptivePredictionEngine
+from .utils.cognitive_autopilot import CognitiveAutopilot
 from .stream import PureStreamStorage
 from .utils.brain_logger import BrainLogger
 from .utils.adaptive_trigger import AdaptiveTrigger
@@ -61,7 +63,14 @@ class MinimalBrain:
         else:
             self.activation_dynamics = ActivationDynamics(use_gpu=True, use_mixed_precision=True)
             
-        self.prediction_engine = PredictionEngine(use_pattern_analysis=True)
+        # Initialize cognitive autopilot for adaptive intensity control
+        self.cognitive_autopilot = CognitiveAutopilot()
+        
+        # Use adaptive prediction engine with cognitive autopilot
+        self.prediction_engine = AdaptivePredictionEngine(
+            use_pattern_analysis=True, 
+            cognitive_autopilot=self.cognitive_autopilot
+        )
         
         # Stream storage for raw temporal sequences
         self.stream_storage = PureStreamStorage()
@@ -159,16 +168,40 @@ class MinimalBrain:
             self.activation_dynamics.update_all_activations(self.experience_storage._experiences)
             self._activate_similar_experiences(sensory_input)
         
-        # Predict action using all available experience
+        # Update cognitive autopilot first to get proper recommendations
+        last_confidence = getattr(self, '_last_confidence', 0.5)
+        prediction_error = 1.0 - last_confidence  # Simple error estimate
+        
+        initial_brain_state = {
+            'prediction_confidence': last_confidence,
+            'num_experiences': len(self.experience_storage._experiences)
+        }
+        
+        autopilot_state = self.cognitive_autopilot.update_cognitive_state(
+            last_confidence, prediction_error, initial_brain_state
+        )
+        
+        # Create brain state with autopilot recommendations for prediction
+        brain_state_for_prediction = {
+            'prediction_confidence': last_confidence,
+            'num_experiences': len(self.experience_storage._experiences),
+            'cognitive_autopilot': autopilot_state
+        }
+        
+        # Predict action using all available experience with adaptive intensity
         predicted_action, confidence, prediction_details = self.prediction_engine.predict_action(
             sensory_input,
             self.similarity_engine,
             self.activation_dynamics, 
             self.experience_storage._experiences,
-            action_dimensions
+            action_dimensions,
+            brain_state_for_prediction
         )
         
         self.total_predictions += 1
+        
+        # Store confidence for next cycle
+        self._last_confidence = confidence
         
         # Log prediction outcome if logging enabled
         if self.logger and predicted_action:
@@ -199,6 +232,7 @@ class MinimalBrain:
         brain_state['cycle_time'] = cycle_time
         brain_state['cycle_time_ms'] = cycle_time_ms
         brain_state['hardware_adaptive_limits'] = self.hardware_adaptation.get_cognitive_limits()
+        brain_state['cognitive_autopilot'] = autopilot_state
         
         return predicted_action, brain_state
     

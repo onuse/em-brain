@@ -25,9 +25,9 @@ class AdaptiveTrigger:
     """
     
     def __init__(self, 
-                 min_experiences_between_adaptations: int = 5,
-                 gradient_change_threshold: float = 0.3,
-                 plateau_detection_window: int = 20,
+                 min_experiences_between_adaptations: int = 100,  # Biologically plausible (was 5)
+                 gradient_change_threshold: float = 0.5,          # Less sensitive (was 0.3)
+                 plateau_detection_window: int = 200,             # Longer patience (was 20)
                  surprise_threshold: float = 0.7):
         """
         Initialize adaptive trigger system.
@@ -48,7 +48,7 @@ class AdaptiveTrigger:
         self.surprise_threshold = surprise_threshold  # Will adapt
         
         # Meta-learning parameters for adaptive thresholds
-        self.threshold_adaptation_rate = 0.1
+        self.threshold_adaptation_rate = 0.02  # Biologically plausible (was 0.1)
         self.adaptation_success_tracking = []  # Track trigger success/failure
         
         # Tracking state

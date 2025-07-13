@@ -43,7 +43,7 @@ class AdaptiveBounds:
         }
         
         # Bound adaptation rates (how fast bounds can change)
-        self.bound_adaptation_rate = 0.02  # Conservative adaptation
+        self.bound_adaptation_rate = 0.002  # Biologically plausible (was 0.02)
         self.min_bound_separation = 0.001  # Bounds can't get too close
         
         # Performance metrics for adaptation
@@ -285,9 +285,9 @@ class PerformanceMonitor:
         self.recent_memory_usage = deque(maxlen=30)
         
         # Performance degradation detection
-        self.performance_degradation_threshold = 0.2  # 20% worse than baseline
+        self.performance_degradation_threshold = 1.0  # Biologically plausible (100% vs 20%)
         self.consecutive_bad_cycles = 0
-        self.max_bad_cycles = 10  # Trigger rollback after this many bad cycles
+        self.max_bad_cycles = 50  # Biologically plausible patience (50 vs 10)
         
         print("📈 PerformanceMonitor initialized - watching for degradation")
     

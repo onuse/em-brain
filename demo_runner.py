@@ -17,6 +17,7 @@ def main():
         'test_demo': 'python3 -c "from demos.test_demo import main; main()"',
         'demo_2d': 'python3 -c "from demos.demo_2d import main; main()"',
         'demo_3d': 'python3 -c "from demos.demo_3d import main; main()"',
+        'demo_3d_hifi': 'python3 -c "from demos.demo_3d_new import main; main()"',
         'spatial_learning': 'python3 -c "from demos.spatial_learning_demo import main; main()"',
         'server': 'python3 brain_server.py',
         # Old names for backward compatibility

@@ -9,7 +9,9 @@ to ensure adaptive parameters don't hurt system speed.
 import time
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# Add the brain/ directory to import path
+brain_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, brain_dir)
 
 from src.brain import MinimalBrain
 

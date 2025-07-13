@@ -69,7 +69,7 @@ class PiCarXBrainstem:
         self.steering_angle = 0.0   # -30 to 30 degrees
         
         # Initialize the minimal brain
-        self.brain = MinimalBrain()
+        self.brain = MinimalBrain(enable_phase2_adaptations=False)
         
         # Performance tracking
         self.total_control_cycles = 0

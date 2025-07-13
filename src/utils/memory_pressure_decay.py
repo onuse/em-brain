@@ -41,7 +41,7 @@ class MemoryPressureDecay:
         # Adaptation parameters (conservative)
         self.max_decay_multiplier = 3.0  # Max 3x base decay rate
         self.min_decay_multiplier = 0.3  # Min 0.3x base decay rate
-        self.adaptation_rate = 0.05  # How fast decay adapts
+        self.adaptation_rate = 0.01  # Biologically plausible (was 0.05)
         
         print(f"🧠 MemoryPressureDecay initialized - base rate: {base_decay_rate}")
     

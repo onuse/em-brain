@@ -24,6 +24,8 @@ brain_dir = os.path.dirname(current_dir)   # brain/
 sys.path.insert(0, brain_dir)
 
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import time
@@ -108,7 +110,7 @@ class PiCarX3DSimulation:
             
             plt.tight_layout()
             plt.ion()
-            plt.show()
+            plt.show(block=False)
         
         # Simulation loop
         start_time = time.time()
@@ -149,6 +151,7 @@ class PiCarX3DSimulation:
             if self.show_realtime and time.time() - last_update > 0.5:  # Update every 0.5s
                 self._update_visualization(fig, ax3d, ax_traj, ax_brain, ax_perf)
                 plt.pause(0.01)
+                plt.savefig(f'logs/demo_3d_step_{self.step_count:03d}.png', dpi=100, bbox_inches='tight')
                 last_update = time.time()
             
             # Control simulation speed
@@ -174,7 +177,11 @@ class PiCarX3DSimulation:
         if self.show_realtime:
             self._create_final_visualization()
             plt.ioff()
-            plt.show()
+            plt.savefig('logs/demo_3d_final_result.png', dpi=150, bbox_inches='tight')
+            print(f"📊 Final visualization saved to: logs/demo_3d_final_result.png")
+            plt.show(block=False)
+            time.sleep(2)  # Brief display
+            plt.close('all')
         
         return self._get_simulation_results()
     
