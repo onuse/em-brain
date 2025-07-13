@@ -14,6 +14,6 @@ debug_output/
 *logs*/
 *output*/
 *.backup
-*old*/
-*old*.py
+*old/
+*old.py
 CLAUDE.md

@@ -93,7 +93,8 @@ class SimilarityEngine:
                                experience_vectors: List[List[float]],
                                experience_ids: List[str],
                                max_results: int = 10,
-                               min_similarity: float = 0.3) -> List[Tuple[str, float]]:
+                               min_similarity: float = 0.3,
+                               use_raw_similarity: bool = False) -> List[Tuple[str, float]]:
         """
         Find the most similar experience vectors to the target.
         
@@ -103,6 +104,7 @@ class SimilarityEngine:
             experience_ids: Corresponding IDs for each experience vector
             max_results: Maximum number of similar experiences to return
             min_similarity: Minimum similarity threshold (0.0-1.0)
+            use_raw_similarity: Force raw similarity (bypass attention optimization)
             
         Returns:
             List of (experience_id, similarity_score) sorted by similarity (highest first)
@@ -112,6 +114,11 @@ class SimilarityEngine:
         
         if len(experience_vectors) != len(experience_ids):
             raise ValueError("experience_vectors and experience_ids must have same length")
+        
+        # Evolution 2.1: Intelligent Routing - DISABLED temporarily due to recursion
+        # TODO: Fix recursion issue - natural attention calls back into this method
+        # The attention system needs to use raw similarity internally
+        pass
         
         start_time = time.time()
         
@@ -376,6 +383,55 @@ class SimilarityEngine:
         """
         if self.use_learnable_similarity and self.learnable_similarity is not None:
             self.learnable_similarity.adapt_similarity_function()
+    
+    def _vectors_to_experiences_bridge(self, experience_vectors: List[List[float]], experience_ids: List[str]):
+        """
+        Bridge function to convert vectors back to experience-like objects for attention system.
+        
+        This is a temporary bridge between the old vector-based interface and the new
+        attention-aware interface. Eventually the brain should pass experience objects directly.
+        """
+        from ..experience import Experience
+        import time
+        
+        experiences = []
+        current_time = time.time()
+        
+        for i, (vector, exp_id) in enumerate(zip(experience_vectors, experience_ids)):
+            # Create a minimal experience object for attention processing
+            # Assumes vector format: [sensory_input..., action_taken...]
+            vector_len = len(vector)
+            
+            # Rough heuristic: assume last 4 elements are action, rest are sensory
+            if vector_len >= 4:
+                sensory_len = vector_len - 4
+                sensory_input = vector[:sensory_len] if sensory_len > 0 else vector
+                action_taken = vector[-4:] if vector_len >= 4 else [0.0, 0.0, 0.0, 0.0]
+            else:
+                sensory_input = vector
+                action_taken = [0.0, 0.0, 0.0, 0.0]
+            
+            # Create experience with reasonable defaults
+            # The attention system mainly needs: id, prediction_utility, local_cluster_density
+            experience = Experience(
+                sensory_input=sensory_input,
+                action_taken=action_taken,
+                outcome=sensory_input,  # Dummy outcome
+                prediction_error=0.3,  # Default moderate error
+                timestamp=current_time - i  # Spread timestamps slightly
+            )
+            
+            # Set experience ID to match
+            experience.id = exp_id
+            
+            # Set reasonable defaults for attention calculation
+            experience.prediction_utility = 0.5  # Default utility
+            experience.local_cluster_density = 0.3  # Default density
+            experience.access_count = 1  # Default access
+            
+            experiences.append(experience)
+        
+        return experiences
     
     def get_performance_stats(self) -> Dict[str, Any]:
         """Get performance statistics."""

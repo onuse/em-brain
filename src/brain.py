@@ -21,7 +21,16 @@ from .prediction import PredictionEngine
 from .stream import PureStreamStorage
 from .utils.brain_logger import BrainLogger
 from .utils.adaptive_trigger import AdaptiveTrigger
+from .utils.adaptive_thresholds import AdaptiveThresholds
+from .utils.adaptive_bounds import AdaptiveBounds, PerformanceMonitor
+from .utils.memory_pressure_decay import MemoryPressureDecay, calculate_memory_usage, calculate_average_utility
 from .persistence import PersistenceManager, PersistenceConfig
+from .cognitive_constants import (
+    PredictionErrorConstants, 
+    CognitiveCapacityConstants, 
+    get_cognitive_profile
+)
+from .utils.hardware_adaptation import get_hardware_adaptation, record_brain_cycle_performance
 
 
 class MinimalBrain:
@@ -35,8 +44,11 @@ class MinimalBrain:
     - Working memory emerges from activation dynamics
     """
     
-    def __init__(self, config=None, enable_logging=True, log_session_name=None, use_utility_based_activation=True, enable_persistence=True):
+    def __init__(self, config=None, enable_logging=True, log_session_name=None, use_utility_based_activation=True, enable_persistence=True, enable_phase2_adaptations=True):
         """Initialize the minimal brain with all 4 core systems."""
+        
+        # Hardware adaptation system (discovers capabilities and adapts limits)
+        self.hardware_adaptation = get_hardware_adaptation()
         
         # Core systems (the only hardcoded intelligence)
         self.experience_storage = ExperienceStorage()
@@ -80,8 +92,8 @@ class MinimalBrain:
         self.total_predictions = 0
         self.brain_start_time = time.time()
         
-        # Adaptive learning parameters  
-        self.optimal_prediction_error = 0.3  # Will adapt based on learning outcomes
+        # Core cognitive constants (the system's "DNA")
+        self.optimal_prediction_error = PredictionErrorConstants.OPTIMAL_PREDICTION_ERROR_TARGET
         self.learning_rate = 0.05  # Rate of adaptation for optimal error
         self.recent_learning_outcomes = []  # Track learning success
         
@@ -95,8 +107,30 @@ class MinimalBrain:
         # Event-driven adaptation system (Strategy 3)
         self.adaptive_trigger = AdaptiveTrigger()
         
+        # Adaptive thresholds system (Phase 1 emergence)
+        self.adaptive_thresholds = AdaptiveThresholds()
+        
+        # Phase 2 Lite adaptations (optional, performance-monitored)
+        self.enable_phase2_adaptations = enable_phase2_adaptations
+        if enable_phase2_adaptations:
+            self.adaptive_bounds = AdaptiveBounds()
+            self.performance_monitor = PerformanceMonitor()
+            self.memory_pressure_decay = MemoryPressureDecay()
+            print("🚀 Phase 2 Lite adaptations enabled - intelligent parameter bounds")
+        else:
+            self.adaptive_bounds = None
+            self.performance_monitor = None
+            self.memory_pressure_decay = None
+        
+        # Log cognitive profile
+        if enable_logging:
+            cognitive_profile = get_cognitive_profile()
+            print(f"🧬 Cognitive DNA: {cognitive_profile['cognitive_species']['name']}")
+            print(f"🎯 Primary drive: {cognitive_profile['drive_system']['primary_drive']}")
+        
         activation_type = "utility-based (emergent)" if use_utility_based_activation else "traditional (engineered)"
-        print(f"MinimalBrain initialized - 4 adaptive systems ready ({activation_type} activation)")
+        phase2_status = " + Phase2Lite" if enable_phase2_adaptations else ""
+        print(f"MinimalBrain initialized - 4 adaptive systems ready ({activation_type} activation{phase2_status})")
     
     def process_sensory_input(self, sensory_input: List[float], 
                             action_dimensions: int = 4) -> Tuple[List[float], Dict[str, Any]]:
@@ -115,6 +149,7 @@ class MinimalBrain:
         Returns:
             Tuple of (predicted_action, brain_state_info)
         """
+        process_start_time = time.time()
         # Update activation dynamics (method differs between systems)
         if self.use_utility_based_activation:
             # Utility-based activation spreads based on prediction utility
@@ -142,8 +177,28 @@ class MinimalBrain:
                 predicted_action, sensory_input, confidence, similar_experiences_used
             )
         
+        # Performance monitoring (Phase 2 Lite + Hardware Adaptation)
+        cycle_time = time.time() - process_start_time
+        cycle_time_ms = cycle_time * 1000  # Convert to milliseconds
+        
+        # Record performance for hardware adaptation
+        current_memory_usage = self._calculate_current_memory_usage()
+        memory_usage_mb = current_memory_usage / (1024 * 1024)  # Convert to MB
+        record_brain_cycle_performance(cycle_time_ms, memory_usage_mb)
+        
+        # Phase 2 performance monitoring (if enabled)
+        if self.performance_monitor:
+            self.performance_monitor.record_performance(cycle_time, confidence, current_memory_usage)
+            
+            # Check for performance degradation
+            if self.performance_monitor.check_performance_degradation():
+                print("⚠️  Performance degradation detected - consider disabling Phase 2 adaptations")
+        
         # Compile brain state
         brain_state = self._get_brain_state(prediction_details, confidence)
+        brain_state['cycle_time'] = cycle_time
+        brain_state['cycle_time_ms'] = cycle_time_ms
+        brain_state['hardware_adaptive_limits'] = self.hardware_adaptation.get_cognitive_limits()
         
         return predicted_action, brain_state
     
@@ -352,10 +407,22 @@ class MinimalBrain:
         if not experience_vectors:
             return
         
+        # Get adaptive similarity threshold for this context
+        all_similarities = []
+        if experience_vectors:
+            # Quick similarity calculation to get distribution
+            for i, exp_vector in enumerate(experience_vectors):
+                similarity = self.similarity_engine.compute_similarity(sensory_input, exp_vector)
+                all_similarities.append(similarity)
+        
+        adaptive_threshold = self.adaptive_thresholds.get_similarity_threshold(
+            all_similarities, context="general"
+        )
+        
         # Find which experiences were considered similar for this prediction
         similar_experiences = self.similarity_engine.find_similar_experiences(
             sensory_input, experience_vectors, experience_ids,
-            max_results=5, min_similarity=0.3
+            max_results=5, min_similarity=adaptive_threshold
         )
         
         # Compute prediction success for this outcome
@@ -503,9 +570,19 @@ class MinimalBrain:
             experience_vectors.append(exp.get_context_vector())
             experience_ids.append(exp_id)
         
+        # Get adaptive similarity threshold for utility assessment
+        all_similarities = []
+        for exp_vector in experience_vectors:
+            similarity = self.similarity_engine.compute_similarity(sensory_input, exp_vector)
+            all_similarities.append(similarity)
+        
+        utility_threshold = self.adaptive_thresholds.get_similarity_threshold(
+            all_similarities, context="utility_assessment"
+        )
+        
         similar_experiences = self.similarity_engine.find_similar_experiences(
             sensory_input, experience_vectors, experience_ids,
-            max_results=15, min_similarity=0.2  # Cast wider net for utility assessment
+            max_results=15, min_similarity=utility_threshold
         )
         
         # Let utility-based activation system determine activation levels
@@ -631,16 +708,31 @@ class MinimalBrain:
     def _get_brain_state(self, prediction_details: Dict[str, Any], confidence: float) -> Dict[str, Any]:
         """Get comprehensive brain state information."""
         
-        # Get working memory size (method differs between systems)
+        # Get working memory with adaptive threshold
+        current_activations = {}
         if self.use_utility_based_activation:
-            working_memory_size = self.activation_dynamics.get_working_memory_size()
+            current_activations = self.activation_dynamics.current_activations
+            working_memory_size = len(current_activations)
         else:
-            working_memory_size = self.activation_dynamics.get_working_memory_size(
-                self.experience_storage._experiences
-            )
+            # For traditional activation, get all activations
+            for exp_id, exp in self.experience_storage._experiences.items():
+                if hasattr(exp, 'activation_level') and exp.activation_level > 0:
+                    current_activations[exp_id] = exp.activation_level
+            working_memory_size = len(current_activations)
         
         # Compute current intrinsic reward (the robot's fundamental drive state)
         current_intrinsic_reward = self.compute_intrinsic_reward()
+        
+        # Apply adaptive working memory threshold
+        recent_performance = confidence  # Use prediction confidence as performance proxy
+        adaptive_wm_threshold = self.adaptive_thresholds.get_working_memory_threshold(
+            current_activations, recent_performance, 
+            1.0 - current_intrinsic_reward  # Convert to prediction error proxy
+        )
+        
+        # Count experiences above adaptive threshold
+        adaptive_working_memory_size = sum(1 for activation in current_activations.values() 
+                                         if activation >= adaptive_wm_threshold)
         
         # Get natural attention system stats
         attention_stats = {}
@@ -652,14 +744,17 @@ class MinimalBrain:
         return {
             'total_experiences': len(self.experience_storage._experiences),
             'working_memory_size': working_memory_size,
+            'adaptive_working_memory_size': adaptive_working_memory_size,
+            'adaptive_working_memory_threshold': adaptive_wm_threshold,
             'prediction_confidence': confidence,
             'prediction_method': prediction_details.get('method', 'unknown'),
             'num_similar_experiences': prediction_details.get('num_similar', 0),
             'brain_uptime': time.time() - self.brain_start_time,
             'total_predictions': self.total_predictions,
             'intrinsic_reward': current_intrinsic_reward,  # The robot's DNA-equivalent drive state
-            'prediction_error_drive': 'optimal_at_0.3',  # Document the fundamental drive
-            'natural_attention_system': attention_stats  # Natural attention system status
+            'prediction_error_drive': f"adaptive_optimal_at_{self.optimal_prediction_error:.2f}",
+            'natural_attention_system': attention_stats,  # Natural attention system status
+            'adaptive_thresholds': True  # Flag that adaptive thresholds are active
         }
     
     def get_brain_stats(self) -> Dict[str, Any]:
@@ -803,3 +898,59 @@ class MinimalBrain:
     
     def __repr__(self) -> str:
         return self.__str__()
+    
+    def _calculate_current_memory_usage(self) -> float:
+        """Calculate current memory usage for performance monitoring."""
+        if self.use_utility_based_activation:
+            current_activations = self.activation_dynamics.current_activations
+        else:
+            current_activations = {}
+            for exp_id, exp in self.experience_storage._experiences.items():
+                if hasattr(exp, 'activation_level') and exp.activation_level > 0:
+                    current_activations[exp_id] = exp.activation_level
+        
+        return calculate_memory_usage(current_activations, len(self.experience_storage._experiences))
+    
+    def get_phase2_adaptation_stats(self) -> Dict[str, Any]:
+        """Get statistics about Phase 2 Lite adaptations."""
+        if not self.enable_phase2_adaptations:
+            return {'phase2_enabled': False}
+        
+        stats = {'phase2_enabled': True}
+        
+        if self.adaptive_bounds:
+            stats['adaptive_bounds'] = self.adaptive_bounds.get_bound_adaptation_stats()
+        
+        if self.performance_monitor:
+            stats['performance_monitor'] = self.performance_monitor.get_performance_summary()
+        
+        if self.memory_pressure_decay:
+            stats['memory_pressure_decay'] = self.memory_pressure_decay.get_decay_statistics()
+        
+        return stats
+    
+    def disable_phase2_adaptations(self):
+        """Disable Phase 2 adaptations (rollback to Phase 1 only)."""
+        if self.enable_phase2_adaptations:
+            print("🔄 Disabling Phase 2 Lite adaptations - reverting to Phase 1 only")
+            self.enable_phase2_adaptations = False
+            
+            # Reset adaptive systems to safe defaults
+            if self.adaptive_bounds:
+                self.adaptive_bounds.reset_bounds()
+            if self.memory_pressure_decay:
+                self.memory_pressure_decay.reset_decay_adaptation()
+    
+    def enable_phase2_adaptations_safe(self):
+        """Re-enable Phase 2 adaptations with fresh performance monitoring."""
+        if not self.enable_phase2_adaptations:
+            print("🚀 Re-enabling Phase 2 Lite adaptations with fresh monitoring")
+            self.enable_phase2_adaptations = True
+            
+            # Reinitialize systems if needed
+            if not self.adaptive_bounds:
+                self.adaptive_bounds = AdaptiveBounds()
+            if not self.performance_monitor:
+                self.performance_monitor = PerformanceMonitor()
+            if not self.memory_pressure_decay:
+                self.memory_pressure_decay = MemoryPressureDecay()
