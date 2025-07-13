@@ -208,16 +208,24 @@ Server → Client: [action_vector_length, action_data...]
 
 No JSON, no complex packets, no WebSocket overhead. Raw vector exchange only.
 
-## The Bet
+## The Scientific Hypothesis
 
-**Hypothesis**: A robot with only these 4 adaptive systems + single prediction error drive can develop sophisticated behaviors:
+**Central Claim**: These 4 systems represent the **Irreducible Cognitive Architecture** - the minimal computational substrate from which intelligence emerges:
+
+**Hypothesis**: A robot with only these 4 adaptive systems + single primary drive can develop sophisticated behaviors:
 - Spatial navigation without maps (emerges from sensory similarity clustering)
 - Motor skills without templates (emerges from action pattern reinforcement)
 - Exploration without explicit curiosity modules (emerges from prediction error optimization)
 - Learning without specialized algorithms (emerges from adaptive parameter adjustment)
 - Goal formation without programming (emerges from prediction error patterns)
 
-**Evidence**: This matches how biological intelligence works (prediction error signaling drives all learning), how successful AI works (pattern matching + adaptation), and how developmental psychology works (children learn through prediction error minimization).
+**Scientific Foundation**: 
+- **Neuroscience**: Prediction error drives all learning (dopamine, hippocampus, cortex)
+- **AI Research**: Pattern matching + adaptation explains successful systems (transformers, RL)
+- **Computational Theory**: These 4 functions appear in every intelligent system
+- **Developmental Psychology**: Children bootstrap intelligence through prediction error minimization
+
+**Mission**: Prove this is the minimal architecture that supports unlimited behavioral emergence while remaining scientifically grounded and practically effective.
 
 ## Constraints
 

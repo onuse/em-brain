@@ -357,7 +357,8 @@ class PiCarXBrainstem:
             'brain': {
                 'total_experiences': brain_stats['brain_summary']['total_experiences'],
                 'total_predictions': brain_stats['brain_summary']['total_predictions'],
-                'working_memory_size': brain_stats['activation_dynamics']['working_memory_size'],
+                'working_memory_size': brain_stats['activation_dynamics'].get('working_memory_size', 
+                                                                    brain_stats['activation_dynamics'].get('current_working_memory_size', 0)),
                 'consensus_rate': brain_stats['prediction_engine']['consensus_rate']
             },
             'performance': {
