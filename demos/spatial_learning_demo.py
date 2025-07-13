@@ -138,7 +138,9 @@ def run_spatial_learning_demo():
     print(f"\n🧠 After learning: {brain.total_experiences} experiences stored")
     stats = brain.get_brain_stats()
     print(f"   Consensus predictions: {stats['prediction_engine']['consensus_rate']:.2f}")
-    print(f"   Working memory size: {stats['activation_dynamics']['working_memory_size']}")
+    working_memory_size = stats['activation_dynamics'].get('working_memory_size', 
+                                                       stats['activation_dynamics'].get('current_working_memory_size', 0))
+    print(f"   Working memory size: {working_memory_size}")
     
     # Test spatial memory
     print("\n🎯 Testing Spatial Memory")
@@ -172,7 +174,9 @@ def run_spatial_learning_demo():
     print(f"   Total predictions: {final_stats['brain_summary']['total_predictions']}")
     print(f"   Similarity engine: {final_stats['similarity_engine']['device']} "
           f"({final_stats['similarity_engine']['total_searches']} searches)")
-    print(f"   Working memory: {final_stats['activation_dynamics']['working_memory_size']} active experiences")
+    final_working_memory = final_stats['activation_dynamics'].get('working_memory_size', 
+                                                              final_stats['activation_dynamics'].get('current_working_memory_size', 0))
+    print(f"   Working memory: {final_working_memory} active experiences")
     print(f"   Prediction accuracy: {final_stats['prediction_engine']['avg_prediction_accuracy']:.3f}")
     
     print("\n✅ Demo complete!")
