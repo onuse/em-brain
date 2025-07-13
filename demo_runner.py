@@ -14,12 +14,16 @@ def main():
     
     demos = {
         'brain': 'python3 -c "from tests.test_minimal_brain import main; main()"',
-        'text': 'python3 -c "from demos.picar_x.picar_x_text_demo import main; main()"',
-        'spatial': 'python3 -c "from demos.spatial_learning_demo import main; main()"',
-        'grid': 'python3 -c "from demos.picar_x.picar_x_2d_debug_demo import main; main()"',
-        'wireframe': 'python3 -c "from demos.picar_x.picar_x_wireframe_demo import main; main()"',
-        'scientific': 'python3 -c "from demos.picar_x.picar_x_3d_demo import main; main()"',
-        'server': 'python3 brain_server.py'
+        'test_demo': 'python3 -c "from demos.test_demo import main; main()"',
+        'demo_2d': 'python3 -c "from demos.demo_2d import main; main()"',
+        'demo_3d': 'python3 -c "from demos.demo_3d import main; main()"',
+        'spatial_learning': 'python3 -c "from demos.spatial_learning_demo import main; main()"',
+        'server': 'python3 brain_server.py',
+        # Old names for backward compatibility
+        'text': 'python3 -c "from demos.picar_x_simulation.picar_x_text_demo import main; main()"',
+        'grid': 'python3 -c "from demos.picar_x_simulation.picar_x_2d_debug_demo import main; main()"',
+        'wireframe': 'python3 -c "from demos.picar_x_simulation.picar_x_wireframe_demo import main; main()"',
+        'scientific': 'python3 -c "from demos.picar_x_simulation.picar_x_3d_demo import main; main()"'
     }
     
     if len(sys.argv) != 2:
