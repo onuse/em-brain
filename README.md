@@ -36,22 +36,23 @@ This is an implementation of the **embarrassingly simple** brain architecture ba
 Can we achieve sophisticated robotic intelligence with just 4 interacting systems, letting spatial navigation, motor skills, exploration, and learning emerge naturally rather than being hardcoded?
 
 ### Design Principles
-- **No hardcoded cognitive modules** - everything emerges from system interactions
-- **Single unified memory** - all experiences stored together with full context
-- **Pattern-based intelligence** - decisions emerge from similarity to past experiences
-- **Neural-inspired dynamics** - activation spreading creates working memory effects
-- **Adaptive parameters** - system learns optimal settings rather than using hardcoded values
-- **Single fundamental drive** - prediction error optimization replaces all biological motivations
+- **Minimal core** - 4-system brain handles pattern recognition and prediction
+- **Embodied Free Energy** - action selection emerges from physics-grounded constraints
+- **Hardware-driven behavior** - robot's physical state directly shapes decisions
+- **No artificial drives** - all preferences emerge from embodied prediction error minimization
+- **Clean interfaces** - core brain operates independently of embodied action selection
 
 ## Research Foundation
 
 This architecture is supported by decades of research across multiple fields:
 
 ### Neuroscience
-- **Predictive Processing** (Andy Clark, Jakob Hohwy, Anil Seth): Brain minimizes prediction errors, all learning emerges from this
+- **Free Energy Principle** (Karl Friston): All brain activity minimizes prediction error through hierarchical predictive processing
+- **Embodied Cognition** (Varela, Thompson, Rosch): Physical constraints directly shape cognitive processes and behavior
+- **Precision-Weighted Prediction** (Andy Clark, Jakob Hohwy): Context modulates the importance of different predictions
+- **Interoceptive Processing** (Anil Seth): Brain continuously predicts and regulates internal bodily states
 - **Complementary Learning Systems** (McClelland, O'Reilly): Hippocampus stores episodes, cortex extracts patterns via similarity
 - **Neural Reuse Hypothesis** (Michael Anderson): Same circuits support multiple cognitive functions, no specialized modules needed
-- **Place Cell Research** (O'Keefe, Nadel): Spatial navigation emerges from similarity detection, not coordinate systems
 
 ### Artificial Intelligence
 - **Transformers/GPT**: Attention mechanism = similarity search through massive experience data
@@ -103,28 +104,36 @@ Generates next action by following patterns in activated memories:
 - Return consensus action from multiple similar experiences
 - Adaptively balance exploration vs exploitation based on learning progress
 
-## The Robot's DNA: Adaptive Prediction Error Minimization
+## Embodied Free Energy System
 
-The system has a single fundamental drive that replaces all biological motivations:
+Action selection emerges from minimizing prediction error across embodied physical constraints. No hardcoded motivations needed.
 
-### Core Principle
-**Minimize prediction error to an optimal level, not to zero**
+### Architecture
+- **Core brain**: Pattern recognition and prediction (4 systems)
+- **Embodied Free Energy layer**: Physics-grounded action selection
+- **Clean separation**: Embodied system uses brain services; brain remains unmodified
 
-- **Zero prediction error** = stagnation (nothing new to learn)
-- **High prediction error** = chaos (patterns too complex to learn)  
-- **Optimal prediction error** ≈ 0.3 = learnable patterns that drive growth
+### Embodied Priors
+Physical constraints create natural preferences through precision-weighted prediction error:
+- **Energy homeostasis**: Expect adequate battery power - precision increases as battery depletes
+- **Thermal regulation**: Expect normal operating temperature - precision increases with motor heat
+- **Cognitive capacity**: Expect available processing resources - precision increases with memory pressure
+- **System integrity**: Expect reliable sensor function - precision increases with noise levels
 
-### Adaptive Meta-Learning
-- The "optimal" prediction error target **adapts based on learning outcomes**
-- System learns what level of prediction error leads to best learning progress
-- All parameters (activation decay, similarity thresholds, etc.) adapt to optimize this drive
-- **This is the only hardcoded motivation - everything else emerges**
+### Free Energy Minimization
+1. Read current hardware state (battery, temperature, memory, sensors)
+2. Update precision weights based on physical context
+3. Generate possible actions within hardware capabilities
+4. Predict hardware effects for each action using brain + physics model
+5. Calculate total Free Energy across all embodied priors
+6. Select action that minimizes embodied Free Energy
 
-### Why This Works
-- Matches biological research on dopamine and prediction error signaling
-- Explains curiosity, exploration, skill development, and goal formation
-- Provides intrinsic motivation without external reward engineering
-- Creates natural progression from simple to complex behaviors
+### Emergent Behavior
+Different hardware states create distinct behavioral patterns without programming:
+- **High battery + cool motors**: Active exploration and fast movement
+- **Low battery**: Automatic energy-seeking behavior emerges
+- **Hot motors**: Cooling behaviors and reduced activity
+- **High memory pressure**: Simpler, less resource-intensive actions
 
 ## What Emerges (No Additional Hardcoding)
 
@@ -136,9 +145,9 @@ The system has a single fundamental drive that replaces all biological motivatio
 **How**: Actions with low prediction error get reinforced naturally
 **Research**: Motor cortex develops through prediction-error learning
 
-### Exploration
-**How**: High prediction-error areas naturally attract attention
-**Research**: Dopamine signals prediction error, driving exploration
+### Exploration vs Conservation
+**How**: Balance emerges from Free Energy minimization across energy and learning priors
+**Research**: Animals balance exploration and conservation based on internal state and environmental context
 
 ### Working Memory
 **How**: Activation levels create temporary accessibility
@@ -148,20 +157,20 @@ The system has a single fundamental drive that replaces all biological motivatio
 **How**: Temporal chains of experiences enable sequence prediction
 **Research**: Hippocampal replay creates planning through experience sequences
 
-### Motivation
-**How**: Single adaptive drive optimizes prediction error to learnable level (not zero)
-**Research**: All biological drives reduce to prediction error minimization with optimal targets
+### Decision Making
+**How**: Embodied Free Energy minimization creates context-sensitive action selection
+**Research**: Brain integrates interoceptive signals with predictions for decision making
 
 ## Architecture Decision Rationale
 
-### Why Only 4 Systems?
-Every successful AI system follows this pattern:
+### Why Separate Core and Embodied System?
+The 4-system pattern handles cognition universally:
 1. Store experiences/patterns/cases
 2. Find similar past situations
-3. Use similarity to predict/decide  
-4. Update based on outcomes
+3. Use similarity to predict outcomes
+4. Update based on results
 
-Everything else is optimization or engineering structure.
+Action selection requires preferences. Instead of artificial motivations, preferences emerge from the robot's physical constraints through embodied Free Energy minimization.
 
 ### Why Not Specialized Modules?
 - **Complexity explosion**: Each module needs interfaces with every other module
@@ -177,34 +186,22 @@ Everything else is optimization or engineering structure.
 ## Folder Structure
 
 ```
-minimal/
-├── brain.py                    # Main coordinator (orchestrates 4 systems)
-├── server.py                   # TCP server entry point
-├── experience/                 # Experience storage subsystem
-│   ├── storage.py             # Core experience database
-│   ├── models.py              # Experience data structures  
-│   └── persistence.py         # Save/load experiences
-├── similarity/                 # Similarity search subsystem
-│   ├── engine.py              # Main similarity search
-│   ├── gpu_backend.py         # GPU acceleration
-│   └── indexing.py            # Fast search structures
-├── activation/                 # Neural activation subsystem
-│   ├── dynamics.py            # Spreading activation logic
-│   ├── decay.py               # Activation decay/working memory
-│   └── patterns.py            # Activation pattern utilities
-├── prediction/                 # Action prediction subsystem
-│   ├── engine.py              # Main prediction logic
-│   ├── consensus.py           # Pattern consensus from experiences
-│   └── bootstrap.py           # Initial random actions (cold start)
-├── communication/              # Server-side communication only
-│   ├── tcp_server.py          # Simple TCP server
-│   ├── protocol.py            # Message format and parsing
-│   └── handlers.py            # Request/response handlers
-├── utils/                      # Shared utilities
-│   ├── config.py              # Configuration management
-│   └── metrics.py             # Performance tracking
-└── test_client/                # TEMPORARY: POC client for testing
-    └── ...                     # (Will be deleted when real clients exist)
+brain/
+├── server/                     # Brain server (4-system core + embodied Free Energy)
+│   ├── brain.py               # Main coordinator 
+│   ├── embodied_free_energy/   # Embodied Free Energy system
+│   │   ├── system.py          # Free Energy action selection
+│   │   ├── base.py            # Embodied priors and hardware interface
+│   │   └── brain_adapter.py   # Integration with 4-system brain
+│   ├── experience/             # Experience storage (core system 1)
+│   ├── similarity/             # Similarity search (core system 2)
+│   ├── activation/             # Activation dynamics (core system 3)
+│   ├── prediction/             # Prediction engine (core system 4)
+│   └── communication/          # Network interfaces
+└── client_picarx/              # Robot client implementation
+    ├── src/brainstem/          # Hardware integration
+    ├── src/hardware/           # Hardware abstraction layer
+    └── docs/installation/      # Pi Zero deployment
 ```
 
 ### Design Rules Applied
@@ -225,22 +222,23 @@ No JSON, no complex packets, no WebSocket overhead. Raw vector exchange only.
 
 ## The Scientific Hypothesis
 
-**Central Claim**: These 4 systems represent the **Irreducible Cognitive Architecture** - the minimal computational substrate from which intelligence emerges:
+**Central Claim**: These 4 systems + embodied Free Energy represent the **Irreducible Cognitive Architecture** - the minimal computational substrate from which intelligence emerges:
 
-**Hypothesis**: A robot with only these 4 adaptive systems + single primary drive can develop sophisticated behaviors:
+**Hypothesis**: A robot with these 4 cognitive systems + embodied Free Energy action selection can develop sophisticated behaviors:
 - Spatial navigation without maps (emerges from sensory similarity clustering)
 - Motor skills without templates (emerges from action pattern reinforcement)
-- Exploration without explicit curiosity modules (emerges from prediction error optimization)
-- Learning without specialized algorithms (emerges from adaptive parameter adjustment)
-- Goal formation without programming (emerges from prediction error patterns)
+- Energy management without programming (emerges from battery state precision weighting)
+- Thermal regulation without hardcoding (emerges from motor temperature constraints)
+- Exploration vs conservation balance (emerges from competing energy and learning priors)
+- Goal formation without programming (emerges from Free Energy minimization patterns)
 
 **Scientific Foundation**: 
-- **Neuroscience**: Prediction error drives all learning (dopamine, hippocampus, cortex)
-- **AI Research**: Pattern matching + adaptation explains successful systems (transformers, RL)
-- **Computational Theory**: These 4 functions appear in every intelligent system
-- **Developmental Psychology**: Children bootstrap intelligence through prediction error minimization
+- **Neuroscience**: Pattern recognition + interoceptive Free Energy minimization explain behavior
+- **AI Research**: Pattern matching + embodied constraints create robust intelligent systems
+- **Computational Theory**: Cognition + physics-grounded action selection appear in biological intelligence
+- **Biological Reality**: All intelligence emerges from minimizing prediction error across embodied constraints
 
-**Mission**: Prove this is the minimal architecture that supports unlimited behavioral emergence while remaining scientifically grounded and practically effective.
+**Mission**: Prove this is the minimal architecture that supports behavioral emergence while remaining scientifically grounded, biologically accurate, and practically effective.
 
 ## Constraints
 
@@ -248,10 +246,11 @@ No JSON, no complex packets, no WebSocket overhead. Raw vector exchange only.
 The "embarrassingly simple" constraint applies to the **core brain dynamics**, not supporting infrastructure:
 
 **Core Brain Systems** (Must remain simple):
-- **Maximum Systems**: 4 (experience, similarity, activation, prediction)
-- **Core Brain Logic**: Conceptually simple - no complex cognitive modules
-- **Intelligence Emergence**: Everything beyond the 4 systems emerges from their interaction
-- **Explanation Time**: <5 minutes to understand the core intelligence mechanism
+- **Cognitive Core**: 4 systems (experience, similarity, activation, prediction)
+- **Action Selection**: Embodied Free Energy minimization (single principle)
+- **Core Logic**: Conceptually simple - no complex cognitive modules
+- **Emergence**: Complex behavior emerges from physics + prediction error minimization
+- **Explanation Time**: <5 minutes to understand the complete architecture
 
 **Supporting Infrastructure** (Can be sophisticated):
 - **TCP Servers**: Network communication, protocol handling, client management
@@ -265,20 +264,20 @@ The "embarrassingly simple" constraint applies to the **core brain dynamics**, n
 
 The goal is conceptual simplicity of the intelligence mechanism, not performance art. A production-ready brain needs robust infrastructure while maintaining elegant core dynamics.
 
-### What We Don't Build (In Core Brain Logic)
-- Motivator classes (single adaptive drive replaces all motivations)
+### What We Don't Build (In Core Systems)
+- Artificial motivations or drives (behavior emerges from embodied constraints)
 - Memory accessors (similarity search handles all retrieval)
 - Novelty detectors (novelty = low similarity to existing experiences)
 - Spatial representations (places emerge from sensory clustering)
 - Motor templates (skills emerge from successful action patterns)
 - Working memory modules (activation levels create working memory)
-- Attention systems (natural properties create attention effects)
-- Goal hierarchies (goals emerge from prediction error optimization)
+- Attention systems (precision weighting creates attention effects)
+- Goal hierarchies (goals emerge from Free Energy minimization)
 - Parameter tuning systems (parameters self-adjust based on learning outcomes)
-- Hardcoded cognitive thresholds (all thresholds adapt to optimize prediction performance)
+- Hardcoded behavioral thresholds (all behavior emerges from physics + prediction error)
 
-**If it's not in the 4 core systems above, it should emerge from their interaction - not be engineered as additional cognitive modules.**
+**If it's not in the core systems or embodied Free Energy layer, it should emerge from their interaction - not be engineered as additional modules.**
 
 ---
 
-*This implementation tests whether intelligence is fundamentally about fast search through massive experience data, rather than sophisticated algorithms.*
+*This implementation tests whether intelligence requires only pattern recognition plus embodied Free Energy minimization, rather than sophisticated cognitive modules.*

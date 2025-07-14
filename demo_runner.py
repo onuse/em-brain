@@ -13,13 +13,25 @@ def main():
     """Run specific demo by name."""
     
     demos = {
-        'brain': 'python3 -c "from tests.test_minimal_brain import main; main()"',
+        'brain': 'python3 server/tests/test_minimal_brain.py',
         'test_demo': 'python3 -c "from demos.test_demo import main; main()"',
         'demo_2d': 'python3 -c "from demos.demo_2d import main; main()"',
         'demo_3d': 'python3 -c "from demos.demo_3d import main; main()"',
         'demo_3d_hifi': 'python3 -c "from demos.demo_3d_new import main; main()"',
         'spatial_learning': 'python3 -c "from demos.spatial_learning_demo import main; main()"',
-        'server': 'python3 brain_server.py',
+        'server': 'python3 server/brain_server.py',
+        'vocal_test': 'python3 client_picarx/test_vocal_system.py',
+        'vocal_mac': 'python3 client_picarx/test_vocal_system.py mac',
+        'vocal_visual': 'python3 client_picarx/vocal_demo_visual.py',
+        'vocal_diagnostic': 'python3 client_picarx/vocal_demo_diagnostic.py',
+        'hardware_scan': 'python3 client_picarx/docs/installation/hardware_discovery.py',
+        'hardware_report': 'python3 client_picarx/docs/installation/hardware_discovery.py --save hardware_report.txt',
+        'motivation_test': 'python3 server/test_motivation_system.py',
+        'motivation_balance': 'python3 server/test_motivation_balance.py',
+        'motivation_integration': 'python3 server/test_motivation_integration.py',
+        'embodied_free_energy': 'python3 server/test_embodied_free_energy.py',
+        '3d_embodied': 'python3 -c "from demos.demo_3d_embodied import main; main()"',
+        'socket_embodied': 'python3 demos/picar_x_simulation/pure_socket_embodied_brainstem.py',
         # Old names for backward compatibility
         'text': 'python3 -c "from demos.picar_x_simulation.picar_x_text_demo import main; main()"',
         'grid': 'python3 -c "from demos.picar_x_simulation.picar_x_2d_debug_demo import main; main()"',

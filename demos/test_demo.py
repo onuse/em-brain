@@ -18,10 +18,11 @@ Run with: python3 demo_runner.py test_demo
 import sys
 import os
 
-# Add the brain/ directory to import minimal as a package
+# Add the server directory to import brain components
 current_dir = os.path.dirname(__file__)  # demos/
 brain_dir = os.path.dirname(current_dir)   # brain/
-sys.path.insert(0, brain_dir)
+server_dir = os.path.join(brain_dir, 'server')
+sys.path.insert(0, server_dir)
 
 import numpy as np
 import time

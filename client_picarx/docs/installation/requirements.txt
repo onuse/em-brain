@@ -1,0 +1,26 @@
+# PiCar-X Brain Client Dependencies
+# 
+# Core dependencies for the brain client running on Raspberry Pi Zero 2 WH
+# These are installed in addition to the SunFounder hardware libraries
+
+# Core Python packages
+numpy>=1.21.0               # Numerical computing (required for sensor data processing)
+requests>=2.28.0            # HTTP client for brain server communication
+
+# Optional but recommended
+scipy>=1.9.0                # Scientific computing (for advanced sensor fusion)
+pygame>=2.1.0               # Audio synthesis for vocal expressions (if using Mac audio mock)
+
+# Development and debugging (comment out for production)
+# matplotlib>=3.5.0         # Plotting for sensor data visualization  
+# jupyter>=1.0.0            # Interactive development (if needed)
+
+# Production logging and monitoring
+# psutil>=5.9.0             # System monitoring and resource usage
+# schedule>=1.2.0           # Task scheduling for periodic operations
+
+# Notes:
+# - SunFounder libraries (robot-hat, vilib, picar-x) are installed separately
+# - I2S audio driver is installed via shell script
+# - Keep dependencies minimal for Pi Zero performance
+# - Uncomment optional packages as needed for specific features

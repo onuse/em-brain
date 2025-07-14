@@ -27,7 +27,13 @@ demos_dir = os.path.dirname(current_dir)  # demos/
 brain_dir = os.path.dirname(demos_dir)   # brain/ (project root)
 sys.path.insert(0, brain_dir)
 
-from src.brain import MinimalBrain
+try:
+    from src.brain import MinimalBrain
+except ImportError:
+    # Try server path when running from different directory
+    server_path = os.path.join(brain_dir, 'server')
+    sys.path.insert(0, server_path)
+    from src.brain import MinimalBrain
 import numpy as np
 import time
 import math
