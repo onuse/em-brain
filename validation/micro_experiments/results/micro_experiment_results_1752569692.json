@@ -1,0 +1,237 @@
+{
+  "total_experiments": 4,
+  "passed_experiments": 0,
+  "failed_experiments": 4,
+  "success_rate": 0.0,
+  "avg_confidence": -0.09723148133780084,
+  "assumption_scores": {
+    "Similar situations should produce similar actions": {
+      "passed": 0,
+      "total": 1,
+      "rate": 0.0,
+      "avg_confidence": -0.7889259253512033
+    },
+    "Prediction error should decrease over time": {
+      "passed": 0,
+      "total": 1,
+      "rate": 0.0,
+      "avg_confidence": 0.0
+    },
+    "More experience should lead to better performance": {
+      "passed": 0,
+      "total": 1,
+      "rate": 0.0,
+      "avg_confidence": 0.0
+    },
+    "16D sensory input should provide sufficient information for 4D actions": {
+      "passed": 0,
+      "total": 1,
+      "rate": 0.0,
+      "avg_confidence": 0.39999999999999997
+    }
+  },
+  "experiment_results": [
+    {
+      "experiment_name": "Similarity Consistency",
+      "assumption_tested": "Similar situations should produce similar actions",
+      "start_time": 1752569644.965865,
+      "duration_seconds": 0.04442024230957031,
+      "passed": false,
+      "confidence": -0.7889259253512033,
+      "p_value": null,
+      "effect_size": null,
+      "measurements": {
+        "base_consistency": 2.863436229737294,
+        "similar_consistency": 0.2855843790348874,
+        "base_responses": [
+          [
+            -1.6320629119873047,
+            -0.4834699332714081,
+            -1.562139868736267,
+            -0.09726068377494812
+          ],
+          [
+            0.3567330241203308,
+            0.13057121634483337,
+            -0.6928572654724121,
+            1.4828827381134033
+          ],
+          [
+            -0.16261518001556396,
+            -0.554900586605072,
+            -0.11561672389507294,
+            -1.4001643657684326
+          ],
+          [
+            0.8446720242500305,
+            -0.2655567228794098,
+            -0.9115442037582397,
+            -1.5515632629394531
+          ],
+          [
+            1.6011216640472412,
+            0.39311280846595764,
+            0.42764735221862793,
+            -0.5854244232177734
+          ]
+        ],
+        "similar_responses": [
+          [
+            -1.1389178037643433,
+            -1.0679354667663574,
+            0.04046671837568283,
+            0.24982485175132751
+          ],
+          [
+            -0.2293493002653122,
+            0.760356605052948,
+            -0.8219168186187744,
+            -0.367611289024353
+          ],
+          [
+            1.1433442831039429,
+            -0.5672510266304016,
+            0.5452185869216919,
+            0.1827460080385208
+          ],
+          [
+            1.3587064743041992,
+            2.405529260635376,
+            -0.18407030403614044,
+            -1.0247478485107422
+          ],
+          [
+            -0.3524676263332367,
+            -0.4980751574039459,
+            -0.14941152930259705,
+            0.08597277104854584
+          ]
+        ],
+        "sample_size": 15
+      },
+      "error_message": null,
+      "sample_size": 15,
+      "random_seed": 42
+    },
+    {
+      "experiment_name": "Prediction Error Learning",
+      "assumption_tested": "Prediction error should decrease over time",
+      "start_time": 1752569645.010327,
+      "duration_seconds": 32.71672081947327,
+      "passed": false,
+      "confidence": 0.0,
+      "p_value": 0.20380162989857922,
+      "effect_size": -0.5897414171468472,
+      "measurements": {
+        "prediction_errors": [
+          1.0585601643122182,
+          0.7753989408514388,
+          0.8019703923009154,
+          0.7826391929911778,
+          0.8962697851020869,
+          0.8658363966695003,
+          0.920990478200638,
+          0.849564720875574,
+          0.7921105449588546,
+          1.0486667764319555,
+          0.9763734569987914,
+          1.079772266145834,
+          1.0085738248998306,
+          1.0506463171355993,
+          0.8565175908712777,
+          0.7416754248829396,
+          0.7960783183321208,
+          1.172667623379421,
+          0.8748445237299043,
+          1.014433911042297,
+          1.2436243223358943,
+          0.8684822326189507,
+          1.1519318927940605,
+          0.7517989037097015,
+          0.90703233552622,
+          0.7795486659418526,
+          1.0568883706653263,
+          0.8874195854302173,
+          0.9915889795395758,
+          0.9376729102924001
+        ],
+        "early_mean": 0.8792007392694359,
+        "late_mean": 0.95759881988542,
+        "improvement": -0.07839808061598408,
+        "improvement_rate": -0.08916971644169484,
+        "trend_slope": 0.0028372701679846156,
+        "t_stat": -1.31870189788741,
+        "p_value": 0.20380162989857922,
+        "effect_size": -0.5897414171468472
+      },
+      "error_message": null,
+      "sample_size": 30,
+      "random_seed": 42
+    },
+    {
+      "experiment_name": "Experience Scaling",
+      "assumption_tested": "More experience should lead to better performance",
+      "start_time": 1752569677.7271318,
+      "duration_seconds": 10.66071605682373,
+      "passed": false,
+      "confidence": 0.0,
+      "p_value": null,
+      "effect_size": null,
+      "measurements": {
+        "experience_levels": [
+          5,
+          10,
+          15,
+          20,
+          25
+        ],
+        "performance_scores": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "correlation": 0.0,
+        "slope": 0.0
+      },
+      "error_message": null,
+      "sample_size": 5,
+      "random_seed": 42
+    },
+    {
+      "experiment_name": "Sensory-Motor Coordination",
+      "assumption_tested": "16D sensory input should provide sufficient information for 4D actions",
+      "start_time": 1752569688.3881989,
+      "duration_seconds": 4.231202125549316,
+      "passed": false,
+      "confidence": 0.39999999999999997,
+      "p_value": null,
+      "effect_size": null,
+      "measurements": {
+        "scenarios": [
+          "light_close",
+          "light_far",
+          "obstacle_close",
+          "obstacle_far",
+          "low_battery",
+          "high_battery"
+        ],
+        "coordination_scores": [
+          0.0,
+          0.0,
+          0.45,
+          0.7,
+          0.75,
+          0.5
+        ],
+        "avg_coordination": 0.39999999999999997,
+        "coordination_consistency": 0.6986143113329146
+      },
+      "error_message": null,
+      "sample_size": 6,
+      "random_seed": 42
+    }
+  ],
+  "timestamp": 1752569692.620044
+}

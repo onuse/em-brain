@@ -34,27 +34,34 @@ class BrainLogger:
     - Emergent behavior detection
     """
     
-    def __init__(self, session_name: str = None, log_dir: str = "logs"):
+    def __init__(self, session_name: str = None, log_dir: str = "logs", config: dict = None):
         """
         Initialize brain logging system.
         
         Args:
             session_name: Name for this learning session
-            log_dir: Directory to store log files
+            log_dir: Directory to store log files (overridden by config if provided)
+            config: Configuration dict that may contain logging settings
         """
         self.session_name = session_name or f"brain_session_{int(time.time())}"
-        self.log_dir = log_dir
+        
+        # Use config log directory if provided, otherwise use parameter
+        if config and 'logging' in config:
+            self.log_dir = config['logging'].get('log_directory', log_dir)
+        else:
+            self.log_dir = log_dir
+            
         self.session_start = time.time()
         
         # Ensure log directory exists
-        os.makedirs(log_dir, exist_ok=True)
+        os.makedirs(self.log_dir, exist_ok=True)
         
         # Log file paths
-        self.brain_state_log = os.path.join(log_dir, f"{self.session_name}_brain_state.jsonl")
-        self.adaptation_log = os.path.join(log_dir, f"{self.session_name}_adaptations.jsonl")
-        self.similarity_log = os.path.join(log_dir, f"{self.session_name}_similarity.jsonl")
-        self.emergence_log = os.path.join(log_dir, f"{self.session_name}_emergence.jsonl")
-        self.session_summary = os.path.join(log_dir, f"{self.session_name}_summary.json")
+        self.brain_state_log = os.path.join(self.log_dir, f"{self.session_name}_brain_state.jsonl")
+        self.adaptation_log = os.path.join(self.log_dir, f"{self.session_name}_adaptations.jsonl")
+        self.similarity_log = os.path.join(self.log_dir, f"{self.session_name}_similarity.jsonl")
+        self.emergence_log = os.path.join(self.log_dir, f"{self.session_name}_emergence.jsonl")
+        self.session_summary = os.path.join(self.log_dir, f"{self.session_name}_summary.json")
         
         # In-memory buffers for pattern detection
         self.recent_states = deque(maxlen=100)  # Recent brain states

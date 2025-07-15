@@ -10,6 +10,7 @@ import numpy as np
 import time
 from .learnable_similarity import LearnableSimilarity
 from .adaptive_attention import AdaptiveAttentionScorer
+from ..utils.cache_adapters import SimilarityEngineCacheAdapter
 
 # Try GPU acceleration (PyTorch MPS preferred)
 try:
@@ -73,11 +74,13 @@ class SimilarityEngine:
         # Performance tracking
         self.total_searches = 0
         self.total_search_time = 0.0
-        self.cache_hits = 0
         
-        # Simple caching for repeated searches
-        self._cache = {}
-        self._max_cache_size = 1000
+        # Memory-managed caching for repeated searches
+        self._cache = SimilarityEngineCacheAdapter(
+            max_entries=1000,
+            max_size_mb=50.0,  # Reasonable memory limit
+            eviction_policy="hybrid"  # Use hybrid eviction strategy
+        )
         
         similarity_type = "learnable adaptive" if use_learnable_similarity else "hardcoded cosine"
         attention_type = " + natural attention" if use_natural_attention else ""
@@ -124,12 +127,21 @@ class SimilarityEngine:
         
         # Check cache
         cache_key = self._create_cache_key(target_vector, len(experience_vectors), max_results, min_similarity)
-        if cache_key in self._cache:
-            self.cache_hits += 1
-            return self._cache[cache_key]
+        cached_result = self._cache.get(cache_key)
+        if cached_result is not None:
+            return cached_result
         
-        # Compute similarities
-        if self.use_gpu and len(experience_vectors) > 50:  # GPU worth it for larger datasets
+        # Compute similarities - use hardware adaptation to decide GPU usage
+        should_use_gpu = False
+        if self.use_gpu:
+            try:
+                from ..utils.hardware_adaptation import should_use_gpu_for_similarity_search
+                should_use_gpu = should_use_gpu_for_similarity_search(len(experience_vectors))
+            except ImportError:
+                # Fallback to hardcoded threshold
+                should_use_gpu = len(experience_vectors) > 50
+        
+        if should_use_gpu:
             similarities = self._gpu_compute_similarities(target_vector, experience_vectors)
         else:
             similarities = self._cpu_compute_similarities(target_vector, experience_vectors)
@@ -149,8 +161,14 @@ class SimilarityEngine:
         self.total_searches += 1
         self.total_search_time += search_time
         
-        # Cache result
-        self._cache_result(cache_key, results)
+        # Cache result with utility score based on result quality
+        if results:
+            avg_similarity = sum(score for _, score in results) / len(results)
+            result_quality = min(1.0, avg_similarity * len(results) / max_results)
+        else:
+            result_quality = 0.1
+        
+        self._cache.put(cache_key, results, result_quality)
         
         return results
     
@@ -333,14 +351,10 @@ class SimilarityEngine:
         return f"{vector_hash}_{num_experiences}_{max_results}_{min_similarity}"
     
     def _cache_result(self, cache_key: str, results: List[Tuple[str, float]]):
-        """Cache a search result."""
-        if len(self._cache) >= self._max_cache_size:
-            # Simple cache eviction - remove oldest entries
-            oldest_keys = list(self._cache.keys())[:100]
-            for key in oldest_keys:
-                del self._cache[key]
-        
-        self._cache[cache_key] = results
+        """Cache a search result (legacy method for compatibility)."""
+        # This method is now handled by the put() call in the main search method
+        # Keeping for backward compatibility
+        pass
     
     def _warmup_gpu(self):
         """Warm up GPU with dummy computation."""
@@ -436,15 +450,14 @@ class SimilarityEngine:
     def get_performance_stats(self) -> Dict[str, Any]:
         """Get performance statistics."""
         avg_search_time = self.total_search_time / max(1, self.total_searches)
-        cache_hit_rate = self.cache_hits / max(1, self.total_searches)
+        cache_stats = self._cache.get_stats()
         
         stats = {
             'total_searches': self.total_searches,
             'total_time': self.total_search_time,
             'avg_search_time': avg_search_time,
             'searches_per_second': 1.0 / max(0.000001, avg_search_time),
-            'cache_hits': self.cache_hits,
-            'cache_hit_rate': cache_hit_rate,
+            'cache_stats': cache_stats,
             'gpu_enabled': self.use_gpu,
             'device': self.device,
             'similarity_type': 'learnable' if self.use_learnable_similarity else 'hardcoded_cosine'

@@ -81,10 +81,12 @@ class LearnableSimilarity:
         self.initial_learning_rate = learning_rate
         self.learning_rate = learning_rate  # This will adapt based on learning success
         
-        # GPU configuration with CUDA/MPS support
-        self.use_gpu = use_gpu and GPU_FUNCTIONAL
-        self.device = PREFERRED_DEVICE if self.use_gpu else 'cpu'
-        self.use_mixed_precision = use_mixed_precision and self.use_gpu
+        # GPU configuration with CUDA/MPS support - lazy initialization
+        self.gpu_capable = use_gpu and GPU_FUNCTIONAL
+        self.use_gpu = False  # Start with CPU, upgrade to GPU when dataset is large enough
+        self.device = 'cpu'  # Start with CPU
+        self.use_mixed_precision = use_mixed_precision
+        self.gpu_device = PREFERRED_DEVICE if self.gpu_capable else 'cpu'
         
         # Precision configuration - mimics biological neural noise
         self.compute_dtype = torch.float16 if self.use_mixed_precision else torch.float32
@@ -112,8 +114,48 @@ class LearnableSimilarity:
         self.adaptations_performed = 0
         self.similarity_evolution = []  # Track how similarity function changes
         
-        gpu_status = f"GPU acceleration {'enabled' if self.use_gpu else 'disabled'}"
+        gpu_status = f"GPU capable: {self.gpu_capable} (lazy initialization enabled)"
         print(f"LearnableSimilarity initialized - similarity will emerge from prediction success ({gpu_status})")
+    
+    def _check_and_upgrade_to_gpu(self, operation_size: int):
+        """Check if we should upgrade to GPU based on operation size."""
+        if not self.gpu_capable or self.use_gpu:
+            return  # Already using GPU or not capable
+        
+        # Check with hardware adaptation system
+        try:
+            from ..utils.hardware_adaptation import should_use_gpu_for_similarity_search
+            if should_use_gpu_for_similarity_search(operation_size):
+                self._upgrade_to_gpu()
+        except ImportError:
+            # Fallback to simple threshold
+            if operation_size >= 50:
+                self._upgrade_to_gpu()
+    
+    def _upgrade_to_gpu(self):
+        """Upgrade from CPU to GPU processing."""
+        if not self.gpu_capable or self.use_gpu:
+            return
+        
+        print(f"🚀 Upgrading similarity search to GPU ({self.gpu_device}) - dataset large enough to benefit")
+        
+        self.use_gpu = True
+        self.device = self.gpu_device
+        
+        # If parameters already exist, convert them to GPU tensors
+        if self.feature_weights is not None:
+            try:
+                self.feature_weights_tensor = torch.tensor(
+                    self.feature_weights, dtype=self.storage_dtype, device=self.device, requires_grad=False
+                )
+                self.interaction_matrix_tensor = torch.tensor(
+                    self.interaction_matrix, dtype=self.storage_dtype, device=self.device, requires_grad=False
+                )
+                print(f"✅ Similarity parameters migrated to GPU")
+            except Exception as e:
+                print(f"❌ GPU upgrade failed: {e}, staying on CPU")
+                self.use_gpu = False
+                self.device = 'cpu'
     
     def _initialize_parameters(self, vector_dim: int):
         """Initialize learnable parameters when we see first vector."""
@@ -127,28 +169,14 @@ class LearnableSimilarity:
         self.feature_weights = np.ones(vector_dim) + np.random.normal(0, 0.1, vector_dim)
         
         # Interaction matrix - learns how features interact
-        # Start as identity (no interactions initially)
-        self.interaction_matrix = np.eye(vector_dim) * 0.1
+        # Start as zero matrix (no interactions initially)
+        self.interaction_matrix = np.zeros((vector_dim, vector_dim))
         
-        # Initialize GPU tensors if using GPU
-        if self.use_gpu:
-            try:
-                # Store critical parameters in FP32, compute in FP16 for efficiency
-                self.feature_weights_tensor = torch.tensor(
-                    self.feature_weights, dtype=self.storage_dtype, device=self.device, requires_grad=False
-                )
-                self.interaction_matrix_tensor = torch.tensor(
-                    self.interaction_matrix, dtype=self.storage_dtype, device=self.device, requires_grad=False
-                )
-                
-                precision_info = f"FP16 compute, FP32 storage" if self.use_mixed_precision else "FP32"
-                print(f"Similarity parameters initialized for {vector_dim}D vectors (GPU tensors created, {precision_info})")
-            except Exception as e:
-                print(f"GPU tensor initialization failed: {e}, falling back to CPU")
-                self.use_gpu = False
-                self.device = 'cpu'
-        else:
-            print(f"Similarity parameters initialized for {vector_dim}D vectors (CPU only)")
+        # GPU tensors will be created on-demand when needed
+        self.feature_weights_tensor = None
+        self.interaction_matrix_tensor = None
+        
+        print(f"Similarity parameters initialized for {vector_dim}D vectors (CPU, GPU upgrade on-demand)")
     
     def compute_similarity(self, vector_a: List[float], vector_b: List[float]) -> float:
         """
@@ -313,6 +341,10 @@ class LearnableSimilarity:
     
     def _gradient_adapt(self, recent_outcomes: List[Dict]):
         """Perform gradient-based adaptation of similarity parameters."""
+        
+        # Check if we should upgrade to GPU based on dataset size
+        dataset_size = len(self.prediction_outcomes)
+        self._check_and_upgrade_to_gpu(dataset_size)
         
         if self.use_gpu and self.feature_weights_tensor is not None:
             self._gpu_gradient_adapt(recent_outcomes)

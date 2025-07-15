@@ -115,6 +115,11 @@ class CognitiveCapacityConstants:
     MIN_PATTERN_LENGTH = 2  # Shortest meaningful pattern
     MAX_PATTERN_LENGTH = 10  # Longest trackable sequence
     PATTERN_RECOGNITION_WINDOW = 50  # Experiences analyzed for patterns
+    
+    # GPU Activation Thresholds (Hardware-adaptive fallbacks)
+    DEFAULT_GPU_SIMILARITY_THRESHOLD = 50  # Default experiences count for GPU similarity search
+    DEFAULT_GPU_ACTIVATION_THRESHOLD = 20  # Default experiences count for GPU activation dynamics
+    DEFAULT_GPU_PATTERN_THRESHOLD = 10     # Default patterns count for GPU pattern analysis
 
 # =============================================================================
 # PREDICTION ERROR DNA: The Fundamental Drive

@@ -7,7 +7,10 @@ from any client (Pi Zero brainstems, simulations, mobile apps, etc.)
 
 import sys
 import signal
-from typing import Optional
+import json
+import os
+from pathlib import Path
+from typing import Optional, Dict, Any
 
 from src.brain import MinimalBrain
 from src.communication import MinimalTCPServer
@@ -19,9 +22,57 @@ class MinimalBrainServer:
     def __init__(self, host: str = '0.0.0.0', port: int = 9999):
         self.host = host
         self.port = port
-        self.brain = MinimalBrain()
+        
+        # Load settings and setup paths
+        self.config = self._load_settings()
+        self._setup_paths()
+        
+        # Initialize brain with config
+        self.brain = MinimalBrain(config=self.config)
         self.tcp_server = MinimalTCPServer(self.brain, host, port)
         self.running = False
+    
+    def _load_settings(self) -> Dict[str, Any]:
+        """Load settings from settings.json with proper path resolution."""
+        # Get the server directory (where this file is located)
+        server_dir = Path(__file__).parent
+        settings_file = server_dir / "settings.json"
+        
+        if settings_file.exists():
+            try:
+                with open(settings_file, 'r') as f:
+                    return json.load(f)
+            except Exception as e:
+                print(f"⚠️ Warning: Could not load settings.json: {e}")
+                return {}
+        else:
+            print(f"⚠️ Warning: settings.json not found at {settings_file}")
+            return {}
+    
+    def _setup_paths(self):
+        """Setup absolute paths for logs and robot_memory."""
+        # Always use the brain root directory (parent of server directory)
+        brain_root = Path(__file__).parent.parent
+        
+        # Convert relative paths to absolute paths
+        if 'logging' in self.config:
+            log_dir = self.config['logging'].get('log_directory', './logs')
+            self.config['logging']['log_directory'] = str(brain_root / log_dir.lstrip('./'))
+        else:
+            self.config['logging'] = {'log_directory': str(brain_root / 'logs')}
+        
+        if 'memory' in self.config:
+            memory_path = self.config['memory'].get('persistent_memory_path', './robot_memory')
+            self.config['memory']['persistent_memory_path'] = str(brain_root / memory_path.lstrip('./'))
+        else:
+            self.config['memory'] = {'persistent_memory_path': str(brain_root / 'robot_memory')}
+        
+        # Create directories if they don't exist
+        os.makedirs(self.config['logging']['log_directory'], exist_ok=True)
+        os.makedirs(self.config['memory']['persistent_memory_path'], exist_ok=True)
+        
+        print(f"📁 Logs directory: {self.config['logging']['log_directory']}")
+        print(f"📁 Memory directory: {self.config['memory']['persistent_memory_path']}")
         
     def start(self):
         """Start the minimal brain server."""

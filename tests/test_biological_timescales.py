@@ -21,7 +21,9 @@ import datetime
 from typing import List, Dict
 
 # Add server directory to path
-server_dir = os.path.join(os.path.dirname(__file__), 'server')
+# From tests/ we need to go up one level to brain/, then into server/
+brain_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+server_dir = os.path.join(brain_root, 'server')
 sys.path.insert(0, server_dir)
 
 from src.communication import MinimalBrainClient
@@ -38,7 +40,8 @@ class BiologicalTimescaleTester:
         
     def connect(self) -> bool:
         """Connect to brain server."""
-        print("🔗 Connecting to brain server for biological timescale test...")
+        timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        print(f"[{timestamp}] 🔗 Connecting to brain server for biological timescale test...")
         return self.client.connect()
     
     def disconnect(self):
@@ -158,7 +161,18 @@ class BiologicalTimescaleTester:
             if (time.time() - test_start) < total_duration - rest_duration:
                 print(f"   😴 Consolidation break: {rest_duration//60} minutes...")
                 print(f"      (Brain consolidating memories - biological process)")
-                time.sleep(rest_duration)
+                
+                # Send keepalive pings during consolidation to maintain connection
+                consolidation_start = time.time()
+                while (time.time() - consolidation_start) < rest_duration:
+                    # Sleep for 30 seconds, then send keepalive
+                    time.sleep(30)
+                    if (time.time() - consolidation_start) < rest_duration:
+                        try:
+                            # Send keepalive ping
+                            self.client.get_action([0.0, 0.0, 0.0, 0.0], timeout=5.0)
+                        except Exception:
+                            pass  # Ignore keepalive failures during consolidation
         
         return self._generate_results(overall_performance, consolidation_checkpoints)
     

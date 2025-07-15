@@ -8,8 +8,9 @@ import os
 import time
 
 # Add the brain/ directory to sys.path
-current_dir = os.path.dirname(__file__)
-sys.path.insert(0, current_dir)
+# From tests/ we need to go up one level to brain/
+brain_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, brain_root)
 
 def test_imports():
     """Test if all required modules can be imported."""

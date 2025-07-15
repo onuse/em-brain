@@ -14,6 +14,7 @@ import sys
 import os
 import socket
 import time
+import datetime
 import threading
 import json
 import struct
@@ -27,12 +28,8 @@ demos_dir = os.path.dirname(current_dir)  # demos/
 brain_dir = os.path.dirname(demos_dir)   # brain/ (project root)
 sys.path.insert(0, brain_dir)
 
-# Import ONLY embodied Free Energy system (no server imports!)
-from server.embodied_free_energy import (
-    EmbodiedFreeEnergySystem,
-    HardwareInterface,
-    HardwareTelemetry
-)
+# NO SERVER IMPORTS - Pure socket implementation only!
+# Implements local embodied Free Energy logic for the brainstem
 
 
 class PureSocketBrainClient:

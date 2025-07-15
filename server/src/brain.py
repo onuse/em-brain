@@ -49,6 +49,9 @@ class MinimalBrain:
     def __init__(self, config=None, enable_logging=True, log_session_name=None, use_utility_based_activation=True, enable_persistence=True, enable_phase2_adaptations=True):
         """Initialize the minimal brain with all 4 core systems."""
         
+        # Store config for use in other methods
+        self.config = config
+        
         # Hardware adaptation system (discovers capabilities and adapts limits)
         self.hardware_adaptation = get_hardware_adaptation()
         
@@ -109,7 +112,7 @@ class MinimalBrain:
         # Logging system for emergence analysis
         self.enable_logging = enable_logging
         if enable_logging:
-            self.logger = BrainLogger(session_name=log_session_name)
+            self.logger = BrainLogger(session_name=log_session_name, config=config)
         else:
             self.logger = None
         
@@ -865,7 +868,7 @@ class MinimalBrain:
         # Reset logger if enabled
         if self.logger:
             self.logger.close_session()
-            self.logger = BrainLogger() if self.enable_logging else None
+            self.logger = BrainLogger(config=self.config) if self.enable_logging else None
         
         print("🧹 MinimalBrain reset to initial state")
     

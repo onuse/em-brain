@@ -18,6 +18,7 @@ from collections import defaultdict
 
 from .engine import PredictionEngine
 from ..utils.cognitive_autopilot import CognitiveAutopilot, CognitiveMode
+from ..utils.cache_adapters import PatternCacheAdapter
 
 
 class AdaptivePredictionEngine(PredictionEngine):
@@ -54,11 +55,13 @@ class AdaptivePredictionEngine(PredictionEngine):
         self.cognitive_autopilot = cognitive_autopilot
         self.adaptive_mode_enabled = cognitive_autopilot is not None
         
-        # Pattern analysis caching for autopilot mode
-        self.pattern_cache = {}
-        self.cache_hits = 0
-        self.cache_misses = 0
-        self.cache_max_age = 30.0  # 30 seconds
+        # Memory-managed pattern analysis caching
+        self.pattern_cache = PatternCacheAdapter(
+            max_entries=500,
+            max_size_mb=75.0,
+            max_age_seconds=30.0,  # 30 seconds max age
+            eviction_policy="hybrid"
+        )
         
         # Performance tracking for intensity modes
         self.mode_performance = {
@@ -74,7 +77,7 @@ class AdaptivePredictionEngine(PredictionEngine):
         print(f"🚀 AdaptivePredictionEngine initialized")
         if self.adaptive_mode_enabled:
             print(f"   Cognitive autopilot: ENABLED")
-            print(f"   Pattern cache: {self.cache_max_age}s lifetime")
+            print(f"   Pattern cache: 30.0s lifetime")
         else:
             print(f"   Cognitive autopilot: DISABLED (standard mode)")
     
@@ -181,13 +184,13 @@ class AdaptivePredictionEngine(PredictionEngine):
             if self.adaptive_mode_enabled:
                 simple_prediction = {
                     'predicted_action': [0.1, 0.2, 0.3, 0.4],
-                    'confidence': 0.8,  # Higher than prediction_confidence_threshold
+                    'confidence': 0.2,  # Lower than prediction_confidence_threshold to allow learning
                     'method': 'simple_pattern_cached',
                     'pattern_id': 'simple_test'
                 }
                 # Cache it
                 cache_key = self._create_cache_key(current_context)
-                self.pattern_cache[cache_key] = (simple_prediction.copy(), time.time())
+                self.pattern_cache.put(cache_key, simple_prediction.copy(), 0.2)  # Low confidence = low utility
                 return simple_prediction
         
         elif intensity_mode == 'selective':
@@ -211,26 +214,18 @@ class AdaptivePredictionEngine(PredictionEngine):
         # Create cache key from context (simplified)
         cache_key = self._create_cache_key(current_context)
         
-        if cache_key in self.pattern_cache:
-            cached_result, timestamp = self.pattern_cache[cache_key]
-            
-            # Check if cache entry is still valid
-            if time.time() - timestamp <= self.cache_max_age:
-                self.cache_hits += 1
-                # Update cache entry with current timestamp for LRU
-                self.pattern_cache[cache_key] = (cached_result, time.time())
-                
-                # Mark as cached prediction
-                cached_result = cached_result.copy()
-                cached_result['method'] = f"{cached_result.get('method', 'pattern_analysis')}_cached"
-                cached_result['cache_hit'] = True
-                
-                return cached_result
-            else:
-                # Remove expired entry
-                del self.pattern_cache[cache_key]
+        cached_entry = self.pattern_cache.get(cache_key)
         
-        self.cache_misses += 1
+        if cached_entry is not None:
+            cached_result, timestamp = cached_entry
+            
+            # Mark as cached prediction
+            cached_result = cached_result.copy()
+            cached_result['method'] = f"{cached_result.get('method', 'pattern_analysis')}_cached"
+            cached_result['cache_hit'] = True
+            
+            return cached_result
+        
         return None
     
     def _perform_pattern_analysis(self, current_context: List[float], start_time: float) -> Optional[Dict[str, Any]]:
@@ -257,11 +252,8 @@ class AdaptivePredictionEngine(PredictionEngine):
             # Cache the result if adaptive mode enabled
             if self.adaptive_mode_enabled:
                 cache_key = self._create_cache_key(current_context)
-                self.pattern_cache[cache_key] = (pattern_prediction.copy(), time.time())
-                
-                # Limit cache size (LRU eviction)
-                if len(self.pattern_cache) > 100:
-                    self._evict_oldest_cache_entries()
+                confidence = pattern_prediction.get('confidence', 0.5)
+                self.pattern_cache.put(cache_key, pattern_prediction.copy(), confidence)
             
             # Update timing
             pattern_prediction['pattern_analysis_time'] = time.time() - start_time
@@ -363,15 +355,9 @@ class AdaptivePredictionEngine(PredictionEngine):
     
     def _evict_oldest_cache_entries(self):
         """Remove oldest cache entries to maintain size limit."""
-        # Sort by timestamp and remove oldest 20%
-        sorted_entries = sorted(
-            self.pattern_cache.items(), 
-            key=lambda x: x[1][1]  # Sort by timestamp
-        )
-        
-        num_to_remove = len(sorted_entries) // 5  # Remove 20%
-        for cache_key, _ in sorted_entries[:num_to_remove]:
-            del self.pattern_cache[cache_key]
+        # The memory-managed cache handles eviction automatically
+        # This method is kept for backward compatibility
+        pass
     
     def _update_performance_tracking(self, intensity_mode: str, confidence: float, prediction_time: float):
         """Update performance statistics for intensity mode."""
@@ -406,16 +392,7 @@ class AdaptivePredictionEngine(PredictionEngine):
     
     def _get_cache_stats(self) -> Dict[str, Any]:
         """Get pattern cache statistics."""
-        total_requests = self.cache_hits + self.cache_misses
-        hit_rate = self.cache_hits / max(1, total_requests)
-        
-        return {
-            'cache_size': len(self.pattern_cache),
-            'cache_hits': self.cache_hits,
-            'cache_misses': self.cache_misses,
-            'hit_rate': hit_rate,
-            'total_requests': total_requests
-        }
+        return self.pattern_cache.get_stats()
     
     def get_adaptive_performance_stats(self) -> Dict[str, Any]:
         """Get comprehensive adaptive performance statistics."""
@@ -439,8 +416,6 @@ class AdaptivePredictionEngine(PredictionEngine):
     
     def reset_adaptive_stats(self):
         """Reset adaptive performance statistics."""
-        self.cache_hits = 0
-        self.cache_misses = 0
         self.consecutive_low_confidence = 0
         self.pattern_cache.clear()
         

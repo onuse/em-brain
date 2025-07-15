@@ -14,7 +14,7 @@ import time
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, current_dir)
 
-from embodied_free_energy import (
+from src.embodiment import (
     EmbodiedFreeEnergySystem,
     EmbodiedBrainAdapter,
     MockHardwareInterface,

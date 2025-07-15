@@ -375,13 +375,54 @@ class HardwareAdaptation:
         
         return profile_dict
     
-    def should_use_gpu_for_operation(self, operation_size: int) -> bool:
-        """Determine if GPU should be used for a given operation size."""
+    def should_use_gpu_for_operation(self, operation_size: int, operation_type: str = 'general') -> bool:
+        """
+        Determine if GPU should be used for a given operation size and type.
+        
+        Args:
+            operation_size: Size of the operation (e.g., number of experiences)
+            operation_type: Type of operation ('similarity', 'activation', 'pattern', or 'general')
+        """
         if not self.hardware_profile or not self.hardware_profile.gpu_available:
             return False
         
-        # Use GPU if operation size is above the adaptive threshold
-        return operation_size >= self.hardware_profile.batch_processing_threshold
+        # Get appropriate threshold based on operation type
+        threshold = self._get_gpu_threshold_for_operation_type(operation_type)
+        
+        # Use GPU if operation size is above the threshold
+        return operation_size >= threshold
+    
+    def _get_gpu_threshold_for_operation_type(self, operation_type: str) -> int:
+        """Get GPU activation threshold for specific operation type."""
+        # Import here to avoid circular imports
+        try:
+            from ..cognitive_constants import CognitiveCapacityConstants
+            
+            # Use adaptive threshold as base, but allow operation-specific scaling
+            base_threshold = self.hardware_profile.batch_processing_threshold
+            
+            if operation_type == 'similarity':
+                # Similarity search benefits from GPU at lower thresholds due to vectorization
+                return max(base_threshold * 1, CognitiveCapacityConstants.DEFAULT_GPU_SIMILARITY_THRESHOLD)
+            elif operation_type == 'activation':
+                # Activation dynamics need fewer experiences to benefit from GPU spreading
+                return max(base_threshold // 2, CognitiveCapacityConstants.DEFAULT_GPU_ACTIVATION_THRESHOLD)
+            elif operation_type == 'pattern':
+                # Pattern analysis benefits from GPU with fewer patterns due to complex computations
+                return max(base_threshold // 5, CognitiveCapacityConstants.DEFAULT_GPU_PATTERN_THRESHOLD)
+            else:
+                # General operations use the standard threshold
+                return base_threshold
+                
+        except ImportError:
+            # Fallback if cognitive constants aren't available
+            base_threshold = self.hardware_profile.batch_processing_threshold
+            thresholds = {
+                'similarity': base_threshold,
+                'activation': base_threshold // 2,
+                'pattern': base_threshold // 5
+            }
+            return thresholds.get(operation_type, base_threshold)
     
     def get_optimal_batch_size(self, total_items: int) -> int:
         """Get optimal batch size for processing given total items."""
@@ -419,4 +460,12 @@ def record_brain_cycle_performance(cycle_time_ms: float, memory_usage_mb: float 
 
 def should_use_gpu_for_similarity_search(num_experiences: int) -> bool:
     """Check if GPU should be used for similarity search of given size."""
-    return get_hardware_adaptation().should_use_gpu_for_operation(num_experiences)
+    return get_hardware_adaptation().should_use_gpu_for_operation(num_experiences, 'similarity')
+
+def should_use_gpu_for_activation_dynamics(num_experiences: int) -> bool:
+    """Check if GPU should be used for activation dynamics of given size."""
+    return get_hardware_adaptation().should_use_gpu_for_operation(num_experiences, 'activation')
+
+def should_use_gpu_for_pattern_analysis(num_patterns: int) -> bool:
+    """Check if GPU should be used for pattern analysis of given size."""
+    return get_hardware_adaptation().should_use_gpu_for_operation(num_patterns, 'pattern')

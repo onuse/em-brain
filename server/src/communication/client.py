@@ -7,6 +7,7 @@ This runs on the robot hardware (Pi Zero) and communicates with the brain server
 
 import socket
 import time
+import datetime
 from typing import List, Optional, Tuple, Dict, Any
 
 from .protocol import MessageProtocol, MessageProtocolError
@@ -62,7 +63,8 @@ class MinimalBrainClient:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.settimeout(10.0)  # 10 second connection timeout
             
-            print(f"🔌 Connecting to brain server at {self.server_host}:{self.server_port}...")
+            timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            print(f"[{timestamp}] 🔌 Connecting to brain server at {self.server_host}:{self.server_port}...")
             self.socket.connect((self.server_host, self.server_port))
             
             # Perform handshake
@@ -90,13 +92,15 @@ class MinimalBrainClient:
             self.connected = True
             self.connection_time = time.time()
             
-            print(f"✅ Connected to brain server!")
+            timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            print(f"[{timestamp}] ✅ Connected to brain server!")
             print(f"   Server capabilities: {server_caps}")
             
             return True
             
         except Exception as e:
-            print(f"❌ Failed to connect to brain server: {e}")
+            timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            print(f"[{timestamp}] ❌ Failed to connect to brain server: {e}")
             self._cleanup_connection()
             return False
     
@@ -173,7 +177,8 @@ class MinimalBrainClient:
     
     def disconnect(self):
         """Disconnect from brain server."""
-        print("👋 Disconnecting from brain server...")
+        timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        print(f"[{timestamp}] 👋 Disconnecting from brain server...")
         self._cleanup_connection()
     
     def _cleanup_connection(self):

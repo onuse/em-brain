@@ -13,6 +13,7 @@ import numpy as np
 from collections import defaultdict
 
 from ..experience import Experience
+from ..utils.cache_adapters import ActivationCacheAdapter
 
 # GPU acceleration
 try:
@@ -52,10 +53,12 @@ class ActivationDynamics:
             use_gpu: Whether to use GPU acceleration for spreading activation
             use_mixed_precision: Whether to use FP16 for memory efficiency
         """
-        # GPU configuration
-        self.use_gpu = use_gpu and MPS_FUNCTIONAL
-        self.device = 'mps' if self.use_gpu else 'cpu'
-        self.use_mixed_precision = use_mixed_precision and self.use_gpu
+        # GPU configuration - lazy initialization
+        self.gpu_capable = use_gpu and MPS_FUNCTIONAL
+        self.use_gpu = False  # Start with CPU, upgrade when dataset is large enough
+        self.device = 'cpu'  # Start with CPU
+        self.use_mixed_precision = use_mixed_precision
+        self.gpu_device = 'mps' if self.gpu_capable else 'cpu'
         
         # Precision configuration - biological neural noise simulation
         self.compute_dtype = torch.float16 if self.use_mixed_precision else torch.float32
@@ -76,7 +79,13 @@ class ActivationDynamics:
         
         # Spreading activation state
         self._spread_queue = []  # Experiences to spread activation from
-        self._similarity_cache = {}  # Cache similar experience lookups
+        
+        # Memory-managed cache for similarity lookups and GPU tensors
+        self._cache_adapter = ActivationCacheAdapter(
+            max_entries=2000,
+            max_size_mb=100.0,
+            eviction_policy="utility_based"  # Activation benefits from utility-based eviction
+        )
         
         # GPU tensors for efficient computation
         self._gpu_activation_levels = None  # Tensor of all activation levels
@@ -85,8 +94,33 @@ class ActivationDynamics:
         self._index_to_experience_id = {}   # Map tensor indices back to experience IDs
         
         precision_info = f"FP16 compute, FP32 storage" if self.use_mixed_precision else "FP32"
-        gpu_status = f"GPU acceleration {'enabled' if self.use_gpu else 'disabled'}"
+        gpu_status = f"GPU capable: {self.gpu_capable} (lazy initialization enabled)"
         print(f"🧠 ActivationDynamics initialized - adaptive parameters ({gpu_status}, {precision_info})")
+    
+    def _check_and_upgrade_to_gpu(self, num_experiences: int):
+        """Check if we should upgrade to GPU based on number of experiences."""
+        if not self.gpu_capable or self.use_gpu:
+            return  # Already using GPU or not capable
+        
+        # Check with hardware adaptation system
+        try:
+            from ..utils.hardware_adaptation import should_use_gpu_for_activation_dynamics
+            if should_use_gpu_for_activation_dynamics(num_experiences):
+                self._upgrade_to_gpu()
+        except ImportError:
+            # Fallback to simple threshold
+            if num_experiences >= 20:
+                self._upgrade_to_gpu()
+    
+    def _upgrade_to_gpu(self):
+        """Upgrade from CPU to GPU processing."""
+        if not self.gpu_capable or self.use_gpu:
+            return
+        
+        print(f"🚀 Upgrading activation dynamics to GPU ({self.gpu_device}) - experience set large enough to benefit")
+        
+        self.use_gpu = True
+        self.device = self.gpu_device
     
     def _rebuild_gpu_tensors(self, all_experiences: Dict[str, Experience]):
         """Rebuild GPU tensors when experience set changes significantly."""
@@ -225,8 +259,11 @@ class ActivationDynamics:
         if time_delta < 0.1:  # Don't update too frequently
             return
         
+        # Check if we should upgrade to GPU based on experience count
+        self._check_and_upgrade_to_gpu(len(all_experiences))
+        
         # Use GPU acceleration for large experience sets
-        if self.use_gpu and len(all_experiences) > 20:
+        if self.use_gpu:
             self._gpu_update_activations(all_experiences, time_delta)
         else:
             self._cpu_update_activations(all_experiences, time_delta)
@@ -442,8 +479,22 @@ class ActivationDynamics:
             if not source_exp:
                 continue
             
-            # Spread activation to similar experiences based on cached connections
-            for similar_id, similarity in source_exp.similar_experiences.items():
+            # Try to get cached similar experiences first
+            cached_similar = self._cache_adapter.get_similar_experiences(exp_id)
+            
+            if cached_similar is not None:
+                # Use cached similarities
+                similar_experiences = cached_similar
+            else:
+                # Fall back to experience object similarities
+                similar_experiences = source_exp.similar_experiences
+                
+                # Cache for future use with utility based on activation level
+                utility_score = min(1.0, source_exp.activation_level * 2.0)
+                self._cache_adapter.cache_similar_experiences(exp_id, similar_experiences, utility_score)
+            
+            # Spread activation to similar experiences
+            for similar_id, similarity in similar_experiences.items():
                 target_exp = all_experiences.get(similar_id)
                 if target_exp and similarity > 0.3:  # Only spread to reasonably similar
                     spread_amount = source_strength * similarity * self.spread_strength

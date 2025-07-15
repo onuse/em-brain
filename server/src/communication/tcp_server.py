@@ -8,6 +8,7 @@ from robot clients (Pi Zero brainstems, simulators, etc.)
 import socket
 import threading
 import time
+import datetime
 from typing import Dict, Any, Optional, Callable
 import uuid
 
@@ -56,7 +57,8 @@ class MinimalTCPServer:
     
     def start(self):
         """Start the TCP server."""
-        print(f"\n🚀 Starting TCP server on {self.host}:{self.port}")
+        timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        print(f"\n[{timestamp}] 🚀 Starting TCP server on {self.host}:{self.port}")
         
         try:
             # Create server socket
@@ -68,14 +70,16 @@ class MinimalTCPServer:
             self.running = True
             self.start_time = time.time()
             
-            print(f"✅ Server listening on {self.host}:{self.port}")
+            timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            print(f"[{timestamp}] ✅ Server listening on {self.host}:{self.port}")
             print("   Waiting for robot clients to connect...")
             
             # Main server loop
             while self.running:
                 try:
                     client_socket, client_address = self.server_socket.accept()
-                    print(f"🤖 New client connected from {client_address}")
+                    timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    print(f"[{timestamp}] 🤖 New client connected from {client_address}")
                     
                     # Handle client in separate thread
                     client_thread = threading.Thread(
@@ -131,13 +135,15 @@ class MinimalTCPServer:
         
         try:
             # Set socket timeout for client communication
-            client_socket.settimeout(30.0)  # 30 second timeout
+            # Use longer timeout for biological timescale tests (5+ minutes consolidation)
+            client_socket.settimeout(300.0)  # 5 minute timeout
             
             # Main client communication loop
             while self.running:
                 try:
-                    # Receive message from client
-                    msg_type, vector_data = self.protocol.receive_message(client_socket, timeout=10.0)
+                    # Receive message from client  
+                    # Use longer receive timeout for biological tests
+                    msg_type, vector_data = self.protocol.receive_message(client_socket, timeout=60.0)
                     client_info['last_activity'] = time.time()
                     
                     # Process message based on type
@@ -166,7 +172,8 @@ class MinimalTCPServer:
                     error_response = self.protocol.encode_error(2.0)  # Protocol error
                     self.protocol.send_message(client_socket, error_response)
                 except ConnectionError:
-                    print(f"💔 Client {client_id} disconnected")
+                    timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    print(f"[{timestamp}] 💔 Client {client_id} disconnected")
                     break
                 except Exception as e:
                     print(f"❌ Unexpected error handling {client_id}: {e}")
@@ -182,7 +189,8 @@ class MinimalTCPServer:
             if client_id in self.clients:
                 del self.clients[client_id]
             
-            print(f"👋 Client {client_id} disconnected (served {client_info['requests_served']} requests)")
+            timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            print(f"[{timestamp}] 👋 Client {client_id} disconnected (served {client_info['requests_served']} requests)")
     
     def _handle_handshake(self, client_info: dict, capabilities: list) -> bytes:
         """Handle handshake message from client."""

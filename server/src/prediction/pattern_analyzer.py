@@ -88,10 +88,12 @@ class GPUPatternAnalyzer:
             use_gpu: Whether to use GPU acceleration
             use_mixed_precision: Whether to use FP16 for memory efficiency
         """
-        # GPU configuration
-        self.use_gpu = use_gpu and GPU_FUNCTIONAL
-        self.device = PREFERRED_DEVICE if self.use_gpu else 'cpu'
-        self.use_mixed_precision = use_mixed_precision and self.use_gpu
+        # GPU configuration - lazy initialization
+        self.gpu_capable = use_gpu and GPU_FUNCTIONAL
+        self.use_gpu = False  # Start with CPU, upgrade when pattern set is large enough
+        self.device = 'cpu'  # Start with CPU
+        self.use_mixed_precision = use_mixed_precision
+        self.gpu_device = PREFERRED_DEVICE if self.gpu_capable else 'cpu'
         
         # Precision configuration - biological neural noise simulation
         self.compute_dtype = torch.float16 if self.use_mixed_precision else torch.float32
@@ -126,8 +128,37 @@ class GPUPatternAnalyzer:
         self.prediction_confidence_threshold = 0.6
         
         precision_info = f"FP16 compute, FP32 storage" if self.use_mixed_precision else "FP32"
-        gpu_status = f"GPU acceleration {'enabled' if self.use_gpu else 'disabled'}"
+        gpu_status = f"GPU capable: {self.gpu_capable} (lazy initialization enabled)"
         print(f"🔍 GPUPatternAnalyzer initialized - learning recurring sequences ({gpu_status}, {precision_info})")
+    
+    def _check_and_upgrade_to_gpu(self, num_patterns: int):
+        """Check if we should upgrade to GPU based on number of patterns."""
+        if not self.gpu_capable or self.use_gpu:
+            return  # Already using GPU or not capable
+        
+        # Check with hardware adaptation system
+        try:
+            from ..utils.hardware_adaptation import should_use_gpu_for_pattern_analysis
+            if should_use_gpu_for_pattern_analysis(num_patterns):
+                self._upgrade_to_gpu()
+        except ImportError:
+            # Fallback to simple threshold
+            if num_patterns >= 10:
+                self._upgrade_to_gpu()
+    
+    def _upgrade_to_gpu(self):
+        """Upgrade from CPU to GPU processing."""
+        if not self.gpu_capable or self.use_gpu:
+            return
+        
+        print(f"🚀 Upgrading pattern analysis to GPU ({self.gpu_device}) - pattern set large enough to benefit")
+        
+        self.use_gpu = True
+        self.device = self.gpu_device
+        
+        # Rebuild existing GPU tensors if we have patterns
+        if len(self.learned_patterns) > 0:
+            self._rebuild_gpu_pattern_tensors()
     
     def add_experience_to_stream(self, experience_data: Dict[str, Any]):
         """
@@ -168,6 +199,9 @@ class GPUPatternAnalyzer:
         
         # Update pattern statistics
         self._update_pattern_statistics()
+        
+        # Check if we should upgrade to GPU based on number of patterns
+        self._check_and_upgrade_to_gpu(len(self.learned_patterns))
         
         # Rebuild GPU tensors if patterns changed significantly
         if len(self.learned_patterns) > 0 and self.use_gpu:
