@@ -46,6 +46,9 @@ class MinimalTCPServer:
         self.clients = {}  # client_id -> client_info
         self.client_counter = 0
         
+        # Experience storage tracking per client
+        self.client_experiences = {}  # client_id -> previous experience data
+        
         # Performance tracking
         self.total_requests = 0
         self.total_clients_served = 0
@@ -189,6 +192,10 @@ class MinimalTCPServer:
             if client_id in self.clients:
                 del self.clients[client_id]
             
+            # Cleanup client experience data
+            if client_id in self.client_experiences:
+                del self.client_experiences[client_id]
+            
             timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             print(f"[{timestamp}] 👋 Client {client_id} disconnected (served {client_info['requests_served']} requests)")
     
@@ -220,14 +227,41 @@ class MinimalTCPServer:
             return self.protocol.encode_error(4.0)  # Sensory input too large
         
         try:
-            # Process through brain
+            client_id = client_info['id']
+            
+            # Store previous experience if this is not the first request
+            if client_id in self.client_experiences:
+                prev_experience = self.client_experiences[client_id]
+                
+                # Store complete experience: prev_sensory → prev_action → current_sensory (outcome)
+                experience_id = self.brain.store_experience(
+                    sensory_input=prev_experience['sensory_input'],
+                    action_taken=prev_experience['action_taken'],
+                    outcome=sensory_vector,  # Current sensory input is the outcome
+                    predicted_action=prev_experience['predicted_action']
+                )
+                
+                # Log experience storage (first few times)
+                if client_info['requests_served'] < 5:
+                    print(f"💾 {client_id}: Stored experience {experience_id} "
+                          f"(total: {len(self.brain.experience_storage._experiences)})")
+            
+            # Process current sensory input through brain
             action_vector, brain_state = self.brain.process_sensory_input(
                 sensory_vector, action_dimensions=4  # Standard 4D action space
             )
             
+            # Store current experience data for next cycle
+            self.client_experiences[client_id] = {
+                'sensory_input': sensory_vector.copy(),
+                'action_taken': action_vector.copy(),
+                'predicted_action': action_vector.copy(),  # For now, predicted = taken
+                'timestamp': time.time()
+            }
+            
             # Debug output for first few requests
             if client_info['requests_served'] < 5:
-                print(f"🧠 {client_info['id']}: {len(sensory_vector)}D sensors → "
+                print(f"🧠 {client_id}: {len(sensory_vector)}D sensors → "
                       f"{len(action_vector)}D action ({brain_state['prediction_method']}, "
                       f"conf: {brain_state['prediction_confidence']:.3f})")
             

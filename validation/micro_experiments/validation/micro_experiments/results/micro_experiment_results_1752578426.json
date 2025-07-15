@@ -34,8 +34,8 @@
     {
       "experiment_name": "Similarity Consistency",
       "assumption_tested": "Similar situations should produce similar actions",
-      "start_time": 1752573378.255904,
-      "duration_seconds": 0.0005791187286376953,
+      "start_time": 1752578426.635063,
+      "duration_seconds": 0.0007550716400146484,
       "passed": false,
       "confidence": 0.0,
       "p_value": null,
@@ -48,8 +48,8 @@
     {
       "experiment_name": "Prediction Error Learning",
       "assumption_tested": "Prediction error should decrease over time",
-      "start_time": 1752573378.2565,
-      "duration_seconds": 0.0001590251922607422,
+      "start_time": 1752578426.635835,
+      "duration_seconds": 0.00023484230041503906,
       "passed": false,
       "confidence": 0.0,
       "p_value": null,
@@ -62,8 +62,8 @@
     {
       "experiment_name": "Experience Scaling",
       "assumption_tested": "More experience should lead to better performance",
-      "start_time": 1752573378.2566679,
-      "duration_seconds": 0.00015115737915039062,
+      "start_time": 1752578426.636079,
+      "duration_seconds": 0.00022983551025390625,
       "passed": false,
       "confidence": 0.0,
       "p_value": null,
@@ -76,8 +76,8 @@
     {
       "experiment_name": "Sensory-Motor Coordination",
       "assumption_tested": "16D sensory input should provide sufficient information for 4D actions",
-      "start_time": 1752573378.256832,
-      "duration_seconds": 0.00017905235290527344,
+      "start_time": 1752578426.6363158,
+      "duration_seconds": 0.00021219253540039062,
       "passed": false,
       "confidence": 0.0,
       "p_value": null,
@@ -88,5 +88,5 @@
       "random_seed": 42
     }
   ],
-  "timestamp": 1752573378.2571242
+  "timestamp": 1752578426.636628
 }
