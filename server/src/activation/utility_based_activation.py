@@ -278,8 +278,12 @@ class UtilityBasedActivation:
     def _gpu_compute_utilities(self, target_context: List[float],
                               all_experiences: Dict[str, Experience],
                               similarity_scores: List[Tuple[str, float]]) -> Dict[str, float]:
-        """GPU-accelerated utility computation."""
+        """GPU-accelerated utility computation with batch optimization."""
         try:
+            # OPTIMIZATION: Skip GPU for small sets where Python overhead dominates
+            if len(similarity_scores) < 20:
+                return self._cpu_compute_utilities(target_context, all_experiences, similarity_scores, time.time())
+            
             # Update GPU tensors incrementally (no rebuilding!)
             self._update_gpu_tensors_incrementally(all_experiences, similarity_scores)
             
@@ -289,56 +293,63 @@ class UtilityBasedActivation:
             current_time = time.time()
             num_experiences = len(similarity_scores)
             
-            # Convert similarity scores to tensor with compute precision
-            similarities = torch.tensor([sim for _, sim in similarity_scores], 
-                                      dtype=self.compute_dtype, device=self.device)
+            # OPTIMIZATION: Pre-allocate tensors to avoid repeated allocation
+            if not hasattr(self, '_gpu_batch_tensors') or self._gpu_batch_tensors is None:
+                self._gpu_batch_tensors = {
+                    'similarities': torch.zeros(100, dtype=self.compute_dtype, device=self.device),
+                    'current_activations': torch.zeros(100, dtype=self.compute_dtype, device=self.device),
+                    'utilities': torch.zeros(100, dtype=self.compute_dtype, device=self.device)
+                }
             
-            # Vectorized utility computation with mixed precision
-            # Base utility = similarity
+            # Resize batch tensors if needed
+            if num_experiences > self._gpu_batch_tensors['similarities'].size(0):
+                new_size = max(num_experiences, self._gpu_batch_tensors['similarities'].size(0) * 2)
+                for key in self._gpu_batch_tensors:
+                    self._gpu_batch_tensors[key] = torch.zeros(new_size, dtype=self.compute_dtype, device=self.device)
+            
+            # Fill batch tensors efficiently
+            similarities = self._gpu_batch_tensors['similarities'][:num_experiences]
+            current_activations_tensor = self._gpu_batch_tensors['current_activations'][:num_experiences]
+            
+            # Vectorized tensor filling
+            for i, (exp_id, sim) in enumerate(similarity_scores):
+                similarities[i] = sim
+                current_activations_tensor[i] = self.current_activations.get(exp_id, 0.0)
+            
+            # Vectorized utility computation with pre-allocated weights
+            if not hasattr(self, '_gpu_weight_tensors'):
+                self._gpu_weight_tensors = {
+                    'base': torch.tensor(0.4, dtype=self.compute_dtype, device=self.device),
+                    'historical': torch.tensor(0.2, dtype=self.compute_dtype, device=self.device),
+                    'success': torch.tensor(0.2, dtype=self.compute_dtype, device=self.device),
+                    'error': torch.tensor(0.1, dtype=self.compute_dtype, device=self.device),
+                    'connection': torch.tensor(0.1, dtype=self.compute_dtype, device=self.device)
+                }
+            
+            # Batch utility computation
             base_utilities = similarities
+            historical_utilities = self._gpu_utility_history[:num_experiences].to(self.compute_dtype)
+            recent_success_boosts = current_activations_tensor * 0.5  # Simplified boost
+            error_boosts = self._gpu_experience_data[:num_experiences, 0].to(self.compute_dtype)
+            connection_boosts = self._gpu_compute_connection_boost_batch(current_activations_tensor)
             
-            # Historical utilities (convert to compute precision)
-            historical_utilities = self._gpu_utility_history.to(self.compute_dtype)
-            
-            # Recent success boost (vectorized lookup)
-            current_activations_tensor = torch.zeros(num_experiences, dtype=self.compute_dtype, device=self.device)
-            for i, (exp_id, _) in enumerate(similarity_scores):
-                if exp_id in self.current_activations:
-                    current_activations_tensor[i] = self.current_activations[exp_id]
-            
-            recent_success_boosts = self._gpu_compute_recent_success_boost(current_activations_tensor)
-            
-            # Error boosts (from experience features, convert to compute precision)
-            error_boosts = self._gpu_experience_data[:, 0].to(self.compute_dtype)  # First feature is inverted prediction error
-            
-            # Connection boosts (vectorized)
-            connection_boosts = self._gpu_compute_connection_boost(current_activations_tensor)
-            
-            # Combine utilities (vectorized weighted sum) with mixed precision
-            weight_tensors = {
-                'base': torch.tensor(0.4, dtype=self.compute_dtype, device=self.device),
-                'historical': torch.tensor(0.2, dtype=self.compute_dtype, device=self.device),
-                'success': torch.tensor(0.2, dtype=self.compute_dtype, device=self.device),
-                'error': torch.tensor(0.1, dtype=self.compute_dtype, device=self.device),
-                'connection': torch.tensor(0.1, dtype=self.compute_dtype, device=self.device)
-            }
-            
+            # Vectorized weighted sum
             total_utilities = (
-                base_utilities * weight_tensors['base'] +
-                historical_utilities * weight_tensors['historical'] +
-                recent_success_boosts * weight_tensors['success'] +
-                error_boosts * weight_tensors['error'] +
-                connection_boosts * weight_tensors['connection']
+                base_utilities * self._gpu_weight_tensors['base'] +
+                historical_utilities * self._gpu_weight_tensors['historical'] +
+                recent_success_boosts * self._gpu_weight_tensors['success'] +
+                error_boosts * self._gpu_weight_tensors['error'] +
+                connection_boosts * self._gpu_weight_tensors['connection']
             )
             
-            # Apply minimum utility threshold and convert to dict
-            max_utility = torch.tensor(1.0, dtype=self.compute_dtype, device=self.device)
-            total_utilities = torch.clamp(total_utilities, max=max_utility)
+            # Apply threshold and convert to dict efficiently
+            torch.clamp(total_utilities, max=1.0, out=total_utilities)
             utility_threshold = 0.1
             
-            new_activations = {}
+            # Batch CPU conversion
             utilities_cpu = total_utilities.cpu().numpy()
             
+            new_activations = {}
             for i, (exp_id, _) in enumerate(similarity_scores):
                 utility = float(utilities_cpu[i])
                 if utility > utility_threshold:
@@ -369,6 +380,25 @@ class UtilityBasedActivation:
         connection_boosts = torch.matmul(connection_matrix_compute, current_activations)
         boost_factor = torch.tensor(0.5, dtype=self.compute_dtype, device=self.device)
         return connection_boosts * boost_factor  # Moderate boost from connections
+    
+    def _gpu_compute_connection_boost_batch(self, current_activations: torch.Tensor) -> torch.Tensor:
+        """Batch-optimized GPU computation of connection utility boost."""
+        if self._gpu_connection_matrix is None or current_activations.size(0) == 0:
+            return torch.zeros_like(current_activations)
+        
+        # Use existing connection matrix but with batch optimization
+        num_experiences = current_activations.size(0)
+        if num_experiences > self._gpu_connection_matrix.size(0):
+            # Pad current activations to match connection matrix size
+            padded_activations = torch.zeros(self._gpu_connection_matrix.size(0), dtype=self.compute_dtype, device=self.device)
+            padded_activations[:num_experiences] = current_activations
+            connection_boosts = torch.matmul(self._gpu_connection_matrix.to(self.compute_dtype), padded_activations)
+            return connection_boosts[:num_experiences] * 0.5
+        else:
+            # Use subset of connection matrix
+            connection_submatrix = self._gpu_connection_matrix[:num_experiences, :num_experiences].to(self.compute_dtype)
+            connection_boosts = torch.matmul(connection_submatrix, current_activations)
+            return connection_boosts * 0.5
     
     def _gpu_compute_connection_boost_indexed(self, current_activations: torch.Tensor, active_indices: torch.Tensor) -> torch.Tensor:
         """GPU computation of connection utility boost for specific indices."""

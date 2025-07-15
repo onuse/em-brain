@@ -194,7 +194,9 @@ class LearnableSimilarity:
         
         # Initialize parameters if needed
         if self.feature_weights is None:
-            self._initialize_parameters(len(vec_a))
+            # Use specified vector dimensions, or infer from input if not specified
+            vector_dim = self.vector_dimensions if self.vector_dimensions is not None else len(vec_a)
+            self._initialize_parameters(vector_dim)
         
         if self.use_gpu and self.feature_weights_tensor is not None:
             return self._gpu_compute_similarity(vec_a, vec_b)

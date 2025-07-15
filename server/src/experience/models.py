@@ -93,10 +93,13 @@ class Experience:
         """
         Get the 'context' of this experience for similarity matching.
         
-        For now, this is just the sensory input, but could be more
-        sophisticated (sensory + action, or learned features).
+        Combines sensory input and action taken to create the full context
+        vector used for similarity comparisons.
         """
-        return self.sensory_input.copy()
+        context = []
+        context.extend(self.sensory_input)
+        context.extend(self.action_taken)
+        return context
     
     def get_action_vector(self) -> List[float]:
         """Get the action taken in this experience."""

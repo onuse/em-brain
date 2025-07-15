@@ -202,7 +202,7 @@ class CognitiveAutopilot:
         self.mode_switch_count += 1
         self.last_mode_switch = current_time
         
-        print(f"🧠 Cognitive mode: {old_mode.value} → {new_mode.value}")
+        # Mode switch logged silently (removed verbose output)
     
     def _generate_system_recommendations(self, brain_state: Dict[str, Any]) -> Dict[str, Any]:
         """Generate recommendations for other brain systems."""

@@ -10,6 +10,7 @@ import numpy as np
 import time
 from .learnable_similarity import LearnableSimilarity
 from .adaptive_attention import AdaptiveAttentionScorer
+from .hierarchical_index import HierarchicalExperienceIndex
 from ..utils.cache_adapters import SimilarityEngineCacheAdapter
 
 # Try GPU acceleration (PyTorch MPS preferred)
@@ -44,7 +45,7 @@ class SimilarityEngine:
     """
     
     def __init__(self, use_gpu: bool = True, use_learnable_similarity: bool = True, 
-                 use_natural_attention: bool = True):
+                 use_natural_attention: bool = True, use_hierarchical_indexing: bool = True):
         """
         Initialize similarity search engine.
         
@@ -52,15 +53,18 @@ class SimilarityEngine:
             use_gpu: Whether to use GPU acceleration if available
             use_learnable_similarity: Whether to use adaptive similarity learning
             use_natural_attention: Whether to use natural attention weighting
+            use_hierarchical_indexing: Whether to use hierarchical indexing for 10k+ experiences
         """
         self.use_gpu = use_gpu and MPS_FUNCTIONAL
         self.device = 'mps' if self.use_gpu else 'cpu'
         self.use_learnable_similarity = use_learnable_similarity
         self.use_natural_attention = use_natural_attention
+        self.use_hierarchical_indexing = use_hierarchical_indexing
         
         # Learnable similarity function
         if use_learnable_similarity:
-            self.learnable_similarity = LearnableSimilarity(use_gpu=use_gpu)
+            # Experience vectors are sensory_input (4D) + action_taken (4D) = 8D
+            self.learnable_similarity = LearnableSimilarity(vector_dimensions=8, use_gpu=use_gpu)
         else:
             self.learnable_similarity = None
         
@@ -70,6 +74,16 @@ class SimilarityEngine:
             self.natural_attention_similarity = NaturalAttentionSimilarity(self)
         else:
             self.natural_attention_similarity = None
+        
+        # Hierarchical indexing for massive experience scaling
+        if use_hierarchical_indexing:
+            self.hierarchical_index = HierarchicalExperienceIndex(
+                max_region_size=50,
+                similarity_threshold=0.4,
+                max_search_regions=3
+            )
+        else:
+            self.hierarchical_index = None
         
         # Performance tracking
         self.total_searches = 0
@@ -84,12 +98,13 @@ class SimilarityEngine:
         
         similarity_type = "learnable adaptive" if use_learnable_similarity else "hardcoded cosine"
         attention_type = " + natural attention" if use_natural_attention else ""
+        hierarchical_type = " + hierarchical indexing" if use_hierarchical_indexing else ""
         
         if self.use_gpu:
-            print(f"SimilarityEngine using {similarity_type}{attention_type} similarity with GPU acceleration")
+            print(f"SimilarityEngine using {similarity_type}{attention_type}{hierarchical_type} similarity with GPU acceleration")
             self._warmup_gpu()
         else:
-            print(f"SimilarityEngine using {similarity_type}{attention_type} similarity with CPU")
+            print(f"SimilarityEngine using {similarity_type}{attention_type}{hierarchical_type} similarity with CPU")
     
     def find_similar_experiences(self, 
                                target_vector: List[float],
@@ -131,30 +146,51 @@ class SimilarityEngine:
         if cached_result is not None:
             return cached_result
         
-        # Compute similarities - use hardware adaptation to decide GPU usage
-        should_use_gpu = False
-        if self.use_gpu:
-            try:
-                from ..utils.hardware_adaptation import should_use_gpu_for_similarity_search
-                should_use_gpu = should_use_gpu_for_similarity_search(len(experience_vectors))
-            except ImportError:
-                # Fallback to hardcoded threshold
-                should_use_gpu = len(experience_vectors) > 50
+        # Decide whether to use hierarchical search
+        use_hierarchical = (
+            self.use_hierarchical_indexing and 
+            self.hierarchical_index is not None and
+            self.hierarchical_index.should_use_hierarchical_search(len(experience_vectors))
+        )
         
-        if should_use_gpu:
-            similarities = self._gpu_compute_similarities(target_vector, experience_vectors)
+        if use_hierarchical:
+            # Use hierarchical search for massive datasets
+            target_array = np.array(target_vector, dtype=np.float32)
+            experience_arrays = [np.array(vec, dtype=np.float32) for vec in experience_vectors]
+            
+            results = self.hierarchical_index.find_similar_experiences(
+                target_array, experience_arrays, experience_ids, max_results
+            )
+            
+            # Filter by minimum similarity
+            results = [(exp_id, sim) for exp_id, sim in results if sim >= min_similarity]
+            
         else:
-            similarities = self._cpu_compute_similarities(target_vector, experience_vectors)
-        
-        # Find best matches
-        results = []
-        for i, similarity in enumerate(similarities):
-            if similarity >= min_similarity:
-                results.append((experience_ids[i], float(similarity)))
-        
-        # Sort by similarity (highest first) and limit results
-        results.sort(key=lambda x: x[1], reverse=True)
-        results = results[:max_results]
+            # Use traditional similarity search
+            # Compute similarities - use hardware adaptation to decide GPU usage
+            should_use_gpu = False
+            if self.use_gpu:
+                try:
+                    from ..utils.hardware_adaptation import should_use_gpu_for_similarity_search
+                    should_use_gpu = should_use_gpu_for_similarity_search(len(experience_vectors))
+                except ImportError:
+                    # Fallback to hardcoded threshold
+                    should_use_gpu = len(experience_vectors) > 50
+            
+            if should_use_gpu:
+                similarities = self._gpu_compute_similarities(target_vector, experience_vectors)
+            else:
+                similarities = self._cpu_compute_similarities(target_vector, experience_vectors)
+            
+            # Find best matches
+            results = []
+            for i, similarity in enumerate(similarities):
+                if similarity >= min_similarity:
+                    results.append((experience_ids[i], float(similarity)))
+            
+            # Sort by similarity (highest first) and limit results
+            results.sort(key=lambda x: x[1], reverse=True)
+            results = results[:max_results]
         
         # Update performance tracking
         search_time = time.time() - start_time
@@ -398,6 +434,20 @@ class SimilarityEngine:
         if self.use_learnable_similarity and self.learnable_similarity is not None:
             self.learnable_similarity.adapt_similarity_function()
     
+    def add_experience_to_index(self, experience_id: str, experience_vector: List[float]):
+        """
+        Add a new experience to the hierarchical index.
+        
+        Call this whenever a new experience is stored to maintain the index.
+        
+        Args:
+            experience_id: Unique identifier for the experience
+            experience_vector: Vector representation of the experience
+        """
+        if self.use_hierarchical_indexing and self.hierarchical_index is not None:
+            vector_array = np.array(experience_vector, dtype=np.float32)
+            self.hierarchical_index.add_experience(experience_id, vector_array)
+    
     def _vectors_to_experiences_bridge(self, experience_vectors: List[List[float]], experience_ids: List[str]):
         """
         Bridge function to convert vectors back to experience-like objects for attention system.
@@ -474,6 +524,13 @@ class SimilarityEngine:
             stats['natural_attention_available'] = True
         else:
             stats['natural_attention_available'] = False
+        
+        # Add hierarchical indexing statistics if available
+        if self.use_hierarchical_indexing and self.hierarchical_index is not None:
+            hierarchical_stats = self.hierarchical_index.get_performance_stats()
+            stats['hierarchical_indexing'] = hierarchical_stats
+        else:
+            stats['hierarchical_indexing'] = None
         
         return stats
     

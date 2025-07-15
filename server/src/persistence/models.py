@@ -21,9 +21,9 @@ class PersistenceConfig:
     deltas_path: str = "deltas" 
     metadata_path: str = "metadata"
     
-    # Checkpoint frequency
+    # Checkpoint frequency  
     checkpoint_interval_experiences: int = 1000
-    checkpoint_interval_seconds: int = 300  # 5 minutes
+    checkpoint_interval_seconds: int = 5  # 5 seconds as requested, with throttled checking in brain.py
     
     # Delta batching
     delta_batch_size: int = 100

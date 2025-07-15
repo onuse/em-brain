@@ -294,9 +294,17 @@ class AdaptivePredictionEngine(PredictionEngine):
         if not experience_vectors:
             return self._bootstrap_random_action(action_dimensions)
         
+        # Pad current context to match experience vector dimensions
+        # Current context is sensory input (4D), experience vectors are sensory + action (8D)
+        if len(current_context) == 4 and experience_vectors and len(experience_vectors[0]) == 8:
+            # Pad with zeros for the action part since we're predicting the action
+            padded_context = current_context + [0.0, 0.0, 0.0, 0.0]
+        else:
+            padded_context = current_context
+        
         # Find similar experiences with adaptive parameters
         similar_experiences = similarity_engine.find_similar_experiences(
-            current_context, experience_vectors, experience_ids,
+            padded_context, experience_vectors, experience_ids,
             max_results=max_results, min_similarity=min_similarity
         )
         

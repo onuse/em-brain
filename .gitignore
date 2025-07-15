@@ -17,3 +17,5 @@ debug_output/
 *old/
 *old.py
 CLAUDE.md
+.idea/vcs.xml
+.idea/.gitignore

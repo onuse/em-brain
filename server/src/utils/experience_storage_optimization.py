@@ -104,6 +104,10 @@ class ExperienceStorageOptimization:
         # Store experience (must be synchronous)
         experience_id = self.brain.experience_storage.add_experience(experience)
         
+        # Add experience to hierarchical index for fast similarity search (must be synchronous)
+        experience_vector = experience.get_context_vector()
+        self.brain.similarity_engine.add_experience_to_index(experience_id, experience_vector)
+        
         # Add to pattern analysis stream (important for predictions)
         experience_data = {
             'experience_id': experience_id,
