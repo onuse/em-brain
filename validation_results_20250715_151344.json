@@ -1,0 +1,565 @@
+{
+  "test_info": {
+    "duration": 60,
+    "cycles_completed": 60,
+    "timestamp": "20250715_151344"
+  },
+  "performance_data": [
+    {
+      "cycle": 0,
+      "cycle_time_ms": 36.30995750427246,
+      "total_experiences": 1,
+      "prediction_confidence": 0.1,
+      "working_memory_size": 0,
+      "timestamp": 1752585164.130574
+    },
+    {
+      "cycle": 1,
+      "cycle_time_ms": 12.705087661743164,
+      "total_experiences": 2,
+      "prediction_confidence": 0.1,
+      "working_memory_size": 1,
+      "timestamp": 1752585165.111947
+    },
+    {
+      "cycle": 2,
+      "cycle_time_ms": 18.22185516357422,
+      "total_experiences": 3,
+      "prediction_confidence": 0.1,
+      "working_memory_size": 2,
+      "timestamp": 1752585166.1208289
+    },
+    {
+      "cycle": 3,
+      "cycle_time_ms": 16.23392105102539,
+      "total_experiences": 4,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 3,
+      "timestamp": 1752585167.122659
+    },
+    {
+      "cycle": 4,
+      "cycle_time_ms": 23.60987663269043,
+      "total_experiences": 5,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 4,
+      "timestamp": 1752585168.132753
+    },
+    {
+      "cycle": 5,
+      "cycle_time_ms": 25.662899017333984,
+      "total_experiences": 6,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 5,
+      "timestamp": 1752585169.139554
+    },
+    {
+      "cycle": 6,
+      "cycle_time_ms": 27.976274490356445,
+      "total_experiences": 7,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 6,
+      "timestamp": 1752585170.1454022
+    },
+    {
+      "cycle": 7,
+      "cycle_time_ms": 35.25662422180176,
+      "total_experiences": 8,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 7,
+      "timestamp": 1752585171.1569338
+    },
+    {
+      "cycle": 8,
+      "cycle_time_ms": 38.533926010131836,
+      "total_experiences": 9,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 8,
+      "timestamp": 1752585172.161831
+    },
+    {
+      "cycle": 9,
+      "cycle_time_ms": 51.225900650024414,
+      "total_experiences": 10,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 9,
+      "timestamp": 1752585173.177011
+    },
+    {
+      "cycle": 10,
+      "cycle_time_ms": 45.84097862243652,
+      "total_experiences": 11,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 10,
+      "timestamp": 1752585174.175673
+    },
+    {
+      "cycle": 11,
+      "cycle_time_ms": 171.22483253479004,
+      "total_experiences": 12,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 11,
+      "timestamp": 1752585175.302193
+    },
+    {
+      "cycle": 12,
+      "cycle_time_ms": 195.25504112243652,
+      "total_experiences": 13,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 12,
+      "timestamp": 1752585176.330274
+    },
+    {
+      "cycle": 13,
+      "cycle_time_ms": 165.06409645080566,
+      "total_experiences": 14,
+      "prediction_confidence": 1.0,
+      "working_memory_size": 13,
+      "timestamp": 1752585177.305103
+    },
+    {
+      "cycle": 14,
+      "cycle_time_ms": 182.01088905334473,
+      "total_experiences": 15,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 14,
+      "timestamp": 1752585178.325952
+    },
+    {
+      "cycle": 15,
+      "cycle_time_ms": 186.9349479675293,
+      "total_experiences": 16,
+      "prediction_confidence": 1.0,
+      "working_memory_size": 15,
+      "timestamp": 1752585179.331481
+    },
+    {
+      "cycle": 16,
+      "cycle_time_ms": 163.28001022338867,
+      "total_experiences": 17,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 16,
+      "timestamp": 1752585180.310843
+    },
+    {
+      "cycle": 17,
+      "cycle_time_ms": 167.54913330078125,
+      "total_experiences": 18,
+      "prediction_confidence": 1.0,
+      "working_memory_size": 17,
+      "timestamp": 1752585181.3170612
+    },
+    {
+      "cycle": 18,
+      "cycle_time_ms": 177.86002159118652,
+      "total_experiences": 19,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 18,
+      "timestamp": 1752585182.331653
+    },
+    {
+      "cycle": 19,
+      "cycle_time_ms": 193.33672523498535,
+      "total_experiences": 20,
+      "prediction_confidence": 1.0,
+      "working_memory_size": 19,
+      "timestamp": 1752585183.352136
+    },
+    {
+      "cycle": 20,
+      "cycle_time_ms": 189.8510456085205,
+      "total_experiences": 20,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 20,
+      "timestamp": 1752585184.350395
+    },
+    {
+      "cycle": 21,
+      "cycle_time_ms": 185.8358383178711,
+      "total_experiences": 20,
+      "prediction_confidence": 1.0,
+      "working_memory_size": 19,
+      "timestamp": 1752585185.350106
+    },
+    {
+      "cycle": 22,
+      "cycle_time_ms": 200.66189765930176,
+      "total_experiences": 20,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 18,
+      "timestamp": 1752585186.3664708
+    },
+    {
+      "cycle": 23,
+      "cycle_time_ms": 200.6068229675293,
+      "total_experiences": 20,
+      "prediction_confidence": 1.0,
+      "working_memory_size": 18,
+      "timestamp": 1752585187.3714309
+    },
+    {
+      "cycle": 24,
+      "cycle_time_ms": 206.06589317321777,
+      "total_experiences": 20,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 18,
+      "timestamp": 1752585188.381908
+    },
+    {
+      "cycle": 25,
+      "cycle_time_ms": 187.95394897460938,
+      "total_experiences": 20,
+      "prediction_confidence": 1.0,
+      "working_memory_size": 18,
+      "timestamp": 1752585189.366761
+    },
+    {
+      "cycle": 26,
+      "cycle_time_ms": 194.78487968444824,
+      "total_experiences": 20,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 18,
+      "timestamp": 1752585190.376848
+    },
+    {
+      "cycle": 27,
+      "cycle_time_ms": 185.1201057434082,
+      "total_experiences": 20,
+      "prediction_confidence": 1.0,
+      "working_memory_size": 18,
+      "timestamp": 1752585191.370183
+    },
+    {
+      "cycle": 28,
+      "cycle_time_ms": 215.68012237548828,
+      "total_experiences": 20,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 18,
+      "timestamp": 1752585192.4057522
+    },
+    {
+      "cycle": 29,
+      "cycle_time_ms": 182.58905410766602,
+      "total_experiences": 20,
+      "prediction_confidence": 1.0,
+      "working_memory_size": 18,
+      "timestamp": 1752585193.373342
+    },
+    {
+      "cycle": 30,
+      "cycle_time_ms": 179.66008186340332,
+      "total_experiences": 20,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 18,
+      "timestamp": 1752585194.3737779
+    },
+    {
+      "cycle": 31,
+      "cycle_time_ms": 194.0159797668457,
+      "total_experiences": 20,
+      "prediction_confidence": 1.0,
+      "working_memory_size": 18,
+      "timestamp": 1752585195.3931148
+    },
+    {
+      "cycle": 32,
+      "cycle_time_ms": 202.10886001586914,
+      "total_experiences": 20,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 17,
+      "timestamp": 1752585196.404883
+    },
+    {
+      "cycle": 33,
+      "cycle_time_ms": 146.09789848327637,
+      "total_experiences": 20,
+      "prediction_confidence": 1.0,
+      "working_memory_size": 17,
+      "timestamp": 1752585197.353823
+    },
+    {
+      "cycle": 34,
+      "cycle_time_ms": 165.75098037719727,
+      "total_experiences": 20,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 17,
+      "timestamp": 1752585198.375243
+    },
+    {
+      "cycle": 35,
+      "cycle_time_ms": 241.36996269226074,
+      "total_experiences": 20,
+      "prediction_confidence": 1.0,
+      "working_memory_size": 17,
+      "timestamp": 1752585199.454474
+    },
+    {
+      "cycle": 36,
+      "cycle_time_ms": 142.23909378051758,
+      "total_experiences": 20,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 17,
+      "timestamp": 1752585200.3584971
+    },
+    {
+      "cycle": 37,
+      "cycle_time_ms": 209.59806442260742,
+      "total_experiences": 20,
+      "prediction_confidence": 1.0,
+      "working_memory_size": 17,
+      "timestamp": 1752585201.430669
+    },
+    {
+      "cycle": 38,
+      "cycle_time_ms": 248.0461597442627,
+      "total_experiences": 20,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 17,
+      "timestamp": 1752585202.470859
+    },
+    {
+      "cycle": 39,
+      "cycle_time_ms": 139.75882530212402,
+      "total_experiences": 20,
+      "prediction_confidence": 1.0,
+      "working_memory_size": 17,
+      "timestamp": 1752585203.3632069
+    },
+    {
+      "cycle": 40,
+      "cycle_time_ms": 183.36892127990723,
+      "total_experiences": 20,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 17,
+      "timestamp": 1752585204.4101949
+    },
+    {
+      "cycle": 41,
+      "cycle_time_ms": 271.43096923828125,
+      "total_experiences": 20,
+      "prediction_confidence": 1.0,
+      "working_memory_size": 17,
+      "timestamp": 1752585205.5034199
+    },
+    {
+      "cycle": 42,
+      "cycle_time_ms": 256.34193420410156,
+      "total_experiences": 20,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 17,
+      "timestamp": 1752585206.493398
+    },
+    {
+      "cycle": 43,
+      "cycle_time_ms": 278.5782814025879,
+      "total_experiences": 20,
+      "prediction_confidence": 1.0,
+      "working_memory_size": 17,
+      "timestamp": 1752585207.5206861
+    },
+    {
+      "cycle": 44,
+      "cycle_time_ms": 258.2359313964844,
+      "total_experiences": 20,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 17,
+      "timestamp": 1752585208.505387
+    },
+    {
+      "cycle": 45,
+      "cycle_time_ms": 235.04304885864258,
+      "total_experiences": 20,
+      "prediction_confidence": 1.0,
+      "working_memory_size": 18,
+      "timestamp": 1752585209.4863229
+    },
+    {
+      "cycle": 46,
+      "cycle_time_ms": 315.2918815612793,
+      "total_experiences": 20,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 18,
+      "timestamp": 1752585210.5712268
+    },
+    {
+      "cycle": 47,
+      "cycle_time_ms": 289.6459102630615,
+      "total_experiences": 20,
+      "prediction_confidence": 1.0,
+      "working_memory_size": 18,
+      "timestamp": 1752585211.549661
+    },
+    {
+      "cycle": 48,
+      "cycle_time_ms": 241.35804176330566,
+      "total_experiences": 20,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 17,
+      "timestamp": 1752585212.505717
+    },
+    {
+      "cycle": 49,
+      "cycle_time_ms": 142.5788402557373,
+      "total_experiences": 20,
+      "prediction_confidence": 1.0,
+      "working_memory_size": 17,
+      "timestamp": 1752585213.4087198
+    },
+    {
+      "cycle": 50,
+      "cycle_time_ms": 83.25886726379395,
+      "total_experiences": 20,
+      "prediction_confidence": 0.8952756738232541,
+      "working_memory_size": 17,
+      "timestamp": 1752585214.3497689
+    },
+    {
+      "cycle": 51,
+      "cycle_time_ms": 281.6939353942871,
+      "total_experiences": 20,
+      "prediction_confidence": 1.0,
+      "working_memory_size": 17,
+      "timestamp": 1752585215.55215
+    },
+    {
+      "cycle": 52,
+      "cycle_time_ms": 336.8878364562988,
+      "total_experiences": 20,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 17,
+      "timestamp": 1752585216.610448
+    },
+    {
+      "cycle": 53,
+      "cycle_time_ms": 282.3452949523926,
+      "total_experiences": 20,
+      "prediction_confidence": 1.0,
+      "working_memory_size": 18,
+      "timestamp": 1752585217.5609322
+    },
+    {
+      "cycle": 54,
+      "cycle_time_ms": 337.3911380767822,
+      "total_experiences": 20,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 18,
+      "timestamp": 1752585218.62015
+    },
+    {
+      "cycle": 55,
+      "cycle_time_ms": 268.14842224121094,
+      "total_experiences": 20,
+      "prediction_confidence": 1.0,
+      "working_memory_size": 18,
+      "timestamp": 1752585219.5551202
+    },
+    {
+      "cycle": 56,
+      "cycle_time_ms": 162.6431941986084,
+      "total_experiences": 20,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 18,
+      "timestamp": 1752585220.451812
+    },
+    {
+      "cycle": 57,
+      "cycle_time_ms": 236.97996139526367,
+      "total_experiences": 20,
+      "prediction_confidence": 1.0,
+      "working_memory_size": 18,
+      "timestamp": 1752585221.527649
+    },
+    {
+      "cycle": 58,
+      "cycle_time_ms": 264.48702812194824,
+      "total_experiences": 20,
+      "prediction_confidence": 0.95,
+      "working_memory_size": 18,
+      "timestamp": 1752585222.557709
+    },
+    {
+      "cycle": 59,
+      "cycle_time_ms": 142.63510704040527,
+      "total_experiences": 20,
+      "prediction_confidence": 1.0,
+      "working_memory_size": 17,
+      "timestamp": 1752585223.4403782
+    }
+  ],
+  "similarity_data": [
+    {
+      "cycle": 0,
+      "adaptations_performed": 0,
+      "learning_rate": 0.01,
+      "similarity_success_correlation": 0.0,
+      "prediction_outcomes_tracked": 1,
+      "timestamp": 1752585164.130574
+    },
+    {
+      "cycle": 10,
+      "adaptations_performed": 0,
+      "learning_rate": 0.01,
+      "similarity_success_correlation": -0.13429201342077962,
+      "prediction_outcomes_tracked": 45,
+      "timestamp": 1752585174.175673
+    },
+    {
+      "cycle": 20,
+      "adaptations_performed": 0,
+      "learning_rate": 0.01,
+      "similarity_success_correlation": 0.24811388966389747,
+      "prediction_outcomes_tracked": 95,
+      "timestamp": 1752585184.350395
+    },
+    {
+      "cycle": 30,
+      "adaptations_performed": 0,
+      "learning_rate": 0.01,
+      "similarity_success_correlation": -0.183407837650085,
+      "prediction_outcomes_tracked": 145,
+      "timestamp": 1752585194.3737779
+    },
+    {
+      "cycle": 40,
+      "adaptations_performed": 0,
+      "learning_rate": 0.01,
+      "similarity_success_correlation": -0.21665925705547384,
+      "prediction_outcomes_tracked": 195,
+      "timestamp": 1752585204.4101949
+    },
+    {
+      "cycle": 50,
+      "adaptations_performed": 0,
+      "learning_rate": 0.01,
+      "similarity_success_correlation": -0.3374717959420429,
+      "prediction_outcomes_tracked": 245,
+      "timestamp": 1752585214.3497689
+    }
+  ],
+  "connectivity_data": [
+    {
+      "cycle": 0,
+      "total_connections": 0,
+      "avg_connections_per_experience": 0.0,
+      "max_connections": 0,
+      "total_experiences": 1,
+      "timestamp": 1752585164.130574
+    },
+    {
+      "cycle": 20,
+      "total_connections": 175,
+      "avg_connections_per_experience": 8.75,
+      "max_connections": 18,
+      "total_experiences": 20,
+      "timestamp": 1752585184.350395
+    },
+    {
+      "cycle": 40,
+      "total_connections": 275,
+      "avg_connections_per_experience": 13.75,
+      "max_connections": 27,
+      "total_experiences": 20,
+      "timestamp": 1752585204.4101949
+    }
+  ]
+}
