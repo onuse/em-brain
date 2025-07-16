@@ -7,6 +7,7 @@ These were extracted from the removed Phase 2 memory_pressure_decay system.
 
 from typing import Dict, Any
 from ..cognitive_constants import CognitiveCapacityConstants
+from .hardware_adaptation import get_adaptive_cognitive_limits
 
 
 def calculate_memory_usage(current_activations: Dict[str, float], 
@@ -22,14 +23,16 @@ def calculate_memory_usage(current_activations: Dict[str, float],
         Memory usage (0.0-1.0)
     """
     active_memories = len(current_activations)
-    max_capacity = CognitiveCapacityConstants.MAX_WORKING_MEMORY_SIZE
+    # Get adaptive limits based on current hardware
+    limits = get_adaptive_cognitive_limits()
+    max_capacity = limits.get('working_memory_limit', CognitiveCapacityConstants.MAX_WORKING_MEMORY_SIZE)
+    max_storage = limits.get('similarity_search_limit', 500) * 4  # Same calculation as storage system
     
     # Memory usage based on active working memory
     working_memory_usage = active_memories / max_capacity
     
-    # Also consider total experience storage (for future extensions)
-    # This could be used if we add limits on total experience storage
-    storage_usage = min(1.0, total_experiences / 1000)  # Example: 1000 experience soft limit
+    # Storage usage based on adaptive hardware limits
+    storage_usage = min(1.0, total_experiences / max_storage)
     
     # Return combined usage (weighted toward working memory)
     return working_memory_usage * 0.7 + storage_usage * 0.3

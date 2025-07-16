@@ -145,6 +145,13 @@ class MinimalBrain:
                     print(f"⚠️  Storage optimization not available: {e}")
                 self.enable_storage_optimization = False
         
+        # Run startup hardware capacity test to discover optimal limits
+        if not quiet_mode:
+            print("\n🔍 Running startup hardware capacity test...")
+            from .utils.startup_capacity_test import run_startup_capacity_test
+            startup_limits = run_startup_capacity_test()
+            print(f"📊 Hardware capacity discovered: {startup_limits['max_experiences']:,} experiences")
+        
         # Log cognitive profile
         if enable_logging:
             cognitive_profile = get_cognitive_profile()
@@ -246,6 +253,9 @@ class MinimalBrain:
         brain_state['cycle_time_ms'] = cycle_time_ms
         brain_state['hardware_adaptive_limits'] = self.hardware_adaptation.get_cognitive_limits()
         brain_state['cognitive_autopilot'] = autopilot_state
+        
+        # Performance monitoring for future optimization
+        # Startup capacity test has already determined optimal limits
         
         return predicted_action, brain_state
     

@@ -170,9 +170,9 @@ class HardwareAdaptation:
                                 cycle_time_ms: float) -> Dict[str, int]:
         """Calculate conservative initial cognitive limits based on hardware."""
         
-        # Memory-based limits (conservative: use 50% of available memory)
-        available_memory_mb = memory_gb * 1024 * 0.5
-        bytes_per_experience = 1024  # Rough estimate: 1KB per experience
+        # Memory-based limits (use 80% of available memory for hundreds of thousands of experiences)
+        available_memory_mb = memory_gb * 1024 * 0.8
+        bytes_per_experience = 200  # More realistic: ~200 bytes per experience
         max_experiences_by_memory = int(available_memory_mb * 1024 / bytes_per_experience)
         
         # CPU-based limits
@@ -192,28 +192,28 @@ class HardwareAdaptation:
         # GPU acceleration bonus
         gpu_multiplier = 2.0 if gpu_available else 1.0
         
-        # Calculate limits
-        base_working_memory = 15  # Human-like baseline
-        base_similarity_search = 500
-        base_batch_threshold = 50
-        base_energy_budget = 20
+        # Calculate limits (scaled for hundreds of thousands of experiences)
+        base_working_memory = 100  # Increased for large-scale operation
+        base_similarity_search = 10000  # Increased for scalability
+        base_batch_threshold = 200
+        base_energy_budget = 100
         
         working_memory_limit = int(base_working_memory * cpu_multiplier * perf_multiplier)
         similarity_search_limit = int(base_similarity_search * gpu_multiplier * perf_multiplier)
         batch_threshold = int(base_batch_threshold * perf_multiplier)
         energy_budget = int(base_energy_budget * cpu_multiplier * perf_multiplier)
         
-        # Memory constraints
-        working_memory_limit = min(working_memory_limit, max_experiences_by_memory // 100)
-        similarity_search_limit = min(similarity_search_limit, max_experiences_by_memory // 5)
+        # Memory constraints (much less conservative)
+        working_memory_limit = min(working_memory_limit, max_experiences_by_memory // 1000)  # Allow 0.1% for working memory
+        similarity_search_limit = min(similarity_search_limit, max_experiences_by_memory // 2)  # Allow 50% for similarity search
         
-        # Sanity bounds
-        working_memory_limit = max(5, min(100, working_memory_limit))
-        similarity_search_limit = max(100, min(10000, similarity_search_limit))
-        batch_threshold = max(10, min(200, batch_threshold))
-        energy_budget = max(5, min(100, energy_budget))
+        # Sanity bounds (increased for large-scale operation)
+        working_memory_limit = max(50, min(10000, working_memory_limit))  # Allow up to 10k working memory
+        similarity_search_limit = max(1000, min(1000000, similarity_search_limit))  # Allow up to 1M similarity search
+        batch_threshold = max(50, min(1000, batch_threshold))
+        energy_budget = max(50, min(1000, energy_budget))
         
-        max_experiences_per_cycle = working_memory_limit * 2  # Allow some headroom
+        max_experiences_per_cycle = working_memory_limit * 10  # Allow more headroom for large-scale operation
         
         print(f"📊 Hardware tier: {performance_tier} (cycle: {cycle_time_ms:.1f}ms)")
         print(f"🧠 Initial cognitive limits: WM={working_memory_limit}, Search={similarity_search_limit}")

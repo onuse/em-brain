@@ -12,6 +12,7 @@ import time
 from collections import defaultdict
 
 from .models import Experience
+from ..utils.startup_capacity_test import should_trigger_cleanup, get_cleanup_target, get_startup_limits
 
 
 class ExperienceStorage:
@@ -347,15 +348,28 @@ class ExperienceStorage:
         
         When storage gets large, gradually remove lowest-utility experiences
         to maintain performance while preserving important memories.
-        """
-        max_experiences = 2000  # Soft limit for efficient processing
         
-        if len(self._experiences) <= max_experiences:
+        Uses adaptive limits based on actual hardware capabilities.
+        """
+        # Use startup-discovered hardware limits
+        current_count = len(self._experiences)
+        
+        # Check if we should cleanup based on startup capacity test
+        if not should_trigger_cleanup(current_count):
             return
         
-        # Calculate target for reduction (remove 10% of excess)
-        excess_count = len(self._experiences) - max_experiences
-        target_removal_count = max(1, excess_count // 10)
+        # Get cleanup target from startup test results
+        target_count = get_cleanup_target(current_count)
+        target_removal_count = current_count - target_count
+        
+        # Ensure we remove at least 10 experiences for efficiency
+        target_removal_count = max(10, target_removal_count)
+        
+        # Log when significant cleanup is needed
+        limits = get_startup_limits()
+        if target_removal_count >= 50:
+            bottleneck = limits.get('bottleneck', 'unknown') if limits else 'unknown'
+            print(f"🧠 Hardware-based cleanup ({bottleneck} bottleneck): {current_count:,} → {target_count:,} experiences")
         
         # Find lowest-utility experiences for removal
         experience_utilities = []
@@ -373,8 +387,8 @@ class ExperienceStorage:
         # Sort by utility (lowest first)
         experience_utilities.sort(key=lambda x: x[1])
         
-        # Remove lowest-utility experiences
-        removal_count = min(target_removal_count, len(experience_utilities) // 4)  # Max 25% at once
+        # Remove lowest-utility experiences (up to target amount)
+        removal_count = min(target_removal_count, len(experience_utilities))
         experiences_to_remove = experience_utilities[:removal_count]
         
         for exp_id, _ in experiences_to_remove:
@@ -387,7 +401,9 @@ class ExperienceStorage:
                 self._chronological_order.remove(exp_id)
         
         if experiences_to_remove:
-            print(f"🧠 Storage pressure: removed {len(experiences_to_remove)} low-utility experiences")
+            # Only log if removing a meaningful amount to reduce spam
+            if len(experiences_to_remove) >= 50:
+                print(f"🧠 Hardware-optimized cleanup: removed {len(experiences_to_remove)} low-utility experiences")
     
     def clear(self):
         """Clear all stored experiences (for testing)."""

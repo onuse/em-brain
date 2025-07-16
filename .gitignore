@@ -18,3 +18,5 @@ debug_output/
 *old.py
 CLAUDE.md
 .idea*/
+*amazonq*
+RULES.md

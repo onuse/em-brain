@@ -1,0 +1,48 @@
+{
+  "config": {
+    "target_experiences": 10000,
+    "batch_size": 100,
+    "duration_hours": 2.0,
+    "parallel_batches": false
+  },
+  "baseline_metrics": {
+    "experiences": 100,
+    "duration": 13.155067920684814,
+    "avg_response_time": 0.02622497797012329,
+    "response_time_std": 0.012769513913519027,
+    "experiences_per_second": 7.601633119868703,
+    "memory_usage_baseline": 197.1671875,
+    "response_times": [
+      0.04188799858093262,
+      0.03979802131652832,
+      0.06673669815063477,
+      0.04493093490600586,
+      0.036083221435546875,
+      0.04201698303222656,
+      0.042025089263916016,
+      0.04400205612182617,
+      0.042497873306274414,
+      0.043177127838134766
+    ],
+    "failed_actions": 0,
+    "success_rate": 1.0
+  },
+  "scaling_results": {},
+  "analysis": {
+    "interrupted": true,
+    "message": "Insufficient data for analysis"
+  },
+  "integration_results": {
+    "interrupted": true,
+    "message": "Integration test skipped due to interruption"
+  },
+  "study_duration": 635.7702829837799,
+  "total_experiences_processed": 23,
+  "interrupted": true,
+  "error_summary": {
+    "total_errors": 0,
+    "retryable_errors": 0,
+    "non_retryable_errors": 0,
+    "error_codes": {}
+  }
+}
