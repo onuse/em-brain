@@ -31,8 +31,8 @@ brain_root = Path(__file__).parent.parent
 sys.path.insert(0, str(brain_root))
 sys.path.insert(0, str(brain_root / 'server' / 'src'))
 
-from validation.test_integration import IntegrationTestSuite
-from validation.micro_experiments.core_assumptions import create_core_assumption_suite
+from test_integration import IntegrationTestSuite
+from micro_experiments.core_assumptions import create_core_assumption_suite
 
 class ComprehensiveBrainVerification:
     """Comprehensive verification suite for the optimized brain."""
@@ -222,7 +222,7 @@ class ComprehensiveBrainVerification:
         print("   Running extended learning test...")
         
         from communication import MinimalBrainClient
-        from validation.embodied_learning.environments.sensory_motor_world import SensoryMotorWorld
+        from embodied_learning.environments.sensory_motor_world import SensoryMotorWorld
         
         client = MinimalBrainClient()
         environment = SensoryMotorWorld(random_seed=42)
@@ -341,7 +341,7 @@ class ComprehensiveBrainVerification:
         
         # Generate load to test memory bounds
         from communication import MinimalBrainClient
-        from validation.embodied_learning.environments.sensory_motor_world import SensoryMotorWorld
+        from embodied_learning.environments.sensory_motor_world import SensoryMotorWorld
         
         client = MinimalBrainClient()
         environment = SensoryMotorWorld(random_seed=42)
@@ -399,7 +399,7 @@ class ComprehensiveBrainVerification:
         response_times = []
         
         from communication import MinimalBrainClient
-        from validation.embodied_learning.environments.sensory_motor_world import SensoryMotorWorld
+        from embodied_learning.environments.sensory_motor_world import SensoryMotorWorld
         
         client = MinimalBrainClient()
         environment = SensoryMotorWorld(random_seed=42)
