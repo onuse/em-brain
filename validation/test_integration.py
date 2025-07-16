@@ -26,6 +26,7 @@ from typing import Optional, List, Dict, Any
 brain_root = Path(__file__).parent.parent
 sys.path.insert(0, str(brain_root))
 sys.path.insert(0, str(brain_root / 'server' / 'src'))
+sys.path.insert(0, str(brain_root / 'server'))
 
 class IntegrationTestResult:
     """Test result with detailed information."""
@@ -42,6 +43,7 @@ class IntegrationTestSuite:
     def __init__(self):
         self.results: List[IntegrationTestResult] = []
         self.server_process: Optional[subprocess.Popen] = None
+        self.server_monitor_thread: Optional[threading.Thread] = None
         self.server_port = 9999
         
     def run_all_tests(self) -> bool:
@@ -87,10 +89,10 @@ class IntegrationTestSuite:
         print("🔍 Testing import resolution...")
         
         imports_to_test = [
-            ('communication', 'MinimalBrainClient'),
-            ('validation.embodied_learning.environments.sensory_motor_world', 'SensoryMotorWorld'),
-            ('brain', 'MinimalBrain'),
-            ('embodiment', 'EmbodiedFreeEnergySystem'),
+            ('src.communication.client', 'MinimalBrainClient'),
+            ('embodied_learning.environments.sensory_motor_world', 'SensoryMotorWorld'),
+            ('src.brain', 'MinimalBrain'),
+            ('src.embodiment.system', 'EmbodiedFreeEnergySystem'),
         ]
         
         failed_imports = []
@@ -133,12 +135,18 @@ class IntegrationTestSuite:
                 ))
                 return
             
-            # Start server process
+            # Check if server is already running
+            if self._is_server_running():
+                print("   ⚠️  Server already running, will use existing instance")
+                self.results.append(IntegrationTestResult(
+                    "server_startup", True,
+                    "Server already running"
+                ))
+                return
+            
+            # Start server process with output directly to terminal
             self.server_process = subprocess.Popen(
                 [sys.executable, "brain_server.py"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
                 cwd=Path("server")
             )
             
@@ -198,7 +206,7 @@ class IntegrationTestSuite:
         
         try:
             # Import and test client
-            from communication import MinimalBrainClient
+            from src.communication.client import MinimalBrainClient
             
             client = MinimalBrainClient()
             
@@ -424,7 +432,7 @@ class IntegrationTestSuite:
             return
         
         try:
-            from communication import MinimalBrainClient
+            from src.communication.client import MinimalBrainClient
             from validation.embodied_learning.environments.sensory_motor_world import SensoryMotorWorld
             
             client = MinimalBrainClient()
@@ -482,7 +490,7 @@ class IntegrationTestSuite:
             return
         
         try:
-            from communication import MinimalBrainClient
+            from src.communication.client import MinimalBrainClient
             from validation.embodied_learning.environments.sensory_motor_world import SensoryMotorWorld
             
             client = MinimalBrainClient()
@@ -549,7 +557,7 @@ class IntegrationTestSuite:
             return
         
         try:
-            from communication import MinimalBrainClient
+            from src.communication.client import MinimalBrainClient
             from validation.embodied_learning.environments.sensory_motor_world import SensoryMotorWorld
             
             client = MinimalBrainClient()
@@ -619,7 +627,7 @@ class IntegrationTestSuite:
             return
         
         try:
-            from communication import MinimalBrainClient
+            from src.communication.client import MinimalBrainClient
             
             client = MinimalBrainClient()
             
@@ -682,7 +690,7 @@ class IntegrationTestSuite:
             return
         
         try:
-            from communication import MinimalBrainClient
+            from src.communication.client import MinimalBrainClient
             
             client = MinimalBrainClient()
             
@@ -749,8 +757,8 @@ class IntegrationTestSuite:
                 f"Consolidation survival test exception: {e}"
             ))
     
-    def _is_server_ready(self) -> bool:
-        """Check if server is ready for connections."""
+    def _is_server_running(self) -> bool:
+        """Check if server is already running on the port."""
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                 sock.settimeout(1.0)
@@ -758,6 +766,10 @@ class IntegrationTestSuite:
                 return result == 0
         except:
             return False
+    
+    def _is_server_ready(self) -> bool:
+        """Check if server is ready for connections."""
+        return self._is_server_running()
     
     def _print_results(self):
         """Print comprehensive test results."""
@@ -783,6 +795,7 @@ class IntegrationTestSuite:
         for result in self.results:
             status = "✅" if result.passed else "❌"
             print(f"   {status} {result.test_name}: {result.message}")
+    
     
     def cleanup(self):
         """Clean up any running processes."""

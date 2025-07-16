@@ -247,7 +247,9 @@ class ExperienceStorage:
         max_age_seconds = max_age_hours * 3600
         
         to_remove = []
-        for exp_id, experience in self._experiences.items():
+        # Thread-safe copy to avoid concurrent modification
+        experiences_snapshot = dict(self._experiences)
+        for exp_id, experience in experiences_snapshot.items():
             age = current_time - experience.timestamp
             if (experience.access_count < min_access_count and 
                 age > max_age_seconds):
@@ -357,7 +359,9 @@ class ExperienceStorage:
         
         # Find lowest-utility experiences for removal
         experience_utilities = []
-        for exp_id, experience in self._experiences.items():
+        # Thread-safe copy to avoid concurrent modification
+        experiences_snapshot = dict(self._experiences)
+        for exp_id, experience in experiences_snapshot.items():
             utility = getattr(experience, 'prediction_utility', 0.3)
             age_factor = (time.time() - experience.timestamp) / 3600.0  # Hours old
             access_factor = experience.access_count

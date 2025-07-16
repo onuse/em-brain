@@ -454,7 +454,10 @@ class MinimalBrain:
         experience_ids = []
         similarities = []
         
-        for exp_id, exp in self.experience_storage._experiences.items():
+        # Thread-safe copy of experiences to avoid concurrent modification
+        experiences_snapshot = dict(self.experience_storage._experiences)
+        
+        for exp_id, exp in experiences_snapshot.items():
             exp_vector = exp.get_context_vector()
             similarity = self.similarity_engine.compute_similarity(sensory_input, exp_vector)
             
@@ -628,7 +631,10 @@ class MinimalBrain:
         experience_ids = []
         similarities = []
         
-        for exp_id, exp in self.experience_storage._experiences.items():
+        # Thread-safe copy of experiences to avoid concurrent modification
+        experiences_snapshot = dict(self.experience_storage._experiences)
+        
+        for exp_id, exp in experiences_snapshot.items():
             exp_vector = exp.get_context_vector()
             similarity = self.similarity_engine.compute_similarity(sensory_input, exp_vector)
             

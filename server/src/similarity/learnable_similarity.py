@@ -178,6 +178,40 @@ class LearnableSimilarity:
         
         print(f"Similarity parameters initialized for {vector_dim}D vectors (CPU, GPU upgrade on-demand)")
     
+    def _resize_parameters(self, new_dim: int):
+        """Resize parameters when vector dimensions change."""
+        if self.feature_weights is None:
+            self._initialize_parameters(new_dim)
+            return
+        
+        old_dim = len(self.feature_weights)
+        if new_dim == old_dim:
+            return
+        
+        # Resize feature weights
+        if new_dim > old_dim:
+            # Expand with ones
+            padding = np.ones(new_dim - old_dim)
+            self.feature_weights = np.concatenate([self.feature_weights, padding])
+        else:
+            # Truncate
+            self.feature_weights = self.feature_weights[:new_dim]
+        
+        # Resize interaction matrix
+        old_matrix = self.interaction_matrix
+        self.interaction_matrix = np.zeros((new_dim, new_dim))
+        
+        # Copy old values
+        copy_dim = min(old_dim, new_dim)
+        self.interaction_matrix[:copy_dim, :copy_dim] = old_matrix[:copy_dim, :copy_dim]
+        
+        # Reset GPU tensors to force recreation
+        self.feature_weights_tensor = None
+        self.interaction_matrix_tensor = None
+        
+        self.vector_dimensions = new_dim
+        print(f"Similarity parameters resized from {old_dim}D to {new_dim}D")
+    
     def compute_similarity(self, vector_a: List[float], vector_b: List[float]) -> float:
         """
         Compute learned similarity between two vectors.
@@ -192,11 +226,19 @@ class LearnableSimilarity:
         vec_a = np.array(vector_a)
         vec_b = np.array(vector_b)
         
+        # Ensure both vectors have same length
+        if len(vec_a) != len(vec_b):
+            return 0.0  # Can't compare different dimensions
+        
         # Initialize parameters if needed
         if self.feature_weights is None:
             # Use specified vector dimensions, or infer from input if not specified
             vector_dim = self.vector_dimensions if self.vector_dimensions is not None else len(vec_a)
             self._initialize_parameters(vector_dim)
+        
+        # Handle dimension mismatch by adapting parameters
+        elif len(vec_a) != len(self.feature_weights):
+            self._resize_parameters(len(vec_a))
         
         if self.use_gpu and self.feature_weights_tensor is not None:
             return self._gpu_compute_similarity(vec_a, vec_b)
@@ -246,6 +288,14 @@ class LearnableSimilarity:
     
     def _cpu_compute_similarity(self, vec_a: np.ndarray, vec_b: np.ndarray) -> float:
         """CPU fallback similarity computation."""
+        # Handle dimension mismatch by adapting parameters
+        if len(vec_a) != len(self.feature_weights):
+            self._resize_parameters(len(vec_a))
+        
+        # Handle dimension mismatch by adapting parameters
+        if len(vec_a) != len(self.feature_weights):
+            self._resize_parameters(len(vec_a))
+        
         # Apply learned feature weighting
         weighted_a = vec_a * self.feature_weights
         weighted_b = vec_b * self.feature_weights

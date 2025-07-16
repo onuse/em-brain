@@ -31,6 +31,7 @@ def main():
         'motivation_integration': 'python3 server/test_motivation_integration.py',
         'embodied_free_energy': 'python3 server/test_embodied_free_energy.py',
         '3d_embodied': 'python3 -c "from demos.demo_3d_embodied import main; main()"',
+        'multimodal': 'python3 -c "from demos.demo_3d_multimodal import main; main()"',
         'socket_embodied': 'python3 demos/picar_x_simulation/pure_socket_embodied_brainstem.py',
         # Old names for backward compatibility
         'text': 'python3 -c "from demos.picar_x_simulation.picar_x_text_demo import main; main()"',

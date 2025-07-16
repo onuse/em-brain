@@ -83,7 +83,7 @@ def test_attention_weighted_similarity():
     print("=" * 60)
     
     # Create similarity engine with attention
-    similarity_engine = SimilarityEngine(use_adaptive_attention=True, use_gpu=False)
+    similarity_engine = SimilarityEngine(use_natural_attention=True, use_gpu=False)
     
     # Create experiences with different attention levels
     experiences = []
@@ -117,7 +117,7 @@ def test_attention_weighted_similarity():
     for mode in ['normal', 'deep', 'hybrid']:
         print(f"\n🔍 Testing {mode.upper()} retrieval mode:")
         
-        results = similarity_engine.find_similar_experiences_with_attention(
+        results = similarity_engine.find_similar_experiences_with_natural_attention(
             query_vector, experiences, max_results=5, retrieval_mode=mode
         )
         
@@ -138,7 +138,7 @@ def test_memory_suppression_and_retrieval():
     print("\n🧪 Testing Memory Suppression & Cue-Based Retrieval")
     print("=" * 60)
     
-    similarity_engine = SimilarityEngine(use_adaptive_attention=True, use_gpu=False)
+    similarity_engine = SimilarityEngine(use_natural_attention=True, use_gpu=False)
     
     # Simulate yesterday's boring day - many similar low-attention experiences
     yesterday_experiences = []
@@ -169,7 +169,7 @@ def test_memory_suppression_and_retrieval():
     print(f"\n🤔 Trying to remember yesterday (no specific cues):")
     general_query = [2.0, 1.5, 0.0, 0.2, 0.1, 0.0, 0.0, 0.0]  # General yesterday context
     
-    normal_results = similarity_engine.find_similar_experiences_with_attention(
+    normal_results = similarity_engine.find_similar_experiences_with_natural_attention(
         general_query, yesterday_experiences, max_results=3, retrieval_mode='normal'
     )
     
@@ -182,7 +182,7 @@ def test_memory_suppression_and_retrieval():
     print(f"\n💡 Someone mentions 'blue car' (high similarity cue):")
     blue_car_query = [2.5, 1.5, 180.0, 0.0, 0.0, 0.0, 90.0, 1.0]  # Specific blue car context
     
-    cued_results = similarity_engine.find_similar_experiences_with_attention(
+    cued_results = similarity_engine.find_similar_experiences_with_natural_attention(
         blue_car_query, yesterday_experiences, max_results=5, retrieval_mode='hybrid'
     )
     

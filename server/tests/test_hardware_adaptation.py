@@ -4,6 +4,9 @@
 Test script for hardware adaptation system
 """
 
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from src.utils.hardware_adaptation import get_hardware_adaptation
 import time
 

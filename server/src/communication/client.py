@@ -140,7 +140,28 @@ class MinimalBrainClient:
                 return action_vector
             elif msg_type == MessageProtocol.MSG_ERROR:
                 error_code = action_vector[0] if action_vector else 0
-                print(f"⚠️  Brain server error: {error_code}")
+                
+                # Map error codes to human-readable messages
+                error_messages = {
+                    1.0: "Unknown Message Type",
+                    2.0: "Protocol Error", 
+                    3.0: "Empty Sensory Input",
+                    3.1: "Sensory Input Too Large",
+                    4.0: "Invalid Action Dimensions",
+                    5.0: "Brain Processing Error",
+                    5.1: "Similarity Engine Failure",
+                    5.2: "Prediction Engine Failure", 
+                    5.3: "Experience Storage Failure",
+                    5.4: "Activation Dynamics Failure",
+                    5.5: "Pattern Analysis Failure",
+                    5.6: "Memory Pressure Error",
+                    5.7: "GPU Processing Error",
+                    6.0: "System Overload",
+                    7.0: "Learning System Failure"
+                }
+                
+                error_name = error_messages.get(error_code, f"Unknown Error ({error_code})")
+                print(f"⚠️  Brain server error: {error_code} - {error_name}")
                 return None
             else:
                 print(f"⚠️  Unexpected response type: {msg_type}")

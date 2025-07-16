@@ -9,8 +9,9 @@ A simple robot learns to navigate a 2D world using only sensory similarity.
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'server'))
 
-from src.brain import MinimalBrain
+from server.src.brain import MinimalBrain
 import numpy as np
 import time
 

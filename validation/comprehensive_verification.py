@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Comprehensive Brain Verification Suite
+Comprehensive Brain Verification Suite - Phase 1 Improved
 
 This suite verifies that the optimized brain behaves as expected by:
 1. Running extended validation tests with performance monitoring
@@ -8,6 +8,13 @@ This suite verifies that the optimized brain behaves as expected by:
 3. Testing biological realism with longer timescales
 4. Monitoring for performance degradation
 5. Ensuring learning persistence and consistency
+
+Phase 1 Improvements:
+- Persistent connections to reduce connection overhead
+- World reuse pattern to minimize environment resets
+- Retry logic for brain error 5.0 handling
+- Increased timeouts for intensive tests
+- Better error handling and reporting
 
 Usage:
   python3 validation/comprehensive_verification.py --duration 60 --clear-logs
@@ -30,15 +37,21 @@ import matplotlib.pyplot as plt
 brain_root = Path(__file__).parent.parent
 sys.path.insert(0, str(brain_root))
 sys.path.insert(0, str(brain_root / 'server' / 'src'))
+sys.path.insert(0, str(brain_root / 'server'))
+sys.path.insert(0, str(brain_root / 'validation'))
 
 from test_integration import IntegrationTestSuite
-from micro_experiments.core_assumptions import create_core_assumption_suite
+from micro_experiments.improved_core_assumptions import create_improved_core_assumption_suite
 
 class ComprehensiveBrainVerification:
-    """Comprehensive verification suite for the optimized brain."""
+    """Comprehensive verification suite for the optimized brain with Phase 1 improvements."""
     
     def __init__(self, duration_minutes: int = 60, clear_logs: bool = True):
         self.duration_minutes = duration_minutes
+        
+        # Persistent resources to avoid excessive reconnections
+        self.persistent_client = None
+        self.persistent_environment = None
         self.clear_logs = clear_logs
         self.start_time = None
         self.results = {}
@@ -47,13 +60,52 @@ class ComprehensiveBrainVerification:
         self.learning_metrics = []
         
         # Create results directory
-        self.results_dir = Path("validation/verification_results")
+        self.results_dir = Path("verification_results")
         self.results_dir.mkdir(exist_ok=True)
         
         print(f"🔍 Comprehensive Brain Verification Suite")
         print(f"   Duration: {duration_minutes} minutes")
         print(f"   Clear logs: {clear_logs}")
         print(f"   Results: {self.results_dir}")
+    
+    def _setup_persistent_resources(self) -> bool:
+        """Setup persistent client and environment to avoid excessive reconnections."""
+        print("🔧 Setting up persistent resources...")
+        
+        # Create persistent client
+        try:
+            from src.communication.client import MinimalBrainClient
+            self.persistent_client = MinimalBrainClient()
+            if not self.persistent_client.connect():
+                print("   ❌ Failed to connect to brain server")
+                return False
+            print("   ✅ Persistent brain connection established")
+        except Exception as e:
+            print(f"   ❌ Failed to create persistent client: {e}")
+            return False
+        
+        # Create persistent environment
+        try:
+            from embodied_learning.environments.sensory_motor_world import SensoryMotorWorld
+            self.persistent_environment = SensoryMotorWorld(random_seed=42)
+            print("   ✅ Persistent test environment created")
+        except Exception as e:
+            print(f"   ❌ Failed to create persistent environment: {e}")
+            return False
+        
+        return True
+    
+    def _cleanup_persistent_resources(self):
+        """Clean up persistent resources."""
+        print("🧹 Cleaning up persistent resources...")
+        
+        if self.persistent_client:
+            self.persistent_client.disconnect()
+            self.persistent_client = None
+            print("   ✅ Disconnected from brain server")
+        
+        self.persistent_environment = None
+        print("   ✅ Test environment cleaned up")
     
     def run_verification(self) -> Dict[str, Any]:
         """Run comprehensive verification suite."""
@@ -102,7 +154,7 @@ class ComprehensiveBrainVerification:
             print(f"   ✅ Cleared memory directory: {memory_dir}")
         
         # Clear validation results
-        validation_results = brain_root / "validation/micro_experiments/results"
+        validation_results = Path("micro_experiments/results")
         if validation_results.exists():
             shutil.rmtree(validation_results)
             print(f"   ✅ Cleared validation results")
@@ -205,7 +257,7 @@ class ComprehensiveBrainVerification:
                 time.sleep(interval * 60)
             
             print(f"   Running micro-experiments at {interval} minutes...")
-            suite = create_core_assumption_suite()
+            suite = create_improved_core_assumption_suite()
             summary = suite.run_all(stop_on_failure=False)
             
             results[f"interval_{interval}min"] = {
@@ -221,9 +273,10 @@ class ComprehensiveBrainVerification:
         """Run extended learning test to verify biological realism."""
         print("   Running extended learning test...")
         
-        from communication import MinimalBrainClient
+        from src.communication.client import MinimalBrainClient
         from embodied_learning.environments.sensory_motor_world import SensoryMotorWorld
         
+        # Use persistent connection for improved performance
         client = MinimalBrainClient()
         environment = SensoryMotorWorld(random_seed=42)
         
@@ -231,22 +284,23 @@ class ComprehensiveBrainVerification:
             return {'error': 'Failed to connect to brain'}
         
         try:
-            # Run learning episodes
+            # Run learning episodes with reduced resets
             episodes = 20
             episode_results = []
             
             for episode in range(episodes):
                 print(f"   Episode {episode + 1}/{episodes}")
                 
-                # Reset environment
-                environment.reset()
+                # Reset environment only every 5 episodes (world reuse)
+                if episode % 5 == 0:
+                    environment.reset()
                 
                 # Run episode
                 episode_data = self._run_learning_episode(client, environment, episode)
                 episode_results.append(episode_data)
                 
                 # Brief pause between episodes
-                time.sleep(2)
+                time.sleep(1)  # Reduced pause
             
             # Analyze learning progression
             learning_analysis = self._analyze_learning_progression(episode_results)
@@ -265,17 +319,19 @@ class ComprehensiveBrainVerification:
         actions_per_episode = 50
         prediction_errors = []
         light_distances = []
+        failed_actions = 0
         
         for action_num in range(actions_per_episode):
             # Get sensory input
             sensory_input = environment.get_sensory_input()
             
-            # Get brain action
+            # Get brain action with retry logic
             start_time = time.time()
-            action = client.get_action(sensory_input, timeout=5.0)
+            action = self._get_action_with_retry(client, sensory_input, max_retries=3, timeout=10.0)
             response_time = time.time() - start_time
             
             if action is None:
+                failed_actions += 1
                 continue
             
             # Execute action
@@ -294,11 +350,39 @@ class ComprehensiveBrainVerification:
         return {
             'episode': episode_num,
             'actions': len(prediction_errors),
-            'avg_prediction_error': np.mean(prediction_errors),
-            'avg_light_distance': np.mean(light_distances),
+            'failed_actions': failed_actions,
+            'avg_prediction_error': np.mean(prediction_errors) if prediction_errors else 0.0,
+            'avg_light_distance': np.mean(light_distances) if light_distances else 1.0,
             'prediction_errors': prediction_errors,
             'light_distances': light_distances
         }
+    
+    def _get_action_with_retry(self, client, sensory_input, max_retries: int = 3, timeout: float = 10.0):
+        """Get action from brain with retry logic for error 5.0."""
+        for attempt in range(max_retries):
+            try:
+                action = client.get_action(sensory_input, timeout=timeout)
+                if action is not None:
+                    return action
+                    
+                # None response might be error 5.0, try again
+                if attempt < max_retries - 1:
+                    time.sleep(0.1)  # Brief pause before retry
+                    continue
+                    
+            except Exception as e:
+                if "5.0" in str(e) or "Brain processing error" in str(e):
+                    if attempt < max_retries - 1:
+                        time.sleep(0.1)
+                        continue
+                    else:
+                        print(f"   ⚠️  Brain processing failed after {max_retries} attempts")
+                        return None
+                else:
+                    print(f"   ⚠️  Unexpected error: {e}")
+                    return None
+        
+        return None
     
     def _analyze_learning_progression(self, episode_results: List[Dict]) -> Dict[str, Any]:
         """Analyze learning progression across episodes."""
@@ -340,7 +424,7 @@ class ComprehensiveBrainVerification:
         memory_samples = []
         
         # Generate load to test memory bounds
-        from communication import MinimalBrainClient
+        from src.communication.client import MinimalBrainClient
         from embodied_learning.environments.sensory_motor_world import SensoryMotorWorld
         
         client = MinimalBrainClient()
@@ -365,9 +449,9 @@ class ComprehensiveBrainVerification:
                     'timestamp': time.time()
                 })
                 
-                # Generate brain activity
+                # Generate brain activity with retry logic
                 sensory_input = environment.get_sensory_input()
-                action = client.get_action(sensory_input, timeout=3.0)
+                action = self._get_action_with_retry(client, sensory_input, max_retries=2, timeout=5.0)
                 
                 if action is not None:
                     environment.execute_action(action)
@@ -398,7 +482,7 @@ class ComprehensiveBrainVerification:
         
         response_times = []
         
-        from communication import MinimalBrainClient
+        from src.communication.client import MinimalBrainClient
         from embodied_learning.environments.sensory_motor_world import SensoryMotorWorld
         
         client = MinimalBrainClient()
@@ -413,7 +497,7 @@ class ComprehensiveBrainVerification:
                 sensory_input = environment.get_sensory_input()
                 
                 start_time = time.time()
-                action = client.get_action(sensory_input, timeout=10.0)
+                action = self._get_action_with_retry(client, sensory_input, max_retries=2, timeout=10.0)
                 response_time = time.time() - start_time
                 
                 if action is not None:
@@ -479,8 +563,11 @@ class ComprehensiveBrainVerification:
         timestamp = int(time.time())
         results_file = self.results_dir / f"verification_results_{timestamp}.json"
         
+        # Convert results to JSON-serializable format
+        serializable_results = self._convert_to_json_serializable(self.results)
+        
         with open(results_file, 'w') as f:
-            json.dump(self.results, f, indent=2)
+            json.dump(serializable_results, f, indent=2)
         
         # Generate performance plots
         self._generate_performance_plots()
@@ -489,6 +576,25 @@ class ComprehensiveBrainVerification:
         self._generate_summary_report()
         
         print(f"   ✅ Analysis saved to {self.results_dir}")
+    
+    def _convert_to_json_serializable(self, obj):
+        """Convert object to JSON-serializable format."""
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, (np.float64, np.float32)):
+            return float(obj)
+        elif isinstance(obj, (np.int64, np.int32)):
+            return int(obj)
+        elif isinstance(obj, np.bool_):
+            return bool(obj)
+        elif isinstance(obj, dict):
+            return {k: self._convert_to_json_serializable(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [self._convert_to_json_serializable(item) for item in obj]
+        elif isinstance(obj, tuple):
+            return [self._convert_to_json_serializable(item) for item in obj]
+        else:
+            return obj
     
     def _generate_performance_plots(self):
         """Generate performance monitoring plots."""

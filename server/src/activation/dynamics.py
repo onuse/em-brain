@@ -154,7 +154,9 @@ class ActivationDynamics:
             
             for i, exp_id_1 in enumerate(experience_ids):
                 experience = all_experiences[exp_id_1]
-                for exp_id_2, similarity in experience.similar_experiences.items():
+                # Thread-safe copy to avoid concurrent modification
+                similar_experiences_snapshot = dict(experience.similar_experiences)
+                for exp_id_2, similarity in similar_experiences_snapshot.items():
                     if exp_id_2 in self._experience_id_to_index:
                         j = self._experience_id_to_index[exp_id_2]
                         similarity_matrix[i, j] = similarity
@@ -282,7 +284,9 @@ class ActivationDynamics:
                 return  # No experiences to process
             
             # Update GPU activation levels from current experience states
-            for exp_id, experience in all_experiences.items():
+            # Thread-safe copy to avoid concurrent modification
+            experiences_snapshot = dict(all_experiences)
+            for exp_id, experience in experiences_snapshot.items():
                 if exp_id in self._experience_id_to_index:
                     idx = self._experience_id_to_index[exp_id]
                     self._gpu_activation_levels[idx] = experience.activation_level
@@ -494,7 +498,9 @@ class ActivationDynamics:
                 self._cache_adapter.cache_similar_experiences(exp_id, similar_experiences, utility_score)
             
             # Spread activation to similar experiences
-            for similar_id, similarity in similar_experiences.items():
+            # Thread-safe copy to avoid concurrent modification
+            similar_experiences_snapshot = dict(similar_experiences)
+            for similar_id, similarity in similar_experiences_snapshot.items():
                 target_exp = all_experiences.get(similar_id)
                 if target_exp and similarity > 0.3:  # Only spread to reasonably similar
                     spread_amount = source_strength * similarity * self.spread_strength

@@ -287,7 +287,9 @@ class AdaptivePredictionEngine(PredictionEngine):
         # Get experience vectors
         experience_vectors = []
         experience_ids = []
-        for exp_id, experience in all_experiences.items():
+        # Thread-safe copy to avoid concurrent modification
+        experiences_snapshot = dict(all_experiences)
+        for exp_id, experience in experiences_snapshot.items():
             experience_vectors.append(experience.get_context_vector())
             experience_ids.append(exp_id)
         
@@ -295,9 +297,12 @@ class AdaptivePredictionEngine(PredictionEngine):
             return self._bootstrap_random_action(action_dimensions)
         
         # Pad current context to match experience vector dimensions
-        # Current context is sensory input (4D), experience vectors are sensory + action (8D)
-        if len(current_context) == 4 and experience_vectors and len(experience_vectors[0]) == 8:
+        # Current context is sensory input (16D), experience vectors are sensory + action (20D)
+        if len(current_context) == 16 and experience_vectors and len(experience_vectors[0]) == 20:
             # Pad with zeros for the action part since we're predicting the action
+            padded_context = current_context + [0.0, 0.0, 0.0, 0.0]
+        elif len(current_context) == 4 and experience_vectors and len(experience_vectors[0]) == 8:
+            # Backward compatibility for 4D sensory input
             padded_context = current_context + [0.0, 0.0, 0.0, 0.0]
         else:
             padded_context = current_context

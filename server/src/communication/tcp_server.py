@@ -13,6 +13,7 @@ from typing import Dict, Any, Optional, Callable
 import uuid
 
 from .protocol import MessageProtocol, MessageProtocolError
+from .error_codes import BrainErrorCode, create_brain_error, log_brain_error
 from ..brain import MinimalBrain
 
 
@@ -155,8 +156,13 @@ class MinimalTCPServer:
                     elif msg_type == MessageProtocol.MSG_SENSORY_INPUT:
                         response = self._handle_sensory_input(client_info, vector_data)
                     else:
-                        print(f"⚠️  Unknown message type {msg_type} from {client_id}")
-                        response = self.protocol.encode_error(1.0)  # Unknown message type
+                        error = create_brain_error(
+                            BrainErrorCode.UNKNOWN_MESSAGE_TYPE,
+                            f"Unknown message type {msg_type}",
+                            context={'message_type': msg_type}
+                        )
+                        log_brain_error(error, client_id)
+                        response = self.protocol.encode_error(error.error_code.value)
                     
                     # Send response
                     if not self.protocol.send_message(client_socket, response):
@@ -170,9 +176,14 @@ class MinimalTCPServer:
                     print(f"⏰ Client {client_id} timed out")
                     break
                 except MessageProtocolError as e:
-                    print(f"⚠️  Protocol error from {client_id}: {e}")
-                    # Send error response and continue
-                    error_response = self.protocol.encode_error(2.0)  # Protocol error
+                    error = create_brain_error(
+                        BrainErrorCode.PROTOCOL_ERROR,
+                        f"Protocol error: {e}",
+                        context={'protocol_error': str(e)},
+                        exception=e
+                    )
+                    log_brain_error(error, client_id)
+                    error_response = self.protocol.encode_error(error.error_code.value)
                     self.protocol.send_message(client_socket, error_response)
                 except ConnectionError:
                     timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -221,10 +232,21 @@ class MinimalTCPServer:
         
         # Validate sensory input
         if len(sensory_vector) == 0:
-            return self.protocol.encode_error(3.0)  # Empty sensory input
+            error = create_brain_error(
+                BrainErrorCode.EMPTY_SENSORY_INPUT,
+                context={'client_id': client_info['id']}
+            )
+            log_brain_error(error, client_info['id'])
+            return self.protocol.encode_error(error.error_code.value)
         
         if len(sensory_vector) > 32:  # Reasonable limit
-            return self.protocol.encode_error(4.0)  # Sensory input too large
+            error = create_brain_error(
+                BrainErrorCode.SENSORY_INPUT_TOO_LARGE,
+                f"Sensory input size {len(sensory_vector)} exceeds limit of 32",
+                context={'input_size': len(sensory_vector), 'limit': 32}
+            )
+            log_brain_error(error, client_info['id'])
+            return self.protocol.encode_error(error.error_code.value)
         
         try:
             client_id = client_info['id']
@@ -268,8 +290,50 @@ class MinimalTCPServer:
             return self.protocol.encode_action_output(action_vector)
             
         except Exception as e:
-            print(f"❌ Brain processing error for {client_info['id']}: {e}")
-            return self.protocol.encode_error(5.0)  # Brain processing error
+            # Determine specific error type based on exception
+            error_code = self._classify_brain_error(e)
+            
+            error = create_brain_error(
+                error_code,
+                f"Brain processing failed: {e}",
+                context={
+                    'client_id': client_info['id'],
+                    'sensory_input_size': len(sensory_vector),
+                    'requests_served': client_info['requests_served'],
+                    'exception_type': type(e).__name__
+                },
+                exception=e
+            )
+            log_brain_error(error, client_info['id'])
+            return self.protocol.encode_error(error.error_code.value)
+    
+    def _classify_brain_error(self, exception: Exception) -> BrainErrorCode:
+        """Classify exception into specific brain error code."""
+        exception_str = str(exception).lower()
+        exception_type = type(exception).__name__
+        
+        # Check for specific error patterns
+        if 'similarity' in exception_str:
+            return BrainErrorCode.SIMILARITY_ENGINE_FAILURE
+        elif 'prediction' in exception_str:
+            return BrainErrorCode.PREDICTION_ENGINE_FAILURE
+        elif 'experience' in exception_str:
+            return BrainErrorCode.EXPERIENCE_STORAGE_FAILURE
+        elif 'activation' in exception_str:
+            return BrainErrorCode.ACTIVATION_DYNAMICS_FAILURE
+        elif 'pattern' in exception_str:
+            return BrainErrorCode.PATTERN_ANALYSIS_FAILURE
+        elif 'memory' in exception_str or 'memoryerror' in exception_type.lower():
+            return BrainErrorCode.MEMORY_PRESSURE_ERROR
+        elif 'cuda' in exception_str or 'gpu' in exception_str or 'mps' in exception_str:
+            return BrainErrorCode.GPU_PROCESSING_ERROR
+        elif 'timeout' in exception_str:
+            return BrainErrorCode.SYSTEM_OVERLOAD
+        elif 'dimension' in exception_str:
+            return BrainErrorCode.INVALID_ACTION_DIMENSIONS
+        else:
+            # Default to generic brain processing error
+            return BrainErrorCode.BRAIN_PROCESSING_ERROR
     
     def get_server_stats(self) -> dict:
         """Get comprehensive server statistics."""
