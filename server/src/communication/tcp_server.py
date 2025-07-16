@@ -209,8 +209,8 @@ class MinimalTCPServer:
         # Respond with server capabilities
         server_capabilities = [
             4.0,  # Brain version
-            16.0,  # Expected sensory vector size
-            4.0,   # Action vector size  
+            4.0,  # Expected sensory vector size (4D)
+            4.0,   # Action vector size (4D) 
             1.0    # GPU acceleration available
         ]
         

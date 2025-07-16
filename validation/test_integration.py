@@ -25,7 +25,7 @@ from typing import Optional, List, Dict, Any
 # Add paths for testing
 brain_root = Path(__file__).parent.parent
 sys.path.insert(0, str(brain_root))
-sys.path.insert(0, str(brain_root / 'server'))
+sys.path.insert(0, str(brain_root / 'server' / 'src'))
 
 class IntegrationTestResult:
     """Test result with detailed information."""
@@ -87,10 +87,10 @@ class IntegrationTestSuite:
         print("🔍 Testing import resolution...")
         
         imports_to_test = [
-            ('src.communication', 'MinimalBrainClient'),
+            ('communication', 'MinimalBrainClient'),
             ('validation.embodied_learning.environments.sensory_motor_world', 'SensoryMotorWorld'),
-            ('src.brain', 'MinimalBrain'),
-            ('src.embodiment', 'EmbodiedFreeEnergySystem'),
+            ('brain', 'MinimalBrain'),
+            ('embodiment', 'EmbodiedFreeEnergySystem'),
         ]
         
         failed_imports = []
@@ -198,7 +198,7 @@ class IntegrationTestSuite:
         
         try:
             # Import and test client
-            from src.communication import MinimalBrainClient
+            from communication import MinimalBrainClient
             
             client = MinimalBrainClient()
             
@@ -424,7 +424,7 @@ class IntegrationTestSuite:
             return
         
         try:
-            from src.communication import MinimalBrainClient
+            from communication import MinimalBrainClient
             from validation.embodied_learning.environments.sensory_motor_world import SensoryMotorWorld
             
             client = MinimalBrainClient()
@@ -482,7 +482,7 @@ class IntegrationTestSuite:
             return
         
         try:
-            from src.communication import MinimalBrainClient
+            from communication import MinimalBrainClient
             from validation.embodied_learning.environments.sensory_motor_world import SensoryMotorWorld
             
             client = MinimalBrainClient()
@@ -549,7 +549,7 @@ class IntegrationTestSuite:
             return
         
         try:
-            from src.communication import MinimalBrainClient
+            from communication import MinimalBrainClient
             from validation.embodied_learning.environments.sensory_motor_world import SensoryMotorWorld
             
             client = MinimalBrainClient()
@@ -619,7 +619,7 @@ class IntegrationTestSuite:
             return
         
         try:
-            from src.communication import MinimalBrainClient
+            from communication import MinimalBrainClient
             
             client = MinimalBrainClient()
             
@@ -682,7 +682,7 @@ class IntegrationTestSuite:
             return
         
         try:
-            from src.communication import MinimalBrainClient
+            from communication import MinimalBrainClient
             
             client = MinimalBrainClient()
             

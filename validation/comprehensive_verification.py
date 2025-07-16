@@ -29,6 +29,7 @@ import matplotlib.pyplot as plt
 # Add paths
 brain_root = Path(__file__).parent.parent
 sys.path.insert(0, str(brain_root))
+sys.path.insert(0, str(brain_root / 'server' / 'src'))
 
 from validation.test_integration import IntegrationTestSuite
 from validation.micro_experiments.core_assumptions import create_core_assumption_suite
@@ -220,7 +221,7 @@ class ComprehensiveBrainVerification:
         """Run extended learning test to verify biological realism."""
         print("   Running extended learning test...")
         
-        from server.src.communication import MinimalBrainClient
+        from communication import MinimalBrainClient
         from validation.embodied_learning.environments.sensory_motor_world import SensoryMotorWorld
         
         client = MinimalBrainClient()
@@ -339,7 +340,7 @@ class ComprehensiveBrainVerification:
         memory_samples = []
         
         # Generate load to test memory bounds
-        from server.src.communication import MinimalBrainClient
+        from communication import MinimalBrainClient
         from validation.embodied_learning.environments.sensory_motor_world import SensoryMotorWorld
         
         client = MinimalBrainClient()
@@ -397,7 +398,7 @@ class ComprehensiveBrainVerification:
         
         response_times = []
         
-        from server.src.communication import MinimalBrainClient
+        from communication import MinimalBrainClient
         from validation.embodied_learning.environments.sensory_motor_world import SensoryMotorWorld
         
         client = MinimalBrainClient()

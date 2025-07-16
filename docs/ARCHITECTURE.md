@@ -1,188 +1,228 @@
 # Minimal Brain Architecture
 
-## 📁 **Clean Folder Structure**
+## 📁 **Project Structure**
 
-The minimal brain follows a clean, logical organization:
+The minimal brain follows clean separation between project coordination and brain implementation:
 
 ```
-minimal/
-├── __init__.py                 # Package initialization
-├── brain.py                    # Main brain coordinator (orchestrates 4 systems)
-├── server.py                   # Main server entry point (uses TCP server internally)
-│
-├── experience/                 # System 1: Experience Storage
-│   ├── models.py              # Experience data model
-│   └── storage.py             # Experience database
-│
-├── similarity/                 # System 2: Similarity Search Engine
-│   └── engine.py              # GPU-accelerated similarity search
-│
-├── activation/                 # System 3: Activation Dynamics
-│   └── dynamics.py            # Neural activation spreading
-│
-├── prediction/                 # System 4: Prediction Engine
-│   └── engine.py              # Consensus-based action prediction
-│
-├── communication/              # Server-side TCP communication
-│   ├── protocol.py            # Binary message protocol
-│   ├── tcp_server.py          # TCP server implementation
-│   └── client.py              # Client library (for robots)
+brain/
+├── CLAUDE.md                   # Development instructions
+├── README.md                   # Project overview
+├── demo.py                     # Interactive demo launcher
+├── demo_runner.py              # Direct demo execution
+├── test_runner.py              # Test orchestration
+├── validation_runner.py        # Scientific validation
 │
 ├── demos/                      # Demonstration applications
 │   ├── spatial_learning_demo.py    # Basic 2D spatial learning
-│   └── picar_x/                    # PiCar-X robot demos
-│       ├── picar_x_brainstem.py         # Local brainstem (direct)
-│       ├── picar_x_network_brainstem.py  # Network brainstem (TCP)
-│       ├── picar_x_text_demo.py         # ASCII visualization demo
-│       └── picar_x_3d_demo.py           # 3D visualization (matplotlib)
+│   ├── demo_2d.py, demo_3d.py      # Core demos
+│   └── picar_x_simulation/          # PiCar-X simulation demos
+│       ├── picar_x_brainstem.py         # Local brainstem
+│       ├── picar_x_network_brainstem.py # Network brainstem
+│       └── visualization/               # 3D rendering
 │
-├── tests/                      # Test files
-│   ├── test_minimal_brain.py  # Core functionality tests
-│   ├── test_prediction.py     # Prediction engine tests
-│   └── test_client_server.py  # Network communication tests
+├── docs/                       # Project documentation
+│   ├── ARCHITECTURE.md         # This file
+│   ├── COMM_PROTOCOL.md        # Communication protocol
+│   ├── EMBODIED_FREE_ENERGY.md # Embodied system docs
+│   └── IMPLEMENTATION.md       # Implementation details
 │
-├── utils/                      # Utilities (currently minimal)
-├── logs/                       # Log files (runtime generated)
+├── validation/                 # Scientific validation
+│   ├── embodied_learning/      # Embodied learning experiments
+│   └── micro_experiments/      # Micro-validation tests
 │
-└── Documentation:
-    ├── README.md              # Main documentation
-    ├── MINIMAL.md             # Theoretical foundation
-    ├── ARCHITECTURE.md        # This file
-    ├── IMPLEMENTATION.md      # Implementation achievements
-    └── DEPLOYMENT.md          # Deployment guide
+├── client_picarx/              # PiCar-X client implementation
+│   ├── src/brainstem/          # Hardware integration
+│   └── src/hardware/           # Hardware abstraction
+│
+├── server/                     # Complete brain implementation
+│   ├── brain_server.py         # Main server entry point
+│   ├── settings.json           # Server configuration
+│   │
+│   ├── src/                    # Core brain implementation
+│   │   ├── brain.py            # Main brain coordinator
+│   │   ├── cognitive_constants.py # Core parameters
+│   │   │
+│   │   ├── experience/         # System 1: Experience Storage
+│   │   │   ├── models.py       # Experience data model
+│   │   │   └── storage.py      # Experience database
+│   │   │
+│   │   ├── similarity/         # System 2: Similarity Search
+│   │   │   ├── engine.py       # Core similarity search
+│   │   │   ├── adaptive_attention.py # Attention mechanisms
+│   │   │   └── learnable_similarity.py # Adaptive similarity
+│   │   │
+│   │   ├── activation/         # System 3: Activation Dynamics
+│   │   │   ├── dynamics.py     # Neural activation spreading
+│   │   │   └── utility_based_activation.py # Utility-based activation
+│   │   │
+│   │   ├── prediction/         # System 4: Prediction Engine
+│   │   │   ├── engine.py       # Core prediction
+│   │   │   └── adaptive_engine.py # Adaptive prediction
+│   │   │
+│   │   ├── embodiment/         # Embodied Free Energy System
+│   │   │   ├── base.py         # Hardware constraints
+│   │   │   ├── system.py       # Free Energy minimization
+│   │   │   └── brain_adapter.py # Brain integration
+│   │   │
+│   │   ├── communication/      # Network communication
+│   │   │   ├── protocol.py     # Binary message protocol
+│   │   │   ├── tcp_server.py   # TCP server implementation
+│   │   │   └── client.py       # Client library
+│   │   │
+│   │   ├── persistence/        # Memory persistence
+│   │   │   ├── manager.py      # Checkpoint management
+│   │   │   └── serializer.py   # Data serialization
+│   │   │
+│   │   └── utils/              # Supporting utilities
+│   │       ├── memory_manager.py # Memory optimization
+│   │       ├── brain_logger.py   # Logging system
+│   │       └── hardware_adaptation.py # Hardware adaptation
+│   │
+│   ├── tests/                  # Complete test suite
+│   │   ├── integration/        # Integration tests
+│   │   │   ├── test_brain_learning.py # Brain learning tests
+│   │   │   └── test_brain_server.py   # Server tests
+│   │   │
+│   │   ├── test_minimal_brain.py # Core functionality tests
+│   │   ├── test_prediction.py    # Prediction engine tests
+│   │   └── test_client_server.py # Communication tests
+│   │
+│   └── tools/                  # Development tools
+│       ├── analysis/           # Performance analysis
+│       │   ├── performance_analysis.py
+│       │   └── archived/       # Historical analysis
+│       │
+│       └── experiments/        # Quick experiments
+│           ├── quick_brain_test.py
+│           └── five_minute_test.py
+│
+├── logs/                       # Runtime logs
+└── robot_memory/               # Persistent brain memory
+    ├── checkpoints/            # Memory snapshots
+    └── metadata/               # Session metadata
 ```
 
-## 🏗️ **Architecture Decisions**
+## 🏗️ **Core Architecture**
 
-### **Why This Structure?**
+### **The 4 Essential Systems**
 
-1. **4 Core Systems**: Each system gets its own folder with clear purpose
-2. **Clean Separation**: Communication is separate from brain logic
-3. **Organized Demos**: PiCar-X demos in subfolder since they're related
-4. **Proper Testing**: Tests in dedicated folder, not scattered
-5. **No Redundancy**: Single server.py entry point, no duplicate files
+1. **Experience Storage** (`experience/`): Stores every sensory-motor moment
+2. **Similarity Search** (`similarity/`): Finds similar past experiences
+3. **Activation Dynamics** (`activation/`): Neural spreading activation
+4. **Prediction Engine** (`prediction/`): Generates actions from patterns
+
+### **Embodied Free Energy System**
+
+The `embodiment/` system provides physics-grounded action selection:
+- **Hardware constraints**: Battery, temperature, memory limits
+- **Free Energy minimization**: Balances energy conservation with learning
+- **Emergent behavior**: Natural energy management without programming
 
 ### **Server Architecture**
 
 ```
-server.py (Entry Point)
+brain_server.py (Entry Point)
     ↓
-MinimalBrainServer (Orchestrator)
-    ├── MinimalBrain (4 systems)
-    └── MinimalTCPServer (from communication/)
-            ├── Protocol Handler
-            └── Client Connections
+MinimalBrainServer
+    ├── MinimalBrain (4 systems + embodiment)
+    │   ├── Experience Storage
+    │   ├── Similarity Search
+    │   ├── Activation Dynamics
+    │   ├── Prediction Engine
+    │   └── Embodied Free Energy
+    │
+    └── MinimalTCPServer
+        ├── Binary Protocol Handler
+        ├── Client Connection Manager
+        └── Message Processing
 ```
-
-- `server.py`: Main entry point for running the brain server
-- `tcp_server.py`: TCP implementation details (in communication/)
-- No duplicate server files in root directory
 
 ### **Communication Flow**
 
 ```
-Robot Hardware → Network Brainstem → TCP Client → [Network] → TCP Server → Brain → Response
-     (Pi Zero)        (demos/)      (client.py)              (tcp_server.py)  (brain.py)
+Robot Hardware → Brainstem → TCP Client → [Network] → Brain Server → Response
+   (Pi Zero)     (client/)   (protocol)              (server/)
 ```
 
 ## 🎯 **Key Design Principles**
 
-### **1. Core Intelligence Simplicity**
-- Only 4 core systems needed for intelligence (experience, similarity, activation, prediction)
-- No complex cognitive modules in brain logic
-- Everything beyond the 4 systems emerges from their interaction
-- **But**: Supporting infrastructure can be sophisticated (GPU acceleration, persistence, networking)
+### **1. Clean Separation**
+- **Root**: Human-approachable project coordination
+- **Server**: Complete brain implementation with development tools
+- **Client**: Robot-specific hardware integration
 
-### **2. Clean Separation**
-- **Brain logic** separate from **supporting infrastructure**
-- Core intelligence separate from communication/persistence/utilities
-- Demos separate from core implementation  
-- Tests separate from production code
+### **2. Core Intelligence Simplicity**
+- Only 4 cognitive systems + embodied Free Energy
+- No complex cognitive modules
+- Intelligence emerges from system interactions
 
 ### **3. Production Ready**
-- Server runs on powerful machine with full infrastructure
-- Clients (robots) connect over robust network protocols
-- Multiple robots can share one brain
-- Comprehensive persistence and monitoring
+- Robust TCP communication with binary protocol
+- Comprehensive persistence and checkpointing
+- GPU acceleration for similarity search
+- Multi-robot support
 
-### **4. Extensible Intelligence**
-- Easy to add new robot types (infrastructure extensions)
-- Easy to add new demos (application extensions)
-- Hard to add new cognitive modules (intelligence stays simple)
-- Easy to optimize performance (infrastructure improvements)
+### **4. Scientific Validation**
+- Dedicated validation experiments
+- Biological timescale testing
+- Empirical behavior analysis
 
 ## 📋 **Usage Patterns**
 
 ### **Running the Brain Server**
 ```bash
-cd brain
-python3 minimal/server.py
+cd server
+python3 brain_server.py
 ```
 
-### **Running a Robot Client**
+### **Running Demos**
 ```bash
-# Network-based (proper deployment)
-python3 minimal/demos/picar_x/picar_x_network_brainstem.py
+# Interactive demo picker
+python3 demo.py
 
-# Direct connection (testing only)
-python3 minimal/demos/picar_x/picar_x_text_demo.py
+# Direct demo execution
+python3 demo_runner.py spatial_learning
 ```
 
 ### **Running Tests**
 ```bash
-# Test core functionality
-python3 minimal/tests/test_minimal_brain.py
+# All tests
+python3 test_runner.py all
 
-# Test client-server communication
-python3 minimal/tests/test_client_server.py
+# Specific test
+python3 test_runner.py brain_learning
+```
+
+### **Running Validation**
+```bash
+# Scientific validation
+python3 validation_runner.py embodied_learning.biological_embodied_learning
 ```
 
 ## 🔧 **Extension Points**
 
 ### **Adding New Robot Types**
-1. Create new folder in `demos/` (e.g., `demos/drone/`)
-2. Implement brainstem that translates sensors/motors
-3. Use `MinimalBrainClient` for network communication
+1. Create client in `client_<robot>/`
+2. Implement brainstem using `MinimalBrainClient`
+3. Add hardware abstraction layer
 
 ### **Adding New Capabilities**
-- New capabilities emerge from the 4 systems
-- Don't add new systems - let behavior emerge
-- Focus on better sensors or more experiences
+- Capabilities emerge from the 4 systems
+- Focus on richer sensors or more experiences
+- Don't add new cognitive modules
 
 ### **Improving Performance**
-- Optimize similarity search (already GPU accelerated)
-- Add spatial indexing for millions of experiences
-- Implement experience compression
+- Optimize similarity search (GPU acceleration)
+- Enhance memory management
+- Improve network protocol efficiency
 
-## 📊 **Implementation Success Assessment**
+## 📊 **Architecture Benefits**
 
-### ✅ **Core Intelligence Goals Achieved**
-1. **4 Systems Only**: Experience, similarity, activation, prediction - no additional cognitive modules
-2. **Emergent Behaviors**: Spatial navigation, motor skills, exploration, working memory all emerge naturally
-3. **Single Drive**: Prediction error optimization replaces all biological motivations  
-4. **Natural Learning**: No hardcoded cognitive thresholds - everything adapts based on performance
-5. **Conceptual Simplicity**: 5-minute explanation of core mechanism still holds
+1. **Conceptually Simple**: 4 systems + embodied Free Energy
+2. **Production Ready**: Robust infrastructure for real deployment
+3. **Scientifically Valid**: Validates emergence from simple interactions
+4. **Extensible**: Easy to add robots, demos, optimizations
+5. **Maintainable**: Clear separation between intelligence and infrastructure
 
-### ✅ **Production Infrastructure Added**
-1. **GPU Acceleration**: MPS/CUDA support for similarity search and activation dynamics
-2. **Robust Persistence**: Checkpoint system with compression and session management
-3. **Network Architecture**: TCP server/client with binary protocol for real robot deployment
-4. **Monitoring Systems**: Comprehensive logging, performance tracking, debugging tools
-5. **Testing Framework**: Full test coverage with realistic robot simulation
-
-### 🎯 **The Success Story**
-**We proved the core hypothesis**: Intelligence does emerge from just 4 simple systems + massive experience data + fast similarity search.
-
-**But we also proved**: A production-ready implementation needs sophisticated supporting infrastructure.
-
-**Key Insight**: The "embarrassingly simple" constraint should apply to cognitive architecture, not engineering implementation. We successfully maintained conceptual simplicity while building production capability.
-
-## 🎉 **Architecture Benefits**
-
-1. **Conceptually Simple**: Core intelligence mechanism remains elegant and explainable
-2. **Production Ready**: Robust infrastructure supports real-world deployment
-3. **Scientifically Valid**: Proves emergence of complex behaviors from simple interactions
-4. **Extensible**: Easy to add robots, demos, and performance improvements
-5. **Maintainable**: Clear separation between intelligence logic and supporting systems
-
-**The minimal brain architecture successfully bridges the gap between elegant theory and practical deployment!**
+The architecture successfully bridges elegant theory with practical deployment capability.

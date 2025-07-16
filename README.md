@@ -13,14 +13,14 @@ pip install numpy torch psutil
 pip install -r requirements.txt
 
 # Test installation
-python3 test_installation.py
+python3 server/tests/test_installation.py
 ```
 
 ### Running Demos
 ```bash
-python3 demo_runner.py spatial     # Spatial learning demo (recommended first)
-python3 demo_runner.py brain       # Brain functionality demo
-python3 demo.py                    # Interactive demo launcher
+python3 demo_runner.py spatial_learning # Spatial learning demo (recommended first)
+python3 demo_runner.py brain           # Brain functionality demo
+python3 demo.py                        # Interactive demo launcher
 ```
 
 **System Requirements:**
@@ -187,28 +187,51 @@ Action selection requires preferences. Instead of artificial motivations, prefer
 
 ```
 brain/
-├── server/                     # Brain server (4-system core + embodied Free Energy)
-│   ├── brain.py               # Main coordinator 
-│   ├── embodied_free_energy/   # Embodied Free Energy system
-│   │   ├── system.py          # Free Energy action selection
-│   │   ├── base.py            # Embodied priors and hardware interface
-│   │   └── brain_adapter.py   # Integration with 4-system brain
-│   ├── experience/             # Experience storage (core system 1)
-│   ├── similarity/             # Similarity search (core system 2)
-│   ├── activation/             # Activation dynamics (core system 3)
-│   ├── prediction/             # Prediction engine (core system 4)
-│   └── communication/          # Network interfaces
-└── client_picarx/              # Robot client implementation
-    ├── src/brainstem/          # Hardware integration
-    ├── src/hardware/           # Hardware abstraction layer
-    └── docs/installation/      # Pi Zero deployment
+├── CLAUDE.md, README.md        # Essential documentation
+├── demo.py, demo_runner.py     # Demo execution tools
+├── test_runner.py              # Test orchestration
+├── validation_runner.py        # Scientific validation
+├── demos/                      # Demo applications
+├── docs/                       # Core documentation
+├── validation/                 # Scientific validation experiments
+│
+├── server/                     # Complete brain implementation
+│   ├── brain_server.py         # Main server entry point
+│   ├── src/                    # Core brain implementation
+│   │   ├── brain.py            # Main coordinator
+│   │   ├── embodiment/         # Embodied Free Energy system
+│   │   │   ├── system.py       # Free Energy action selection
+│   │   │   ├── base.py         # Embodied priors and hardware interface
+│   │   │   └── brain_adapter.py # Integration with 4-system brain
+│   │   ├── experience/         # Experience storage (core system 1)
+│   │   ├── similarity/         # Similarity search (core system 2)
+│   │   ├── activation/         # Activation dynamics (core system 3)
+│   │   ├── prediction/         # Prediction engine (core system 4)
+│   │   ├── communication/      # Network interfaces
+│   │   ├── persistence/        # Memory persistence
+│   │   └── utils/              # Supporting utilities
+│   ├── tests/                  # Complete test suite
+│   │   ├── integration/        # Integration tests
+│   │   └── test_*.py           # Unit tests
+│   └── tools/                  # Development tools
+│       ├── analysis/           # Performance analysis
+│       └── experiments/        # Quick experiments
+│
+├── client_picarx/              # Robot client implementation
+│   ├── src/brainstem/          # Hardware integration
+│   ├── src/hardware/           # Hardware abstraction layer
+│   └── docs/installation/      # Pi Zero deployment
+│
+├── logs/                       # Runtime logs
+└── robot_memory/               # Persistent brain memory
 ```
 
 ### Design Rules Applied
-- **8-item rule**: No folder has >8 files/subfolders for human comprehension
+- **Clean separation**: Root for coordination, server for complete implementation
+- **Logical grouping**: Integration tests, analysis tools, experiments properly organized
 - **Single responsibility**: Each file has one clear purpose
-- **Clean separation**: Server-only code, no client contamination
-- **Ugly naming**: `test_client/` signals temporary scaffolding
+- **Human-approachable root**: Only essential files in root directory
+- **Complete server**: All brain development tools consolidated in server/
 
 ## Communication Protocol
 

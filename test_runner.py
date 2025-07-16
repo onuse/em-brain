@@ -26,12 +26,12 @@ def main():
     
     # Define test locations
     test_locations = {
-        # Integration tests (root/tests/)
-        'biological_timescales': 'python3 tests/test_biological_timescales.py',
-        'brain_learning': 'python3 tests/test_brain_learning.py', 
-        'brain_server': 'python3 tests/test_brain_server.py',
-        'extended_learning': 'python3 tests/test_extended_learning.py',
-        'socket_demo': 'python3 tests/test_socket_demo.py',
+        # Integration tests (server/tests/integration/)
+        'biological_timescales': 'cd server && python3 tests/integration/test_biological_timescales.py',
+        'brain_learning': 'cd server && python3 tests/integration/test_brain_learning.py', 
+        'brain_server': 'cd server && python3 tests/integration/test_brain_server.py',
+        'extended_learning': 'cd server && python3 tests/integration/test_extended_learning.py',
+        'socket_demo': 'cd server && python3 tests/integration/test_socket_demo.py',
         
         # Server unit tests (server/tests/)
         'embodied_free_energy': 'cd server && python3 tests/test_embodied_free_energy.py',
@@ -45,7 +45,7 @@ def main():
         'persistence': 'cd server && python3 tests/test_persistence.py',
         
         # Client tests
-        'vocal_system': 'cd client_picarx && python3 test_vocal_system.py',
+        'vocal_system': 'cd client_picarx && python3 tests/test_vocal_system.py',
     }
     
     if test_name == 'all':
@@ -89,7 +89,7 @@ def main():
 
 def list_available_tests():
     """List all available tests."""
-    print("\nIntegration tests:")
+    print("\nIntegration tests (server/tests/integration/):")
     print("  biological_timescales - Test biological learning timescales")
     print("  brain_learning - Test core brain learning")
     print("  brain_server - Test server connectivity")
@@ -107,7 +107,7 @@ def list_available_tests():
     print("  prediction - Test prediction engine")
     print("  persistence - Test memory persistence")
     
-    print("\nClient tests:")
+    print("\nClient tests (client_picarx/tests/):")
     print("  vocal_system - Test vocal system")
     
     print("\nSpecial:")
