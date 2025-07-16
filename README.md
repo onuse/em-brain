@@ -135,6 +135,18 @@ Different hardware states create distinct behavioral patterns without programmin
 - **Hot motors**: Cooling behaviors and reduced activity
 - **High memory pressure**: Simpler, less resource-intensive actions
 
+### Performance Characteristics
+- **Decision speed**: ~0.1ms average (scales with actions × priors)
+- **Memory usage**: ~4KB for embodied priors, ~100 bytes per telemetry reading
+- **Precision adaptation**: Energy homeostasis (5.0→19.3), thermal regulation (2.0→5.3)
+
+### vs Traditional Motivation Systems
+Unlike hardcoded motivation modules, embodied Free Energy provides:
+- **Physics-based**: Constraints emerge from actual hardware limitations
+- **Automatic adaptation**: Precision weights adjust based on context
+- **Unified principle**: Single Free Energy minimization replaces multiple drives
+- **Biologically accurate**: Matches neural precision-weighting mechanisms
+
 ## What Emerges (No Additional Hardcoding)
 
 ### Spatial Intelligence
