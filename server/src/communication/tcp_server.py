@@ -14,6 +14,7 @@ import uuid
 
 from .protocol import MessageProtocol, MessageProtocolError
 from .error_codes import BrainErrorCode, create_brain_error, log_brain_error
+from .sensor_buffer import get_sensor_buffer
 from ..brain import MinimalBrain
 
 
@@ -49,6 +50,9 @@ class MinimalTCPServer:
         
         # Experience storage tracking per client
         self.client_experiences = {}  # client_id -> previous experience data
+        
+        # Sensor buffer for decoupling brain from socket I/O
+        self.sensor_buffer = get_sensor_buffer()
         
         # Performance tracking
         self.total_requests = 0
@@ -207,6 +211,9 @@ class MinimalTCPServer:
             if client_id in self.client_experiences:
                 del self.client_experiences[client_id]
             
+            # Cleanup sensor buffer data
+            self.sensor_buffer.clear_client_data(client_id)
+            
             timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             print(f"[{timestamp}] 👋 Client {client_id} disconnected (served {client_info['requests_served']} requests)")
     
@@ -251,6 +258,9 @@ class MinimalTCPServer:
         try:
             client_id = client_info['id']
             
+            # Add sensor input to buffer (step toward decoupled brain loop)
+            self.sensor_buffer.add_sensor_input(client_id, sensory_vector)
+            
             # Store previous experience if this is not the first request
             if client_id in self.client_experiences:
                 prev_experience = self.client_experiences[client_id]
@@ -263,10 +273,12 @@ class MinimalTCPServer:
                     predicted_action=prev_experience['predicted_action']
                 )
                 
-                # Log experience storage (first few times)
+                # Log vector stream learning (first few times)
                 if client_info['requests_served'] < 5:
-                    print(f"💾 {client_id}: Stored experience {experience_id} "
-                          f"(total: {len(self.brain.experience_storage._experiences)})")
+                    brain_stats = self.brain.get_brain_stats()
+                    total_cycles = brain_stats['brain_summary']['total_cycles']
+                    print(f"💾 {client_id}: Stored in vector streams {experience_id} "
+                          f"(total cycles: {total_cycles})")
             
             # Process current sensory input through brain
             action_vector, brain_state = self.brain.process_sensory_input(

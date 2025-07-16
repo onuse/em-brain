@@ -87,7 +87,8 @@ class AdaptivePredictionEngine(PredictionEngine):
                       activation_dynamics, 
                       all_experiences: Dict[str, Any], 
                       action_dimensions: int,
-                      brain_state: Optional[Dict[str, Any]] = None) -> Tuple[List[float], float, Dict[str, Any]]:
+                      brain_state: Optional[Dict[str, Any]] = None,
+                      generate_experience_predictions: bool = True) -> Tuple[List[float], float, Dict[str, Any]]:
         """
         Predict action with adaptive computational intensity.
         
@@ -149,6 +150,13 @@ class AdaptivePredictionEngine(PredictionEngine):
             'prediction_time': total_time,
             'cache_stats': self._get_cache_stats() if self.adaptive_mode_enabled else None
         })
+        
+        # Generate experience predictions if requested
+        if generate_experience_predictions and confidence > 0.3:
+            predicted_experiences = self._generate_experience_predictions(
+                current_context, predicted_action, confidence, intensity_mode
+            )
+            prediction_details['predicted_experiences'] = predicted_experiences
         
         return predicted_action, confidence, prediction_details
     
@@ -438,6 +446,107 @@ class AdaptivePredictionEngine(PredictionEngine):
             mode_stats['avg_time'] = 0.0
         
         print("🔄 Adaptive prediction engine statistics reset")
+    
+    def _generate_experience_predictions(self, 
+                                       current_context: List[float], 
+                                       predicted_action: List[float], 
+                                       confidence: float,
+                                       intensity_mode: str) -> List[Dict[str, Any]]:
+        """
+        Generate predicted experience structures for working memory injection.
+        
+        Creates experience-like structures that can be fed back into the prediction system
+        to enable emergent prediction chaining.
+        """
+        predicted_experiences = []
+        
+        # Number of future predictions based on confidence and intensity
+        horizon = 1
+        if confidence > 0.6:
+            horizon = 3 if intensity_mode == 'full' else 2
+        elif confidence > 0.4:
+            horizon = 2 if intensity_mode == 'full' else 1
+        
+        context = current_context.copy()
+        
+        for step in range(horizon):
+            # Predict outcome of the action in this context
+            predicted_outcome = self._predict_outcome(context, predicted_action)
+            
+            # Create experience-like structure with individual lifetime
+            birth_time = time.time()
+            predicted_experience = {
+                'experience_id': f"predicted_{int(birth_time * 1000)}_{step}",
+                'sensory_input': context.copy(),
+                'action_taken': predicted_action.copy(),
+                'outcome': predicted_outcome,
+                'is_predicted': True,
+                'prediction_step': step + 1,
+                'prediction_confidence': confidence * (0.8 ** step),  # Decay confidence over horizon
+                'prediction_time': birth_time,
+                'consolidation_eligible_time': birth_time + 1.0,  # 1 second verification window
+                'intensity_mode': intensity_mode
+            }
+            
+            predicted_experiences.append(predicted_experience)
+            
+            # For next prediction step, update context with predicted outcome
+            if step < horizon - 1:
+                # Simple context evolution - real implementation would be more sophisticated
+                context = self._evolve_context(context, predicted_action, predicted_outcome)
+                
+                # Generate next action prediction (simplified)
+                predicted_action = self._predict_next_action(context, predicted_action)
+        
+        return predicted_experiences
+    
+    def _predict_outcome(self, context: List[float], action: List[float]) -> List[float]:
+        """
+        Predict the outcome of an action in a given context.
+        
+        This is a simplified version - real implementation would use learned models.
+        """
+        # Simple outcome prediction based on action magnitude and context
+        outcome_magnitude = sum(abs(x) for x in action) * 0.1
+        context_influence = sum(context) * 0.05
+        
+        # Generate outcome as modified context
+        outcome = []
+        for i, ctx_val in enumerate(context):
+            if i < len(action):
+                outcome.append(ctx_val + action[i] * 0.1 + context_influence)
+            else:
+                outcome.append(ctx_val + outcome_magnitude)
+        
+        return outcome
+    
+    def _evolve_context(self, context: List[float], action: List[float], outcome: List[float]) -> List[float]:
+        """
+        Evolve context based on action and outcome for next prediction step.
+        """
+        # Simple context evolution - blend current context with outcome
+        new_context = []
+        for i, ctx_val in enumerate(context):
+            if i < len(outcome):
+                new_context.append(ctx_val * 0.7 + outcome[i] * 0.3)
+            else:
+                new_context.append(ctx_val)
+        
+        return new_context
+    
+    def _predict_next_action(self, context: List[float], previous_action: List[float]) -> List[float]:
+        """
+        Predict next action based on evolved context.
+        """
+        # Simple continuation - slight modification of previous action
+        next_action = []
+        for i, prev_act in enumerate(previous_action):
+            if i < len(context):
+                next_action.append(prev_act * 0.8 + context[i] * 0.1)
+            else:
+                next_action.append(prev_act * 0.9)
+        
+        return next_action
 
 
 def create_adaptive_prediction_engine(cognitive_autopilot: Optional[CognitiveAutopilot] = None,

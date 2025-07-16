@@ -145,7 +145,7 @@ class PiCarXTextDemo:
         
         print(f"\n📍 Step {step:3d}: Position ({self.robot.position[0]:5.1f}, {self.robot.position[1]:5.1f}) "
               f"Heading {self.robot.position[2]:5.1f}°")
-        print(f"   🧠 Brain: {brain_state['total_experiences']:3d} exp, "
+        print(f"   🧠 Brain: {brain_state['total_cycles']:3d} cycles, "
               f"{brain_state['prediction_method']:20s}, conf: {brain_state['prediction_confidence']:.3f}")
         print(f"   🤖 Motors: Speed {motor_state['motor_speed']:5.1f}, "
               f"Steering {motor_state['steering_angle']:5.1f}°, "
@@ -225,27 +225,28 @@ class PiCarXTextDemo:
         print(f"   • Final position: ({self.robot.position[0]:.1f}, {self.robot.position[1]:.1f})")
         
         print(f"\n🧠 Brain Intelligence Metrics:")
-        print(f"   • Total experiences: {status['brain']['total_experiences']}")
-        print(f"   • Total predictions: {status['brain']['total_predictions']}")
-        print(f"   • Consensus prediction rate: {status['brain']['consensus_rate']:.2%}")
-        print(f"   • Working memory size: {status['brain']['working_memory_size']}")
+        print(f"   • Total cycles: {status['brain']['total_cycles']}")
+        print(f"   • Architecture: {status['brain']['architecture']}")
+        print(f"   • Prediction confidence: {status['brain']['prediction_confidence']:.3f}")
+        print(f"   • Sensory patterns: {status['brain']['sensory_patterns']}")
+        print(f"   • Motor patterns: {status['brain']['motor_patterns']}")
         
         print(f"\n🎮 Technical Performance:")
         brain_stats = self.robot.brain.get_brain_stats()
-        sim_stats = brain_stats['similarity_engine']
-        print(f"   • Average similarity search: {sim_stats['avg_search_time']*1000:.2f}ms")
-        print(f"   • GPU acceleration: {sim_stats['device']}")
-        print(f"   • Total similarity searches: {sim_stats['total_searches']}")
-        print(f"   • Cache hit rate: {sim_stats['cache_hit_rate']:.2%}")
+        vector_stats = brain_stats['vector_brain']
+        print(f"   • Brain uptime: {status['brain']['uptime_seconds']:.1f} seconds")
+        print(f"   • Vector stream processing: continuous")
+        print(f"   • Cross-stream learning: enabled")
+        print(f"   • Stream patterns formed: {status['brain']['sensory_patterns'] + status['brain']['motor_patterns']}")
         
-        # Calculate learning progression
-        if status['brain']['total_experiences'] > 20:
+        # Calculate learning progression based on vector stream metrics
+        if status['brain']['total_cycles'] > 20:
             print(f"\n🌟 Emergent Intelligence Indicators:")
             
-            # High consensus rate indicates pattern learning
-            if status['brain']['consensus_rate'] > 0.7:
+            # High prediction confidence indicates pattern learning
+            if status['brain']['prediction_confidence'] > 0.5:
                 print("   ✅ Strong pattern recognition achieved")
-            elif status['brain']['consensus_rate'] > 0.5:
+            elif status['brain']['prediction_confidence'] > 0.3:
                 print("   ✅ Moderate pattern recognition achieved")
             else:
                 print("   ⚠️  Limited pattern recognition")
@@ -259,11 +260,12 @@ class PiCarXTextDemo:
             else:
                 print("   ⚠️  Basic obstacle avoidance")
             
-            # Working memory size indicates active learning
-            if status['brain']['working_memory_size'] > 10:
-                print("   ✅ Active working memory system")
+            # Stream patterns indicate active learning  
+            total_patterns = status['brain']['sensory_patterns'] + status['brain']['motor_patterns']
+            if total_patterns > 5:
+                print("   ✅ Active vector stream learning")
             else:
-                print("   ⚠️  Limited working memory activity")
+                print("   ⚠️  Limited stream pattern formation")
         
         print(f"\n🔬 Scientific Validation:")
         print("   • Spatial navigation: Emerges from sensory similarity clustering")
@@ -292,14 +294,14 @@ class PiCarXTextDemo:
             },
             'brain_intelligence': status['brain'],
             'technical_performance': {
-                'avg_search_time_ms': brain_stats['similarity_engine']['avg_search_time'] * 1000,
-                'gpu_device': brain_stats['similarity_engine']['device'],
-                'cache_hit_rate': brain_stats['similarity_engine']['cache_hit_rate']
+                'architecture': status['brain']['architecture'],
+                'brain_uptime': status['brain']['uptime_seconds'],
+                'total_cycles': status['brain']['total_cycles']
             },
             'emergent_behaviors': {
-                'pattern_recognition': status['brain']['consensus_rate'] > 0.5,
+                'pattern_recognition': status['brain']['prediction_confidence'] > 0.3,
                 'obstacle_avoidance': (self.collision_count / self.step_count) < 0.1,
-                'working_memory': status['brain']['working_memory_size'] > 10
+                'stream_learning': (status['brain']['sensory_patterns'] + status['brain']['motor_patterns']) > 5
             }
         }
 

@@ -30,13 +30,13 @@ python3 demo.py                        # Interactive demo launcher
 
 ## Philosophy
 
-This is an implementation of the **embarrassingly simple** brain architecture based on the principle that intelligence emerges from: **massive experience data + lightning-fast similarity search + neural activation dynamics**
+This is an implementation of the **embarrassingly simple** brain architecture based on the principle that intelligence emerges from: **continuous vector streams + cross-stream learning + biologically-realistic temporal processing**
 
 ### Core Question
-Can we achieve sophisticated robotic intelligence with just 4 interacting systems, letting spatial navigation, motor skills, exploration, and learning emerge naturally rather than being hardcoded?
+Can we achieve sophisticated robotic intelligence with just 4 core systems (experience, similarity, activation, prediction) using continuous vector streams instead of discrete data structures, letting spatial navigation, motor skills, exploration, and learning emerge naturally?
 
 ### Design Principles
-- **Minimal core** - 4-system brain handles pattern recognition and prediction
+- **Vector Stream Architecture** - Continuous processing replaces discrete experience packages for biological realism
 - **Embodied Free Energy** - action selection emerges from physics-grounded constraints
 - **Hardware-driven behavior** - robot's physical state directly shapes decisions
 - **No artificial drives** - all preferences emerge from embodied prediction error minimization
@@ -55,8 +55,9 @@ This architecture is supported by decades of research across multiple fields:
 - **Neural Reuse Hypothesis** (Michael Anderson): Same circuits support multiple cognitive functions, no specialized modules needed
 
 ### Artificial Intelligence
-- **Transformers/GPT**: Attention mechanism = similarity search through massive experience data
-- **K-Nearest Neighbors**: Store everything, find similar cases, predict from neighbors - works across domains
+- **Transformers/GPT**: Attention mechanism = continuous pattern matching through vector representations
+- **Reservoir Computing**: Fixed random networks process temporal streams with emergent computation
+- **Vector Databases**: Real-time similarity search through high-dimensional continuous vector spaces
 - **Case-Based Reasoning**: Successful AI approach using experience storage + similarity + adaptation
 - **Reinforcement Learning**: Trial-and-error learning creates intelligent behavior without explicit programming
 
@@ -109,8 +110,8 @@ Generates next action by following patterns in activated memories:
 Action selection emerges from minimizing prediction error across embodied physical constraints. No hardcoded motivations needed.
 
 ### Architecture
-- **Core brain**: Pattern recognition and prediction (4 systems)
-- **Embodied Free Energy layer**: Physics-grounded action selection
+- **Vector Stream Brain**: Continuous sensory, motor, and temporal streams with cross-stream learning
+- **Embodied Free Energy layer**: Physics-grounded action selection from stream predictions
 - **Clean separation**: Embodied system uses brain services; brain remains unmodified
 
 ### Embodied Priors
@@ -176,11 +177,11 @@ Unlike hardcoded motivation modules, embodied Free Energy provides:
 ## Architecture Decision Rationale
 
 ### Why Separate Core and Embodied System?
-The 4-system pattern handles cognition universally:
-1. Store experiences/patterns/cases
-2. Find similar past situations
-3. Use similarity to predict outcomes
-4. Update based on results
+The vector stream pattern handles cognition universally:
+1. Continuous sensory/motor/temporal vector processing
+2. Cross-stream pattern learning and associations
+3. Real-time prediction from stream dynamics
+4. Organic adaptation through temporal integration
 
 Action selection requires preferences. Instead of artificial motivations, preferences emerge from the robot's physical constraints through embodied Free Energy minimization.
 
@@ -214,11 +215,9 @@ brain/
 │   │   ├── embodiment/         # Embodied Free Energy system
 │   │   │   ├── system.py       # Free Energy action selection
 │   │   │   ├── base.py         # Embodied priors and hardware interface
-│   │   │   └── brain_adapter.py # Integration with 4-system brain
-│   │   ├── experience/         # Experience storage (core system 1)
-│   │   ├── similarity/         # Similarity search (core system 2)
-│   │   ├── activation/         # Activation dynamics (core system 3)
-│   │   ├── prediction/         # Prediction engine (core system 4)
+│   │   │   └── brain_adapter.py # Integration with vector stream brain
+│   │   ├── vector_stream/      # Vector stream brain implementation
+│   │   │   └── minimal_brain.py # Continuous sensory/motor/temporal streams
 │   │   ├── communication/      # Network interfaces
 │   │   ├── persistence/        # Memory persistence
 │   │   └── utils/              # Supporting utilities
@@ -257,11 +256,11 @@ No JSON, no complex packets, no WebSocket overhead. Raw vector exchange only.
 
 ## The Scientific Hypothesis
 
-**Central Claim**: These 4 systems + embodied Free Energy represent the **Irreducible Cognitive Architecture** - the minimal computational substrate from which intelligence emerges:
+**Central Claim**: Vector streams + embodied Free Energy represent the **Irreducible Cognitive Architecture** - the minimal computational substrate from which intelligence emerges:
 
-**Hypothesis**: A robot with these 4 cognitive systems + embodied Free Energy action selection can develop sophisticated behaviors:
-- Spatial navigation without maps (emerges from sensory similarity clustering)
-- Motor skills without templates (emerges from action pattern reinforcement)
+**Hypothesis**: A robot with vector stream processing + embodied Free Energy action selection can develop sophisticated behaviors:
+- Spatial navigation without maps (emerges from sensory stream pattern clustering)
+- Motor skills without templates (emerges from motor stream pattern reinforcement)
 - Energy management without programming (emerges from battery state precision weighting)
 - Thermal regulation without hardcoding (emerges from motor temperature constraints)
 - Exploration vs conservation balance (emerges from competing energy and learning priors)
@@ -281,7 +280,7 @@ No JSON, no complex packets, no WebSocket overhead. Raw vector exchange only.
 The "embarrassingly simple" constraint applies to the **core brain dynamics**, not supporting infrastructure:
 
 **Core Brain Systems** (Must remain simple):
-- **Cognitive Core**: 4 systems (experience, similarity, activation, prediction)
+- **Cognitive Core**: Vector streams (continuous sensory, motor, temporal processing)
 - **Action Selection**: Embodied Free Energy minimization (single principle)
 - **Core Logic**: Conceptually simple - no complex cognitive modules
 - **Emergence**: Complex behavior emerges from physics + prediction error minimization

@@ -41,9 +41,11 @@ def test_basic_brain_functionality():
     exp_id = brain.store_experience(sensory_input, action, actual_outcome, action)
     
     print(f"   Stored experience ID: {exp_id[:8]}...")
-    print(f"   Total experiences: {brain.total_experiences}")
+    stats = brain.get_brain_stats()
+    total_cycles = stats['brain_summary']['total_cycles']
+    print(f"   Total cycles: {total_cycles}")
     
-    assert brain.total_experiences == 1, "Should have 1 experience"
+    assert total_cycles >= 1, "Should have at least 1 cycle"
     
     # Test 3: Learn from multiple experiences
     print("\n🎓 Test 3: Learning from multiple experiences")
@@ -61,7 +63,10 @@ def test_basic_brain_functionality():
         if i % 3 == 0:
             print(f"   Experience {i+2}: {state['prediction_method']}, confidence: {state['prediction_confidence']:.3f}")
     
-    print(f"   Total experiences: {brain.total_experiences}")
+    final_stats = brain.get_brain_stats()
+    final_cycles = final_stats['brain_summary']['total_cycles']
+    print(f"   Total cycles: {final_cycles}")
+    print(f"   Vector patterns formed: {final_stats['brain_summary']['streams']['sensory_patterns'] + final_stats['brain_summary']['streams']['motor_patterns']}")
     
     # Test 4: Test pattern recognition
     print("\n🔍 Test 4: Testing pattern recognition")
@@ -74,33 +79,27 @@ def test_basic_brain_functionality():
     print(f"   Predicted action: {predicted_action}")
     print(f"   Prediction method: {state['prediction_method']}")
     print(f"   Confidence: {state['prediction_confidence']:.3f}")
-    print(f"   Similar experiences found: {state['num_similar_experiences']}")
-    print(f"   Working memory size: {state['working_memory_size']}")
+    print(f"   Architecture: {state['architecture']}")
     
-    # Should now use consensus prediction with reasonable confidence
-    assert state['num_similar_experiences'] > 0, "Should find similar experiences"
+    # Should now use vector stream prediction  
+    assert state['prediction_method'] == 'vector_stream_continuous', "Should use vector stream prediction"
     
     # Test 5: Get comprehensive brain stats
     print("\n📊 Test 5: Brain performance statistics")
     stats = brain.get_brain_stats()
     
     print(f"   Brain summary: {stats['brain_summary']}")
-    print(f"   Similarity engine: {stats['similarity_engine']['device']}")
-    # Handle different activation system stats structures
-    activation_stats = stats['activation_dynamics']
-    if 'working_memory_size' in activation_stats:
-        working_memory_size = activation_stats['working_memory_size']
-    elif 'current_working_memory_size' in activation_stats:
-        working_memory_size = activation_stats['current_working_memory_size']
-    else:
-        working_memory_size = "unknown"
+    print(f"   Architecture: {stats['brain_summary']['architecture']}")
+    print(f"   Vector streams:")
+    print(f"     - Sensory patterns: {stats['brain_summary']['streams']['sensory_patterns']}")
+    print(f"     - Motor patterns: {stats['brain_summary']['streams']['motor_patterns']}")
+    print(f"     - Temporal patterns: {stats['brain_summary']['streams']['temporal_patterns']}")
+    print(f"   Vector brain: {stats['vector_brain']['prediction_confidence']:.3f} confidence")
     
-    print(f"   Activation dynamics: {working_memory_size} in working memory")
-    print(f"   Prediction engine: {stats['prediction_engine']['consensus_rate']:.2f} consensus rate")
-    
-    # Verify stats make sense
-    assert stats['brain_summary']['total_experiences'] == brain.total_experiences
-    assert stats['brain_summary']['total_predictions'] == brain.total_predictions
+    # Verify vector stream stats make sense
+    assert stats['brain_summary']['total_cycles'] > 0, "Should have processed cycles"
+    assert stats['brain_summary']['architecture'] == 'vector_stream', "Should be vector stream architecture"
+    assert stats['vector_brain']['prediction_confidence'] >= 0.0, "Should have valid confidence"
     
     print("\n✅ All tests passed! Minimal brain is working correctly.")
     return True
@@ -131,19 +130,19 @@ def test_similarity_performance():
         predicted_action, state = brain.process_sensory_input(test_input, action_dimensions=4)
     search_time = (time.time() - start_time) / 10
     
-    print(f"   100 experiences stored")
+    print(f"   100 vector stream updates stored")
     print(f"   Average prediction time: {search_time*1000:.2f}ms")
-    print(f"   Similarity engine: {brain.similarity_engine.get_performance_stats()['device']}")
+    print(f"   Vector stream architecture: continuous processing")
     
-    assert search_time < 0.1, f"Prediction should be fast (<100ms), got {search_time*1000:.2f}ms"
+    assert search_time < 0.1, f"Vector stream prediction should be fast (<100ms), got {search_time*1000:.2f}ms"
     
     print("✅ Performance test passed!")
 
 
 def test_working_memory_effects():
-    """Test that activation dynamics create working memory effects."""
+    """Test that vector streams create learning patterns."""
     
-    print("\n🧠 Testing working memory effects")
+    print("\n🧠 Testing vector stream learning")
     
     brain = MinimalBrain()
     
@@ -161,35 +160,22 @@ def test_working_memory_effects():
     target_input = [5.0, 6.0, 0.0, 0.0]  # Similar to experience #5
     predicted_action, state = brain.process_sensory_input(target_input)
     
-    # Check working memory (handle different activation systems)
-    working_memory_size = state['working_memory_size']
+    # Check vector stream patterns formed
+    stats = brain.get_brain_stats()
+    total_patterns = (stats['brain_summary']['streams']['sensory_patterns'] + 
+                     stats['brain_summary']['streams']['motor_patterns'] +
+                     stats['brain_summary']['streams']['temporal_patterns'])
     
-    # Get activated experiences based on activation system type
-    if hasattr(brain.activation_dynamics, 'get_activated_experiences'):
-        # Traditional activation system
-        activated_experiences = brain.activation_dynamics.get_activated_experiences(
-            brain.experience_storage._experiences, min_activation=0.1
-        )
-    elif hasattr(brain.activation_dynamics, 'get_working_memory_experiences'):
-        # Utility-based activation system
-        working_memory_list = brain.activation_dynamics.get_working_memory_experiences(min_activation=0.1)
-        activated_experiences = [brain.experience_storage._experiences[exp_id] for exp_id, _ in working_memory_list]
-    else:
-        activated_experiences = []
+    print(f"   Total cycles: {stats['brain_summary']['total_cycles']}")
+    print(f"   Stream patterns formed: {total_patterns}")
+    print(f"   Prediction confidence: {state['prediction_confidence']:.3f}")
+    print(f"   Architecture: {state['architecture']}")
     
-    print(f"   Total experiences: {len(brain.experience_storage._experiences)}")
-    print(f"   Working memory size: {working_memory_size}")
-    print(f"   Activated experiences: {len(activated_experiences)}")
+    assert total_patterns > 0, "Should have formed stream patterns"
+    assert state['architecture'] == 'vector_stream', "Should use vector stream architecture"
+    assert stats['brain_summary']['total_cycles'] >= 1, "Should have processed cycles"
     
-    if activated_experiences:
-        print(f"   Most activated: {activated_experiences[0].experience_id[:8]}... "
-              f"(activation: {activated_experiences[0].activation_level:.3f})")
-    
-    assert working_memory_size > 0, "Should have some experiences in working memory"
-    # Working memory might include all experiences if they're all recently activated
-    assert working_memory_size <= len(brain.experience_storage._experiences), "Working memory should not exceed total"
-    
-    print("✅ Working memory test passed!")
+    print("✅ Vector stream learning test passed!")
 
 
 def main():

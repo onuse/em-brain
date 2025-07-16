@@ -11,7 +11,8 @@ from contextlib import contextmanager
 
 from .tensor_optimization import TensorOptimizationCoordinator, TensorOptimizationConfig
 from .batch_processor import BatchExperienceProcessor
-from ..activation.optimized_dynamics import OptimizedActivationDynamics
+# Activation dynamics archived with experience-based architecture
+# from ..activation.optimized_dynamics import OptimizedActivationDynamics
 
 
 class OptimizedBrainMixin:

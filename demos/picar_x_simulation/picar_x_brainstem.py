@@ -74,8 +74,8 @@ class PiCarXBrainstem:
         self.motor_speed = 0.0      # -100 to 100
         self.steering_angle = 0.0   # -30 to 30 degrees
         
-        # Initialize the minimal brain
-        self.brain = MinimalBrain(enable_phase2_adaptations=False)
+        # Initialize the minimal brain with vector stream architecture
+        self.brain = MinimalBrain(quiet_mode=True, sensory_dim=16, motor_dim=8)
         
         # Performance tracking
         self.total_control_cycles = 0
@@ -322,10 +322,11 @@ class PiCarXBrainstem:
                          to_obstacle[1] * sensor_direction[1])
             
             if projection > 0:  # Obstacle is in front of sensor
-                # Distance from obstacle center to ray
-                perpendicular_distance = math.sqrt(
-                    to_obstacle[0]**2 + to_obstacle[1]**2 - projection**2
-                )
+                # Distance from obstacle center to ray (safe calculation)
+                distance_squared = to_obstacle[0]**2 + to_obstacle[1]**2
+                projection_squared = projection**2
+                perpendicular_squared = max(0.0, distance_squared - projection_squared)
+                perpendicular_distance = math.sqrt(perpendicular_squared)
                 
                 if perpendicular_distance <= obs_radius:
                     # Ray hits obstacle
@@ -361,11 +362,12 @@ class PiCarXBrainstem:
                 'steering': self.steering_angle
             },
             'brain': {
-                'total_experiences': brain_stats['brain_summary']['total_experiences'],
-                'total_predictions': brain_stats['brain_summary']['total_predictions'],
-                'working_memory_size': brain_stats['activation_dynamics'].get('working_memory_size', 
-                                                                    brain_stats['activation_dynamics'].get('current_working_memory_size', 0)),
-                'consensus_rate': brain_stats['prediction_engine']['consensus_rate']
+                'total_cycles': brain_stats['brain_summary']['total_cycles'],
+                'uptime_seconds': brain_stats['brain_summary']['uptime_seconds'],
+                'prediction_confidence': brain_stats['brain_summary']['prediction_confidence'],
+                'architecture': brain_stats['brain_summary']['architecture'],
+                'sensory_patterns': brain_stats['brain_summary']['streams']['sensory_patterns'],
+                'motor_patterns': brain_stats['brain_summary']['streams']['motor_patterns']
             },
             'performance': {
                 'control_cycles': self.total_control_cycles,
