@@ -65,6 +65,14 @@ class VectorStream:
         
         This is like neural firing in a brain region.
         """
+        # Input validation
+        if not torch.isfinite(new_activation).all():
+            # Replace NaN/Inf with zeros for stability
+            new_activation = torch.where(torch.isfinite(new_activation), new_activation, torch.zeros_like(new_activation))
+        
+        if new_activation.shape[0] != self.dim:
+            raise ValueError(f"Expected {self.dim}D activation, got {new_activation.shape[0]}D")
+        
         # Store activation in rolling buffer
         self.activation_buffer[self.buffer_index] = new_activation
         self.time_buffer[self.buffer_index] = timestamp
@@ -88,7 +96,12 @@ class VectorStream:
         """Learn recurring patterns in the activation stream."""
         # Check if this activation matches any existing patterns
         for pattern in self.patterns:
-            similarity = torch.cosine_similarity(activation, pattern.activation_pattern, dim=0)
+            # Handle zero vectors in cosine similarity
+            if torch.norm(activation) < 1e-8 or torch.norm(pattern.activation_pattern) < 1e-8:
+                similarity = 0.0
+            else:
+                similarity = torch.cosine_similarity(activation, pattern.activation_pattern, dim=0).item()
+            
             if similarity > self.pattern_similarity_threshold:
                 # Reinforce existing pattern
                 pattern.frequency += 1
@@ -147,8 +160,10 @@ class VectorStream:
             prediction += total_pattern_weight * pattern.activation_pattern
             total_weight += total_pattern_weight
         
-        if total_weight > 0:
+        if total_weight > 1e-8:  # Avoid division by zero
             prediction = prediction / total_weight
+        else:
+            prediction = torch.zeros_like(self.current_activation)
         
         return prediction
     
@@ -205,8 +220,22 @@ class MinimalVectorStreamBrain:
         current_time = time.time()
         cycle_start = current_time
         
-        # Convert to tensor
-        sensory_tensor = torch.tensor(sensory_vector, dtype=torch.float32)
+        # Input validation and conversion
+        if not sensory_vector:
+            raise ValueError("Sensory vector cannot be empty")
+        
+        try:
+            sensory_tensor = torch.tensor(sensory_vector, dtype=torch.float32)
+        except (ValueError, TypeError) as e:
+            raise ValueError(f"Invalid sensory vector format: {e}")
+        
+        # Validate tensor dimensions
+        if sensory_tensor.dim() != 1:
+            raise ValueError(f"Expected 1D sensory vector, got {sensory_tensor.dim()}D")
+        
+        # Ensure finite values
+        if not torch.isfinite(sensory_tensor).all():
+            sensory_tensor = torch.where(torch.isfinite(sensory_tensor), sensory_tensor, torch.zeros_like(sensory_tensor))
         
         # Generate temporal context (organic metronome)
         temporal_vector = self._generate_temporal_context(current_time)

@@ -7,8 +7,9 @@ Common functionality for minimal brain:
 - Performance metrics (future)
 """
 
-# Only import what exists
+# Only import what exists after vector stream migration
 from .brain_logger import BrainLogger
-from .adaptive_trigger import AdaptiveTrigger
+from .cognitive_autopilot import CognitiveAutopilot
+from .hardware_adaptation import get_hardware_adaptation
 
-__all__ = ["BrainLogger", "AdaptiveTrigger"]
+__all__ = ["BrainLogger", "CognitiveAutopilot", "get_hardware_adaptation"]
