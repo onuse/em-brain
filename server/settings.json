@@ -1,4 +1,11 @@
 {
+  "brain": {
+    "type": "sparse_goldilocks",
+    "sensory_dim": 16,
+    "motor_dim": 8,
+    "temporal_dim": 4,
+    "max_patterns": 100000
+  },
   "memory": {
     "persistent_memory_path": "./robot_memory",
     "enable_persistence": true,

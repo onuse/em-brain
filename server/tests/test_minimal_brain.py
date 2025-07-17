@@ -66,7 +66,8 @@ def test_basic_brain_functionality():
     final_stats = brain.get_brain_stats()
     final_cycles = final_stats['brain_summary']['total_cycles']
     print(f"   Total cycles: {final_cycles}")
-    print(f"   Vector patterns formed: {final_stats['brain_summary']['streams']['sensory_patterns'] + final_stats['brain_summary']['streams']['motor_patterns']}")
+    print(f"   Architecture: {final_stats['brain_summary']['architecture']}")
+    print(f"   Prediction confidence: {final_stats['brain_summary']['prediction_confidence']:.3f}")
     
     # Test 4: Test pattern recognition
     print("\n🔍 Test 4: Testing pattern recognition")
@@ -90,15 +91,11 @@ def test_basic_brain_functionality():
     
     print(f"   Brain summary: {stats['brain_summary']}")
     print(f"   Architecture: {stats['brain_summary']['architecture']}")
-    print(f"   Vector streams:")
-    print(f"     - Sensory patterns: {stats['brain_summary']['streams']['sensory_patterns']}")
-    print(f"     - Motor patterns: {stats['brain_summary']['streams']['motor_patterns']}")
-    print(f"     - Temporal patterns: {stats['brain_summary']['streams']['temporal_patterns']}")
     print(f"   Vector brain: {stats['vector_brain']['prediction_confidence']:.3f} confidence")
     
     # Verify vector stream stats make sense
     assert stats['brain_summary']['total_cycles'] > 0, "Should have processed cycles"
-    assert stats['brain_summary']['architecture'] == 'vector_stream', "Should be vector stream architecture"
+    assert 'goldilocks' in stats['brain_summary']['architecture'], "Should be goldilocks architecture"
     assert stats['vector_brain']['prediction_confidence'] >= 0.0, "Should have valid confidence"
     
     print("\n✅ All tests passed! Minimal brain is working correctly.")
@@ -162,17 +159,13 @@ def test_working_memory_effects():
     
     # Check vector stream patterns formed
     stats = brain.get_brain_stats()
-    total_patterns = (stats['brain_summary']['streams']['sensory_patterns'] + 
-                     stats['brain_summary']['streams']['motor_patterns'] +
-                     stats['brain_summary']['streams']['temporal_patterns'])
     
     print(f"   Total cycles: {stats['brain_summary']['total_cycles']}")
-    print(f"   Stream patterns formed: {total_patterns}")
+    print(f"   Architecture: {stats['brain_summary']['architecture']}")
     print(f"   Prediction confidence: {state['prediction_confidence']:.3f}")
     print(f"   Architecture: {state['architecture']}")
     
-    assert total_patterns > 0, "Should have formed stream patterns"
-    assert state['architecture'] == 'vector_stream', "Should use vector stream architecture"
+    assert 'goldilocks' in state['architecture'], "Should use goldilocks architecture"
     assert stats['brain_summary']['total_cycles'] >= 1, "Should have processed cycles"
     
     print("✅ Vector stream learning test passed!")

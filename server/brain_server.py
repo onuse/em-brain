@@ -27,8 +27,8 @@ class MinimalBrainServer:
         self.config = self._load_settings()
         self._setup_paths()
         
-        # Initialize brain with config
-        self.brain = MinimalBrain(config=self.config)
+        # Initialize brain with config - use quiet mode to reduce startup spam
+        self.brain = MinimalBrain(config=self.config, quiet_mode=True)
         self.tcp_server = MinimalTCPServer(self.brain, host, port)
         self.running = False
     

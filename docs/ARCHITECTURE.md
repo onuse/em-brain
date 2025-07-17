@@ -40,25 +40,11 @@ brain/
 │   ├── settings.json           # Server configuration
 │   │
 │   ├── src/                    # Core brain implementation
-│   │   ├── brain.py            # Main brain coordinator
+│   │   ├── brain.py            # Main brain coordinator (vector stream orchestrator)
 │   │   ├── cognitive_constants.py # Core parameters
 │   │   │
-│   │   ├── experience/         # System 1: Experience Storage
-│   │   │   ├── models.py       # Experience data model
-│   │   │   └── storage.py      # Experience database
-│   │   │
-│   │   ├── similarity/         # System 2: Similarity Search
-│   │   │   ├── engine.py       # Core similarity search
-│   │   │   ├── adaptive_attention.py # Attention mechanisms
-│   │   │   └── learnable_similarity.py # Adaptive similarity
-│   │   │
-│   │   ├── activation/         # System 3: Activation Dynamics
-│   │   │   ├── dynamics.py     # Neural activation spreading
-│   │   │   └── utility_based_activation.py # Utility-based activation
-│   │   │
-│   │   ├── prediction/         # System 4: Prediction Engine
-│   │   │   ├── engine.py       # Core prediction
-│   │   │   └── adaptive_engine.py # Adaptive prediction
+│   │   ├── vector_stream/      # Vector Stream Brain
+│   │   │   └── minimal_brain.py # 3-stream processing engine
 │   │   │
 │   │   ├── embodiment/         # Embodied Free Energy System
 │   │   │   ├── base.py         # Hardware constraints
@@ -70,10 +56,6 @@ brain/
 │   │   │   ├── tcp_server.py   # TCP server implementation
 │   │   │   └── client.py       # Client library
 │   │   │
-│   │   ├── persistence/        # Memory persistence
-│   │   │   ├── manager.py      # Checkpoint management
-│   │   │   └── serializer.py   # Data serialization
-│   │   │
 │   │   └── utils/              # Supporting utilities
 │   │       ├── memory_manager.py # Memory optimization
 │   │       ├── brain_logger.py   # Logging system
@@ -81,11 +63,10 @@ brain/
 │   │
 │   ├── tests/                  # Complete test suite
 │   │   ├── integration/        # Integration tests
-│   │   │   ├── test_brain_learning.py # Brain learning tests
+│   │   │   ├── test_brain_learning.py # Vector stream learning tests
 │   │   │   └── test_brain_server.py   # Server tests
 │   │   │
-│   │   ├── test_minimal_brain.py # Core functionality tests
-│   │   ├── test_prediction.py    # Prediction engine tests
+│   │   ├── test_minimal_brain.py # Vector stream functionality tests
 │   │   └── test_client_server.py # Communication tests
 │   │
 │   └── tools/                  # Development tools
@@ -105,12 +86,11 @@ brain/
 
 ## 🏗️ **Core Architecture**
 
-### **The 4 Essential Systems**
+### **The 3 Vector Streams**
 
-1. **Experience Storage** (`experience/`): Stores every sensory-motor moment
-2. **Similarity Search** (`similarity/`): Finds similar past experiences
-3. **Activation Dynamics** (`activation/`): Neural spreading activation
-4. **Prediction Engine** (`prediction/`): Generates actions from patterns
+1. **Sensory Stream** (`sensory_stream`): Continuous sensory pattern processing with rolling buffer
+2. **Motor Stream** (`motor_stream`): Motor command patterns and cross-stream learning
+3. **Temporal Stream** (`temporal_stream`): Biological timing rhythms and temporal context
 
 ### **Embodied Free Energy System**
 
@@ -125,12 +105,15 @@ The `embodiment/` system provides physics-grounded action selection:
 brain_server.py (Entry Point)
     ↓
 MinimalBrainServer
-    ├── MinimalBrain (4 systems + embodiment)
-    │   ├── Experience Storage
-    │   ├── Similarity Search
-    │   ├── Activation Dynamics
-    │   ├── Prediction Engine
-    │   └── Embodied Free Energy
+    ├── MinimalBrain (vector stream coordinator)
+    │   ├── MinimalVectorStreamBrain
+    │   │   ├── Sensory Stream (pattern learning + rolling buffer)
+    │   │   ├── Motor Stream (cross-stream prediction)
+    │   │   └── Temporal Stream (organic metronome)
+    │   └── EmbodiedFreeEnergySystem
+    │       ├── Hardware Telemetry
+    │       ├── Precision-Weighted Priors
+    │       └── Free Energy Minimization
     │
     └── MinimalTCPServer
         ├── Binary Protocol Handler
@@ -153,14 +136,14 @@ Robot Hardware → Brainstem → TCP Client → [Network] → Brain Server → R
 - **Client**: Robot-specific hardware integration
 
 ### **2. Core Intelligence Simplicity**
-- Only 4 cognitive systems + embodied Free Energy
+- Only 3 vector streams + embodied Free Energy  
 - No complex cognitive modules
-- Intelligence emerges from system interactions
+- Intelligence emerges from stream interactions and physics constraints
 
 ### **3. Production Ready**
 - Robust TCP communication with binary protocol
-- Comprehensive persistence and checkpointing
-- GPU acceleration for similarity search
+- Rolling buffer memory management
+- Hardware adaptation and telemetry
 - Multi-robot support
 
 ### **4. Scientific Validation**
@@ -219,10 +202,10 @@ python3 validation_runner.py embodied_learning.biological_embodied_learning
 
 ## 📊 **Architecture Benefits**
 
-1. **Conceptually Simple**: 4 systems + embodied Free Energy
-2. **Production Ready**: Robust infrastructure for real deployment
-3. **Scientifically Valid**: Validates emergence from simple interactions
-4. **Extensible**: Easy to add robots, demos, optimizations
-5. **Maintainable**: Clear separation between intelligence and infrastructure
+1. **Conceptually Simple**: 3 vector streams + embodied Free Energy
+2. **Biologically Plausible**: Continuous processing matches neural dynamics
+3. **Production Ready**: Robust infrastructure for real deployment
+4. **Scientifically Testable**: Clear limitations and capabilities to validate
+5. **Maintainable**: Clean separation between stream processing and infrastructure
 
-The architecture successfully bridges elegant theory with practical deployment capability.
+The architecture provides a testable minimal substrate for investigating whether basic intelligent behaviors can emerge from simple continuous processing mechanisms.

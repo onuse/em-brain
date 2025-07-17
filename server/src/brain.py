@@ -15,6 +15,7 @@ import time
 from typing import List, Dict, Tuple, Optional, Any
 
 from .vector_stream.minimal_brain import MinimalVectorStreamBrain
+from .vector_stream.sparse_goldilocks_brain import SparseGoldilocksBrain
 from .utils.cognitive_autopilot import CognitiveAutopilot
 from .utils.brain_logger import BrainLogger
 from .utils.hardware_adaptation import get_hardware_adaptation, record_brain_cycle_performance
@@ -32,26 +33,42 @@ class MinimalBrain:
     """
     
     def __init__(self, config=None, enable_logging=True, log_session_name=None, quiet_mode=False, 
-                 sensory_dim=16, motor_dim=8, temporal_dim=4):
+                 sensory_dim=None, motor_dim=None, temporal_dim=None, max_patterns=None, 
+                 brain_type=None):
         """Initialize the minimal brain with vector stream architecture."""
         
         # Store config for use in other methods
-        self.config = config
+        self.config = config or {}
         self.quiet_mode = quiet_mode
+        
+        # Get brain configuration from settings with defaults
+        brain_config = self.config.get('brain', {})
+        self.brain_type = brain_type or brain_config.get('type', 'sparse_goldilocks')
+        self.sensory_dim = sensory_dim or brain_config.get('sensory_dim', 16)
+        self.motor_dim = motor_dim or brain_config.get('motor_dim', 8)
+        self.temporal_dim = temporal_dim or brain_config.get('temporal_dim', 4)
+        max_patterns = max_patterns or brain_config.get('max_patterns', 100000)
         
         # Hardware adaptation system
         self.hardware_adaptation = get_hardware_adaptation()
         
-        # Core vector stream brain - match dimensions to input
-        self.sensory_dim = sensory_dim
-        self.motor_dim = motor_dim
-        self.temporal_dim = temporal_dim
-        
-        self.vector_brain = MinimalVectorStreamBrain(
-            sensory_dim=sensory_dim,
-            motor_dim=motor_dim, 
-            temporal_dim=temporal_dim
-        )
+        # Select brain implementation based on type
+        if self.brain_type == "sparse_goldilocks":
+            self.vector_brain = SparseGoldilocksBrain(
+                sensory_dim=self.sensory_dim,
+                motor_dim=self.motor_dim, 
+                temporal_dim=self.temporal_dim,
+                max_patterns=max_patterns,
+                quiet_mode=quiet_mode
+            )
+        elif self.brain_type == "minimal":
+            self.vector_brain = MinimalVectorStreamBrain(
+                sensory_dim=self.sensory_dim,
+                motor_dim=self.motor_dim, 
+                temporal_dim=self.temporal_dim
+            )
+        else:
+            raise ValueError(f"Unknown brain_type: {self.brain_type}. Options: 'sparse_goldilocks', 'minimal'")
         
         # Initialize cognitive autopilot for adaptive intensity control
         self.cognitive_autopilot = CognitiveAutopilot()
@@ -68,14 +85,17 @@ class MinimalBrain:
             self.logger = None
         
         if not quiet_mode:
-            print(f"🧠 MinimalBrain initialized - Vector Stream Architecture")
-            print(f"   Sensory stream: {sensory_dim}D")
-            print(f"   Motor stream: {motor_dim}D") 
-            print(f"   Temporal stream: {temporal_dim}D")
+            print(f"🧠 MinimalBrain initialized - {self.brain_type.title()} Architecture")
+            print(f"   Sensory stream: {self.sensory_dim}D")
+            print(f"   Motor stream: {self.motor_dim}D") 
+            print(f"   Temporal stream: {self.temporal_dim}D")
+            if self.brain_type == "sparse_goldilocks":
+                print(f"   Max patterns: {max_patterns:,}")
+                print(f"   🧬 Evolutionary Win #1: Sparse Distributed Representations")
             print(f"   Continuous prediction and dead reckoning enabled")
         else:
             # Show minimal essential summary
-            print(f"🧠 Vector Brain ready: {sensory_dim}D→{motor_dim}D processing")
+            print(f"🧠 Vector Brain ready: {self.sensory_dim}D→{self.motor_dim}D processing")
     
     def process_sensory_input(self, sensory_input: List[float], 
                             action_dimensions: int = 4) -> Tuple[List[float], Dict[str, Any]]:
@@ -212,13 +232,8 @@ class MinimalBrain:
                 'total_cycles': self.total_cycles,
                 'uptime_seconds': time.time() - self.brain_start_time,
                 'cycles_per_minute': self.total_cycles / max(1, (time.time() - self.brain_start_time) / 60),
-                'architecture': 'vector_stream',
-                'prediction_confidence': vector_stats['prediction_confidence'],
-                'streams': {
-                    'sensory_patterns': vector_stats['streams']['sensory']['pattern_count'],
-                    'motor_patterns': vector_stats['streams']['motor']['pattern_count'],
-                    'temporal_patterns': vector_stats['streams']['temporal']['pattern_count']
-                }
+                'architecture': vector_stats.get('architecture', 'vector_stream'),
+                'prediction_confidence': vector_stats.get('prediction_confidence', 0.0)
             },
             'vector_brain': vector_stats
         }
@@ -256,9 +271,9 @@ class MinimalBrain:
     
     def __str__(self) -> str:
         return (f"MinimalBrain({self.total_cycles} cycles, "
-                f"vector_stream_architecture, "
-                f"sensory={self.vector_brain.sensory_stream.dim}D, "
-                f"motor={self.vector_brain.motor_stream.dim}D)")
+                f"{self.brain_type}_architecture, "
+                f"sensory={self.sensory_dim}D, "
+                f"motor={self.motor_dim}D)")
     
     def __repr__(self) -> str:
         return self.__str__()

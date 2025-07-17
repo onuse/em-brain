@@ -1,0 +1,10 @@
+{
+  "enable_core_stats": true,
+  "enable_stream_stats": false,
+  "enable_coactivation_stats": false,
+  "enable_column_stats": false,
+  "enable_competition_stats": false,
+  "enable_hierarchy_stats": false,
+  "enable_performance_profiling": false,
+  "enable_debug_stats": false
+}
