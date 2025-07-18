@@ -221,15 +221,48 @@ class MinimalTCPServer:
         """Handle handshake message from client."""
         print(f"🤝 Handshake from {client_info['id']}: {len(capabilities)} capabilities")
         
+        # Parse client capabilities 
+        if len(capabilities) >= 4:
+            client_version = capabilities[0]
+            client_sensory_dim = int(capabilities[1])
+            client_action_dim = int(capabilities[2]) 
+            client_hardware_type = capabilities[3]
+            
+            print(f"   Client: {client_sensory_dim}D sensors → {client_action_dim}D actions (hw_type: {client_hardware_type})")
+        else:
+            print(f"   ⚠️ Client sent incomplete capabilities: {capabilities}")
+        
+        # Get server capabilities from actual brain configuration
+        server_sensory_dim = self.brain.sensory_dim
+        server_action_dim = self.brain.motor_dim
+        
+        print(f"   Server: {server_sensory_dim}D sensors → {server_action_dim}D actions")
+        
+        # Validate compatibility
+        compatible = True
+        if len(capabilities) >= 4:
+            if client_sensory_dim != server_sensory_dim:
+                print(f"   ⚠️ Sensory dimension mismatch: client={client_sensory_dim}D, server={server_sensory_dim}D")
+                compatible = False
+            if client_action_dim != server_action_dim:
+                print(f"   ⚠️ Action dimension mismatch: client={client_action_dim}D, server={server_action_dim}D")
+                compatible = False
+        
+        if compatible:
+            print(f"   ✅ Dimensions compatible")
+        else:
+            print(f"   ❌ Dimension mismatch detected - expect errors")
+        
         # Store client capabilities
         client_info['capabilities'] = capabilities
+        client_info['compatible'] = compatible
         
-        # Respond with server capabilities
+        # Respond with actual server capabilities
         server_capabilities = [
             4.0,  # Brain version
-            4.0,  # Expected sensory vector size (4D)
-            4.0,   # Action vector size (4D) 
-            1.0    # GPU acceleration available
+            float(server_sensory_dim),  # Expected sensory vector size
+            float(server_action_dim),   # Action vector size
+            1.0   # GPU acceleration available
         ]
         
         return self.protocol.encode_handshake(server_capabilities)

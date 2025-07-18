@@ -24,13 +24,24 @@ import time
 
 # Hardware adaptation integration
 try:
-    from .utils.hardware_adaptation import get_adaptive_cognitive_limits
+    from ..utils.hardware_adaptation import get_adaptive_cognitive_limits
     HARDWARE_ADAPTATION_AVAILABLE = True
 except ImportError:
-    HARDWARE_ADAPTATION_AVAILABLE = False
-    def get_adaptive_cognitive_limits():
-        return {}
-    print("⚠️  Hardware adaptation not available, using static constants")
+    try:
+        # Try absolute import for standalone scripts
+        import sys
+        import os
+        # Add brain root to path if not already there
+        brain_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        if brain_root not in sys.path:
+            sys.path.insert(0, brain_root)
+        from src.utils.hardware_adaptation import get_adaptive_cognitive_limits
+        HARDWARE_ADAPTATION_AVAILABLE = True
+    except ImportError:
+        HARDWARE_ADAPTATION_AVAILABLE = False
+        def get_adaptive_cognitive_limits():
+            return {}
+        print("⚠️  Hardware adaptation not available, using static constants")
 
 # =============================================================================
 # CORE IDENTITY: What Kind of Mind This Is

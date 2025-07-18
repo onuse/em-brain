@@ -741,8 +741,15 @@ class SparseGoldilocksBrain:
             temporal_activation = self.temporal_stream.update(temporal_vector * 0.1, current_time)
         else:
             # Winner gets full processing - exclusive attention in action
-            sensory_activation = self.sensory_stream.update(attended_pattern, current_time)
-            temporal_activation = self.temporal_stream.update(temporal_vector, current_time)
+            # But each stream must get the appropriate tensor dimensions
+            if torch.equal(attended_pattern, sensory_tensor):
+                # Sensory pattern won attention - give it full processing
+                sensory_activation = self.sensory_stream.update(sensory_tensor, current_time)
+                temporal_activation = self.temporal_stream.update(temporal_vector * 0.1, current_time)  # Reduced processing
+            else:
+                # Temporal pattern won attention - give it full processing
+                sensory_activation = self.sensory_stream.update(sensory_tensor * 0.1, current_time)  # Reduced processing
+                temporal_activation = self.temporal_stream.update(temporal_vector, current_time)
         
         # Generate motor prediction using emergent temporal constraints
         motor_prediction = self._predict_motor_output_emergent(

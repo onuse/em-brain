@@ -2,7 +2,7 @@
   "brain": {
     "type": "sparse_goldilocks",
     "sensory_dim": 16,
-    "motor_dim": 8,
+    "motor_dim": 4,
     "temporal_dim": 4,
     "max_patterns": 100000
   },

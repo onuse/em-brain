@@ -45,9 +45,20 @@ class MinimalBrain:
         brain_config = self.config.get('brain', {})
         self.brain_type = brain_type or brain_config.get('type', 'sparse_goldilocks')
         self.sensory_dim = sensory_dim or brain_config.get('sensory_dim', 16)
-        self.motor_dim = motor_dim or brain_config.get('motor_dim', 8)
+        self.motor_dim = motor_dim or brain_config.get('motor_dim', 4)
         self.temporal_dim = temporal_dim or brain_config.get('temporal_dim', 4)
         max_patterns = max_patterns or brain_config.get('max_patterns', 100000)
+        
+        # Log dimension configuration sources for traceability
+        if not quiet_mode:
+            print(f"🧠 Brain Dimension Configuration:")
+            sensory_source = "param" if sensory_dim else ("config" if 'sensory_dim' in brain_config else "default")
+            motor_source = "param" if motor_dim else ("config" if 'motor_dim' in brain_config else "default") 
+            temporal_source = "param" if temporal_dim else ("config" if 'temporal_dim' in brain_config else "default")
+            print(f"   Sensory: {self.sensory_dim}D (from {sensory_source})")
+            print(f"   Motor: {self.motor_dim}D (from {motor_source})")
+            print(f"   Temporal: {self.temporal_dim}D (from {temporal_source})")
+            print(f"   Type: {self.brain_type} (from {'param' if brain_type else ('config' if 'type' in brain_config else 'default')})")
         
         # Hardware adaptation system
         self.hardware_adaptation = get_hardware_adaptation()
