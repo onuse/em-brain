@@ -139,8 +139,8 @@ class UnifiedCorticalStreamStorage:
             # New format: (pattern_ids, similarities) as separate lists
             pattern_ids, similarities = similar_patterns
         else:
-            # Old format: list of (pattern, similarity) tuples
-            pattern_ids = [pattern.pattern_id for pattern, _ in similar_patterns]
+            # Current format: list of (pattern_id, similarity) tuples where pattern_id is already a string
+            pattern_ids = [pattern_id for pattern_id, _ in similar_patterns]
             similarities = [similarity for _, similarity in similar_patterns]
         
         # Apply temporal recency weighting

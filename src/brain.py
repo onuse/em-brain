@@ -49,15 +49,21 @@ class MinimalBrain:
         self.temporal_dim = temporal_dim or brain_config.get('temporal_dim', 4)
         max_patterns = max_patterns or brain_config.get('max_patterns', 100000)
         
+        # Timing configuration
+        self.target_cycle_time_ms = brain_config.get('target_cycle_time_ms', 50.0)
+        self.target_cycle_time_s = self.target_cycle_time_ms / 1000.0
+        
         # Log dimension configuration sources for traceability
         if not quiet_mode:
             print(f"🧠 Brain Dimension Configuration:")
             sensory_source = "param" if sensory_dim else ("config" if 'sensory_dim' in brain_config else "default")
             motor_source = "param" if motor_dim else ("config" if 'motor_dim' in brain_config else "default") 
             temporal_source = "param" if temporal_dim else ("config" if 'temporal_dim' in brain_config else "default")
+            timing_source = "config" if 'target_cycle_time_ms' in brain_config else "default"
             print(f"   Sensory: {self.sensory_dim}D (from {sensory_source})")
             print(f"   Motor: {self.motor_dim}D (from {motor_source})")
             print(f"   Temporal: {self.temporal_dim}D (from {temporal_source})")
+            print(f"   Cycle time: {self.target_cycle_time_ms}ms (from {timing_source})")
             print(f"   Type: {self.brain_type} (from {'param' if brain_type else ('config' if 'type' in brain_config else 'default')})")
         
         # Hardware adaptation system
@@ -192,6 +198,15 @@ class MinimalBrain:
         # Record performance for hardware adaptation
         memory_usage_mb = 50.0  # Vector streams use much less memory than experience storage
         record_brain_cycle_performance(cycle_time_ms, memory_usage_mb)
+        
+        # Enforce target cycle time if configured (biological timing vs emergent timing)
+        if self.target_cycle_time_s > 0:
+            remaining_time = self.target_cycle_time_s - cycle_time
+            if remaining_time > 0:
+                time.sleep(remaining_time)
+                # Update cycle time to include sleep
+                cycle_time = time.time() - process_start_time
+                cycle_time_ms = cycle_time * 1000
         
         # Compile brain state
         brain_state = {
