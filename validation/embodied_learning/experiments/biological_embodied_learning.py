@@ -679,8 +679,29 @@ class BiologicalEmbodiedLearningExperiment:
     def _save_results(self, results: Dict):
         """Save experiment results to file."""
         results_file = self.results_dir / "experiment_results.json"
+        
+        # Convert numpy types to native Python types for JSON serialization
+        def convert_numpy_types(obj):
+            if isinstance(obj, np.integer):
+                return int(obj)
+            elif isinstance(obj, np.floating):
+                return float(obj)
+            elif isinstance(obj, np.bool_):
+                return bool(obj)
+            elif isinstance(obj, np.ndarray):
+                return obj.tolist()
+            elif isinstance(obj, dict):
+                return {k: convert_numpy_types(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_numpy_types(item) for item in obj]
+            else:
+                return obj
+        
+        # Convert the entire results dictionary
+        serializable_results = convert_numpy_types(results)
+        
         with open(results_file, 'w') as f:
-            json.dump(results, f, indent=2)
+            json.dump(serializable_results, f, indent=2)
         
         print(f"💾 Results saved to {results_file}")
     

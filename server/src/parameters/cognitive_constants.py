@@ -35,7 +35,7 @@ except ImportError:
         brain_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         if brain_root not in sys.path:
             sys.path.insert(0, brain_root)
-        from src.utils.hardware_adaptation import get_adaptive_cognitive_limits
+        from server.src.utils.hardware_adaptation import get_adaptive_cognitive_limits
         HARDWARE_ADAPTATION_AVAILABLE = True
     except ImportError:
         HARDWARE_ADAPTATION_AVAILABLE = False

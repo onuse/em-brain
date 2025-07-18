@@ -7,8 +7,8 @@ Test that all 4 systems work together to create basic intelligent behavior.
 
 import sys
 import os
-# Add project root to path for imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+# Add server directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 from src.brain import MinimalBrain
 import numpy as np

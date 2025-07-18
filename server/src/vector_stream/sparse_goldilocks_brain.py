@@ -751,8 +751,8 @@ class SparseGoldilocksBrain:
                 sensory_activation = self.sensory_stream.update(sensory_tensor * 0.1, current_time)  # Reduced processing
                 temporal_activation = self.temporal_stream.update(temporal_vector, current_time)
         
-        # Generate motor prediction using emergent temporal constraints
-        motor_prediction = self._predict_motor_output_emergent(
+        # Generate motor decision using competitive priorities (DUAL MOTIVATION)
+        motor_prediction = self._predict_motor_with_competitive_decisions(
             sensory_activation, temporal_activation, current_time
         )
         motor_activation = self.motor_stream.update(motor_prediction, current_time)
@@ -818,6 +818,12 @@ class SparseGoldilocksBrain:
             'emergent_forgetting_rate': plasticity_result.get('forgetting_rate_emergent', 0.0),
             'total_system_energy': plasticity_result.get('energy_state', {}).get('total', 0.0)
         }
+        
+        # DUAL MOTIVATION SYSTEM: Update pattern confidence in competitive dynamics
+        # This creates the restlessness vs anxiety tension through resource competition
+        current_confidence = brain_state['prediction_confidence']
+        pattern_id = f"competition_{self.total_cycles}"  # Use the same ID as competitive processing
+        self.emergent_competition.update_pattern_prediction_confidence(pattern_id, current_confidence)
         
         # Adjust action dimensions if needed
         motor_output = motor_activation.tolist()
@@ -1012,6 +1018,128 @@ class SparseGoldilocksBrain:
         )
         
         return final_prediction
+    
+    def _predict_motor_with_competitive_decisions(self, sensory_activation: torch.Tensor, 
+                                                temporal_activation: torch.Tensor, 
+                                                current_time: float) -> torch.Tensor:
+        """
+        Predict motor output using competitive decision-making.
+        
+        DUAL MOTIVATION SYSTEM:
+        - Generates multiple motor options (decisions)
+        - Uses competitive priorities to weight each option
+        - Restlessness emerges as preference for uncertain actions
+        - Anxiety emerges as preference for predictable actions
+        """
+        
+        # Generate motor options (discrete decisions)
+        motor_options = self._generate_motor_options()
+        
+        # Calculate competitive priorities for each option
+        option_priorities = []
+        sophistication_threshold = self.emergent_competition.resource_storage._calculate_sophistication_threshold()
+        
+        for i, option in enumerate(motor_options):
+            # Estimate confidence if we took this action
+            predicted_confidence = self._estimate_action_confidence(
+                option, sensory_activation, temporal_activation
+            )
+            
+            # DUAL MOTIVATION: Apply sophistication-based restlessness
+            if predicted_confidence > sophistication_threshold:
+                # High confidence = restlessness = low priority
+                priority = 0.2 - (predicted_confidence - sophistication_threshold) * 0.5
+            else:
+                # Low confidence = anxiety for accuracy = high priority  
+                priority = 0.8 + (sophistication_threshold - predicted_confidence) * 0.5
+            
+            option_priorities.append(max(0.01, priority))  # Ensure positive
+        
+        # Weighted decision based on competitive priorities
+        chosen_option = self._weighted_motor_decision(motor_options, option_priorities)
+        
+        return chosen_option
+    
+    def _generate_motor_options(self) -> List[torch.Tensor]:
+        """Generate discrete motor options for decision-making."""
+        motor_dim = self.motor_config.dim
+        
+        # Standard motor options (can be expanded)
+        options = [
+            torch.tensor([1.0, 0.0, 0.0, 0.0][:motor_dim]),  # Move forward
+            torch.tensor([0.0, 1.0, 0.0, 0.0][:motor_dim]),  # Turn left  
+            torch.tensor([0.0, -1.0, 0.0, 0.0][:motor_dim]), # Turn right
+            torch.tensor([0.0, 0.0, 0.0, 0.0][:motor_dim]),  # Stop/stay still
+        ]
+        
+        # Ensure all options match motor dimension
+        padded_options = []
+        for option in options:
+            if len(option) < motor_dim:
+                padding = torch.zeros(motor_dim - len(option))
+                option = torch.cat([option, padding])
+            padded_options.append(option)
+        
+        return padded_options
+    
+    def _estimate_action_confidence(self, action: torch.Tensor, 
+                                  sensory_activation: torch.Tensor,
+                                  temporal_activation: torch.Tensor) -> float:
+        """Estimate how confident/predictable an action would be."""
+        
+        # Combine current state with proposed action
+        state_action = torch.cat([sensory_activation, action, temporal_activation])
+        
+        # Look for similar state-action patterns in unified storage
+        try:
+            # Pad to storage dimension
+            storage_dim = self.unified_storage.pattern_dim
+            if len(state_action) > storage_dim:
+                state_action = state_action[:storage_dim]
+            elif len(state_action) < storage_dim:
+                padding = torch.zeros(storage_dim - len(state_action))
+                state_action = torch.cat([state_action, padding])
+            
+            # Find similar patterns
+            similar_patterns = self.unified_storage.find_similar_patterns(
+                state_action, stream_type="combined", k=10, min_similarity=0.1
+            )
+            
+            if isinstance(similar_patterns, tuple):
+                pattern_ids, similarities = similar_patterns
+            else:
+                similarities = [sim for _, sim in similar_patterns]
+            
+            # High similarity = high confidence (predictable action)
+            if similarities:
+                avg_similarity = np.mean(similarities)
+                confidence = min(0.95, avg_similarity)
+            else:
+                confidence = 0.1  # Novel action = low confidence
+                
+        except Exception:
+            # Fallback: assume moderate confidence
+            confidence = 0.5
+            
+        return confidence
+    
+    def _weighted_motor_decision(self, options: List[torch.Tensor], 
+                               priorities: List[float]) -> torch.Tensor:
+        """Make weighted decision between motor options."""
+        
+        # Normalize priorities to probabilities
+        total_priority = sum(priorities)
+        if total_priority <= 0:
+            # Fallback to uniform if all priorities are zero
+            probabilities = [1.0 / len(options)] * len(options)
+        else:
+            probabilities = [p / total_priority for p in priorities]
+        
+        # Weighted selection (probabilistic choice)
+        import random
+        choice = random.choices(options, weights=probabilities, k=1)[0]
+        
+        return choice
     
     def _create_combined_pattern(self, sensory_activation: torch.Tensor,
                                 motor_activation: torch.Tensor,

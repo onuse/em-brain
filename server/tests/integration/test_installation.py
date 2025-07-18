@@ -85,12 +85,13 @@ def test_brain_functionality():
         # Test brain import
         import sys
         import os
-        sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+        # Add server directory to path for imports
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
         from src.brain import MinimalBrain
         print("   ✅ Brain import successful")
         
         # Test brain initialization
-        brain = MinimalBrain(enable_logging=False, enable_persistence=False)
+        brain = MinimalBrain(enable_logging=False, quiet_mode=True)
         print("   ✅ Brain initialization successful")
         
         # Test basic brain cycle

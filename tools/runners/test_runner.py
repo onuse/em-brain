@@ -35,7 +35,7 @@ def main():
         
         # Server unit tests (server/tests/)
         'embodied_free_energy': 'cd server && python3 tests/test_embodied_free_energy.py',
-        'minimal_brain': 'cd server && python3 tests/test_minimal_brain.py',
+        'minimal_brain': 'cd server && python3 tests/integration/test_minimal_brain.py',
         'client_server': 'cd server && python3 tests/test_client_server.py',
         'hardware_adaptation': 'cd server && python3 tests/test_hardware_adaptation.py',
         'utility_activation': 'cd server && python3 tests/test_utility_activation.py',

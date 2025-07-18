@@ -50,6 +50,7 @@ class PatternResource:
     access_frequency: float      # How often this pattern is accessed
     last_access_time: float     # When pattern was last accessed
     storage_priority: float     # Priority for remaining in storage
+    prediction_confidence: float = 0.5  # How predictable this pattern is (0.0-1.0)
     active: bool = False        # Whether pattern is currently active
 
 
@@ -166,6 +167,21 @@ class ResourceConstrainedStorage:
         self.total_competitions += 1
         return True
     
+    def update_pattern_confidence(self, pattern_id: str, prediction_confidence: float):
+        """
+        Update prediction confidence for a pattern.
+        
+        This creates the dual motivation system:
+        - High confidence (>0.9) creates "boredom cost" (restlessness)
+        - Low confidence creates competitive advantage (anxiety for accuracy)
+        """
+        if pattern_id in self.pattern_resources:
+            # Smooth update to prevent oscillation
+            current = self.pattern_resources[pattern_id].prediction_confidence
+            # Exponential moving average with 0.1 learning rate
+            self.pattern_resources[pattern_id].prediction_confidence = \
+                0.9 * current + 0.1 * prediction_confidence
+    
     def _compete_for_storage_slot(self, new_pattern: SparsePattern, current_time: float) -> bool:
         """
         Compete for storage slot - may evict weakest existing pattern.
@@ -239,8 +255,20 @@ class ResourceConstrainedStorage:
         # Activation energy (current energy level)
         energy_bonus = resource.activation_energy
         
-        priority = (0.4 * age_penalty + 0.4 * frequency_bonus + 0.2 * energy_bonus)
-        return priority
+        # DUAL MOTIVATION: Boredom cost based on pattern sophistication
+        # Smart brains tolerate higher confidence before becoming restless
+        sophistication_threshold = self._calculate_sophistication_threshold()
+        boredom_cost = 0.0
+        if resource.prediction_confidence > sophistication_threshold:
+            # Excess confidence creates restlessness pressure
+            excess_confidence = resource.prediction_confidence - sophistication_threshold
+            boredom_cost = (excess_confidence * 10.0) ** 2  # Quadratic scaling
+        
+        base_priority = (0.4 * age_penalty + 0.4 * frequency_bonus + 0.2 * energy_bonus)
+        
+        # Subtract boredom cost - highly predictable patterns lose priority
+        priority = base_priority - boredom_cost
+        return max(0.0, priority)  # Ensure non-negative
     
     def _calculate_activation_priority(self, pattern_id: str, current_time: float) -> float:
         """Calculate activation priority for pattern (higher = more likely to be active)."""
@@ -259,8 +287,50 @@ class ResourceConstrainedStorage:
         # Frequency of recent accesses
         frequency = resource.access_frequency
         
-        priority = (0.5 * recency_bonus + 0.3 * energy + 0.2 * np.log1p(frequency) / 10.0)
-        return priority
+        # DUAL MOTIVATION: Boredom cost based on pattern sophistication
+        # Restlessness emerges when patterns exceed sophistication-appropriate confidence
+        sophistication_threshold = self._calculate_sophistication_threshold()
+        boredom_cost = 0.0
+        if resource.prediction_confidence > sophistication_threshold:
+            excess_confidence = resource.prediction_confidence - sophistication_threshold
+            boredom_cost = (excess_confidence * 5.0) ** 2  # Lighter cost for activation than storage
+        
+        base_priority = (0.5 * recency_bonus + 0.3 * energy + 0.2 * np.log1p(frequency) / 10.0)
+        
+        # Subtract boredom cost - brain becomes "restless" with predictable patterns
+        priority = base_priority - boredom_cost
+        return max(0.0, priority)  # Ensure non-negative
+    
+    def _calculate_sophistication_threshold(self) -> float:
+        """
+        Calculate confidence threshold based on pattern sophistication.
+        
+        Elegant principle: Smarter brains tolerate higher confidence before restlessness.
+        - Simple patterns (child brain): Restless at low confidence → constant exploration
+        - Complex patterns (mature brain): Only restless when genuinely stagnating
+        """
+        if not self.pattern_resources:
+            return 0.3  # Child brain: restless at 30% confidence
+        
+        # Pattern sophistication metrics
+        total_patterns = len(self.pattern_resources)
+        avg_access_frequency = np.mean([r.access_frequency for r in self.pattern_resources.values()])
+        competition_density = self.total_competitions / max(1, total_patterns)
+        
+        # Sophistication: How complex/interconnected the pattern space is
+        pattern_density = min(1.0, np.log10(max(1, total_patterns)) / 5.0)  # 0-1
+        interaction_complexity = min(1.0, avg_access_frequency / 10.0)        # 0-1  
+        competitive_maturity = min(1.0, competition_density / 5.0)            # 0-1
+        
+        sophistication = (pattern_density + interaction_complexity + competitive_maturity) / 3.0
+        
+        # Threshold scaling: 
+        # Naive brain (0.0 sophistication): 30% confidence threshold → constant exploration
+        # Sophisticated brain (1.0 sophistication): 90% confidence threshold → conservative but anti-stagnation
+        min_threshold = 0.3  # Child brain
+        max_threshold = 0.9  # Mature brain
+        
+        return min_threshold + sophistication * (max_threshold - min_threshold)
     
     def _evict_pattern(self, pattern_id: str, reason: str, current_time: float):
         """Evict pattern from storage due to resource competition."""
@@ -480,6 +550,17 @@ class EmergentCompetitiveDynamics:
             self._adapt_competition_pressure()
         
         return competition_info
+    
+    def update_pattern_prediction_confidence(self, pattern_id: str, prediction_confidence: float):
+        """
+        Update prediction confidence for a pattern in the competitive system.
+        
+        This is the core of the dual motivation system:
+        - High confidence patterns (>0.9) become cognitively expensive (restlessness emerges)
+        - Low confidence patterns remain competitive (anxiety for accuracy emerges)
+        - Resource competition naturally balances these motivations
+        """
+        self.resource_storage.update_pattern_confidence(pattern_id, prediction_confidence)
     
     def get_competitive_clusters(self, k: int = 10) -> List[List[str]]:
         """

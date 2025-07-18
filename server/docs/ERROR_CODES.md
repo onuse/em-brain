@@ -148,7 +148,7 @@ The server automatically classifies exceptions into specific error codes based o
 ## Using Error Codes in Code
 
 ```python
-from src.communication.error_codes import BrainErrorCode, create_brain_error, log_brain_error
+from server.src.communication.error_codes import BrainErrorCode, create_brain_error, log_brain_error
 
 # Create specific error
 error = create_brain_error(

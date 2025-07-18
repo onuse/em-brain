@@ -109,7 +109,7 @@ def show_demo_menu():
         },
         '7': {
             'name': 'Brain Server',
-            'command': 'python3 brain_server.py',
+            'command': 'python3 server/brain_server.py',
             'description': 'Start TCP server for client-server robot deployment',
             'always_available': True
         }
@@ -190,7 +190,7 @@ def quick_test():
     print("="*25)
     
     try:
-        from src.brain import MinimalBrain
+        from server.src.brain import MinimalBrain
         
         # Test brain creation
         brain = MinimalBrain()
@@ -224,7 +224,7 @@ def main():
     print()
     
     # Quick validation
-    if not os.path.exists("src/brain.py"):
+    if not os.path.exists("server/src/brain.py"):
         print("❌ Error: Run this from the brain/ project root directory")
         print(f"   Current directory: {os.getcwd()}")
         sys.exit(1)
