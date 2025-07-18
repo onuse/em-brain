@@ -1,0 +1,21 @@
+{
+  "experiment_info": {
+    "total_cycles": 4213,
+    "duration_minutes": 0.9999921043713887,
+    "brain_architecture": "vector_stream",
+    "random_seed": 42
+  },
+  "final_performance": {
+    "avg_prediction_error": 0.949271698829624,
+    "avg_confidence": 0.7199999999999999,
+    "avg_target_distance": 9.899494936611662,
+    "collision_rate": 1.0
+  },
+  "learning_evidence": {
+    "prediction_error_trend": 0.04856671690021252,
+    "confidence_trend": 2.596403596403595,
+    "navigation_trend": 0.0,
+    "collision_trend": 0.0
+  },
+  "learning_score": 0.7643510638510147,
+  "learning_detected": 

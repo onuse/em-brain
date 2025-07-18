@@ -12,6 +12,8 @@ import os
 from pathlib import Path
 from typing import Optional, Dict, Any
 
+import sys
+sys.path.insert(0, '..')
 from src.brain import MinimalBrain
 from src.communication import MinimalTCPServer
 

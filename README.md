@@ -13,14 +13,14 @@ pip install numpy torch psutil
 pip install -r requirements.txt
 
 # Test installation
-python3 server/tests/test_installation.py
+python3 tests/integration/test_installation.py
 ```
 
 ### Running Demos
 ```bash
-python3 demo_runner.py spatial_learning # Spatial learning demo (recommended first)
-python3 demo_runner.py brain           # Brain functionality demo
-python3 demo.py                        # Interactive demo launcher
+python3 tools/runners/demo_runner.py spatial_learning # Spatial learning demo (recommended first)
+python3 tools/runners/demo_runner.py brain           # Brain functionality demo
+python3 demo.py                                       # Interactive demo launcher
 ```
 
 **System Requirements:**
@@ -202,31 +202,33 @@ Action selection emerges from physics constraints rather than artificial motivat
 ```
 brain/
 ├── CLAUDE.md, README.md        # Essential documentation
-├── demo.py, demo_runner.py     # Demo execution tools
-├── test_runner.py              # Test orchestration
-├── validation_runner.py        # Scientific validation
+├── demo.py                     # Interactive demo launcher
+├── tools/runners/              # Execution tools
+│   ├── demo_runner.py          # Demo execution
+│   ├── test_runner.py          # Test orchestration
+│   └── validation_runner.py    # Scientific validation
 ├── demos/                      # Demo applications
 ├── docs/                       # Core documentation
 ├── validation/                 # Scientific validation experiments
 │
-├── server/                     # Complete brain implementation
-│   ├── brain_server.py         # Main server entry point
-│   ├── src/                    # Core brain implementation
-│   │   ├── brain.py            # Main coordinator (vector stream orchestrator)
-│   │   ├── vector_stream/      # Vector stream brain implementation
-│   │   │   └── minimal_brain.py # 3-stream processing: sensory/motor/temporal
-│   │   ├── embodiment/         # Embodied Free Energy system
-│   │   │   ├── system.py       # Free Energy action selection
-│   │   │   ├── base.py         # Hardware priors and telemetry
-│   │   │   └── brain_adapter.py # Integration with vector streams
-│   │   ├── communication/      # Network interfaces
-│   │   └── utils/              # Supporting utilities
-│   ├── tests/                  # Complete test suite
-│   │   ├── integration/        # Integration tests
-│   │   └── test_*.py           # Unit tests
-│   └── tools/                  # Development tools
-│       ├── analysis/           # Performance analysis
-│       └── experiments/        # Quick experiments
+├── src/                        # Core brain implementation
+│   ├── brain.py                # Main coordinator (vector stream orchestrator)
+│   ├── vector_stream/          # Vector stream brain implementation
+│   │   ├── vector_stream_brain.py # Simple 3-stream processing
+│   │   └── sparse_goldilocks_brain.py # Advanced sparse processing
+│
+├── server/                     # Brain server for robots
+│   ├── brain_server.py         # TCP server entry point
+│   └── settings.json           # Server configuration
+│
+├── tests/                      # Complete test suite
+│   ├── integration/            # Integration tests
+│   └── unit/                   # Unit tests
+│
+├── tools/                      # Development tools
+│   ├── runners/                # Test/demo/validation runners
+│   ├── analysis/               # Performance analysis
+│   └── cleanup/                # Project maintenance
 │
 ├── client_picarx/              # Robot client implementation
 │   ├── src/brainstem/          # Hardware integration

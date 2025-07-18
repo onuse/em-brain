@@ -1,0 +1,7154 @@
+{
+  "brain_type": "sparse_goldilocks",
+  "camera_id": 0,
+  "start_time": "2025-07-17T21:17:39.989202",
+  "predictions": [
+    {
+      "timestamp": 1752779863.2391,
+      "frame_count": 1,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779863.2728698,
+      "frame_count": 2,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779863.297781,
+      "frame_count": 3,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779863.3132758,
+      "frame_count": 4,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779863.329447,
+      "frame_count": 5,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779863.345719,
+      "frame_count": 6,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779863.377347,
+      "frame_count": 7,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779863.394594,
+      "frame_count": 8,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779863.4110699,
+      "frame_count": 9,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779863.427079,
+      "frame_count": 10,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779863.442993,
+      "frame_count": 11,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779863.458941,
+      "frame_count": 12,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779863.474709,
+      "frame_count": 13,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779863.4908092,
+      "frame_count": 14,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779863.511202,
+      "frame_count": 15,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779863.545599,
+      "frame_count": 16,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779863.577754,
+      "frame_count": 17,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779863.6115682,
+      "frame_count": 18,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779863.6444108,
+      "frame_count": 19,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779863.679162,
+      "frame_count": 20,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779863.723339,
+      "frame_count": 21,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779863.744117,
+      "frame_count": 22,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779863.777826,
+      "frame_count": 23,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779863.8114402,
+      "frame_count": 24,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779863.844769,
+      "frame_count": 25,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779863.975595,
+      "frame_count": 26,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.075546,
+      "frame_count": 27,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.09977,
+      "frame_count": 28,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.121577,
+      "frame_count": 29,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.1455722,
+      "frame_count": 30,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.178547,
+      "frame_count": 31,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.211665,
+      "frame_count": 32,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.244229,
+      "frame_count": 33,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.277576,
+      "frame_count": 34,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.313388,
+      "frame_count": 35,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.344013,
+      "frame_count": 36,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.379466,
+      "frame_count": 37,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.4108539,
+      "frame_count": 38,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.444781,
+      "frame_count": 39,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.477549,
+      "frame_count": 40,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.510591,
+      "frame_count": 41,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.545332,
+      "frame_count": 42,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.5772119,
+      "frame_count": 43,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.6112041,
+      "frame_count": 44,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.6444411,
+      "frame_count": 45,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.678016,
+      "frame_count": 46,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.710834,
+      "frame_count": 47,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.744294,
+      "frame_count": 48,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.786399,
+      "frame_count": 49,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.811747,
+      "frame_count": 50,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.8445282,
+      "frame_count": 51,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.877432,
+      "frame_count": 52,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.9106472,
+      "frame_count": 53,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.94589,
+      "frame_count": 54,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779864.978775,
+      "frame_count": 55,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.0319722,
+      "frame_count": 56,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.048181,
+      "frame_count": 57,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.078183,
+      "frame_count": 58,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.1116621,
+      "frame_count": 59,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.14537,
+      "frame_count": 60,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.177485,
+      "frame_count": 61,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.210905,
+      "frame_count": 62,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.24425,
+      "frame_count": 63,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.278898,
+      "frame_count": 64,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.311209,
+      "frame_count": 65,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.3439329,
+      "frame_count": 66,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.377332,
+      "frame_count": 67,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.4104671,
+      "frame_count": 68,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.444361,
+      "frame_count": 69,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.4780521,
+      "frame_count": 70,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.511795,
+      "frame_count": 71,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.544478,
+      "frame_count": 72,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.57711,
+      "frame_count": 73,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.610411,
+      "frame_count": 74,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.6433752,
+      "frame_count": 75,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.676447,
+      "frame_count": 76,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.7118988,
+      "frame_count": 77,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.743382,
+      "frame_count": 78,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.778356,
+      "frame_count": 79,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.810206,
+      "frame_count": 80,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.843018,
+      "frame_count": 81,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.876673,
+      "frame_count": 82,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.9131289,
+      "frame_count": 83,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.950714,
+      "frame_count": 84,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779865.976535,
+      "frame_count": 85,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.0106518,
+      "frame_count": 86,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.043353,
+      "frame_count": 87,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.0771651,
+      "frame_count": 88,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.11026,
+      "frame_count": 89,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.1433432,
+      "frame_count": 90,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.1785312,
+      "frame_count": 91,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.210755,
+      "frame_count": 92,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.243098,
+      "frame_count": 93,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 2,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.277228,
+      "frame_count": 94,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.3102021,
+      "frame_count": 95,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.343603,
+      "frame_count": 96,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.376141,
+      "frame_count": 97,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.4101472,
+      "frame_count": 98,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.4439292,
+      "frame_count": 99,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 2,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.479106,
+      "frame_count": 100,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.5126169,
+      "frame_count": 101,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.542806,
+      "frame_count": 102,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.576163,
+      "frame_count": 103,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.6096058,
+      "frame_count": 104,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.643221,
+      "frame_count": 105,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.6778922,
+      "frame_count": 106,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.710496,
+      "frame_count": 107,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.742883,
+      "frame_count": 108,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.775966,
+      "frame_count": 109,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.809076,
+      "frame_count": 110,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.8434281,
+      "frame_count": 111,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.875915,
+      "frame_count": 112,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.910938,
+      "frame_count": 113,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.943201,
+      "frame_count": 114,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779866.9766111,
+      "frame_count": 115,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.009572,
+      "frame_count": 116,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.042617,
+      "frame_count": 117,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.075915,
+      "frame_count": 118,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.10918,
+      "frame_count": 119,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.144167,
+      "frame_count": 120,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.176681,
+      "frame_count": 121,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.208971,
+      "frame_count": 122,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.245524,
+      "frame_count": 123,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.276623,
+      "frame_count": 124,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.311459,
+      "frame_count": 125,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.346611,
+      "frame_count": 126,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.379489,
+      "frame_count": 127,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.413283,
+      "frame_count": 128,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.445858,
+      "frame_count": 129,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.4803479,
+      "frame_count": 130,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.514271,
+      "frame_count": 131,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.547612,
+      "frame_count": 132,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.581447,
+      "frame_count": 133,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.6156769,
+      "frame_count": 134,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.649472,
+      "frame_count": 135,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.681047,
+      "frame_count": 136,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.7145941,
+      "frame_count": 137,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.7489321,
+      "frame_count": 138,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.782102,
+      "frame_count": 139,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.815296,
+      "frame_count": 140,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.8503911,
+      "frame_count": 141,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.883054,
+      "frame_count": 142,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.915044,
+      "frame_count": 143,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.94784,
+      "frame_count": 144,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779867.982323,
+      "frame_count": 145,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.013698,
+      "frame_count": 146,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.046644,
+      "frame_count": 147,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.0822458,
+      "frame_count": 148,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.115793,
+      "frame_count": 149,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.147421,
+      "frame_count": 150,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.180537,
+      "frame_count": 151,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.2145238,
+      "frame_count": 152,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.2489972,
+      "frame_count": 153,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.2810729,
+      "frame_count": 154,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.3170402,
+      "frame_count": 155,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.3484201,
+      "frame_count": 156,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.380382,
+      "frame_count": 157,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.41663,
+      "frame_count": 158,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.446694,
+      "frame_count": 159,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 2,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.477504,
+      "frame_count": 160,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.5096478,
+      "frame_count": 161,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.545121,
+      "frame_count": 162,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.578774,
+      "frame_count": 163,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.611435,
+      "frame_count": 164,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.644256,
+      "frame_count": 165,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.678314,
+      "frame_count": 166,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.712827,
+      "frame_count": 167,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.7460322,
+      "frame_count": 168,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.781586,
+      "frame_count": 169,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.812354,
+      "frame_count": 170,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 2,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.8433049,
+      "frame_count": 171,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.877079,
+      "frame_count": 172,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.9115891,
+      "frame_count": 173,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.945647,
+      "frame_count": 174,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779868.980139,
+      "frame_count": 175,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.014153,
+      "frame_count": 176,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.046564,
+      "frame_count": 177,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 2,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.079268,
+      "frame_count": 178,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 3,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.1141,
+      "frame_count": 179,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 4,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.147268,
+      "frame_count": 180,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.178123,
+      "frame_count": 181,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 5,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.213472,
+      "frame_count": 182,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.248718,
+      "frame_count": 183,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 2,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.281556,
+      "frame_count": 184,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.3140092,
+      "frame_count": 185,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.347716,
+      "frame_count": 186,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.382368,
+      "frame_count": 187,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.413206,
+      "frame_count": 188,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.446989,
+      "frame_count": 189,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.4815512,
+      "frame_count": 190,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.514119,
+      "frame_count": 191,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.5461261,
+      "frame_count": 192,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.582013,
+      "frame_count": 193,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.613056,
+      "frame_count": 194,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.647501,
+      "frame_count": 195,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.681401,
+      "frame_count": 196,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.715073,
+      "frame_count": 197,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.7472372,
+      "frame_count": 198,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.781155,
+      "frame_count": 199,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.814147,
+      "frame_count": 200,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.846821,
+      "frame_count": 201,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.880599,
+      "frame_count": 202,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.914548,
+      "frame_count": 203,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.948784,
+      "frame_count": 204,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779869.982458,
+      "frame_count": 205,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.013967,
+      "frame_count": 206,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.047092,
+      "frame_count": 207,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.079799,
+      "frame_count": 208,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.114532,
+      "frame_count": 209,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.148494,
+      "frame_count": 210,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.1825762,
+      "frame_count": 211,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.213112,
+      "frame_count": 212,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.247078,
+      "frame_count": 213,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.2802272,
+      "frame_count": 214,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.313997,
+      "frame_count": 215,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.34716,
+      "frame_count": 216,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.379169,
+      "frame_count": 217,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.413578,
+      "frame_count": 218,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.447256,
+      "frame_count": 219,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.479454,
+      "frame_count": 220,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.512762,
+      "frame_count": 221,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.5468538,
+      "frame_count": 222,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.5814478,
+      "frame_count": 223,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.613811,
+      "frame_count": 224,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.6483998,
+      "frame_count": 225,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.680744,
+      "frame_count": 226,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.712806,
+      "frame_count": 227,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.743701,
+      "frame_count": 228,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.779339,
+      "frame_count": 229,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.8080168,
+      "frame_count": 230,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.8439229,
+      "frame_count": 231,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.8764422,
+      "frame_count": 232,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.9096,
+      "frame_count": 233,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.942066,
+      "frame_count": 234,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779870.976033,
+      "frame_count": 235,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.0095859,
+      "frame_count": 236,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.044418,
+      "frame_count": 237,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.077297,
+      "frame_count": 238,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.113405,
+      "frame_count": 239,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.146421,
+      "frame_count": 240,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.176801,
+      "frame_count": 241,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.213075,
+      "frame_count": 242,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.247262,
+      "frame_count": 243,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.2802508,
+      "frame_count": 244,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.313231,
+      "frame_count": 245,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.348617,
+      "frame_count": 246,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.3798249,
+      "frame_count": 247,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.412383,
+      "frame_count": 248,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.446178,
+      "frame_count": 249,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.479193,
+      "frame_count": 250,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.5127301,
+      "frame_count": 251,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.547321,
+      "frame_count": 252,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.581107,
+      "frame_count": 253,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.613618,
+      "frame_count": 254,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 2,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.646317,
+      "frame_count": 255,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.679473,
+      "frame_count": 256,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.713536,
+      "frame_count": 257,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.747456,
+      "frame_count": 258,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.7799838,
+      "frame_count": 259,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.81433,
+      "frame_count": 260,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.8473861,
+      "frame_count": 261,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.879422,
+      "frame_count": 262,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.912949,
+      "frame_count": 263,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.946042,
+      "frame_count": 264,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779871.9803572,
+      "frame_count": 265,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.0127301,
+      "frame_count": 266,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.047936,
+      "frame_count": 267,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.079972,
+      "frame_count": 268,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.113492,
+      "frame_count": 269,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.146086,
+      "frame_count": 270,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.179494,
+      "frame_count": 271,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.213574,
+      "frame_count": 272,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.245163,
+      "frame_count": 273,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.28026,
+      "frame_count": 274,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.314353,
+      "frame_count": 275,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.345633,
+      "frame_count": 276,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.3794692,
+      "frame_count": 277,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.412674,
+      "frame_count": 278,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.446439,
+      "frame_count": 279,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.4796422,
+      "frame_count": 280,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.5144498,
+      "frame_count": 281,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.546334,
+      "frame_count": 282,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.579545,
+      "frame_count": 283,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.612722,
+      "frame_count": 284,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.6455739,
+      "frame_count": 285,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.6794188,
+      "frame_count": 286,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.71233,
+      "frame_count": 287,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.747676,
+      "frame_count": 288,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.78018,
+      "frame_count": 289,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.812445,
+      "frame_count": 290,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.84553,
+      "frame_count": 291,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.878859,
+      "frame_count": 292,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.90926,
+      "frame_count": 293,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.941519,
+      "frame_count": 294,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779872.976463,
+      "frame_count": 295,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.0089548,
+      "frame_count": 296,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.041701,
+      "frame_count": 297,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.075105,
+      "frame_count": 298,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.10904,
+      "frame_count": 299,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.143359,
+      "frame_count": 300,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.17787,
+      "frame_count": 301,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.212658,
+      "frame_count": 302,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.2445319,
+      "frame_count": 303,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.283316,
+      "frame_count": 304,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.310302,
+      "frame_count": 305,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.343314,
+      "frame_count": 306,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.376779,
+      "frame_count": 307,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.409128,
+      "frame_count": 308,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.443419,
+      "frame_count": 309,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.474061,
+      "frame_count": 310,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.508291,
+      "frame_count": 311,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.5413492,
+      "frame_count": 312,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.575274,
+      "frame_count": 313,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.609004,
+      "frame_count": 314,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.6428301,
+      "frame_count": 315,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.6769578,
+      "frame_count": 316,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.709286,
+      "frame_count": 317,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.7587469,
+      "frame_count": 318,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.776704,
+      "frame_count": 319,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.826567,
+      "frame_count": 320,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.847557,
+      "frame_count": 321,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.877716,
+      "frame_count": 322,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.9120152,
+      "frame_count": 323,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.9444249,
+      "frame_count": 324,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779873.977791,
+      "frame_count": 325,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.0116742,
+      "frame_count": 326,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.045192,
+      "frame_count": 327,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.079572,
+      "frame_count": 328,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.112735,
+      "frame_count": 329,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.1468852,
+      "frame_count": 330,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.1778939,
+      "frame_count": 331,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.210963,
+      "frame_count": 332,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.2455091,
+      "frame_count": 333,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.278411,
+      "frame_count": 334,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.312018,
+      "frame_count": 335,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.34529,
+      "frame_count": 336,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.3782668,
+      "frame_count": 337,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.411817,
+      "frame_count": 338,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.445164,
+      "frame_count": 339,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.478244,
+      "frame_count": 340,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.512186,
+      "frame_count": 341,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.544619,
+      "frame_count": 342,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.5787892,
+      "frame_count": 343,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.6139982,
+      "frame_count": 344,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.646367,
+      "frame_count": 345,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.675841,
+      "frame_count": 346,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.7093902,
+      "frame_count": 347,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.76001,
+      "frame_count": 348,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.776602,
+      "frame_count": 349,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.8076942,
+      "frame_count": 350,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.842468,
+      "frame_count": 351,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.875853,
+      "frame_count": 352,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.907674,
+      "frame_count": 353,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.9396632,
+      "frame_count": 354,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779874.973141,
+      "frame_count": 355,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.007019,
+      "frame_count": 356,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.040128,
+      "frame_count": 357,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.0757802,
+      "frame_count": 358,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.108943,
+      "frame_count": 359,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.141983,
+      "frame_count": 360,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.174689,
+      "frame_count": 361,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.215702,
+      "frame_count": 362,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.243598,
+      "frame_count": 363,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.276682,
+      "frame_count": 364,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.312365,
+      "frame_count": 365,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.362375,
+      "frame_count": 366,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.383477,
+      "frame_count": 367,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.4101708,
+      "frame_count": 368,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.443472,
+      "frame_count": 369,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.476713,
+      "frame_count": 370,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.5098429,
+      "frame_count": 371,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.5452852,
+      "frame_count": 372,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.5774348,
+      "frame_count": 373,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.608212,
+      "frame_count": 374,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.642207,
+      "frame_count": 375,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.6738932,
+      "frame_count": 376,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.7092092,
+      "frame_count": 377,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.742226,
+      "frame_count": 378,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.777932,
+      "frame_count": 379,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.8109581,
+      "frame_count": 380,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.843588,
+      "frame_count": 381,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.876103,
+      "frame_count": 382,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.910959,
+      "frame_count": 383,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.9449222,
+      "frame_count": 384,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779875.9778821,
+      "frame_count": 385,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779876.0120451,
+      "frame_count": 386,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779876.045803,
+      "frame_count": 387,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779876.0777202,
+      "frame_count": 388,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779876.110537,
+      "frame_count": 389,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779876.143616,
+      "frame_count": 390,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779876.176876,
+      "frame_count": 391,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779876.211426,
+      "frame_count": 392,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779876.245854,
+      "frame_count": 393,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779876.2779489,
+      "frame_count": 394,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779876.31082,
+      "frame_count": 395,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779876.686879,
+      "frame_count": 396,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779876.711128,
+      "frame_count": 397,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779876.731905,
+      "frame_count": 398,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779876.752116,
+      "frame_count": 399,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779876.771265,
+      "frame_count": 400,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 2,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779876.791584,
+      "frame_count": 401,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779876.8101592,
+      "frame_count": 402,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779876.8294961,
+      "frame_count": 403,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779876.8482308,
+      "frame_count": 404,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779876.866557,
+      "frame_count": 405,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779876.885918,
+      "frame_count": 406,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779876.9040582,
+      "frame_count": 407,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779876.92352,
+      "frame_count": 408,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779876.945127,
+      "frame_count": 409,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779876.964503,
+      "frame_count": 410,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779876.981921,
+      "frame_count": 411,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779876.997492,
+      "frame_count": 412,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.013654,
+      "frame_count": 413,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.030709,
+      "frame_count": 414,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.047391,
+      "frame_count": 415,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.064058,
+      "frame_count": 416,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.080805,
+      "frame_count": 417,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.107889,
+      "frame_count": 418,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.140714,
+      "frame_count": 419,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.176492,
+      "frame_count": 420,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.209246,
+      "frame_count": 421,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.242549,
+      "frame_count": 422,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.275828,
+      "frame_count": 423,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.3106701,
+      "frame_count": 424,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.343484,
+      "frame_count": 425,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.375914,
+      "frame_count": 426,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.412842,
+      "frame_count": 427,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.4434009,
+      "frame_count": 428,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.476733,
+      "frame_count": 429,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.5101929,
+      "frame_count": 430,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.543649,
+      "frame_count": 431,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.584822,
+      "frame_count": 432,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.621637,
+      "frame_count": 433,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.644395,
+      "frame_count": 434,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.677644,
+      "frame_count": 435,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.709773,
+      "frame_count": 436,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.7430148,
+      "frame_count": 437,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.7777338,
+      "frame_count": 438,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.808765,
+      "frame_count": 439,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.8426769,
+      "frame_count": 440,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.878649,
+      "frame_count": 441,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.910493,
+      "frame_count": 442,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.9426181,
+      "frame_count": 443,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779877.977071,
+      "frame_count": 444,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.0101812,
+      "frame_count": 445,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.042153,
+      "frame_count": 446,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.0772421,
+      "frame_count": 447,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.11136,
+      "frame_count": 448,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.144587,
+      "frame_count": 449,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.181848,
+      "frame_count": 450,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.206309,
+      "frame_count": 451,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.2428439,
+      "frame_count": 452,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.275587,
+      "frame_count": 453,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.3088,
+      "frame_count": 454,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.3473752,
+      "frame_count": 455,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.374347,
+      "frame_count": 456,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.407557,
+      "frame_count": 457,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.440127,
+      "frame_count": 458,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.4743009,
+      "frame_count": 459,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.504677,
+      "frame_count": 460,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.5496929,
+      "frame_count": 461,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.572277,
+      "frame_count": 462,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.605506,
+      "frame_count": 463,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.638885,
+      "frame_count": 464,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.6726909,
+      "frame_count": 465,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.7073522,
+      "frame_count": 466,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.7403789,
+      "frame_count": 467,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.7751648,
+      "frame_count": 468,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.808825,
+      "frame_count": 469,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.8412979,
+      "frame_count": 470,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.873491,
+      "frame_count": 471,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.906833,
+      "frame_count": 472,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.941566,
+      "frame_count": 473,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779878.975183,
+      "frame_count": 474,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.006102,
+      "frame_count": 475,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.038656,
+      "frame_count": 476,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.073622,
+      "frame_count": 477,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.106208,
+      "frame_count": 478,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.13993,
+      "frame_count": 479,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.1719732,
+      "frame_count": 480,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.206532,
+      "frame_count": 481,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.240625,
+      "frame_count": 482,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.2761111,
+      "frame_count": 483,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.3083231,
+      "frame_count": 484,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.340897,
+      "frame_count": 485,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.375008,
+      "frame_count": 486,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.407382,
+      "frame_count": 487,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.441619,
+      "frame_count": 488,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.475281,
+      "frame_count": 489,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.509517,
+      "frame_count": 490,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.5425322,
+      "frame_count": 491,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.57598,
+      "frame_count": 492,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.608406,
+      "frame_count": 493,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.64159,
+      "frame_count": 494,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.675064,
+      "frame_count": 495,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.728516,
+      "frame_count": 496,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.747926,
+      "frame_count": 497,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.775848,
+      "frame_count": 498,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.8084219,
+      "frame_count": 499,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.8419359,
+      "frame_count": 500,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.876126,
+      "frame_count": 501,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.909164,
+      "frame_count": 502,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.9431942,
+      "frame_count": 503,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779879.9757829,
+      "frame_count": 504,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.011081,
+      "frame_count": 505,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.041298,
+      "frame_count": 506,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.074599,
+      "frame_count": 507,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.1074271,
+      "frame_count": 508,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.140557,
+      "frame_count": 509,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.176084,
+      "frame_count": 510,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.2096078,
+      "frame_count": 511,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.242888,
+      "frame_count": 512,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.274741,
+      "frame_count": 513,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.3089862,
+      "frame_count": 514,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.341335,
+      "frame_count": 515,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.373934,
+      "frame_count": 516,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.4080021,
+      "frame_count": 517,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.44225,
+      "frame_count": 518,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.4750028,
+      "frame_count": 519,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.508286,
+      "frame_count": 520,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.5415092,
+      "frame_count": 521,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.573526,
+      "frame_count": 522,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.608502,
+      "frame_count": 523,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.642255,
+      "frame_count": 524,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.677037,
+      "frame_count": 525,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.70845,
+      "frame_count": 526,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.741477,
+      "frame_count": 527,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.775487,
+      "frame_count": 528,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.808275,
+      "frame_count": 529,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.841564,
+      "frame_count": 530,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.875863,
+      "frame_count": 531,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.908787,
+      "frame_count": 532,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.9407208,
+      "frame_count": 533,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779880.974736,
+      "frame_count": 534,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.007723,
+      "frame_count": 535,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.040792,
+      "frame_count": 536,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.071438,
+      "frame_count": 537,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.1044931,
+      "frame_count": 538,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.138955,
+      "frame_count": 539,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.172585,
+      "frame_count": 540,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.2046962,
+      "frame_count": 541,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.240294,
+      "frame_count": 542,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.273814,
+      "frame_count": 543,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.3079638,
+      "frame_count": 544,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.340928,
+      "frame_count": 545,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.374493,
+      "frame_count": 546,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.407985,
+      "frame_count": 547,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.441391,
+      "frame_count": 548,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.474677,
+      "frame_count": 549,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.5087218,
+      "frame_count": 550,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.5419588,
+      "frame_count": 551,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.5750499,
+      "frame_count": 552,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.611011,
+      "frame_count": 553,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.642663,
+      "frame_count": 554,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.6750112,
+      "frame_count": 555,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.708898,
+      "frame_count": 556,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.7415721,
+      "frame_count": 557,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.775167,
+      "frame_count": 558,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.807949,
+      "frame_count": 559,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.842591,
+      "frame_count": 560,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.874638,
+      "frame_count": 561,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.907386,
+      "frame_count": 562,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.940309,
+      "frame_count": 563,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779881.9756758,
+      "frame_count": 564,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.008306,
+      "frame_count": 565,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.0416892,
+      "frame_count": 566,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.076689,
+      "frame_count": 567,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.10914,
+      "frame_count": 568,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.141407,
+      "frame_count": 569,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.1749911,
+      "frame_count": 570,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.2077959,
+      "frame_count": 571,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.240395,
+      "frame_count": 572,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.273301,
+      "frame_count": 573,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.30829,
+      "frame_count": 574,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.339711,
+      "frame_count": 575,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.3732522,
+      "frame_count": 576,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.407635,
+      "frame_count": 577,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.4404109,
+      "frame_count": 578,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.4739149,
+      "frame_count": 579,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.5076969,
+      "frame_count": 580,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.542009,
+      "frame_count": 581,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.575128,
+      "frame_count": 582,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.607883,
+      "frame_count": 583,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.641454,
+      "frame_count": 584,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.675267,
+      "frame_count": 585,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.7081861,
+      "frame_count": 586,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.74133,
+      "frame_count": 587,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.77549,
+      "frame_count": 588,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.8083682,
+      "frame_count": 589,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.841151,
+      "frame_count": 590,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.873836,
+      "frame_count": 591,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.907713,
+      "frame_count": 592,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.940724,
+      "frame_count": 593,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779882.974286,
+      "frame_count": 594,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.009126,
+      "frame_count": 595,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.041141,
+      "frame_count": 596,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.073987,
+      "frame_count": 597,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.104804,
+      "frame_count": 598,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.137555,
+      "frame_count": 599,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.172061,
+      "frame_count": 600,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.205179,
+      "frame_count": 601,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.2402759,
+      "frame_count": 602,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.273056,
+      "frame_count": 603,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.306587,
+      "frame_count": 604,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.339679,
+      "frame_count": 605,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.372651,
+      "frame_count": 606,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.406434,
+      "frame_count": 607,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.438851,
+      "frame_count": 608,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.473527,
+      "frame_count": 609,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.503072,
+      "frame_count": 610,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.536555,
+      "frame_count": 611,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.5697532,
+      "frame_count": 612,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.602905,
+      "frame_count": 613,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.637802,
+      "frame_count": 614,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.6716301,
+      "frame_count": 615,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.706955,
+      "frame_count": 616,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.740192,
+      "frame_count": 617,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.772471,
+      "frame_count": 618,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.805822,
+      "frame_count": 619,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.839824,
+      "frame_count": 620,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.891851,
+      "frame_count": 621,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.937189,
+      "frame_count": 622,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779883.9698749,
+      "frame_count": 623,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.003934,
+      "frame_count": 624,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.03696,
+      "frame_count": 625,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.072622,
+      "frame_count": 626,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.103939,
+      "frame_count": 627,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.1390588,
+      "frame_count": 628,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.173654,
+      "frame_count": 629,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.207256,
+      "frame_count": 630,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.239794,
+      "frame_count": 631,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.2733388,
+      "frame_count": 632,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.3064198,
+      "frame_count": 633,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.3384378,
+      "frame_count": 634,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.372097,
+      "frame_count": 635,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.4075782,
+      "frame_count": 636,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.4408262,
+      "frame_count": 637,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.4739,
+      "frame_count": 638,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.5065758,
+      "frame_count": 639,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.540309,
+      "frame_count": 640,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.575237,
+      "frame_count": 641,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.6068769,
+      "frame_count": 642,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.6422899,
+      "frame_count": 643,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.674688,
+      "frame_count": 644,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.706156,
+      "frame_count": 645,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.740267,
+      "frame_count": 646,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.773186,
+      "frame_count": 647,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.807551,
+      "frame_count": 648,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.840532,
+      "frame_count": 649,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.874801,
+      "frame_count": 650,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.908132,
+      "frame_count": 651,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.9391842,
+      "frame_count": 652,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779884.973313,
+      "frame_count": 653,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.0071502,
+      "frame_count": 654,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.040603,
+      "frame_count": 655,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.073088,
+      "frame_count": 656,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.107679,
+      "frame_count": 657,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.139033,
+      "frame_count": 658,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.168562,
+      "frame_count": 659,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.2054138,
+      "frame_count": 660,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.236609,
+      "frame_count": 661,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.272533,
+      "frame_count": 662,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.3051908,
+      "frame_count": 663,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.3403158,
+      "frame_count": 664,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.3731468,
+      "frame_count": 665,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.405152,
+      "frame_count": 666,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.4392939,
+      "frame_count": 667,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.4724858,
+      "frame_count": 668,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.506098,
+      "frame_count": 669,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.540519,
+      "frame_count": 670,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.575467,
+      "frame_count": 671,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.607446,
+      "frame_count": 672,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.64021,
+      "frame_count": 673,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.672815,
+      "frame_count": 674,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.7067971,
+      "frame_count": 675,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.740612,
+      "frame_count": 676,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.773481,
+      "frame_count": 677,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.808479,
+      "frame_count": 678,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.839872,
+      "frame_count": 679,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.8732128,
+      "frame_count": 680,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.906764,
+      "frame_count": 681,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.939082,
+      "frame_count": 682,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779885.9740312,
+      "frame_count": 683,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.006607,
+      "frame_count": 684,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.0409548,
+      "frame_count": 685,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.0739572,
+      "frame_count": 686,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.106452,
+      "frame_count": 687,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.140231,
+      "frame_count": 688,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.172964,
+      "frame_count": 689,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.206846,
+      "frame_count": 690,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.23949,
+      "frame_count": 691,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.273247,
+      "frame_count": 692,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.3076532,
+      "frame_count": 693,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.3392792,
+      "frame_count": 694,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.371265,
+      "frame_count": 695,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.405251,
+      "frame_count": 696,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.438902,
+      "frame_count": 697,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.473331,
+      "frame_count": 698,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.5078368,
+      "frame_count": 699,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.539627,
+      "frame_count": 700,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.572434,
+      "frame_count": 701,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.606328,
+      "frame_count": 702,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.6391401,
+      "frame_count": 703,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.673224,
+      "frame_count": 704,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.70738,
+      "frame_count": 705,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.74094,
+      "frame_count": 706,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.7726898,
+      "frame_count": 707,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.805923,
+      "frame_count": 708,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.839631,
+      "frame_count": 709,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.87226,
+      "frame_count": 710,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.906045,
+      "frame_count": 711,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.939338,
+      "frame_count": 712,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779886.973728,
+      "frame_count": 713,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.006248,
+      "frame_count": 714,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.039247,
+      "frame_count": 715,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.072217,
+      "frame_count": 716,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.105141,
+      "frame_count": 717,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.1391308,
+      "frame_count": 718,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.185992,
+      "frame_count": 719,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.2193458,
+      "frame_count": 720,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.238849,
+      "frame_count": 721,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.28064,
+      "frame_count": 722,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.336677,
+      "frame_count": 723,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.3685079,
+      "frame_count": 724,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.4044108,
+      "frame_count": 725,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.435987,
+      "frame_count": 726,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.468874,
+      "frame_count": 727,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.502827,
+      "frame_count": 728,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.535323,
+      "frame_count": 729,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.5683389,
+      "frame_count": 730,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.600884,
+      "frame_count": 731,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.6342049,
+      "frame_count": 732,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.668725,
+      "frame_count": 733,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.701329,
+      "frame_count": 734,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.735046,
+      "frame_count": 735,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.768781,
+      "frame_count": 736,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.803255,
+      "frame_count": 737,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.8373902,
+      "frame_count": 738,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.8714602,
+      "frame_count": 739,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.906467,
+      "frame_count": 740,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.93958,
+      "frame_count": 741,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779887.9705431,
+      "frame_count": 742,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.004439,
+      "frame_count": 743,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.03727,
+      "frame_count": 744,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.0713978,
+      "frame_count": 745,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.1046,
+      "frame_count": 746,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.141384,
+      "frame_count": 747,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.1696808,
+      "frame_count": 748,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.2020748,
+      "frame_count": 749,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.2353358,
+      "frame_count": 750,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.2720408,
+      "frame_count": 751,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.304965,
+      "frame_count": 752,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.337055,
+      "frame_count": 753,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.372981,
+      "frame_count": 754,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.406668,
+      "frame_count": 755,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.438081,
+      "frame_count": 756,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.468968,
+      "frame_count": 757,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.501322,
+      "frame_count": 758,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.5338721,
+      "frame_count": 759,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.5671968,
+      "frame_count": 760,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.601575,
+      "frame_count": 761,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.634377,
+      "frame_count": 762,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.6690612,
+      "frame_count": 763,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.702108,
+      "frame_count": 764,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.7356842,
+      "frame_count": 765,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.769001,
+      "frame_count": 766,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.8035378,
+      "frame_count": 767,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.83837,
+      "frame_count": 768,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.8720021,
+      "frame_count": 769,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.9046772,
+      "frame_count": 770,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.937203,
+      "frame_count": 771,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779888.970829,
+      "frame_count": 772,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.004693,
+      "frame_count": 773,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.03762,
+      "frame_count": 774,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.07196,
+      "frame_count": 775,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.104955,
+      "frame_count": 776,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.137856,
+      "frame_count": 777,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.171082,
+      "frame_count": 778,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.2045639,
+      "frame_count": 779,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.238006,
+      "frame_count": 780,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.272244,
+      "frame_count": 781,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.306583,
+      "frame_count": 782,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.338992,
+      "frame_count": 783,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.369198,
+      "frame_count": 784,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.400791,
+      "frame_count": 785,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.434548,
+      "frame_count": 786,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.469347,
+      "frame_count": 787,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.502741,
+      "frame_count": 788,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.538344,
+      "frame_count": 789,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.569818,
+      "frame_count": 790,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.604247,
+      "frame_count": 791,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.638447,
+      "frame_count": 792,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.672158,
+      "frame_count": 793,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.705597,
+      "frame_count": 794,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.738612,
+      "frame_count": 795,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.772297,
+      "frame_count": 796,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.805214,
+      "frame_count": 797,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.837836,
+      "frame_count": 798,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.871736,
+      "frame_count": 799,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.9052632,
+      "frame_count": 800,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.939313,
+      "frame_count": 801,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779889.973492,
+      "frame_count": 802,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.005677,
+      "frame_count": 803,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.036763,
+      "frame_count": 804,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.068863,
+      "frame_count": 805,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.102116,
+      "frame_count": 806,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.1374369,
+      "frame_count": 807,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.1705012,
+      "frame_count": 808,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.2040331,
+      "frame_count": 809,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.239636,
+      "frame_count": 810,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.2710872,
+      "frame_count": 811,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.304327,
+      "frame_count": 812,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.336877,
+      "frame_count": 813,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.3712058,
+      "frame_count": 814,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.403457,
+      "frame_count": 815,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.4376588,
+      "frame_count": 816,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.472838,
+      "frame_count": 817,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.504726,
+      "frame_count": 818,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.537525,
+      "frame_count": 819,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.5707562,
+      "frame_count": 820,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.604512,
+      "frame_count": 821,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.638326,
+      "frame_count": 822,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.6716712,
+      "frame_count": 823,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.70573,
+      "frame_count": 824,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.738595,
+      "frame_count": 825,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.771138,
+      "frame_count": 826,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.804446,
+      "frame_count": 827,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.8374631,
+      "frame_count": 828,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.8699079,
+      "frame_count": 829,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.9045498,
+      "frame_count": 830,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.9396071,
+      "frame_count": 831,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779890.9721441,
+      "frame_count": 832,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.004096,
+      "frame_count": 833,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.037517,
+      "frame_count": 834,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.0713751,
+      "frame_count": 835,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.104119,
+      "frame_count": 836,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.138158,
+      "frame_count": 837,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.1723719,
+      "frame_count": 838,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.204006,
+      "frame_count": 839,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.237376,
+      "frame_count": 840,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.270693,
+      "frame_count": 841,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.304618,
+      "frame_count": 842,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.3378408,
+      "frame_count": 843,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.37135,
+      "frame_count": 844,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.404554,
+      "frame_count": 845,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.434199,
+      "frame_count": 846,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.467455,
+      "frame_count": 847,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.501494,
+      "frame_count": 848,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.53547,
+      "frame_count": 849,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.569351,
+      "frame_count": 850,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.603113,
+      "frame_count": 851,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.637426,
+      "frame_count": 852,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.670593,
+      "frame_count": 853,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.704129,
+      "frame_count": 854,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.737329,
+      "frame_count": 855,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.7698932,
+      "frame_count": 856,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.802283,
+      "frame_count": 857,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.8364868,
+      "frame_count": 858,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.8729742,
+      "frame_count": 859,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.905427,
+      "frame_count": 860,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.9362729,
+      "frame_count": 861,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779891.969173,
+      "frame_count": 862,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779892.0005498,
+      "frame_count": 863,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779892.035243,
+      "frame_count": 864,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779892.067332,
+      "frame_count": 865,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779892.105218,
+      "frame_count": 866,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779892.1342049,
+      "frame_count": 867,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779892.170727,
+      "frame_count": 868,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779892.201895,
+      "frame_count": 869,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779892.23807,
+      "frame_count": 870,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779892.27115,
+      "frame_count": 871,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779892.303631,
+      "frame_count": 872,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779892.337919,
+      "frame_count": 873,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779892.3774889,
+      "frame_count": 874,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779892.400364,
+      "frame_count": 875,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779892.436569,
+      "frame_count": 876,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779892.470745,
+      "frame_count": 877,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779892.502451,
+      "frame_count": 878,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779892.5366771,
+      "frame_count": 879,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779892.572937,
+      "frame_count": 880,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779892.60439,
+      "frame_count": 881,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779892.636884,
+      "frame_count": 882,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "True",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779892.670055,
+      "frame_count": 883,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779892.7039518,
+      "frame_count": 884,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779892.736959,
+      "frame_count": 885,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779892.7708569,
+      "frame_count": 886,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779892.804692,
+      "frame_count": 887,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779892.838624,
+      "frame_count": 888,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779892.870094,
+      "frame_count": 889,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    },
+    {
+      "timestamp": 1752779892.903599,
+      "frame_count": 890,
+      "prediction_accuracy": 0.0,
+      "motion_detected": "False",
+      "pattern_cluster_size": 1,
+      "brain_confidence": 0.0
+    }
+  ],
+  "patterns_discovered": [],
+  "attention_events": [],
+  "performance_metrics": {
+    "avg_prediction_accuracy": 0.0,
+    "accuracy_trend": 0.0,
+    "avg_processing_time_ms": 4.239563941955566,
+    "processing_fps": 235.87331473027248,
+    "frames_per_second": 26.1420057517906
+  },
+  "emergent_behaviors": {
+    "learning_evident": "False",
+    "pattern_recognition": true,
+    "motion_sensitivity": true,
+    "temporal_prediction": "False"
+  },
+  "end_time": "2025-07-17T21:18:13.083060",
+  "total_frames": 891,
+  "pattern_analysis": {
+    "total_unique_patterns": 879,
+    "most_common_pattern_frequency": 5,
+    "pattern_diversity": 0.9865319865319865
+  },
+  "motion_analysis": {
+    "total_motion_events": 457,
+    "motion_frequency": 0.5129068462401796,
+    "avg_motion_magnitude": 0.3803539149598015
+  }
+}
