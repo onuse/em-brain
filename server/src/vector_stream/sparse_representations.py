@@ -141,23 +141,33 @@ class SparsePatternEncoder:
         if not quiet_mode:
             print(f"🧬 Sparse encoder: {pattern_dim}D @ {sparsity:.1%} on {self.device}")
     
-    def encode_top_k(self, dense_vector: torch.Tensor, pattern_id: str = None) -> SparsePattern:
+    def encode_top_k(self, dense_vector: torch.Tensor, pattern_id: str = None, keep_on_gpu: bool = False) -> SparsePattern:
         """
         Encode by taking top-K highest activations.
         
         This preserves the strongest signals and is deterministic.
+        
+        Args:
+            dense_vector: Input tensor to encode
+            pattern_id: Optional identifier for the pattern
+            keep_on_gpu: If True, avoid CPU transfers for GPU pipeline optimization
         """
         if pattern_id is None:
             pattern_id = f"topk_{int(time.time() * 1000000)}"
         
-        # Move to GPU for acceleration
-        dense_vector = dense_vector.to(self.device)
+        # GPU pipeline optimization: avoid unnecessary transfers
+        if dense_vector.device != self.device:
+            dense_vector = dense_vector.to(self.device)
         
         # Get top-K indices (GPU accelerated)
         _, top_indices = torch.topk(dense_vector, self.target_active_count)
         
-        # Sort for consistency and move back to CPU for storage
-        sorted_indices = top_indices.sort()[0].cpu()
+        # Sort for consistency 
+        sorted_indices = top_indices.sort()[0]
+        
+        # GPU pipeline optimization: only move to CPU if specifically requested
+        if not keep_on_gpu:
+            sorted_indices = sorted_indices.cpu()
         
         return SparsePattern(
             active_indices=sorted_indices,
@@ -166,6 +176,54 @@ class SparsePatternEncoder:
             pattern_id=pattern_id,
             creation_time=time.time()
         )
+    
+    def encode_top_k_batch(self, dense_vectors: torch.Tensor, pattern_ids: List[str] = None, keep_on_gpu: bool = False) -> List[SparsePattern]:
+        """
+        GPU-optimized batch encoding for multiple vectors.
+        
+        Args:
+            dense_vectors: Tensor of shape [batch_size, vector_dim]
+            pattern_ids: Optional list of pattern identifiers
+            keep_on_gpu: If True, avoid CPU transfers for GPU pipeline optimization
+            
+        Returns:
+            List of SparsePattern objects
+        """
+        batch_size = dense_vectors.shape[0]
+        
+        if pattern_ids is None:
+            timestamp = int(time.time() * 1000000)
+            pattern_ids = [f"batch_{i}_{timestamp}" for i in range(batch_size)]
+        
+        # Ensure on correct device
+        if dense_vectors.device != self.device:
+            dense_vectors = dense_vectors.to(self.device)
+        
+        # Batch top-k operation (GPU accelerated)
+        _, top_indices_batch = torch.topk(dense_vectors, self.target_active_count, dim=1)
+        
+        # Batch sort operation
+        sorted_indices_batch = top_indices_batch.sort(dim=1)[0]
+        
+        # GPU pipeline optimization: only move to CPU if specifically requested
+        if not keep_on_gpu:
+            sorted_indices_batch = sorted_indices_batch.cpu()
+        
+        # Create SparsePattern objects
+        patterns = []
+        current_time = time.time()
+        
+        for i in range(batch_size):
+            pattern = SparsePattern(
+                active_indices=sorted_indices_batch[i],
+                pattern_dim=self.pattern_dim,
+                sparsity=self.sparsity,
+                pattern_id=pattern_ids[i],
+                creation_time=current_time
+            )
+            patterns.append(pattern)
+        
+        return patterns
     
     def encode_threshold(self, dense_vector: torch.Tensor, threshold: float = None, 
                         pattern_id: str = None) -> SparsePattern:

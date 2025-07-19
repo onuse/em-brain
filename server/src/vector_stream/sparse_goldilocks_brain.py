@@ -391,6 +391,9 @@ class SparseGoldilocksBrain:
     def __init__(self, sensory_dim: int = 16, motor_dim: int = 8, temporal_dim: int = 4,
                  max_patterns: int = 1_000_000, quiet_mode: bool = False):
         
+        # Store quiet_mode for access by setup methods
+        self.quiet_mode = quiet_mode
+        
         # Stream configurations with sparse representation
         self.sensory_config = StreamConfig(dim=sensory_dim, max_patterns=max_patterns)
         self.motor_config = StreamConfig(dim=motor_dim, max_patterns=max_patterns)
@@ -736,6 +739,12 @@ class SparseGoldilocksBrain:
         # Emergent confidence system (Evolution's Win #4)
         self.emergent_confidence = EmergentConfidenceSystem(quiet_mode=quiet_mode)
         
+        # Integrate with hardware adaptation for GPU optimization
+        self._setup_confidence_hardware_adaptation()
+        
+        # Pre-allocate encoder for fast reflex path optimization
+        self._setup_fast_path_cache()
+        
         if not quiet_mode:
             print(f"\n🧬 SPARSE GOLDILOCKS BRAIN INITIALIZED")
             print(f"   🎯 Evolution's Win #1: Sparse Distributed Representations")
@@ -908,21 +917,52 @@ class SparseGoldilocksBrain:
         
         Returns: (action, minimal_brain_state) if reflex possible, None otherwise
         """
-        # Create minimal sparse pattern for reflex cache lookup
-        # Biological tradeoff: Use simplified encoding for speed
+        # Fast path optimization: Use pre-allocated encoder and caching
         try:
-            # Simple encoding: pad/truncate sensory input to match pattern dimension
-            unified_dim = self.unified_storage.pattern_dim
-            if len(sensory_tensor) > unified_dim:
-                query_vector = sensory_tensor[:unified_dim]
-            else:
-                padding = torch.zeros(unified_dim - len(sensory_tensor))
-                query_vector = torch.cat([sensory_tensor, padding])
+            # Check if fast path encoder is available
+            if not hasattr(self, 'fast_path_encoder') or self.fast_path_encoder is None:
+                return None  # Fall back to slow path
             
-            # Create sparse pattern for reflex lookup
-            from .sparse_representations import SparsePatternEncoder
-            encoder = SparsePatternEncoder(unified_dim, sparsity=0.02, quiet_mode=True)
-            query_pattern = encoder.encode_top_k(query_vector, f"reflex_query_{self.total_cycles}")
+            # GPU-optimized input normalization with caching
+            unified_dim = self.unified_storage.pattern_dim
+            input_size = len(sensory_tensor)
+            
+            if input_size > unified_dim:
+                query_vector = sensory_tensor[:unified_dim]
+            elif input_size < unified_dim:
+                # Use cached padding tensor to avoid allocation
+                padding_size = unified_dim - input_size
+                if padding_size not in self.fast_path_padding_cache:
+                    self.fast_path_padding_cache[padding_size] = torch.zeros(
+                        padding_size, 
+                        device=sensory_tensor.device, 
+                        dtype=sensory_tensor.dtype
+                    )
+                padding = self.fast_path_padding_cache[padding_size]
+                query_vector = torch.cat([sensory_tensor, padding])
+            else:
+                query_vector = sensory_tensor
+            
+            # Pattern caching: Check if we've seen this input recently
+            query_hash = hash(tuple(query_vector.cpu().numpy().round(decimals=3)))
+            
+            if query_hash in self.fast_path_pattern_cache:
+                query_pattern = self.fast_path_pattern_cache[query_hash]
+            else:
+                # Use pre-allocated encoder (GPU-optimized, no CPU transfers)
+                query_pattern = self.fast_path_encoder.encode_top_k(
+                    query_vector, 
+                    f"reflex_query_{self.total_cycles}",
+                    keep_on_gpu=True  # Keep on GPU for performance
+                )
+                
+                # Cache the pattern (with size limit)
+                if len(self.fast_path_pattern_cache) >= self.fast_path_cache_max_size:
+                    # Remove oldest entry (simple FIFO)
+                    oldest_key = next(iter(self.fast_path_pattern_cache))
+                    del self.fast_path_pattern_cache[oldest_key]
+                
+                self.fast_path_pattern_cache[query_hash] = query_pattern
             
             # Check reflex cache directly - bypass temporal hierarchy complexity
             pattern_hash = self.emergent_hierarchy.predictor._hash_pattern(query_pattern)
@@ -1294,6 +1334,53 @@ class SparseGoldilocksBrain:
         
         # Use emergent confidence system instead of static pattern count
         return self.emergent_confidence.current_confidence
+    
+    def _setup_confidence_hardware_adaptation(self):
+        """Setup hardware-adapted GPU thresholds for confidence system."""
+        try:
+            from ..utils.hardware_adaptation import get_hardware_adaptation
+            hardware_adaptation = get_hardware_adaptation()
+            
+            # Get adaptive threshold for coherence calculation operations
+            optimal_threshold = hardware_adaptation.should_use_gpu_for_operation(10, 'similarity')
+            
+            if optimal_threshold:
+                # Use smaller threshold if GPU is beneficial for smaller operations
+                self.emergent_confidence.set_gpu_threshold(5)
+            else:
+                # Use larger threshold if GPU overhead is significant
+                self.emergent_confidence.set_gpu_threshold(25)
+                
+        except ImportError:
+            # Fallback if hardware adaptation not available
+            pass
+    
+    def _setup_fast_path_cache(self):
+        """Setup pre-allocated encoder and caching for fast reflex path optimization."""
+        try:
+            from .sparse_representations import SparsePatternEncoder
+            
+            # Pre-allocate encoder to avoid object creation in hot path
+            unified_dim = self.unified_storage.pattern_dim
+            self.fast_path_encoder = SparsePatternEncoder(
+                unified_dim, 
+                sparsity=0.02, 
+                quiet_mode=True
+            )
+            
+            # Pre-allocate padding tensor for fast input normalization
+            self.fast_path_padding_cache = {}  # Cache padding tensors by size
+            
+            # Pattern cache for recently encoded patterns
+            self.fast_path_pattern_cache = {}  # Cache patterns by input hash
+            self.fast_path_cache_max_size = 100  # Limit cache size
+            
+            if not self.quiet_mode:
+                print(f"🚀 Fast path optimization: pre-allocated encoder and caching enabled")
+                
+        except ImportError:
+            # Fallback if sparse representations not available  
+            self.fast_path_encoder = None
     
     def _exclusive_attention_selection(self, sensory_tensor: torch.Tensor, temporal_vector: torch.Tensor, current_time: float) -> Optional[torch.Tensor]:
         """

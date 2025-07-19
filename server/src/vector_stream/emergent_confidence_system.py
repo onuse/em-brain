@@ -13,6 +13,7 @@ Key insight: Confidence emerges from the interaction of:
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 from typing import List, Tuple, Dict, Any
 from collections import deque
 import time
@@ -51,10 +52,15 @@ class EmergentConfidenceSystem:
         self.last_update_time = time.time()
         self.total_updates = 0
         
+        # GPU acceleration settings
+        self.device = self._detect_device()
+        self.gpu_threshold = 15  # Use vectorized numpy when ≥15 pairs for coherence calculation
+        
         if not quiet_mode:
             print("🧠 EmergentConfidenceSystem initialized")
             print("   Theory: Confidence emerges from prediction dynamics")
             print("   Features: Dunning-Kruger effects, intoxication modeling, no magic numbers")
+            print(f"   Device: {self.device} (vectorization threshold: {self.gpu_threshold} pairs)")
     
     def update_confidence(self, 
                          motor_prediction: List[float],
@@ -147,19 +153,90 @@ class EmergentConfidenceSystem:
     
     def _calculate_coherence_confidence(self) -> float:
         """
-        Calculate confidence from sensory-motor coherence.
+        GPU-accelerated confidence from sensory-motor coherence.
         
         Similar sensory inputs should produce similar motor outputs
         if the system understands the input-output mapping.
+        
+        Optimized with parallel similarity calculations.
         """
         if len(self.recent_sensory_motor_pairs) < 20:
             return 0.7  # Default high for insufficient data
         
         recent_pairs = list(self.recent_sensory_motor_pairs)
+        sample_size = min(20, len(recent_pairs))
+        
+        # Use vectorized calculation if we have enough data
+        if len(recent_pairs) >= self.gpu_threshold:
+            try:
+                return self._calculate_coherence_confidence_vectorized(recent_pairs, sample_size)
+            except Exception as e:
+                if not self.quiet_mode:
+                    print(f"⚠️ Vectorized coherence calculation failed, falling back to CPU: {e}")
+                # Fall back to CPU
+        
+        # CPU fallback implementation
+        return self._calculate_coherence_confidence_cpu(recent_pairs, sample_size)
+    
+    def _calculate_coherence_confidence_vectorized(self, recent_pairs: List[Tuple], sample_size: int) -> float:
+        """Vectorized numpy coherence confidence calculation (optimized for CPU)."""
+        # Sample recent pairs for coherence analysis
+        sample_pairs = recent_pairs[-sample_size:]
+        
+        # Convert to numpy arrays for vectorized operations
+        sensory_data = np.array([sensory for sensory, motor in recent_pairs])
+        motor_data = np.array([motor for sensory, motor in recent_pairs])
+        
+        # Get sample indices
+        sample_indices = np.arange(len(sample_pairs))
+        
+        # Vectorized cosine similarity calculation
+        # Normalize vectors
+        sensory_norms = np.linalg.norm(sensory_data, axis=1, keepdims=True)
+        motor_norms = np.linalg.norm(motor_data, axis=1, keepdims=True)
+        
+        # Avoid division by zero
+        sensory_norms = np.where(sensory_norms == 0, 1, sensory_norms)
+        motor_norms = np.where(motor_norms == 0, 1, motor_norms)
+        
+        sensory_normalized = sensory_data / sensory_norms
+        motor_normalized = motor_data / motor_norms
+        
+        # Calculate all pairwise similarities using matrix multiplication
+        sensory_similarities = np.dot(sensory_normalized, sensory_normalized.T)
+        motor_similarities = np.dot(motor_normalized, motor_normalized.T)
+        
+        # Create mask for high sensory similarity (>0.8) and exclude self-comparison
+        sensory_similarity_threshold = 0.8
+        high_sensory_sim_mask = sensory_similarities > sensory_similarity_threshold
+        
+        # Exclude self-comparisons
+        np.fill_diagonal(high_sensory_sim_mask, False)
+        
+        # Extract coherence scores for sample pairs
         coherence_scores = []
         
-        # Sample recent pairs for coherence analysis
-        sample_pairs = recent_pairs[-min(20, len(recent_pairs)):]
+        for i in sample_indices:
+            # Get motor similarities where sensory similarity is high
+            high_sim_indices = high_sensory_sim_mask[i]
+            
+            if np.any(high_sim_indices):
+                # Average motor similarity for this sensory input
+                avg_motor_sim = np.mean(motor_similarities[i][high_sim_indices])
+                coherence_scores.append(avg_motor_sim)
+        
+        if not coherence_scores:
+            return 0.7  # Default if no coherence data
+        
+        avg_coherence = np.mean(coherence_scores)
+        
+        # Transform coherence to confidence (sigmoid-like transformation)
+        return max(0.05, min(0.95, avg_coherence))
+    
+    def _calculate_coherence_confidence_cpu(self, recent_pairs: List[Tuple], sample_size: int) -> float:
+        """CPU fallback for coherence confidence calculation (original algorithm)."""
+        coherence_scores = []
+        sample_pairs = recent_pairs[-sample_size:]
         
         for i, (sensory_i, motor_i) in enumerate(sample_pairs):
             similar_motor_similarities = []
@@ -358,3 +435,31 @@ class EmergentConfidenceSystem:
         
         if not self.quiet_mode:
             print("🔄 EmergentConfidenceSystem reset - back to ignorant boldness")
+    
+    def _detect_device(self) -> str:
+        """Detect optimal device for tensor operations."""
+        try:
+            if torch.backends.mps.is_available():
+                return 'mps'  # Apple Silicon GPU
+            elif torch.cuda.is_available():
+                return 'cuda'  # NVIDIA GPU
+            else:
+                return 'cpu'
+        except Exception:
+            return 'cpu'
+    
+    def set_gpu_threshold(self, threshold: int):
+        """Set GPU threshold based on hardware adaptation."""
+        self.gpu_threshold = threshold
+        if not self.quiet_mode:
+            print(f"🔧 GPU threshold updated to {threshold} pairs")
+    
+    def get_performance_stats(self) -> Dict[str, Any]:
+        """Get performance statistics for monitoring."""
+        return {
+            'device': self.device,
+            'vectorization_threshold': self.gpu_threshold,
+            'total_updates': self.total_updates,
+            'data_size': len(self.recent_sensory_motor_pairs),
+            'using_vectorized': len(self.recent_sensory_motor_pairs) >= self.gpu_threshold
+        }

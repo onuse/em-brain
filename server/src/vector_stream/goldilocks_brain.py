@@ -296,23 +296,34 @@ class CrossStreamCoactivation:
     
     def record_coactivation(self, activations: Dict[str, List[int]], strength: float = 1.0):
         """
-        Record that patterns were active simultaneously across streams.
+        Vectorized co-activation recording for GPU acceleration.
         
         This is how cross-modal learning emerges naturally.
         """
-        # Record all pairwise co-activations
+        # Vectorized co-activation recording (GPU optimized)
         for stream_a, patterns_a in activations.items():
             for stream_b, patterns_b in activations.items():
                 if stream_a != stream_b:
                     key = f"{stream_a}->{stream_b}"
                     
-                    if key in self.coactivation_strength:
-                        # Increase co-activation strength
-                        for pattern_a in patterns_a:
-                            for pattern_b in patterns_b:
-                                if (pattern_a < self.max_patterns_per_stream and 
-                                    pattern_b < self.max_patterns_per_stream):
-                                    self.coactivation_strength[key][pattern_a, pattern_b] += strength
+                    if key in self.coactivation_strength and patterns_a and patterns_b:
+                        # Filter valid pattern indices
+                        valid_patterns_a = [p for p in patterns_a if p < self.max_patterns_per_stream]
+                        valid_patterns_b = [p for p in patterns_b if p < self.max_patterns_per_stream]
+                        
+                        if valid_patterns_a and valid_patterns_b:
+                            # Vectorized update using advanced indexing (GPU accelerated)
+                            device = self.coactivation_strength[key].device
+                            
+                            # Create index tensors
+                            patterns_a_tensor = torch.tensor(valid_patterns_a, device=device)
+                            patterns_b_tensor = torch.tensor(valid_patterns_b, device=device)
+                            
+                            # Create meshgrid for all combinations
+                            a_indices, b_indices = torch.meshgrid(patterns_a_tensor, patterns_b_tensor, indexing='ij')
+                            
+                            # Vectorized update (single GPU operation instead of nested loops)
+                            self.coactivation_strength[key][a_indices, b_indices] += strength
     
     def get_cross_predictions(self, from_stream: str, pattern_indices: List[int], 
                             to_stream: str, k: int = 10) -> List[Tuple[int, float]]:

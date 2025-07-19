@@ -225,8 +225,10 @@ Implement constraint-based emergence where intelligence arises from optimization
 6. ✅ Complete Phase 5: Emergent adaptive plasticity from multi-timescale constraints
 7. ✅ Emergent Confidence System: Confidence dynamics based on prediction volatility/coherence/meta-accuracy
 8. ✅ **COMPLETED**: High-performance async logging system for production-ready observability
-9. **CURRENT**: Scale testing and validation of integrated 6-phase system with async logging
-10. Continue with remaining constraint-based emergence phases or explore applications
+9. ✅ Scale testing and validation of integrated 6-phase system with async logging
+10. **CURRENT**: Implement persistent memory system for cross-session learning
+11. **NEXT**: Parallel stream processing for enhanced biological realism
+12. Continue with remaining constraint-based emergence phases or explore applications
 
 ---
 
@@ -323,6 +325,84 @@ if debug_mode:
 
 ---
 
+## Phase 6.5: Persistent Cross-Session Memory 🧠 **[IDENTIFIED - HIGH PRIORITY]**
+
+### **Critical Gap Discovered**
+Scale testing revealed that the brain **starts fresh every session** - no persistent memory across runs:
+- **Evidence**: Empty `robot_memory/` folder despite 3+ hours of operation
+- **Impact**: Each 20-minute session rediscovers patterns from zero
+- **Missing**: Cross-session learning accumulation for genuine intelligence
+
+### **Constraint-Based Solution: Persistent Brain State**
+**Core Constraint**: Intelligence requires memory persistence across sessions
+**Design Principle**: Minimal state preservation enabling maximal learning continuity
+
+#### Architecture Components
+
+**1. Brain State Serialization**
+```python
+class PersistentBrainState:
+    def save_state(self) -> dict:
+        """Serialize critical brain state for persistence"""
+        return {
+            "sparse_patterns": self.get_consolidated_patterns(),
+            "confidence_history": self.confidence_system.get_core_dynamics(),
+            "hardware_adaptations": self.hardware_adaptation.get_stable_limits(),
+            "learning_trajectories": self.get_key_learning_paths()
+        }
+```
+
+**2. Constraint-Based Pattern Selection**
+- **Storage limits**: Only most stable/important patterns persist
+- **Energy constraints**: Patterns with high activation history survive
+- **Temporal constraints**: Recent + frequently accessed patterns prioritized
+- **Competition**: Patterns compete for limited persistent storage slots
+
+**3. Session Continuity Protocol**
+```python
+# Session startup
+brain.load_persistent_state(robot_memory_path)  # <1ms load
+brain.continue_learning_from(previous_session_state)
+
+# Session shutdown  
+brain.consolidate_session_learnings()  # Background consolidation
+brain.save_persistent_state(robot_memory_path)  # Critical patterns only
+```
+
+#### Implementation Plan
+
+**Phase 6.5a: Core Persistence Infrastructure**
+- [ ] Design persistent brain state format (JSON/binary)
+- [ ] Implement constraint-based pattern selection for persistence
+- [ ] Add save/load functionality to MinimalBrain
+- [ ] Create session continuity protocols
+
+**Phase 6.5b: Selective Memory Consolidation**
+- [ ] Identify which patterns/learning deserve persistence
+- [ ] Implement competition-based storage limits (biological constraint)
+- [ ] Add cross-session confidence progression tracking
+- [ ] Create learning trajectory preservation
+
+**Phase 6.5c: Integration & Testing**
+- [ ] Integrate with existing brain_server.py save/load hooks
+- [ ] Test cross-session learning continuation
+- [ ] Validate memory efficiency (bounded growth)
+- [ ] Ensure backward compatibility with fresh-start mode
+
+#### Success Metrics
+- **Learning Continuity**: Session N+1 builds meaningfully on Session N learning
+- **Memory Efficiency**: Persistent state size bounded (< 10MB per day of learning)
+- **Pattern Quality**: Preserved patterns show higher activation/success rates
+- **Biological Realism**: Cross-session consolidation matches sleep/wake cycles
+
+#### Biological Inspiration
+**Constraint**: Long-term memory formation requires cross-session consolidation
+**Implementation**: Critical pattern preservation + session continuity
+
+**Research Value**: This addresses the fundamental gap between **within-session adaptation** (current) and **cross-session intelligence accumulation** (required for genuine learning).
+
+---
+
 ## Phase 7: Emergent Parallel Stream Processing 🧠 **[FUTURE]**
 
 ### **Research Motivation**
@@ -368,6 +448,21 @@ class ParallelConstraintBrain:
 - **Constraint-based approach**: Shared resource competition creates natural coordination
 - **Biological precedent**: Neural oscillations provide natural timing
 
+```python
+class BiologicalOscillator:
+    def __init__(self, gamma_freq=40, theta_freq=6):
+        self.gamma_cycle = 1.0 / gamma_freq  # 25ms binding windows
+        self.theta_cycle = 1.0 / theta_freq  # 167ms memory cycles
+        
+    def get_binding_window(self, current_time):
+        # Natural synchronization points emerge from timing
+        return current_time % self.gamma_cycle < 0.005  # 5ms window
+        
+    def should_consolidate(self, current_time):
+        # Theta rhythm drives memory consolidation
+        return current_time % self.theta_cycle < 0.010  # 10ms window
+```
+
 **Challenge 2: Information Consistency**
 - **Traditional approach**: Message passing between streams
 - **Constraint-based approach**: Shared state with atomic updates
@@ -405,6 +500,12 @@ class ParallelConstraintBrain:
 - [ ] A/B test: Parallel vs Sequential learning efficiency  
 - [ ] Cross-modal integration comparison
 - [ ] Emergence behavior analysis (what new behaviors appear?)
+
+**Phase 7e: Oscillatory Binding**
+- [ ] Implement biological oscillator system (gamma 40Hz, theta 6Hz)
+- [ ] Natural synchronization windows for cross-stream binding
+- [ ] Constraint-based timing coordination (no explicit locks)
+- [ ] Emergent temporal binding for simultaneous events
 
 #### Success Metrics
 - **Learning efficiency**: Match or exceed sequential processing performance

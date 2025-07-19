@@ -19,6 +19,7 @@ from .vector_stream.sparse_goldilocks_brain import SparseGoldilocksBrain
 from .utils.cognitive_autopilot import CognitiveAutopilot
 from .utils.brain_logger import BrainLogger
 from .utils.hardware_adaptation import get_hardware_adaptation, record_brain_cycle_performance
+from .persistence import PersistenceManager, PersistenceConfig
 
 
 class MinimalBrain:
@@ -107,6 +108,37 @@ class MinimalBrain:
             self.logger = BrainLogger(session_name=log_session_name, config=config)
         else:
             self.logger = None
+        
+        # Production-grade persistence system for cross-session learning
+        self.enable_persistence = config.get('memory', {}).get('enable_persistence', True)
+        self.persistence_manager = None
+        self.session_count = 0
+        
+        if self.enable_persistence:
+            memory_path = config.get('memory', {}).get('persistent_memory_path', './robot_memory')
+            
+            # Create persistence configuration
+            persistence_config = PersistenceConfig(
+                memory_root_path=memory_path,
+                incremental_save_interval_cycles=config.get('memory', {}).get('save_interval_cycles', 100),
+                enable_compression=config.get('memory', {}).get('enable_compression', True),
+                enable_corruption_detection=config.get('memory', {}).get('enable_corruption_detection', True)
+            )
+            
+            # Initialize production persistence manager
+            self.persistence_manager = PersistenceManager(persistence_config)
+            
+            # Recover existing brain state at startup
+            recovered_state = self.persistence_manager.recover_brain_state_at_startup()
+            if recovered_state:
+                self.session_count = recovered_state.session_count
+                self._apply_recovered_state(recovered_state)
+                if not quiet_mode:
+                    print(f"🧠 Continuing from session {self.session_count}")
+            else:
+                self.session_count = 1
+                if not quiet_mode:
+                    print(f"🧠 Starting fresh brain state - session {self.session_count}")
         
         if not quiet_mode:
             print(f"🧠 MinimalBrain initialized - {self.brain_type.title()} Architecture")
@@ -298,6 +330,10 @@ class MinimalBrain:
         self.total_predictions += 1
         self.total_experiences += 1
         
+        # Process brain cycle for persistence (background, non-blocking)
+        if self.enable_persistence and self.persistence_manager:
+            self.persistence_manager.process_brain_cycle(self)
+        
         return predicted_action, brain_state
     
     def store_experience(self, sensory_input: List[float], action_taken: List[float], 
@@ -392,6 +428,11 @@ class MinimalBrain:
     
     def finalize_session(self):
         """Finalize brain session - call on shutdown."""
+        # Save persistent brain state (blocking - critical for continuity)
+        if self.enable_persistence and self.persistence_manager:
+            self.persistence_manager.save_brain_state_blocking(self)
+            self.persistence_manager.shutdown()
+        
         # Close logging
         if self.logger:
             self.logger.close_session()
@@ -427,6 +468,32 @@ class MinimalBrain:
             basic_stats.update(detailed_stats)
         
         return basic_stats
+    
+    def _apply_recovered_state(self, recovered_state):
+        """Apply recovered brain state to the brain (biological wake-up process)."""
+        if not recovered_state:
+            return
+        
+        try:
+            # Use the brain serializer to restore the complete state
+            if self.persistence_manager and self.persistence_manager.brain_serializer:
+                restoration_success = self.persistence_manager.brain_serializer.restore_brain_state(
+                    self, recovered_state
+                )
+                
+                if restoration_success:
+                    print(f"🧠 Applied recovered state: {len(recovered_state.patterns)} patterns restored")
+                else:
+                    print(f"⚠️ Failed to apply some recovered state - continuing with partial recovery")
+                    
+                # Update experience counters from recovered state
+                self.total_experiences = recovered_state.total_experiences
+                self.total_cycles = recovered_state.total_cycles
+            
+        except Exception as e:
+            print(f"⚠️ Failed to apply recovered state: {e}")
+            print("🧠 Continuing with fresh state")
+    
     
     def __str__(self) -> str:
         return (f"MinimalBrain({self.total_cycles} cycles, "
