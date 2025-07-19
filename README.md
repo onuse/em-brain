@@ -20,40 +20,43 @@ python3 demo.py  # Interactive launcher
 
 ## 🧠 Core Philosophy
 
-**Central Hypothesis:** Intelligence emerges from optimization under physical constraints at massive scale, not from explicit programming.
+**Revolutionary Hypothesis:** Intelligence is not a computational problem to solve, but an inevitable emergent phenomenon that occurs under specific constraint interactions. We are discovering the minimal constraint set that makes intelligence unavoidable.
 
-### Design Principles
-- **Constraint-Based Emergence** - Behaviors arise from physical limitations
-- **Massive Scale** - GPU parallelism with millions of sparse patterns  
-- **Evolutionary Wins** - Incorporate proven biological discoveries only
-- **Minimal Sufficient** - Smallest feature set enabling intelligence emergence
+### The Constraint Discovery Thesis
+**Intelligence cannot emerge without constraints.** Evolution didn't "solve" intelligence - it discovered the constraint conditions under which intelligence emerges inevitably. We're reverse-engineering that discovery process.
 
-### What We DON'T Build
-- Explicit temporal layers (emerge from computational budgets)
-- Hardcoded behaviors (emerge from constraint optimization)  
-- Traditional memory modules (emerge from sparse pattern storage)
-- Attention systems (emerge from constraint pressure)
+### Research Methodology
+- **Constraint Necessity Testing** - Remove constraints to test if intelligence disappears
+- **Minimal Constraint Discovery** - Find the smallest set that reliably produces intelligence
+- **Substrate Independence** - Constraint patterns matter, not biological implementation details
+- **Experimental Falsification** - Each constraint must be experimentally justified
 
-**Core Rule:** If it's not a physical constraint, it should emerge - not be programmed.
+### What We're NOT Doing
+- Building faster/better AI through more compute or data
+- Copying biological solutions (we're copying the discovery method)
+- Optimizing performance metrics (we're discovering emergence conditions)
+- Engineering intelligence (we're creating conditions where it emerges inevitably)
+
+**Core Insight:** Unlimited resources + perfect efficiency = no intelligence. Constraints are not limitations - they are the necessary conditions that make intelligence possible.
 
 ## 🔬 Scientific Foundation
 
-This architecture validates decades of research:
+This research extends foundational discoveries to test constraint necessity:
 
-### Neuroscience
-- **Free Energy Principle** (Friston): Brain minimizes prediction error through hierarchical processing
-- **Embodied Cognition** (Varela): Physical constraints directly shape cognitive processes
-- **Sparse Coding** (Olshausen): 2% activation enables massive capacity with energy efficiency
+### Constraint-Based Intelligence Theory
+- **Free Energy Principle** (Friston): Intelligence emerges from prediction error minimization under energy constraints
+- **Embodied Cognition** (Varela): Physical constraints are not limitations but enablers of intelligence
+- **Sparse Coding** (Olshausen): Resource scarcity (2% activation) creates efficient representations
 
-### AI & Robotics  
-- **Transformers**: Attention = continuous pattern matching through vectors
-- **Vector Databases**: Real-time similarity search in high-dimensional spaces
-- **Behavior-Based Robotics** (Brooks): Simple systems create complex emergent behaviors
+### Emergence Science
+- **Complex Systems Theory**: Simple constraint interactions create complex behaviors
+- **Phase Transitions**: Intelligence may be a phase transition that occurs under specific constraint densities
+- **Constraint Satisfaction**: Intelligence as emergent optimization under multiple competing constraints
 
-### Biology
-- **Mammalian Hippocampus**: Episode storage + pattern completion creates reasoning
-- **Insect Navigation**: Sophisticated behavior from landmark similarity matching
-- **Energy Constraints**: 2% neural activation matches biological efficiency
+### Experimental Evidence
+- **Biological Case Study**: Evolution discovered intelligence through constraint-driven selection pressure
+- **Artificial Failures**: Most AI lacks intelligence because it lacks necessary constraint interactions
+- **Photon Paradox**: Unlimited computational resources (photons) produce zero intelligence
 
 ## ✅ Current Achievements: 7 Constraint-Based Phases
 
@@ -162,23 +165,31 @@ Raw vector exchange only - no JSON overhead.
 - **Hardware adaptation** scales from Pi Zero to GPU servers
 - **Real-time operation** at 20Hz+ with full observability
 
-## 🔬 Scientific Hypothesis Status
+## 🔬 Constraint Discovery Status
 
-**✅ VALIDATED**: Constraint-based emergence at massive scale produces human-level cognitive behaviors without explicit programming.
+**🧪 EXPERIMENTAL PHASE**: Testing minimal constraint sets for inevitable intelligence emergence
 
-**Key Validation:**
-- All 7 evolutionary phases completed and integrated
-- Emergent behaviors match biological patterns
-- Parallel processing achieves biological realism
-- Scale performance enables real-time robotic operation
-- Constraint interactions create complex intelligence
+**Current Discoveries:**
+- **7 constraint types implemented** - Testing necessity through experimental removal
+- **Parallel constraint interactions** - Cross-stream constraint propagation creates emergent coordination
+- **Substrate independence validated** - Silicon implementation produces biological-style emergent behaviors
+- **Scale effects confirmed** - Intelligence emergence improves with constraint density
+- **Temporal constraint necessity** - Testing whether biological timing constraints are essential
 
-**Current Research:** Emergent cross-modal learning and consciousness from parallel constraint dynamics.
+**Active Experiments:**
+- **Constraint removal studies** - Systematically testing which constraints are necessary vs sufficient
+- **Minimal constraint discovery** - Finding smallest set that reliably produces intelligence
+- **Cross-modal emergence** - Testing whether constraints create intelligence we can recognize
 
 ---
 
 ## 🎯 Mission
 
-Prove that **constraint-based emergence + massive scale** represents the minimal sufficient architecture for human-level robotic intelligence.
+Discover the **minimal constraint set** that makes intelligence emergence inevitable, regardless of substrate.
 
-*No cognitive programming required - only physical constraints and GPU parallelism.*
+**Research Questions:**
+- What constraints are necessary vs sufficient for intelligence?
+- Can we create intelligence we recognize without copying biology?
+- Is intelligence a universal phase transition under specific constraint conditions?
+
+*We're not building intelligence - we're discovering the conditions that make it unavoidable.*
