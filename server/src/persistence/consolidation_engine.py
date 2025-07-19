@@ -421,20 +421,51 @@ class ConsolidationEngine:
     def _archive_incremental_files(self, incremental_files: List[Dict[str, Any]]) -> int:
         """Archive incremental files instead of deleting them immediately."""
         archive_dir = os.path.join(self.config.get_recovery_dir(), "archived_incrementals")
-        os.makedirs(archive_dir, exist_ok=True)
+        
+        try:
+            os.makedirs(archive_dir, exist_ok=True)
+        except Exception as e:
+            print(f"⚠️ Failed to create archive directory {archive_dir}: {e}")
+            return 0
         
         archived_count = 0
+        failed_archives = []
+        
         for file_info in incremental_files:
             try:
                 src_path = file_info['filepath']
-                dst_filename = f"archived_{int(time.time())}_{file_info['filename']}"
+                filename = file_info['filename']
+                
+                # Check if source file still exists
+                if not os.path.exists(src_path):
+                    print(f"⚠️ Source file missing during archive: {src_path}")
+                    failed_archives.append(filename)
+                    continue
+                
+                # Generate unique destination filename
+                timestamp = int(time.time())
+                dst_filename = f"archived_{timestamp}_{filename}"
                 dst_path = os.path.join(archive_dir, dst_filename)
+                
+                # Ensure unique destination path
+                counter = 1
+                while os.path.exists(dst_path):
+                    dst_filename = f"archived_{timestamp}_{counter}_{filename}"
+                    dst_path = os.path.join(archive_dir, dst_filename)
+                    counter += 1
                 
                 if self.storage.move_file(src_path, dst_path):
                     archived_count += 1
+                    print(f"📦 Archived: {filename} -> {dst_filename}")
+                else:
+                    failed_archives.append(filename)
                 
             except Exception as e:
-                print(f"⚠️ Failed to archive {file_info['filename']}: {e}")
+                print(f"⚠️ Failed to archive {file_info.get('filename', 'unknown')}: {e}")
+                failed_archives.append(file_info.get('filename', 'unknown'))
+        
+        if failed_archives:
+            print(f"⚠️ Failed to archive {len(failed_archives)} files: {failed_archives[:3]}{'...' if len(failed_archives) > 3 else ''}")
         
         return archived_count
     

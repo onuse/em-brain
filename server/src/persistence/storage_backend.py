@@ -185,10 +185,25 @@ class StorageBackend:
     def move_file(self, src_filepath: str, dst_filepath: str) -> bool:
         """Move file with integrity preservation."""
         try:
-            # Ensure destination directory exists
-            os.makedirs(os.path.dirname(dst_filepath), exist_ok=True)
+            # Check if source file exists
+            if not os.path.exists(src_filepath):
+                print(f"⚠️ Source file does not exist: {src_filepath}")
+                return False
             
-            # Move file
+            # Ensure destination directory exists
+            dst_dir = os.path.dirname(dst_filepath)
+            os.makedirs(dst_dir, exist_ok=True)
+            
+            # Check if destination already exists and remove it
+            if os.path.exists(dst_filepath):
+                print(f"⚠️ Destination file already exists, removing: {dst_filepath}")
+                try:
+                    os.remove(dst_filepath)
+                except Exception as remove_e:
+                    print(f"⚠️ Failed to remove existing destination file: {remove_e}")
+                    return False
+            
+            # Move main file
             shutil.move(src_filepath, dst_filepath)
             
             # Move integrity info if it exists
@@ -196,12 +211,31 @@ class StorageBackend:
                 src_integrity_path = self._get_integrity_filepath(src_filepath)
                 if os.path.exists(src_integrity_path):
                     dst_integrity_path = self._get_integrity_filepath(dst_filepath)
-                    shutil.move(src_integrity_path, dst_integrity_path)
+                    try:
+                        # Remove destination integrity file if it exists
+                        if os.path.exists(dst_integrity_path):
+                            os.remove(dst_integrity_path)
+                        shutil.move(src_integrity_path, dst_integrity_path)
+                    except Exception as integrity_e:
+                        print(f"⚠️ Failed to move integrity file (main move succeeded): {integrity_e}")
+                        # Don't fail the whole operation if only integrity move fails
+            
+            # Verify the move succeeded
+            if not os.path.exists(dst_filepath):
+                print(f"⚠️ Move operation reported success but destination file missing: {dst_filepath}")
+                return False
             
             return True
             
         except Exception as e:
             print(f"⚠️ Failed to move file {src_filepath} to {dst_filepath}: {e}")
+            # If move partially succeeded, try to clean up
+            try:
+                if os.path.exists(dst_filepath) and os.path.exists(src_filepath):
+                    # Both files exist - remove destination to avoid duplicates
+                    os.remove(dst_filepath)
+            except:
+                pass  # Ignore cleanup failures
             return False
     
     def delete_file(self, filepath: str) -> bool:

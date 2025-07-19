@@ -565,8 +565,23 @@ class BrainSerializer:
                 else:
                     print(f"⚠️ Skipping invalid pattern data: {type(pattern_dict)}")
             
-            # Create a copy of state_dict to avoid modifying the original
-            brain_state_dict = state_dict.copy()
+            # Define valid fields for SerializedBrainState to filter out old/invalid keys
+            valid_fields = {
+                'version', 'session_count', 'total_cycles', 'total_experiences', 
+                'save_timestamp', 'patterns', 'confidence_state', 'hardware_adaptations',
+                'cross_stream_associations', 'brain_type', 'sensory_dim', 'motor_dim',
+                'temporal_dim', 'learning_history', 'emergence_events'
+            }
+            
+            # Filter state_dict to only include valid fields (backward compatibility)
+            brain_state_dict = {}
+            for key, value in state_dict.items():
+                if key in valid_fields:
+                    brain_state_dict[key] = value
+                else:
+                    print(f"⚠️ Skipping unknown field '{key}' from saved data (backward compatibility)")
+            
+            # Set patterns from processed data
             brain_state_dict['patterns'] = patterns
             
             # Ensure required fields exist with defaults
