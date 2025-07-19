@@ -50,9 +50,29 @@ class MinimalBrain:
         self.temporal_dim = temporal_dim or brain_config.get('temporal_dim', 4)
         max_patterns = max_patterns or brain_config.get('max_patterns', 100000)
         
-        # Timing configuration
-        self.target_cycle_time_ms = brain_config.get('target_cycle_time_ms', 50.0)
+        # Biological timing configuration (Phase 7: gamma frequency)
+        self.target_cycle_time_ms = brain_config.get('target_cycle_time_ms', 25.0)  # Gamma frequency: 40Hz = 25ms
         self.target_cycle_time_s = self.target_cycle_time_ms / 1000.0
+        
+        # Initialize biological oscillator for Phase 7 parallel processing
+        self.biological_oscillator = None
+        if brain_config.get('enable_biological_timing', True):
+            from .vector_stream.biological_oscillator import create_biological_oscillator
+            oscillator_config = {
+                'gamma_freq': 1000.0 / self.target_cycle_time_ms,  # Convert ms to Hz
+                'theta_freq': brain_config.get('theta_freq', 6.0)
+            }
+            self.biological_oscillator = create_biological_oscillator(oscillator_config, quiet_mode)
+        
+        # Initialize Phase 7b: Parallel Brain Coordinator for async stream processing
+        self.parallel_coordinator = None
+        if brain_config.get('enable_parallel_processing', False) and self.biological_oscillator:
+            from .vector_stream.parallel_brain_coordinator import ParallelBrainCoordinator
+            self.parallel_coordinator = ParallelBrainCoordinator(
+                None,  # Will be set after vector brain initialization
+                self.biological_oscillator,
+                quiet_mode
+            )
         
         # Log dimension configuration sources for traceability
         if not quiet_mode:
@@ -64,8 +84,11 @@ class MinimalBrain:
             print(f"   Sensory: {self.sensory_dim}D (from {sensory_source})")
             print(f"   Motor: {self.motor_dim}D (from {motor_source})")
             print(f"   Temporal: {self.temporal_dim}D (from {temporal_source})")
-            print(f"   Cycle time: {self.target_cycle_time_ms}ms (from {timing_source})")
+            timing_mode = "biological_gamma" if self.biological_oscillator else "traditional"
+            print(f"   Cycle time: {self.target_cycle_time_ms}ms (from {timing_source}, mode: {timing_mode})")
             print(f"   Type: {self.brain_type} (from {'param' if brain_type else ('config' if 'type' in brain_config else 'default')})")
+            parallel_status = "enabled" if self.parallel_coordinator else "disabled"
+            print(f"   Parallel processing: {parallel_status}")
         
         # Hardware adaptation system
         self.hardware_adaptation = get_hardware_adaptation()
@@ -87,6 +110,10 @@ class MinimalBrain:
             )
         else:
             raise ValueError(f"Unknown brain_type: {self.brain_type}. Options: 'sparse_goldilocks', 'minimal'")
+        
+        # Connect parallel coordinator to vector brain after initialization
+        if self.parallel_coordinator:
+            self.parallel_coordinator.set_vector_brain(self.vector_brain)
         
         # Initialize cognitive autopilot for adaptive intensity control
         self.cognitive_autopilot = CognitiveAutopilot()
@@ -182,8 +209,13 @@ class MinimalBrain:
         else:
             processed_input = sensory_input
         
-        # Process through vector stream brain
-        predicted_action, vector_brain_state = self.vector_brain.process_sensory_input(processed_input)
+        # Process through vector stream brain (with optional parallel coordination)
+        if self.parallel_coordinator and self.parallel_coordinator.parallel_mode_enabled:
+            # Use parallel processing with biological coordination
+            predicted_action, vector_brain_state = self.parallel_coordinator.process_with_parallel_coordination(processed_input)
+        else:
+            # Use traditional sequential processing
+            predicted_action, vector_brain_state = self.vector_brain.process_sensory_input(processed_input)
         
         # Adjust action dimensions if requested
         if action_dimensions and action_dimensions != len(predicted_action):
@@ -261,8 +293,20 @@ class MinimalBrain:
         memory_usage_mb = 50.0  # Vector streams use much less memory than experience storage
         record_brain_cycle_performance(cycle_time_ms, memory_usage_mb)
         
-        # Enforce target cycle time if configured (biological timing vs emergent timing)
-        if self.target_cycle_time_s > 0:
+        # Enforce biological timing constraints (Phase 7: gamma-frequency cycles)
+        if self.biological_oscillator:
+            # Use biological oscillator for natural gamma-frequency timing
+            timing = self.biological_oscillator.get_current_timing()
+            remaining_budget = self.biological_oscillator.estimate_processing_budget()
+            
+            # If we have remaining time in the gamma cycle, sleep to maintain biological rhythm
+            if remaining_budget > 0.001:  # At least 1ms remaining
+                time.sleep(remaining_budget)
+                # Update cycle time to include biological sleep
+                cycle_time = time.time() - process_start_time
+                cycle_time_ms = cycle_time * 1000
+        elif self.target_cycle_time_s > 0:
+            # Fallback to traditional timing if biological oscillator disabled
             remaining_time = self.target_cycle_time_s - cycle_time
             if remaining_time > 0:
                 time.sleep(remaining_time)
@@ -270,7 +314,7 @@ class MinimalBrain:
                 cycle_time = time.time() - process_start_time
                 cycle_time_ms = cycle_time * 1000
         
-        # Compile brain state
+        # Compile brain state with biological timing information
         brain_state = {
             'total_cycles': self.total_cycles,
             'prediction_confidence': confidence,
@@ -281,9 +325,34 @@ class MinimalBrain:
             'hardware_adaptive_limits': self.hardware_adaptation.get_cognitive_limits(),
             'cognitive_autopilot': autopilot_state,
             'brain_uptime': time.time() - self.brain_start_time,
-            'architecture': 'vector_stream',
+            'architecture': 'vector_stream_biological' if self.biological_oscillator else 'vector_stream',
             **vector_brain_state  # Include vector stream specific state
         }
+        
+        # Ensure parallel_processing flag is always present for compatibility
+        if 'parallel_processing' not in brain_state:
+            brain_state['parallel_processing'] = bool(
+                self.parallel_coordinator and 
+                self.parallel_coordinator.parallel_mode_enabled and
+                vector_brain_state.get('parallel_processing', False)
+            )
+        
+        # Add biological timing information if available
+        if self.biological_oscillator:
+            coordination_signals = self.biological_oscillator.get_coordination_signal()
+            oscillator_stats = self.biological_oscillator.get_oscillator_stats()
+            brain_state.update({
+                'biological_timing': {
+                    'gamma_phase': coordination_signals['gamma_phase'],
+                    'theta_phase': coordination_signals['theta_phase'],
+                    'current_phase': oscillator_stats['current_phase'],
+                    'binding_window_active': coordination_signals['binding_window'],
+                    'consolidation_active': coordination_signals['consolidation_window'],
+                    'gamma_cycles_completed': coordination_signals['cycle_count'],
+                    'theta_cycles_completed': coordination_signals['theta_cycle_count'],
+                    'avg_gamma_frequency': oscillator_stats['avg_gamma_frequency']
+                }
+            })
         
         # Feature-flagged brain cycle logging after brain state is compiled
         if self.logger and self.config.get('logging', {}).get('log_brain_cycles', False):
@@ -428,6 +497,10 @@ class MinimalBrain:
     
     def finalize_session(self):
         """Finalize brain session - call on shutdown."""
+        # Cleanup parallel coordinator
+        if self.parallel_coordinator:
+            self.parallel_coordinator.cleanup()
+        
         # Save persistent brain state (blocking - critical for continuity)
         if self.enable_persistence and self.persistence_manager:
             self.persistence_manager.save_brain_state_blocking(self)
@@ -467,7 +540,29 @@ class MinimalBrain:
             detailed_stats = self.vector_brain.get_brain_statistics()
             basic_stats.update(detailed_stats)
         
+        # Add parallel processing stats if available
+        if self.parallel_coordinator:
+            parallel_stats = self.parallel_coordinator.get_performance_comparison()
+            basic_stats['parallel_processing'] = parallel_stats
+        
         return basic_stats
+    
+    def enable_parallel_processing(self, enabled: bool = True):
+        """Enable or disable parallel processing mode."""
+        if self.parallel_coordinator:
+            self.parallel_coordinator.set_parallel_mode(enabled)
+            return True
+        else:
+            if not self.quiet_mode:
+                print("⚠️ Parallel processing not available (enable_parallel_processing=True in config required)")
+            return False
+    
+    def get_parallel_performance_stats(self) -> Dict[str, Any]:
+        """Get detailed parallel processing performance statistics."""
+        if self.parallel_coordinator:
+            return self.parallel_coordinator.get_performance_comparison()
+        else:
+            return {'parallel_processing_available': False}
     
     def _apply_recovered_state(self, recovered_state):
         """Apply recovered brain state to the brain (biological wake-up process)."""

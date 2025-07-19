@@ -45,7 +45,8 @@ def profile_brain_cycle_detailed():
                 'type': 'sparse_goldilocks',
                 'sensory_dim': 16,
                 'motor_dim': 4,
-                'target_cycle_time_ms': 0  # Disable sleep padding
+                'target_cycle_time_ms': 25.0,  # Phase 7: 40Hz gamma frequency
+                'enable_biological_timing': True
             },
             'logging': {
                 'log_brain_cycles': True,  # Keep logging to measure overhead
@@ -146,7 +147,8 @@ def profile_brain_loop_cprofile():
                 'type': 'sparse_goldilocks',
                 'sensory_dim': 16,
                 'motor_dim': 4,
-                'target_cycle_time_ms': 0
+                'target_cycle_time_ms': 25.0,  # Phase 7: 40Hz gamma frequency
+                'enable_biological_timing': True
             },
             'logging': {
                 'log_brain_cycles': True
@@ -197,7 +199,7 @@ def profile_logging_overhead():
         # Test with logging enabled
         config_with_logging = {
             'memory': {'persistent_memory_path': temp_dir, 'enable_persistence': False},
-            'brain': {'type': 'sparse_goldilocks', 'target_cycle_time_ms': 0},
+            'brain': {'type': 'sparse_goldilocks', 'target_cycle_time_ms': 25.0, 'enable_biological_timing': True},
             'logging': {'log_brain_cycles': True}
         }
         
@@ -219,7 +221,7 @@ def profile_logging_overhead():
         # Test with logging disabled
         config_no_logging = {
             'memory': {'persistent_memory_path': temp_dir, 'enable_persistence': False},
-            'brain': {'type': 'sparse_goldilocks', 'target_cycle_time_ms': 0},
+            'brain': {'type': 'sparse_goldilocks', 'target_cycle_time_ms': 25.0, 'enable_biological_timing': True},
             'logging': {'log_brain_cycles': False}
         }
         

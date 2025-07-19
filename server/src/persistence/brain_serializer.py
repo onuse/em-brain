@@ -551,11 +551,46 @@ class BrainSerializer:
     
     def from_dict(self, state_dict: Dict[str, Any]) -> SerializedBrainState:
         """Create SerializedBrainState from dictionary."""
-        # Convert pattern dictionaries to SerializedPattern objects
-        patterns = []
-        for pattern_dict in state_dict['patterns']:
-            patterns.append(SerializedPattern(**pattern_dict))
-        
-        # Create brain state
-        state_dict['patterns'] = patterns
-        return SerializedBrainState(**state_dict)
+        try:
+            # Convert pattern dictionaries to SerializedPattern objects
+            patterns = []
+            patterns_data = state_dict.get('patterns', [])
+            
+            if patterns_data is None:
+                patterns_data = []
+            
+            for pattern_dict in patterns_data:
+                if isinstance(pattern_dict, dict):
+                    patterns.append(SerializedPattern(**pattern_dict))
+                else:
+                    print(f"⚠️ Skipping invalid pattern data: {type(pattern_dict)}")
+            
+            # Create a copy of state_dict to avoid modifying the original
+            brain_state_dict = state_dict.copy()
+            brain_state_dict['patterns'] = patterns
+            
+            # Ensure required fields exist with defaults
+            brain_state_dict.setdefault('version', '1.0')
+            brain_state_dict.setdefault('session_count', 1)
+            brain_state_dict.setdefault('total_cycles', 0)
+            brain_state_dict.setdefault('total_experiences', 0)
+            brain_state_dict.setdefault('save_timestamp', time.time())
+            brain_state_dict.setdefault('confidence_state', {})
+            brain_state_dict.setdefault('hardware_adaptations', {})
+            brain_state_dict.setdefault('cross_stream_associations', {})
+            brain_state_dict.setdefault('brain_type', 'sparse_goldilocks')
+            brain_state_dict.setdefault('sensory_dim', 16)
+            brain_state_dict.setdefault('motor_dim', 4)
+            brain_state_dict.setdefault('temporal_dim', 4)
+            brain_state_dict.setdefault('learning_history', [])
+            brain_state_dict.setdefault('emergence_events', [])
+            
+            return SerializedBrainState(**brain_state_dict)
+            
+        except Exception as e:
+            print(f"❌ Error in brain_serializer.from_dict: {e}")
+            print(f"   State dict keys: {list(state_dict.keys()) if state_dict else 'None'}")
+            if state_dict and 'patterns' in state_dict:
+                print(f"   Patterns type: {type(state_dict['patterns'])}")
+                print(f"   Patterns length: {len(state_dict['patterns']) if hasattr(state_dict['patterns'], '__len__') else 'No length'}")
+            raise

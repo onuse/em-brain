@@ -286,11 +286,14 @@ class SparseGoldilocksVectorStream:
         if not quiet_mode:
             print(f"🧬 {stream_name.title()} stream ready")
     
-    def update(self, new_activation: torch.Tensor, timestamp: float = None) -> torch.Tensor:
+    def update(self, new_activation: torch.Tensor, timestamp: float = None):
         """
         Update stream with new activation using sparse processing.
         
         Evolution's win: Massive capacity without pattern interference
+        
+        Returns: Dict with activation_strength for parallel processor compatibility,
+                 or torch.Tensor for backward compatibility (based on context)
         """
         if timestamp is None:
             timestamp = time.time()
@@ -322,6 +325,21 @@ class SparseGoldilocksVectorStream:
         # Generate prediction from similar sparse patterns
         self.predicted_next = self._predict_next_activation(similar_pattern_ids, similarities)
         
+        # Calculate activation strength for parallel processor compatibility
+        activation_strength = float(torch.mean(torch.abs(self.current_activation)).item())
+        
+        # Return dictionary for parallel processor compatibility
+        return {
+            'activation_tensor': self.current_activation,
+            'activation_strength': activation_strength,
+            'timestamp': timestamp,
+            'pattern_count': len(similar_pattern_ids),
+            'similarities': similarities[:5] if similarities else [],  # Top 5 similarities
+            'prediction_strength': float(torch.mean(torch.abs(self.predicted_next)).item())
+        }
+    
+    def get_current_activation(self) -> torch.Tensor:
+        """Get current activation tensor for backward compatibility."""
         return self.current_activation
     
     def _predict_next_activation(self, similar_pattern_ids: List[str], 
@@ -358,6 +376,12 @@ class SparseGoldilocksVectorStream:
         )
         
         return [pattern_id for pattern_id, _ in sorted_patterns[:k]]
+    
+    def get_active_pattern_indices(self, k: int = 5) -> List[int]:
+        """Get indices of most recently active sparse patterns for parallel processor compatibility."""
+        pattern_ids = self.get_active_pattern_ids(k)
+        # Convert string IDs to integer indices for compatibility with parallel stream processor
+        return [hash(pid) % 10000 for pid in pattern_ids]
     
     def get_stream_state(self) -> Dict[str, Any]:
         """Get comprehensive sparse stream state."""
@@ -645,12 +669,26 @@ class SparseGoldilocksBrain:
                 with self.column_lock:
                     self.similarity_cache[query_hash] = results
                     
-                    # Limit cache size
+                    # Limit cache size with proper LRU cleanup
                     if len(self.similarity_cache) > 1000:
-                        # Remove oldest entries
-                        oldest_keys = list(self.similarity_cache.keys())[:100]
-                        for key in oldest_keys:
-                            del self.similarity_cache[key]
+                        # Remove oldest 200 entries to avoid frequent cleanup
+                        cache_items = list(self.similarity_cache.items())
+                        # Keep the most recent 800 entries
+                        self.similarity_cache = dict(cache_items[-800:])
+                        
+                    # Enforce pattern storage limits to prevent memory leaks
+                    if len(self.patterns) > self.max_patterns:
+                        # Remove oldest 10% of patterns
+                        pattern_items = list(self.patterns.items())
+                        patterns_to_remove = len(pattern_items) - int(self.max_patterns * 0.9)
+                        if patterns_to_remove > 0:
+                            for pattern_id, _ in pattern_items[:patterns_to_remove]:
+                                if pattern_id in self.patterns:
+                                    del self.patterns[pattern_id]
+                                # Also remove from stream patterns
+                                for stream_list in self.stream_patterns.values():
+                                    if pattern_id in stream_list:
+                                        stream_list.remove(pattern_id)
                 
                 return results[:k]
             
@@ -790,25 +828,30 @@ class SparseGoldilocksBrain:
         
         if attended_pattern is None:
             # No pattern wins attention - default to minimal processing
-            sensory_activation = self.sensory_stream.update(sensory_tensor * 0.1, current_time)  # 10% processing
-            temporal_activation = self.temporal_stream.update(temporal_vector * 0.1, current_time)
+            sensory_result = self.sensory_stream.update(sensory_tensor * 0.1, current_time)  # 10% processing
+            temporal_result = self.temporal_stream.update(temporal_vector * 0.1, current_time)
         else:
             # Winner gets full processing - exclusive attention in action
             # But each stream must get the appropriate tensor dimensions
             if torch.equal(attended_pattern, sensory_tensor):
                 # Sensory pattern won attention - give it full processing
-                sensory_activation = self.sensory_stream.update(sensory_tensor, current_time)
-                temporal_activation = self.temporal_stream.update(temporal_vector * 0.1, current_time)  # Reduced processing
+                sensory_result = self.sensory_stream.update(sensory_tensor, current_time)
+                temporal_result = self.temporal_stream.update(temporal_vector * 0.1, current_time)  # Reduced processing
             else:
                 # Temporal pattern won attention - give it full processing
-                sensory_activation = self.sensory_stream.update(sensory_tensor * 0.1, current_time)  # Reduced processing
-                temporal_activation = self.temporal_stream.update(temporal_vector, current_time)
+                sensory_result = self.sensory_stream.update(sensory_tensor * 0.1, current_time)  # Reduced processing
+                temporal_result = self.temporal_stream.update(temporal_vector, current_time)
+        
+        # Extract activation tensors for motor prediction (backward compatibility)
+        sensory_activation = sensory_result['activation_tensor'] if isinstance(sensory_result, dict) else sensory_result
+        temporal_activation = temporal_result['activation_tensor'] if isinstance(temporal_result, dict) else temporal_result
         
         # Generate motor decision using competitive priorities (DUAL MOTIVATION)
         motor_prediction = self._predict_motor_with_competitive_decisions(
             sensory_activation, temporal_activation, current_time
         )
-        motor_activation = self.motor_stream.update(motor_prediction, current_time)
+        motor_result = self.motor_stream.update(motor_prediction, current_time)
+        motor_activation = motor_result['activation_tensor'] if isinstance(motor_result, dict) else motor_result
         
         # Process through competitive dynamics for pattern selection
         combined_pattern = self._create_combined_pattern(

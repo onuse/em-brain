@@ -247,9 +247,15 @@ class ConsolidationEngine:
                 return None
             
             brain_dict.pop('incremental_metadata', None)
-            merged_state = self.brain_serializer.from_dict(brain_dict)
-            incremental_files = incremental_files[1:]  # Skip first file
-            print(f"📖 Initial state: {len(merged_state.patterns)} patterns")
+            
+            try:
+                merged_state = self.brain_serializer.from_dict(brain_dict)
+                incremental_files = incremental_files[1:]  # Skip first file
+                print(f"📖 Initial state: {len(merged_state.patterns)} patterns")
+            except Exception as e:
+                print(f"❌ Failed to parse initial file {first_file['filename']}: {e}")
+                print(f"   File keys: {list(brain_dict.keys()) if brain_dict else 'None'}")
+                return None
         
         # Merge each incremental file
         for file_info in incremental_files:
@@ -262,10 +268,16 @@ class ConsolidationEngine:
                 continue
             
             brain_dict.pop('incremental_metadata', None)
-            incremental_state = self.brain_serializer.from_dict(brain_dict)
             
-            # Merge this incremental state
-            merged_state = self._merge_two_states(merged_state, incremental_state)
+            try:
+                incremental_state = self.brain_serializer.from_dict(brain_dict)
+                
+                # Merge this incremental state
+                merged_state = self._merge_two_states(merged_state, incremental_state)
+            except Exception as e:
+                print(f"❌ Failed to parse incremental file {file_info['filename']}: {e}")
+                print(f"   File keys: {list(brain_dict.keys()) if brain_dict else 'None'}")
+                continue  # Skip this file and continue with others
         
         # Update consolidation metadata
         merged_state.save_timestamp = time.time()
