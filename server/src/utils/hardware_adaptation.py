@@ -68,6 +68,7 @@ class HardwareAdaptation:
     """
     
     def __init__(self):
+        self.enabled = True  # Hardware adaptation enabled by default
         self.hardware_profile: Optional[HardwareProfile] = None
         self.performance_history = []  # Recent cycle times for adaptation
         self.adaptation_rate = 0.1  # How aggressively to adapt (conservative)
@@ -77,6 +78,10 @@ class HardwareAdaptation:
         self.target_cycle_time_ms = 50.0  # Ideal: 50ms cycles
         self.max_acceptable_cycle_time_ms = 100.0  # Upper bound: 100ms
         self.memory_pressure_threshold = 0.8  # Start adapting at 80% memory usage
+        
+        # Performance reporting
+        self.last_cycle_report = time.time()
+        self.cycle_report_interval = 60.0  # Report every 60 seconds
         
         print("🔧 Hardware adaptation system initializing...")
         self._discover_hardware()
@@ -263,9 +268,37 @@ class HardwareAdaptation:
         self.hardware_profile.memory_pressure = min(1.0, memory_usage_mb / (self.hardware_profile.total_memory_gb * 1024))
         self.hardware_profile.cpu_utilization = min(1.0, psutil.cpu_percent(interval=None) / 100.0)
         
+        # Periodic cycle time reporting
+        self._maybe_report_cycle_performance()
+        
         # Check if adaptation is needed
         if len(self.performance_history) >= self.min_samples_for_adaptation:
             self._consider_adaptation()
+    
+    def _maybe_report_cycle_performance(self):
+        """Report cycle time performance every 60 seconds."""
+        current_time = time.time()
+        if current_time - self.last_cycle_report > self.cycle_report_interval:
+            if len(self.performance_history) >= 5:  # Need some samples
+                recent_cycles = [p['cycle_time_ms'] for p in self.performance_history[-10:]]
+                avg_cycle_time = np.mean(recent_cycles)
+                min_cycle_time = np.min(recent_cycles)
+                max_cycle_time = np.max(recent_cycles)
+                
+                # Performance status
+                if avg_cycle_time <= self.target_cycle_time_ms:
+                    status = "✅ OPTIMAL"
+                elif avg_cycle_time <= self.max_acceptable_cycle_time_ms:
+                    status = "⚠️ ACCEPTABLE"
+                else:
+                    status = "🚨 DEGRADED"
+                
+                print(f"⏱️ Cycle Performance Report ({status}):")
+                print(f"   Average: {avg_cycle_time:.1f}ms (target: {self.target_cycle_time_ms:.0f}ms)")
+                print(f"   Range: {min_cycle_time:.1f}ms - {max_cycle_time:.1f}ms")
+                print(f"   Samples: {len(self.performance_history)} cycles tracked")
+            
+            self.last_cycle_report = current_time
     
     def _consider_adaptation(self):
         """Consider adapting cognitive limits based on recent performance."""

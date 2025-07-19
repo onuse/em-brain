@@ -20,6 +20,17 @@ from datetime import datetime
 from typing import Dict, Any, List, Optional
 from collections import deque, defaultdict
 import numpy as np
+from pathlib import Path
+
+# Async logging imports
+from .async_logger import AsyncLogger, LoggerConfig, LogLevel
+from .loggable_objects import (
+    LoggableBrainState, 
+    LoggableEmergenceEvent, 
+    LoggablePerformanceMetrics,
+    LoggableVitalSigns,
+    LoggableSystemEvent
+)
 
 
 class BrainLogger:
@@ -34,7 +45,8 @@ class BrainLogger:
     - Emergent behavior detection
     """
     
-    def __init__(self, session_name: str = None, log_dir: str = "logs", config: dict = None):
+    def __init__(self, session_name: str = None, log_dir: str = "logs", config: dict = None, 
+                 enable_async: bool = True, quiet_mode: bool = False):
         """
         Initialize brain logging system.
         
@@ -42,6 +54,8 @@ class BrainLogger:
             session_name: Name for this learning session
             log_dir: Directory to store log files (overridden by config if provided)
             config: Configuration dict that may contain logging settings
+            enable_async: Use async logging for performance (default: True)
+            quiet_mode: Suppress console output for async logger
         """
         self.session_name = session_name or f"brain_session_{int(time.time())}"
         
@@ -52,9 +66,22 @@ class BrainLogger:
             self.log_dir = log_dir
             
         self.session_start = time.time()
+        self.enable_async = enable_async
         
         # Ensure log directory exists
         os.makedirs(self.log_dir, exist_ok=True)
+        
+        # Initialize async logger if enabled
+        self.async_logger = None
+        if enable_async:
+            async_config = LoggerConfig(
+                log_directory=Path(self.log_dir),
+                max_queue_size=5000,
+                batch_size=25,
+                flush_interval_seconds=1.0,
+                drop_policy="drop_oldest"
+            )
+            self.async_logger = AsyncLogger(async_config, quiet_mode=quiet_mode)
         
         # Log file paths
         self.brain_state_log = os.path.join(self.log_dir, f"{self.session_name}_brain_state.jsonl")
@@ -112,6 +139,28 @@ class BrainLogger:
             experience_count: Current experience count
             additional_data: Additional context to log
         """
+        if self.async_logger and self.enable_async:
+            # Async logging - create LoggableObject quickly (<1ms)
+            loggable_state = LoggableBrainState(
+                brain=brain,
+                experience_count=experience_count,
+                additional_data=additional_data,
+                log_level=LogLevel.DEBUG
+            )
+            
+            # Queue for background processing (should be <1ms)
+            success = self.async_logger.please_log(loggable_state)
+            if not success:
+                # Fallback to synchronous if async fails
+                self._log_brain_state_sync(brain, experience_count, additional_data)
+        else:
+            # Synchronous fallback
+            self._log_brain_state_sync(brain, experience_count, additional_data)
+        
+        self.total_experiences_logged = experience_count
+    
+    def _log_brain_state_sync(self, brain, experience_count: int, additional_data: Dict = None):
+        """Synchronous brain state logging (fallback)."""
         timestamp = time.time()
         
         # Get comprehensive brain stats
@@ -142,8 +191,6 @@ class BrainLogger:
         # Write to log file
         with open(self.brain_state_log, 'a') as f:
             f.write(json.dumps(state_entry) + '\n')
-        
-        self.total_experiences_logged = experience_count
         
         # Check for emergence patterns
         self._detect_emergence_patterns(state_entry)
@@ -264,6 +311,39 @@ class BrainLogger:
             evidence: Data supporting the emergence claim
             significance: Significance score (0.0-1.0)
         """
+        if self.async_logger and self.enable_async:
+            # Async logging - create LoggableObject quickly
+            loggable_event = LoggableEmergenceEvent(
+                event_type=event_type,
+                description=description,
+                evidence=evidence,
+                significance=significance,
+                experience_count=self.total_experiences_logged,
+                log_level=LogLevel.VITAL
+            )
+            
+            success = self.async_logger.please_log(loggable_event)
+            if not success:
+                self._log_emergence_sync(event_type, description, evidence, significance)
+        else:
+            self._log_emergence_sync(event_type, description, evidence, significance)
+        
+        # Always add to memory for pattern detection
+        emergence_entry = {
+            "timestamp": time.time(),
+            "session_time": time.time() - self.session_start,
+            "event_type": event_type,
+            "description": description,
+            "evidence": evidence,
+            "significance": significance,
+            "experience_count": self.total_experiences_logged
+        }
+        self.emergence_events.append(emergence_entry)
+        
+        print(f"Emergence detected: {event_type} - {description} (significance: {significance:.3f})")
+    
+    def _log_emergence_sync(self, event_type: str, description: str, evidence: Dict, significance: float):
+        """Synchronous emergence event logging (fallback)."""
         timestamp = time.time()
         
         emergence_entry = {
@@ -276,13 +356,9 @@ class BrainLogger:
             "experience_count": self.total_experiences_logged
         }
         
-        self.emergence_events.append(emergence_entry)
-        
         # Write to log file
         with open(self.emergence_log, 'a') as f:
             f.write(json.dumps(emergence_entry) + '\n')
-        
-        print(f"Emergence detected: {event_type} - {description} (significance: {significance:.3f})")
     
     def _compute_change_magnitude(self, before: Dict, after: Dict) -> float:
         """Compute magnitude of change between before/after states."""
@@ -422,6 +498,13 @@ class BrainLogger:
     def close_session(self):
         """Close logging session and generate final report."""
         print(f"\nClosing logging session: {self.session_name}")
+        
+        # Shutdown async logger if enabled
+        if self.async_logger:
+            stats = self.async_logger.get_stats()
+            print(f"Async logging stats: {stats['total_logs_written']} written, {stats['total_logs_dropped']} dropped")
+            self.async_logger.shutdown()
+        
         report = self.generate_session_report()
         
         print(f"Session duration: {report['session_summary']['duration_hours']:.2f} hours")

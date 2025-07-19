@@ -34,6 +34,7 @@ from .sparse_representations import (
 from .goldilocks_brain import StreamConfig, CrossStreamCoactivation
 from .emergent_temporal_constraints import EmergentTemporalHierarchy
 from .emergent_competitive_dynamics import EmergentCompetitiveDynamics
+from .emergent_confidence_system import EmergentConfidenceSystem
 # Removed imports for deleted files:
 # from .unified_cortical_storage import UnifiedCorticalStorage  
 # from .emergent_hierarchical_abstraction import EmergentHierarchicalAbstraction, PhysicalConstraints
@@ -96,12 +97,48 @@ class UnifiedCorticalStreamStorage:
         
         self.current_time = timestamp
         
+        # Calculate similarity before storage for event tracking (same-stream only)
+        existing_similarities = []
+        if len(self.unified_storage.patterns) > 0:
+            # Sample up to 10 recent patterns from the SAME STREAM for similarity check
+            same_stream_patterns = []
+            for pattern_id, pattern_tensor in self.unified_storage.patterns.items():
+                if pattern_id.startswith(self.stream_name) and pattern_tensor.shape == dense_pattern.shape:
+                    same_stream_patterns.append(pattern_tensor)
+            
+            # Only compare with patterns from the same stream and same dimensions
+            sample_patterns = same_stream_patterns[-10:]  # Last 10 from same stream
+            for existing_pattern in sample_patterns:
+                try:
+                    sim = torch.cosine_similarity(dense_pattern.flatten(), existing_pattern.flatten(), dim=0).item()
+                    existing_similarities.append(sim)
+                except RuntimeError:
+                    # Skip if dimensions still don't match
+                    continue
+        
+        max_similarity = max(existing_similarities) if existing_similarities else 0.0
+        
         # Store through unified cortical system
         pattern_id = self.unified_storage.store_pattern(
             dense_pattern, 
             stream_type=self.stream_name,
             timestamp=timestamp
         )
+        
+        # Track storage event for logging
+        storage_event = {
+            'pattern_id': pattern_id,
+            'similarity_score': max_similarity,
+            'storage_decision': 'stored',
+            'stream_name': self.stream_name,
+            'timestamp': timestamp,
+            'before_state': {'total_patterns': len(self.unified_storage.patterns) - 1},
+            'after_state': {'total_patterns': len(self.unified_storage.patterns)}
+        }
+        
+        # Store event in parent brain for logging access
+        if hasattr(self, 'parent_brain'):
+            self.parent_brain.last_pattern_storage_event = storage_event
         
         # Track frequency and timing (stream-specific)
         self.pattern_frequencies[pattern_id] = 1.0
@@ -693,15 +730,22 @@ class SparseGoldilocksBrain:
         self.start_time = time.time()
         self.total_cycles = 0
         
+        # Pattern storage event tracking for logging
+        self.last_pattern_storage_event = None
+        
+        # Emergent confidence system (Evolution's Win #4)
+        self.emergent_confidence = EmergentConfidenceSystem(quiet_mode=quiet_mode)
+        
         if not quiet_mode:
             print(f"\n🧬 SPARSE GOLDILOCKS BRAIN INITIALIZED")
             print(f"   🎯 Evolution's Win #1: Sparse Distributed Representations")
             print(f"   ⏱️  Evolution's Win #2: Emergent Temporal Hierarchies")
             print(f"   🏆 Evolution's Win #3: Emergent Competitive Dynamics")
-            print(f"   🧠 Core Feature: Exclusive Attention Integration")
+            print(f"   🧠 Evolution's Win #4: Emergent Confidence Dynamics")
+            print(f"   ⚡ Core Feature: Exclusive Attention Integration")
             print(f"   Capacity: {max_patterns:,} patterns per stream")
             print(f"   Memory: ~{self._calculate_total_memory_usage():.1f}MB total")
-            print(f"   🚀 Massive capacity + temporal intelligence + competitive emergence + exclusive attention enabled")
+            print(f"   🚀 Massive capacity + temporal intelligence + competitive emergence + dynamic confidence + exclusive attention enabled")
     
     def process_sensory_input(self, sensory_input: List[float], 
                             action_dimensions: int = None) -> Tuple[List[float], Dict[str, Any]]:
@@ -811,12 +855,13 @@ class SparseGoldilocksBrain:
             'cycle_time_ms': cycle_time * 1000,
             'architecture': 'sparse_goldilocks_exclusive_attention',
             'prediction_confidence': self._estimate_prediction_confidence(),
-            'evolutionary_wins': ['sparse_distributed_representations', 'emergent_temporal_constraints', 'emergent_competitive_dynamics', 'exclusive_attention_integration'],
+            'evolutionary_wins': ['sparse_distributed_representations', 'emergent_temporal_constraints', 'emergent_competitive_dynamics', 'exclusive_attention_integration', 'emergent_confidence_dynamics'],
             'constraint_pressure': abstraction_result.get('emergence_pressure', 0.0),
             'optimization_suggestions': abstraction_result.get('optimization_suggestions', []),
             'emergent_learning_rate': plasticity_result.get('learning_rate_emergent', 0.0),
             'emergent_forgetting_rate': plasticity_result.get('forgetting_rate_emergent', 0.0),
-            'total_system_energy': plasticity_result.get('energy_state', {}).get('total', 0.0)
+            'total_system_energy': plasticity_result.get('energy_state', {}).get('total', 0.0),
+            'confidence_dynamics': self.emergent_confidence.get_confidence_state()
         }
         
         # DUAL MOTIVATION SYSTEM: Update pattern confidence in competitive dynamics
@@ -833,6 +878,21 @@ class SparseGoldilocksBrain:
             else:
                 motor_output = motor_output + [0.0] * (action_dimensions - len(motor_output))
         
+        # Update emergent confidence system with current prediction dynamics
+        self.emergent_confidence.update_confidence(
+            motor_prediction=motor_output,
+            sensory_input=sensory_input,
+            actual_outcome=None  # Could be provided later for accuracy tracking
+        )
+        
+        # Update pattern storage event reference for logging
+        if hasattr(self.sensory_stream, 'last_pattern_storage_event'):
+            self.last_pattern_storage_event = getattr(self.sensory_stream, 'last_pattern_storage_event', None)
+        elif hasattr(self.motor_stream, 'last_pattern_storage_event'):
+            self.last_pattern_storage_event = getattr(self.motor_stream, 'last_pattern_storage_event', None)
+        elif hasattr(self.temporal_stream, 'last_pattern_storage_event'):
+            self.last_pattern_storage_event = getattr(self.temporal_stream, 'last_pattern_storage_event', None)
+            
         return motor_output, brain_state
     
     def _try_fast_reflex_path(self, sensory_tensor: torch.Tensor, current_time: float) -> Optional[Tuple[List[float], Dict[str, Any]]]:
@@ -1065,11 +1125,12 @@ class SparseGoldilocksBrain:
         motor_dim = self.motor_config.dim
         
         # Standard motor options (can be expanded)
+        # CRITICAL FIX: Use positive values at correct indices for np.argmax() compatibility
         options = [
-            torch.tensor([1.0, 0.0, 0.0, 0.0][:motor_dim]),  # Move forward
-            torch.tensor([0.0, 1.0, 0.0, 0.0][:motor_dim]),  # Turn left  
-            torch.tensor([0.0, -1.0, 0.0, 0.0][:motor_dim]), # Turn right
-            torch.tensor([0.0, 0.0, 0.0, 0.0][:motor_dim]),  # Stop/stay still
+            torch.tensor([1.0, 0.0, 0.0, 0.0][:motor_dim]),  # Move forward (index 0)
+            torch.tensor([0.0, 1.0, 0.0, 0.0][:motor_dim]),  # Turn left (index 1)
+            torch.tensor([0.0, 0.0, 1.0, 0.0][:motor_dim]),  # Turn right (index 2) - FIXED!
+            torch.tensor([0.0, 0.0, 0.0, 1.0][:motor_dim]),  # Stop/stay still (index 3) - also fixed for consistency
         ]
         
         # Ensure all options match motor dimension
@@ -1231,9 +1292,8 @@ class SparseGoldilocksBrain:
         unified_stats = self.unified_storage.get_unified_stats()
         total_patterns = unified_stats['total_patterns']
         
-        # Confidence grows logarithmically with sparse pattern count
-        confidence = min(0.95, np.log10(max(1, total_patterns)) / 6.0)
-        return confidence
+        # Use emergent confidence system instead of static pattern count
+        return self.emergent_confidence.current_confidence
     
     def _exclusive_attention_selection(self, sensory_tensor: torch.Tensor, temporal_vector: torch.Tensor, current_time: float) -> Optional[torch.Tensor]:
         """

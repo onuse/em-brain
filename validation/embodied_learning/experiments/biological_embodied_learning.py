@@ -21,7 +21,7 @@ import datetime
 import json
 import numpy as np
 from typing import Dict, List, Tuple, Optional
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 import matplotlib.pyplot as plt
 from pathlib import Path
 
@@ -78,6 +78,11 @@ class SessionResults:
     # Behavioral data
     action_distribution: Dict[str, int]
     trajectory_complexity: float
+    
+    # Confidence dynamics
+    confidence_progression: List[float] = field(default_factory=list)
+    confidence_patterns: List[str] = field(default_factory=list)
+    final_confidence_state: Dict = field(default_factory=dict)
     
     def to_dict(self):
         return asdict(self)
@@ -826,11 +831,11 @@ def main():
     
     parser = argparse.ArgumentParser(description='Biological Embodied Learning Experiment')
     parser.add_argument('--hours', type=float, default=2.0,
-                       help='Experiment duration in hours')
+                       help='Experiment duration in hours (use 0.083 for 5min, 0.33 for 20min)')
     parser.add_argument('--session-minutes', type=int, default=20,
-                       help='Session duration in minutes')
+                       help='Session duration in minutes (use 5 for quick tests)')
     parser.add_argument('--consolidation-minutes', type=int, default=10,
-                       help='Consolidation duration in minutes')
+                       help='Consolidation duration in minutes (use 2 for quick tests)')
     parser.add_argument('--seed', type=int, default=42,
                        help='Random seed for reproducibility')
     parser.add_argument('--world-size', type=float, default=10.0,
@@ -863,7 +868,11 @@ def main():
     print(f"   Sessions: {len(results['session_results'])}")
     print(f"   Actions: {results['total_actions']}")
     print(f"   Biological realism: {results['analysis']['biological_realism']['biological_realism_score']:.3f}")
-    print(f"   Learning detected: {results['analysis']['learning_progression']['total_improvement'] > 0.1}")
+    learning_progression = results['analysis']['learning_progression']
+    if 'total_improvement' in learning_progression:
+        print(f"   Learning detected: {learning_progression['total_improvement'] > 0.1}")
+    else:
+        print(f"   Learning detected: Insufficient data for analysis")
 
 
 if __name__ == "__main__":

@@ -95,6 +95,12 @@ class MinimalBrain:
         self.brain_start_time = time.time()
         self.last_prediction = None  # For prediction error calculation
         
+        # Logging compatibility attributes
+        self.total_experiences = 0
+        self.total_predictions = 0
+        self.optimal_prediction_error = 0.5
+        self.recent_learning_outcomes = []
+        
         # Logging system for emergence analysis
         self.enable_logging = enable_logging
         if enable_logging:
@@ -190,6 +196,30 @@ class MinimalBrain:
             self.logger.log_prediction_outcome(
                 predicted_action, sensory_input, confidence, 0  # Vector streams don't use "similar experiences"
             )
+            
+            # Feature-flagged pattern storage logging for scientific analysis
+            if self.config.get('logging', {}).get('log_pattern_storage', False):
+                # Log pattern storage events when streams update
+                if hasattr(self.vector_brain, 'last_pattern_storage_event'):
+                    storage_event = self.vector_brain.last_pattern_storage_event
+                    if storage_event:
+                        self.logger.log_similarity_evolution(
+                            storage_event.get('pattern_id', 'unknown'),
+                            storage_event.get('similarity_score', 0.0),
+                            storage_event.get('storage_decision', 'unknown')
+                        )
+                        
+                        # Log as adaptation event if significant
+                        if storage_event.get('similarity_score', 0.0) < 0.8:  # Novel pattern
+                            self.logger.log_adaptation_event(
+                                'pattern_storage',
+                                storage_event.get('pattern_id', 'unknown'),
+                                storage_event.get('before_state', {}),
+                                storage_event.get('after_state', {})
+                            )
+                        
+                        # Clear the event after logging
+                        self.vector_brain.last_pattern_storage_event = None
         
         # Performance monitoring
         cycle_time = time.time() - process_start_time
@@ -223,8 +253,50 @@ class MinimalBrain:
             **vector_brain_state  # Include vector stream specific state
         }
         
+        # Feature-flagged brain cycle logging after brain state is compiled
+        if self.logger and self.config.get('logging', {}).get('log_brain_cycles', False):
+            self.logger.log_brain_state(self, self.total_cycles, brain_state)
+            
+            # Emergence event detection - log significant state changes
+            if hasattr(self, 'last_brain_state'):
+                confidence_change = abs(confidence - self.last_brain_state.get('prediction_confidence', 0.0))
+                
+                # Detect emergence events
+                if confidence_change > 0.3:  # Significant confidence change
+                    emergence_type = 'confidence_jump' if confidence > self.last_brain_state.get('prediction_confidence', 0.0) else 'confidence_drop'
+                    self.logger.log_emergence_event(
+                        emergence_type,
+                        f"Confidence changed by {confidence_change:.3f}",
+                        {
+                            'before_confidence': self.last_brain_state.get('prediction_confidence', 0.0),
+                            'after_confidence': confidence,
+                            'cycle': self.total_cycles
+                        },
+                        confidence_change  # significance parameter
+                    )
+                
+                # Detect mode changes in cognitive autopilot
+                current_mode = autopilot_state.get('cognitive_mode', 'unknown')
+                last_mode = self.last_brain_state.get('cognitive_autopilot', {}).get('cognitive_mode', 'unknown')
+                if current_mode != last_mode:
+                    self.logger.log_emergence_event(
+                        'cognitive_mode_transition',
+                        f"Mode changed from {last_mode} to {current_mode}",
+                        {
+                            'before_mode': last_mode,
+                            'after_mode': current_mode,
+                            'cycle': self.total_cycles
+                        },
+                        1.0  # significance parameter (mode changes are always significant)
+                    )
+            
+            # Store current state for next cycle comparison
+            self.last_brain_state = brain_state.copy()
+        
         # Increment cycle counter after compiling brain state
         self.total_cycles += 1
+        self.total_predictions += 1
+        self.total_experiences += 1
         
         return predicted_action, brain_state
     
@@ -274,8 +346,11 @@ class MinimalBrain:
         return {
             'brain_summary': {
                 'total_cycles': self.total_cycles,
+                'total_experiences': self.total_experiences,
+                'total_predictions': self.total_predictions,
                 'uptime_seconds': time.time() - self.brain_start_time,
                 'cycles_per_minute': self.total_cycles / max(1, (time.time() - self.brain_start_time) / 60),
+                'experiences_per_minute': self.total_experiences / max(1, (time.time() - self.brain_start_time) / 60),
                 'architecture': vector_stats.get('architecture', 'vector_stream'),
                 'prediction_confidence': vector_stats.get('prediction_confidence', 0.0)
             },
@@ -320,6 +395,38 @@ class MinimalBrain:
         # Close logging
         if self.logger:
             self.logger.close_session()
+    
+    def compute_intrinsic_reward(self) -> float:
+        """
+        Compute intrinsic reward for current brain state.
+        
+        This is used by the BrainLogger to track learning progress.
+        For the vector stream brain, we use confidence as intrinsic reward.
+        """
+        if hasattr(self.vector_brain, 'emergent_confidence'):
+            return self.vector_brain.emergent_confidence.current_confidence
+        elif hasattr(self.vector_brain, '_estimate_prediction_confidence'):
+            return self.vector_brain._estimate_prediction_confidence()
+        else:
+            # Fallback: simple confidence based on cycle count
+            return min(1.0, self.total_cycles / 1000.0)
+    
+    
+    def get_brain_statistics(self) -> dict:
+        """
+        Get detailed brain statistics (wrapper for vector brain implementation).
+        
+        Returns comprehensive brain statistics.
+        """
+        # Get basic stats
+        basic_stats = self.get_brain_stats()
+        
+        # Get detailed stats from vector brain if available
+        if hasattr(self.vector_brain, 'get_brain_statistics'):
+            detailed_stats = self.vector_brain.get_brain_statistics()
+            basic_stats.update(detailed_stats)
+        
+        return basic_stats
     
     def __str__(self) -> str:
         return (f"MinimalBrain({self.total_cycles} cycles, "
