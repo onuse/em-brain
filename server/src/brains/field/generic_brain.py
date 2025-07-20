@@ -136,7 +136,7 @@ class GenericFieldBrain:
                 auto_discovery=True
             )
             self.enhanced_dynamics = EnhancedFieldDynamics(
-                self.field_impl, phase_config, attractor_config, quiet_mode
+                self.field_impl, phase_config, attractor_config, quiet_mode, self.logger
             )
         
         if enable_attention_guidance:

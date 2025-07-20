@@ -7,7 +7,9 @@ metrics rather than discrete experience/pattern metrics.
 """
 
 import time
-from typing import Dict, Any, Optional
+import torch
+import numpy as np
+from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 
 
@@ -20,6 +22,18 @@ class FieldMetrics:
     field_compression_ratio: float = 0.0
     field_memory_usage_mb: float = 0.0
     average_field_update_time_ms: float = 0.0
+    
+    # Learning progress metrics
+    field_energy_history: List[float] = None
+    field_coordinates_history: List[torch.Tensor] = None
+    phase_transition_count: int = 0
+    current_phase: str = "unknown"
+    
+    def __post_init__(self):
+        if self.field_energy_history is None:
+            self.field_energy_history = []
+        if self.field_coordinates_history is None:
+            self.field_coordinates_history = []
 
 
 class FieldBrainLogger:
@@ -41,6 +55,10 @@ class FieldBrainLogger:
         # Performance tracking
         self.cycle_times = []
         self.field_update_times = []
+        
+        # Learning progress tracking
+        self.last_field_coordinates = None
+        self.last_phase = None
         
         if not quiet_mode:
             print("🧠 Field Brain Logger initialized")
@@ -118,9 +136,27 @@ class FieldBrainLogger:
         # Field processing frequency
         field_frequency = 1000.0 / avg_cycle_time if avg_cycle_time > 0 else 0
         
-        print(f"🧠 Field Brain Performance Report:")
+        # Calculate learning progress indicators
+        energy_variance, energy_trend, coords_diversity = self._calculate_learning_metrics()
+        
+        print(f"🧠 Field Brain Performance & Learning Report:")
         print(f"   Cycle time: {avg_cycle_time:.1f}ms avg ({min_cycle_time:.1f}-{max_cycle_time:.1f}ms)")
         print(f"   Field frequency: {field_frequency:.1f}Hz")
+        
+        # Learning progress indicators
+        if energy_variance is not None:
+            print(f"   Field energy: {self._get_latest_energy():.3f} ±{energy_variance:.3f} (variance)")
+        if energy_trend is not None:
+            trend_arrow = "↗" if energy_trend > 0.01 else "↘" if energy_trend < -0.01 else "→"
+            print(f"   Energy trend: {trend_arrow} {energy_trend:+.3f} (learning={energy_trend > 0})")
+        if coords_diversity is not None:
+            print(f"   Exploration: {coords_diversity:.3f} (diversity in field space)")
+        
+        # Phase dynamics
+        if self.metrics.current_phase != "unknown":
+            print(f"   Current phase: {self.metrics.current_phase} (transitions: {self.metrics.phase_transition_count})")
+        
+        # Traditional metrics
         print(f"   Field evolution cycles: {self.metrics.field_evolution_cycles}")
         print(f"   Field consolidation cycles: {self.metrics.field_consolidation_cycles}")
         
@@ -139,6 +175,70 @@ class FieldBrainLogger:
         print(f"   Uptime: {(current_time - self.start_time) / 60:.1f}min")
         
         self.last_report_time = current_time
+    
+    def _calculate_learning_metrics(self):
+        """Calculate learning progress metrics from field history."""
+        energy_variance = None
+        energy_trend = None
+        coords_diversity = None
+        
+        # Energy variance and trend
+        if len(self.metrics.field_energy_history) >= 5:
+            recent_energies = self.metrics.field_energy_history[-10:]  # Last 10 values
+            energy_variance = float(np.var(recent_energies))
+            
+            if len(recent_energies) >= 5:
+                # Calculate trend (early vs recent)
+                early = np.mean(recent_energies[:3])
+                recent = np.mean(recent_energies[-3:])
+                energy_trend = recent - early
+        
+        # Coordinate diversity (exploration measure)
+        if len(self.metrics.field_coordinates_history) >= 3:
+            recent_coords = self.metrics.field_coordinates_history[-5:]  # Last 5 coordinates
+            if len(recent_coords) > 1:
+                # Calculate average pairwise distance
+                distances = []
+                for i in range(len(recent_coords)):
+                    for j in range(i + 1, len(recent_coords)):
+                        if recent_coords[i] is not None and recent_coords[j] is not None:
+                            dist = torch.norm(recent_coords[i] - recent_coords[j]).item()
+                            distances.append(dist)
+                
+                if distances:
+                    coords_diversity = float(np.mean(distances))
+        
+        return energy_variance, energy_trend, coords_diversity
+    
+    def _get_latest_energy(self):
+        """Get the most recent field energy value."""
+        if self.metrics.field_energy_history:
+            return self.metrics.field_energy_history[-1]
+        return 0.0
+    
+    def log_field_energy(self, energy: float):
+        """Log field energy for learning progress tracking."""
+        self.metrics.field_energy_history.append(energy)
+        # Keep only last 50 values to prevent memory bloat
+        if len(self.metrics.field_energy_history) > 50:
+            self.metrics.field_energy_history.pop(0)
+    
+    def log_field_coordinates(self, coordinates: torch.Tensor):
+        """Log field coordinates for exploration tracking."""
+        if coordinates is not None:
+            # Store a copy to avoid reference issues
+            coord_copy = coordinates.clone().detach()
+            self.metrics.field_coordinates_history.append(coord_copy)
+            # Keep only last 20 coordinate sets
+            if len(self.metrics.field_coordinates_history) > 20:
+                self.metrics.field_coordinates_history.pop(0)
+    
+    def log_phase_transition(self, new_phase: str):
+        """Log phase transitions for dynamics tracking."""
+        if self.last_phase is not None and self.last_phase != new_phase:
+            self.metrics.phase_transition_count += 1
+        self.metrics.current_phase = new_phase
+        self.last_phase = new_phase
     
     def log_error(self, error_msg: str, context: str = ""):
         """Log field brain errors."""

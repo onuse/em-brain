@@ -199,6 +199,9 @@ class ConsolidationEngine:
             "delta_*.json*"
         )
         
+        # Filter out .integrity files - they are handled automatically by storage backend
+        incremental_files = [f for f in incremental_files if not f['filename'].endswith('.integrity')]
+        
         # Sort by creation time (oldest first)
         incremental_files.sort(key=lambda x: x['created_time'])
         return incremental_files

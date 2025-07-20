@@ -345,12 +345,12 @@ class AsyncLogger:
         if current_time - self.last_performance_report > 60.0:  # Every minute
             with self.stats_lock:
                 if not self.quiet_mode:
-                    print(f"📊 AsyncLogger Performance:")
-                    print(f"   In queue: {self.log_queue.qsize()}")
-                    print(f"   Lifetime queued: {self.total_logs_queued}")
-                    print(f"   Written: {self.total_logs_written}")
-                    print(f"   Dropped: {self.total_logs_dropped}")
-                    print(f"   Queue full events: {self.queue_full_events}")
+                    #print(f"📊 AsyncLogger Performance:")
+                    #print(f"   In queue: {self.log_queue.qsize()}")
+                    print(f"AsyncLogger Lifetime queued: {self.total_logs_queued}")
+                    #print(f"   Written: {self.total_logs_written}")
+                    #print(f"   Dropped: {self.total_logs_dropped}")
+                    #print(f"   Queue full events: {self.queue_full_events}")
                 
                 self.last_performance_report = current_time
     

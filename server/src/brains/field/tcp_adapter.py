@@ -133,6 +133,18 @@ class FieldBrainTCPAdapter:
         try:
             output_stream, brain_state = self.field_brain.process_input_stream(sensory_input)
             
+            # Log learning progress metrics
+            if brain_state:
+                # Log field energy for learning tracking
+                field_energy = brain_state.get('field_total_energy', 0.0)
+                if field_energy > 0:
+                    self.logger.log_field_energy(field_energy)
+                
+                # Log field coordinates for exploration tracking
+                field_coordinates = brain_state.get('field_coordinates')
+                if field_coordinates is not None:
+                    self.logger.log_field_coordinates(field_coordinates)
+            
             # Calculate cycle timing
             cycle_time_ms = (time.time() - cycle_start_time) * 1000.0
             

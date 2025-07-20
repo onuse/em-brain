@@ -62,10 +62,12 @@ class EnhancedFieldDynamics:
     def __init__(self, field_impl: FieldImplementation, 
                  phase_config: Optional[PhaseTransitionConfig] = None,
                  attractor_config: Optional[AttractorConfig] = None,
-                 quiet_mode: bool = False):
+                 quiet_mode: bool = False,
+                 logger: Optional[Any] = None):
         
         self.field_impl = field_impl
         self.quiet_mode = quiet_mode
+        self.logger = logger
         
         # Configuration
         self.phase_config = phase_config or PhaseTransitionConfig()
@@ -147,7 +149,15 @@ class EnhancedFieldDynamics:
             return
         
         recent_energy = self.phase_energy_history[-5:]
-        energy_variance = torch.var(torch.tensor(recent_energy)).item()
+        
+        # Protected variance calculation to prevent NaN
+        energy_tensor = torch.tensor(recent_energy)
+        if len(energy_tensor) <= 1:
+            energy_variance = 0.0
+        else:
+            variance_result = torch.var(energy_tensor)
+            energy_variance = 0.0 if torch.isnan(variance_result) or torch.isinf(variance_result) else variance_result.item()
+        
         energy_trend = recent_energy[-1] - recent_energy[0]
         
         # Determine if transition is needed
@@ -188,6 +198,10 @@ class EnhancedFieldDynamics:
         
         if not self.quiet_mode:
             print(f"🔄 Phase transition: {old_phase} → {new_phase} (energy: {self.global_energy_level:.3f})")
+        
+        # Log phase transition for learning progress tracking
+        if self.logger and hasattr(self.logger, 'log_phase_transition'):
+            self.logger.log_phase_transition(new_phase)
         
         # Apply phase-specific field modifications
         transition_coords = self._generate_transition_coordinates()
