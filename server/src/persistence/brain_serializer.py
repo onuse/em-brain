@@ -662,21 +662,39 @@ class BrainSerializer:
                 else:
                     print(f"⚠️ Skipping invalid pattern data: {type(pattern_dict)}")
             
-            # Define valid fields for SerializedBrainState to filter out old/invalid keys
-            valid_fields = {
+            # Define valid fields for SerializedBrainState to filter out integrity metadata
+            brain_state_fields = {
                 'version', 'session_count', 'total_cycles', 'total_experiences', 
                 'save_timestamp', 'patterns', 'confidence_state', 'hardware_adaptations',
                 'cross_stream_associations', 'brain_type', 'sensory_dim', 'motor_dim',
-                'temporal_dim', 'learning_history', 'emergence_events'
+                'temporal_dim', 'learning_history', 'emergence_events', 'field_brain_state'
             }
             
-            # Filter state_dict to only include valid fields (backward compatibility)
+            # Define FileIntegrityInfo fields that should be ignored (not brain data)
+            integrity_fields = {
+                'filepath', 'size_bytes', 'checksum_md5', 'created_time', 
+                'modified_time', 'is_compressed'
+            }
+            
+            # Separate brain data from integrity metadata
             brain_state_dict = {}
+            integrity_metadata = {}
+            unknown_fields = []
+            
             for key, value in state_dict.items():
-                if key in valid_fields:
+                if key in brain_state_fields:
                     brain_state_dict[key] = value
+                elif key in integrity_fields:
+                    integrity_metadata[key] = value  # Separate but don't warn
+                elif key == 'incremental_metadata':
+                    # Skip incremental metadata (handled by consolidation engine)
+                    pass
                 else:
-                    print(f"⚠️ Skipping unknown field '{key}' from saved data (backward compatibility)")
+                    unknown_fields.append(key)
+            
+            # Only warn about truly unknown fields
+            if unknown_fields:
+                print(f"⚠️ Skipping unknown fields from saved data: {unknown_fields}")
             
             # Set patterns from processed data
             brain_state_dict['patterns'] = patterns

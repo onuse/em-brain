@@ -224,6 +224,8 @@ class ConsolidationEngine:
         if brain_dict:
             # Remove any incremental metadata
             brain_dict.pop('incremental_metadata', None)
+            # Remove any consolidation metadata
+            brain_dict.pop('consolidation_metadata', None)
             return self.brain_serializer.from_dict(brain_dict)
         
         return None
@@ -247,6 +249,7 @@ class ConsolidationEngine:
                 return None
             
             brain_dict.pop('incremental_metadata', None)
+            brain_dict.pop('consolidation_metadata', None)
             
             try:
                 merged_state = self.brain_serializer.from_dict(brain_dict)
@@ -268,6 +271,7 @@ class ConsolidationEngine:
                 continue
             
             brain_dict.pop('incremental_metadata', None)
+            brain_dict.pop('consolidation_metadata', None)
             
             try:
                 incremental_state = self.brain_serializer.from_dict(brain_dict)
@@ -401,16 +405,26 @@ class ConsolidationEngine:
     def _update_latest_consolidated_link(self, snapshot_filepath: str):
         """Update symlink to point to latest consolidated snapshot."""
         try:
+            # Match symlink extension to target file extension
+            if snapshot_filepath.endswith('.gz'):
+                symlink_name = "latest_consolidated.json.gz"
+            else:
+                symlink_name = "latest_consolidated.json"
+                
             latest_link = os.path.join(
                 self.config.get_consolidated_dir(),
-                "latest_consolidated.json"
+                symlink_name
             )
             
-            # Remove existing symlink
-            if os.path.islink(latest_link):
-                os.unlink(latest_link)
-            elif os.path.exists(latest_link):
-                os.remove(latest_link)
+            # Remove existing symlinks (both .json and .json.gz versions)
+            old_json_link = os.path.join(self.config.get_consolidated_dir(), "latest_consolidated.json")
+            old_gz_link = os.path.join(self.config.get_consolidated_dir(), "latest_consolidated.json.gz")
+            
+            for old_link in [old_json_link, old_gz_link]:
+                if os.path.islink(old_link):
+                    os.unlink(old_link)
+                elif os.path.exists(old_link):
+                    os.remove(old_link)
             
             # Create new symlink
             os.symlink(os.path.basename(snapshot_filepath), latest_link)

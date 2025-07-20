@@ -287,6 +287,8 @@ class IncrementalEngine:
             
             # Remove incremental metadata if present
             brain_dict.pop('incremental_metadata', None)
+            # Remove consolidation metadata if present
+            brain_dict.pop('consolidation_metadata', None)
             
             # Convert back to SerializedBrainState
             return self.brain_serializer.from_dict(brain_dict)

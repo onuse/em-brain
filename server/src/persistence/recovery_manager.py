@@ -325,18 +325,21 @@ class RecoveryManager:
     def _load_latest_consolidated_snapshot(self) -> Tuple[Optional[SerializedBrainState], str]:
         """Load the most recent consolidated snapshot."""
         try:
-            # Check for latest symlink first
-            latest_link = os.path.join(
-                self.config.get_consolidated_dir(),
-                "latest_consolidated.json"
-            )
+            # Check for latest symlink first (try both compressed and uncompressed)
+            symlink_names = ["latest_consolidated.json.gz", "latest_consolidated.json"]
             
-            if os.path.islink(latest_link) and os.path.exists(latest_link):
-                brain_dict = self.storage.load_json(latest_link)
-                if brain_dict:
-                    brain_dict.pop('consolidation_metadata', None)
-                    brain_state = self.brain_serializer.from_dict(brain_dict)
-                    return brain_state, "latest_consolidated.json"
+            for symlink_name in symlink_names:
+                latest_link = os.path.join(
+                    self.config.get_consolidated_dir(),
+                    symlink_name
+                )
+                
+                if os.path.islink(latest_link) and os.path.exists(latest_link):
+                    brain_dict = self.storage.load_json(latest_link)
+                    if brain_dict:
+                        brain_dict.pop('consolidation_metadata', None)
+                        brain_state = self.brain_serializer.from_dict(brain_dict)
+                        return brain_state, symlink_name
             
             # Fall back to finding most recent consolidated file (exclude integrity files)
             all_consolidated_files = self.storage.list_files(
