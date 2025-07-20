@@ -23,6 +23,31 @@ from enum import Enum
 import math
 from collections import deque, defaultdict
 
+# GPU detection and device selection (priority: CUDA > MPS > CPU)
+try:
+    if torch.cuda.is_available():
+        DEVICE = torch.device('cuda')
+        GPU_AVAILABLE = True
+    elif torch.backends.mps.is_available():
+        DEVICE = torch.device('mps')
+        GPU_AVAILABLE = True
+    else:
+        DEVICE = torch.device('cpu')
+        GPU_AVAILABLE = False
+except Exception:
+    DEVICE = torch.device('cpu')
+    GPU_AVAILABLE = False
+
+def get_field_device(tensor_dims: int) -> torch.device:
+    """
+    Get appropriate device for field tensors, considering MPS dimension limits.
+    
+    MPS has a 16-dimension limit, so high-dimensional field tensors must use CPU.
+    """
+    if DEVICE.type == 'mps' and tensor_dims > 16:
+        return torch.device('cpu')  # MPS limitation fallback
+    return DEVICE
+
 # Import our field dynamics foundation
 try:
     from .dynamics.constraint_field_dynamics import ConstraintField4D, FieldConstraint, FieldConstraintType
@@ -124,7 +149,10 @@ class GenericFieldBrain:
         field_shape = [spatial_resolution] * 3 + [10] + [15] + [1] * (self.total_dimensions - 5)
         
         # Core unified field - this replaces ALL discrete structures
-        self.unified_field = torch.zeros(field_shape, dtype=torch.float32)
+        # Use appropriate device (CPU fallback for MPS dimension limits)
+        field_device = get_field_device(len(field_shape))
+        self.unified_field = torch.zeros(field_shape, dtype=torch.float32, device=field_device)
+        self.field_device = field_device  # Store for other tensor operations
         
         # Field dynamics systems
         self.constraint_field = ConstraintField4D(
@@ -157,6 +185,9 @@ class GenericFieldBrain:
         self.topology_discoveries = 0
         self.gradient_actions = 0
         
+        # Initialize field approximation tables (biological optimization lookup tables)
+        self.field_approximation_tables = {}
+        
         # FUTURE: Predictive caching and approximation tables disabled for clean performance
         # TODO: Move predictive caching to background thread (invisible to main loop)
         # TODO: Re-evaluate approximation tables if hierarchical processing returns
@@ -167,6 +198,10 @@ class GenericFieldBrain:
             print(f"   Spatial resolution: {spatial_resolution}³")
             print(f"   Temporal window: {temporal_window}s")
             print(f"   Field families: {len(FieldDynamicsFamily)} dynamics types")
+            device_info = f"{field_device}"
+            if field_device.type != DEVICE.type:
+                device_info += f" (fallback from {DEVICE} due to dimension limits)"
+            print(f"   Device: {device_info} ({'GPU' if field_device.type != 'cpu' else 'CPU'} acceleration)")
             self._print_dimension_summary()
     
     def _initialize_field_dimensions(self) -> List[FieldDimension]:
@@ -306,11 +341,12 @@ class GenericFieldBrain:
         
         # Create input mapping: stream → field dimensions
         # Use a learnable linear transformation that adapts to any input size
-        self.input_mapping = torch.randn(capabilities.input_dimensions, self.total_dimensions) * 0.1
+        mapping_device = get_field_device(max(capabilities.input_dimensions, self.total_dimensions))
+        self.input_mapping = torch.randn(capabilities.input_dimensions, self.total_dimensions, device=mapping_device) * 0.1
         
         # Create output mapping: field dimensions → stream
         # Use a learnable linear transformation that adapts to any output size
-        self.output_mapping = torch.randn(self.total_dimensions, capabilities.output_dimensions) * 0.1
+        self.output_mapping = torch.randn(self.total_dimensions, capabilities.output_dimensions, device=mapping_device) * 0.1
         
         if not self.quiet_mode:
             print(f"   Created adaptive stream mappings")
@@ -362,7 +398,7 @@ class GenericFieldBrain:
         
         Uses learned mapping - no assumptions about what inputs represent.
         """
-        input_tensor = torch.tensor(input_stream, dtype=torch.float32)
+        input_tensor = torch.tensor(input_stream, dtype=torch.float32, device=self.field_device)
         
         # Map input stream to field dimensions using learned transformation
         field_coordinates = torch.matmul(input_tensor, self.input_mapping)
@@ -400,8 +436,8 @@ class GenericFieldBrain:
         
         # Map field coordinates to spatial positions
         spatial_coords = field_coords[:3]  # First 3 are spatial
-        scale_coord = field_coords[3] if len(field_coords) > 3 else torch.tensor(0.0)
-        time_coord = field_coords[4] if len(field_coords) > 4 else torch.tensor(0.0)
+        scale_coord = field_coords[3] if len(field_coords) > 3 else torch.tensor(0.0, device=self.field_device)
+        time_coord = field_coords[4] if len(field_coords) > 4 else torch.tensor(0.0, device=self.field_device)
         
         # Convert to field indices
         x_center = int((spatial_coords[0] + 1) * 0.5 * (self.spatial_resolution - 1))
@@ -843,7 +879,7 @@ class GenericFieldBrain:
             
             # Add input-driven prediction component
             if len(current_input) >= 3:
-                input_influence = torch.tensor(current_input[:3], dtype=torch.float32)
+                input_influence = torch.tensor(current_input[:3], dtype=torch.float32, device=DEVICE)
                 input_magnitude = torch.norm(input_influence)
                 
                 if input_magnitude > 0.1:  # Significant input

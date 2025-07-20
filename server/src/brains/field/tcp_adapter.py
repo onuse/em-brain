@@ -12,6 +12,7 @@ from typing import List, Tuple, Dict, Any
 from dataclasses import dataclass
 
 from .generic_brain import GenericFieldBrain, StreamCapabilities
+from .field_logger import FieldBrainLogger
 
 
 @dataclass
@@ -38,6 +39,9 @@ class FieldBrainTCPAdapter:
         """Initialize the field brain TCP adapter."""
         self.config = config or FieldBrainConfig()
         
+        # Initialize field-specific logger
+        self.logger = FieldBrainLogger(quiet_mode=self.config.quiet_mode)
+        
         # Create generic field brain
         self.field_brain = GenericFieldBrain(
             spatial_resolution=self.config.spatial_resolution,
@@ -60,11 +64,17 @@ class FieldBrainTCPAdapter:
         self.sensory_dim = self.config.sensory_dimensions
         self.motor_dim = self.config.motor_dimensions
         
+        # Log field brain initialization
+        config_dict = {
+            'spatial_resolution': self.config.spatial_resolution,
+            'temporal_window': self.config.temporal_window,
+            'field_evolution_rate': self.config.field_evolution_rate,
+            'constraint_discovery_rate': self.config.constraint_discovery_rate
+        }
+        self.logger.log_initialization(config_dict)
+        
         if not self.config.quiet_mode:
-            print(f"🧠 FieldBrainTCPAdapter initialized")
-            print(f"   Field brain: {self.field_brain.total_dimensions}D unified space")
-            print(f"   Stream interface: {self.sensory_dim}D → {self.motor_dim}D")
-            print(f"   TCP compatibility: ✅ MinimalBrain interface")
+            print(f"🧠 FieldBrainTCPAdapter ready: {self.sensory_dim}D → {self.motor_dim}D")
     
     def _negotiate_capabilities(self):
         """Set up stream capabilities for the field brain."""
@@ -104,8 +114,12 @@ class FieldBrainTCPAdapter:
                 print(f"⚠️ Action dimension mismatch: requested {action_dimensions}, using {self.motor_dim}")
         
         # Process through field brain
+        cycle_start_time = time.time()
         try:
             output_stream, brain_state = self.field_brain.process_input_stream(sensory_input)
+            
+            # Calculate cycle timing
+            cycle_time_ms = (time.time() - cycle_start_time) * 1000.0
             
             # Ensure output has correct dimensions
             if len(output_stream) != self.motor_dim:
@@ -118,6 +132,23 @@ class FieldBrainTCPAdapter:
             self.total_cycles += 1
             self.total_experiences += 1
             self.total_predictions += 1
+            
+            # Log field-specific metrics
+            sparse_regions = brain_state.get('active_regions', 0)
+            field_update_time = brain_state.get('field_update_time_ms', 0.0)
+            self.logger.log_field_cycle(cycle_time_ms, sparse_regions, field_update_time)
+            
+            # Check for field evolution/consolidation events
+            if brain_state.get('field_evolved', False):
+                self.logger.log_field_evolution()
+            
+            if brain_state.get('field_consolidated', False):
+                compression_ratio = brain_state.get('compression_ratio', 0.0)
+                memory_usage = brain_state.get('memory_usage_mb', 0.0)
+                self.logger.log_field_consolidation(compression_ratio, memory_usage)
+            
+            # Periodic performance reporting
+            self.logger.maybe_report_performance()
             
             # Create compatible brain state response
             brain_state_response = {
@@ -136,8 +167,11 @@ class FieldBrainTCPAdapter:
             
         except Exception as e:
             # Fallback response on error
-            if not self.config.quiet_mode:
-                print(f"❌ Field brain processing error: {e}")
+            cycle_time_ms = (time.time() - cycle_start_time) * 1000.0
+            self.logger.log_error(f"Field processing failed: {str(e)}", f"Cycle {self.total_cycles}")
+            
+            # Still log the cycle time for performance tracking
+            self.logger.log_field_cycle(cycle_time_ms, 0, 0.0)
             
             # Return neutral action
             neutral_action = [0.0] * self.motor_dim

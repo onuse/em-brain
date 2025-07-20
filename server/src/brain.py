@@ -91,8 +91,11 @@ class MinimalBrain:
             parallel_status = "enabled" if self.parallel_coordinator else "disabled"
             print(f"   Parallel processing: {parallel_status}")
         
-        # Hardware adaptation system
-        self.hardware_adaptation = get_hardware_adaptation(self.config)
+        # Hardware adaptation system (disabled for field brains - they have their own optimizations)
+        if self.brain_type == "field":
+            self.hardware_adaptation = None
+        else:
+            self.hardware_adaptation = get_hardware_adaptation(self.config)
         
         # Select brain implementation based on type
         if self.brain_type == "sparse_goldilocks":
@@ -303,9 +306,10 @@ class MinimalBrain:
         cycle_time = time.time() - process_start_time
         cycle_time_ms = cycle_time * 1000
         
-        # Record performance for hardware adaptation
-        memory_usage_mb = 50.0  # Vector streams use much less memory than experience storage
-        record_brain_cycle_performance(cycle_time_ms, memory_usage_mb)
+        # Record performance for hardware adaptation (skip for field brains)
+        if self.hardware_adaptation is not None:
+            memory_usage_mb = 50.0  # Vector streams use much less memory than experience storage
+            record_brain_cycle_performance(cycle_time_ms, memory_usage_mb)
         
         # Enforce biological timing constraints (Phase 7: gamma-frequency cycles)
         if self.biological_oscillator:
@@ -336,7 +340,7 @@ class MinimalBrain:
             'prediction_method': 'bootstrap_random' if self.total_cycles == 0 else 'vector_stream_continuous',  # For test compatibility
             'cycle_time': cycle_time,
             'cycle_time_ms': cycle_time_ms,
-            'hardware_adaptive_limits': self.hardware_adaptation.get_cognitive_limits(),
+            'hardware_adaptive_limits': self.hardware_adaptation.get_cognitive_limits() if self.hardware_adaptation else {},
             'cognitive_autopilot': autopilot_state,
             'brain_uptime': time.time() - self.brain_start_time,
             'architecture': 'vector_stream_biological' if self.biological_oscillator else 'vector_stream',

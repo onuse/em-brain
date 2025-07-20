@@ -16,14 +16,18 @@ import numpy as np
 from typing import Dict, Any, Optional, Tuple
 from dataclasses import dataclass, asdict
 
-# GPU detection
+# GPU detection (priority: CUDA > MPS > CPU)
 try:
     import torch
-    GPU_AVAILABLE = torch.backends.mps.is_available() or torch.cuda.is_available()
-    if GPU_AVAILABLE:
-        device = 'mps' if torch.backends.mps.is_available() else 'cuda'
+    if torch.cuda.is_available():
+        device = 'cuda'
+        GPU_AVAILABLE = True
+    elif torch.backends.mps.is_available():
+        device = 'mps'
+        GPU_AVAILABLE = True
     else:
         device = 'cpu'
+        GPU_AVAILABLE = False
 except ImportError:
     GPU_AVAILABLE = False
     device = 'cpu'
