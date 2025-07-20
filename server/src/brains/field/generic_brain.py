@@ -1705,7 +1705,43 @@ class GenericFieldBrain(BrainMaintenanceInterface):
         enhanced_status = self.get_enhanced_features_status()
         brain_state['enhanced_features'] = enhanced_status
         
+        # Add prediction confidence based on field activity and stability
+        confidence = self._calculate_current_prediction_confidence()
+        brain_state['prediction_confidence'] = confidence
+        
         return brain_state
+    
+    def _calculate_current_prediction_confidence(self) -> float:
+        """Calculate current prediction confidence based on field state and history."""
+        try:
+            # Base confidence from field stability and pattern recognition
+            field_stability = self._calculate_field_stability()
+            
+            # Get recent prediction accuracy if available
+            recent_accuracy = 0.5  # Default neutral accuracy
+            if len(self.prediction_accuracy_history) > 0:
+                recent_accuracy = sum(self.prediction_accuracy_history[-5:]) / min(5, len(self.prediction_accuracy_history))
+            
+            # Confidence based on field activity consistency
+            field_stats = self.field_impl.get_field_statistics() 
+            mean_activation = field_stats.get('mean_activation', 0.0)
+            
+            # Scale confidence based on activation level (higher activation = more confident decisions)
+            # but avoid overconfidence from field energy explosions
+            activation_factor = min(1.0, max(0.1, mean_activation / 10.0))  # Normalize to reasonable range
+            
+            # Combine factors
+            base_confidence = (field_stability * 0.4 + recent_accuracy * 0.4 + activation_factor * 0.2)
+            
+            # Boost confidence if brain has been running for a while (learned patterns)
+            experience_boost = min(0.3, self.brain_cycles / 1000.0)  # Up to 30% boost after 1000 cycles
+            
+            final_confidence = min(1.0, max(0.001, base_confidence + experience_boost))
+            return final_confidence
+            
+        except Exception:
+            # Fallback to minimal confidence if calculation fails
+            return 0.001
     
     def get_field_memory_stats(self) -> Dict[str, Any]:
         """Get comprehensive field memory statistics."""
@@ -1914,7 +1950,8 @@ class GenericFieldBrain(BrainMaintenanceInterface):
     # BrainMaintenanceInterface implementation
     def light_maintenance(self) -> None:
         """
-        Quick cleanup operations (<1ms) - safe during active processing.
+        Quick cleanup operations (<5ms) - safe during active processing.
+        Moved expensive debugging operations here for performance optimization.
         """
         # Cleanup expired attractors from enhanced dynamics
         if self.enhanced_dynamics:
@@ -1925,34 +1962,120 @@ class GenericFieldBrain(BrainMaintenanceInterface):
                 if (current_time - attr['creation_time']) < attr['persistence']
             ]
         
-        # Update simple field metrics
+        # MAINTENANCE OPTIMIZATION: Analyze energy metrics + light decay
         if hasattr(self, 'field_impl') and self.field_impl:
-            # Light metrics update without heavy computation
+            self._analyze_energy_metrics_in_maintenance()
+            
+            # LIGHT DECAY: Gentle decay during light maintenance for better control
+            if hasattr(self.field_impl, 'perform_adaptive_decay_maintenance'):
+                # Get current energy level for light decay decision
+                stats = self.field_impl.get_field_statistics()
+                current_energy = stats.get('total_activation', 0.0)
+                
+                # Apply light decay if energy is building up
+                if current_energy > 30.0:  # Lower threshold for light maintenance
+                    # Apply gentle decay (90% of normal decay rate)
+                    if hasattr(self.field_impl, 'field_tensors'):
+                        light_decay_rate = 0.998  # Very gentle 0.2% decay
+                        for tensor in self.field_impl.field_tensors.values():
+                            tensor.mul_(light_decay_rate)
+            
             self.brain_cycles += 0  # Ensure counter is accessible
+            
+    def _analyze_energy_metrics_in_maintenance(self) -> None:
+        """Analyze stored energy metrics during maintenance instead of real-time."""
+        # Check for recent energy spikes
+        if hasattr(self.field_impl, '_maintenance_energy_metrics'):
+            metrics = self.field_impl._maintenance_energy_metrics
+            recent_changes = metrics.get('recent_changes', [])
+            
+            # Only log significant events during maintenance
+            for change in recent_changes[-3:]:  # Last 3 events
+                if change['change'] > 100.0:  # Only very large changes
+                    print(f"🔧 MAINTENANCE: Large energy change detected: +{change['change']:.1f} (coupling=+{change['coupling']:.1f})")
+                    
+        # Check for clamp events
+        if hasattr(self.field_impl, '_maintenance_clamp_events'):
+            recent_clamps = self.field_impl._maintenance_clamp_events
+            for clamp in recent_clamps[-2:]:  # Last 2 events
+                if clamp['type'] == 'energy_clamp':
+                    print(f"🔧 MAINTENANCE: Energy clamp triggered: {clamp['original']:.1f} → {clamp['clamped']:.1f}")
+                    
+        # Check for high-intensity imprints
+        if hasattr(self.field_impl, '_maintenance_imprint_metrics'):
+            imprints = self.field_impl._maintenance_imprint_metrics
+            for imprint in imprints[-2:]:  # Last 2 events
+                if imprint['intensity'] > 1.0:
+                    print(f"🔧 MAINTENANCE: High-intensity imprint: {imprint['intensity']:.3f}")
     
     def heavy_maintenance(self) -> None:
         """
         Moderate maintenance (10-50ms) - during short idle periods.
+        Moved expensive field computations here for performance optimization.
         """
-        # Energy redistribution and field optimization
+        # MAINTENANCE OPTIMIZATION: Move expensive field analysis here
         if hasattr(self, 'field_impl') and self.field_impl:
-            # Get current field statistics
+            # Comprehensive field analysis that was slowing down main loop
+            self._heavy_field_analysis()
+            
+            # ADAPTIVE DECAY IN MAINTENANCE: Moved from main processing loop
+            decay_stats = None
+            if hasattr(self.field_impl, 'perform_adaptive_decay_maintenance'):
+                decay_stats = self.field_impl.perform_adaptive_decay_maintenance()
+                if decay_stats and decay_stats['energy_removed'] > 0.1:  # Significant decay
+                    print(f"🔧 HEAVY MAINTENANCE: Applied {decay_stats['energy_level']} decay: "
+                          f"{decay_stats['total_energy']:.1f} → {decay_stats['energy_after_decay']:.1f} "
+                          f"(-{decay_stats['energy_removed']:.1f})")
+            
+            # Legacy emergency decay (backup for very high energy)
             stats = self.field_impl.get_field_statistics()
             field_energy = stats.get('total_activation', 0.0)
-            
-            # Apply stronger decay if energy is getting high
             if field_energy > 500.0:
+                print(f"🔧 HEAVY MAINTENANCE: Emergency decay for extreme energy: {field_energy:.1f}")
                 # Emergency energy reduction
                 if hasattr(self.field_impl, 'unified_field'):
-                    self.field_impl.unified_field *= 0.95
+                    self.field_impl.unified_field *= 0.90  # More aggressive emergency decay
                 elif hasattr(self.field_impl, 'field_tensors'):
                     for tensor in self.field_impl.field_tensors.values():
-                        tensor *= 0.95
+                        tensor *= 0.90
+        
+        # Optimize enhanced dynamics during maintenance
+        if self.enhanced_dynamics:
+            # Move expensive coherence calculations here
+            self._update_enhanced_dynamics_metrics()
+            
+            # BACKGROUND ENERGY REDISTRIBUTION: Perform the previously disabled redistribution
+            redistributions = self.enhanced_dynamics.perform_energy_redistribution_maintenance()
+            if redistributions > 0:
+                print(f"🔧 HEAVY MAINTENANCE: Completed {redistributions} energy redistributions")
         
         # Optimize attention regions if enabled
         if self.attention_processor:
             # Clean up inactive attention regions
             pass  # TODO: Implement attention cleanup
+            
+    def _heavy_field_analysis(self) -> None:
+        """Perform expensive field analysis during maintenance."""
+        # Move gradient magnitude calculations here
+        if hasattr(self.field_impl, 'compute_field_gradients'):
+            gradients = self.field_impl.compute_field_gradients()
+            
+            # Analyze gradient patterns for field optimization
+            total_gradient_energy = 0.0
+            for grad_name, grad_tensor in gradients.items():
+                if grad_tensor.numel() > 0:
+                    grad_energy = torch.sum(torch.abs(grad_tensor)).item()
+                    total_gradient_energy += grad_energy
+            
+            # Store for reporting but don't print in main loop
+            if total_gradient_energy > 100.0:
+                print(f"🔧 HEAVY MAINTENANCE: High gradient energy: {total_gradient_energy:.1f}")
+                
+    def _update_enhanced_dynamics_metrics(self) -> None:
+        """Update enhanced dynamics metrics during maintenance."""
+        # Move expensive coherence calculations from main loop to here
+        if hasattr(self.enhanced_dynamics, '_update_coherence_metrics'):
+            self.enhanced_dynamics._update_coherence_metrics()
     
     def deep_consolidation(self) -> None:
         """

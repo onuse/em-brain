@@ -508,10 +508,11 @@ class MultiTensorFieldImplementation(FieldImplementation):
         field_coords = experience.field_coordinates
         intensity = experience.field_intensity
         
-        # ENERGY DEBUG: Track energy before imprinting
+        # MAINTENANCE OPTIMIZATION: Store imprint metrics for maintenance analysis
+        if not hasattr(self, '_maintenance_imprint_metrics'):
+            self._maintenance_imprint_metrics = []
+        
         pre_energy = sum(torch.sum(tensor).item() for tensor in self.field_tensors.values())
-        if intensity > 1.0 or pre_energy > 500.0:
-            print(f"🔍 ENERGY DEBUG [imprint_experience]: intensity={intensity:.6f}, pre_energy={pre_energy:.3f}")
         
         # Extract spatial coordinates
         spatial_coords = field_coords[:3]
@@ -556,13 +557,22 @@ class MultiTensorFieldImplementation(FieldImplementation):
         
         self.total_imprints += 1
         
-        # ENERGY DEBUG: Track energy after imprinting  
+        # MAINTENANCE OPTIMIZATION: Store imprint energy metrics for analysis
         post_energy = sum(torch.sum(tensor).item() for tensor in self.field_tensors.values())
         energy_change = post_energy - pre_energy
-        if energy_change > 10.0 or post_energy > 500.0:
-            print(f"🔍 ENERGY DEBUG [imprint_experience]: post_energy={post_energy:.3f}, change=+{energy_change:.3f}")
-            if post_energy > 1000.0:
-                print(f"   ⚠️  EXCESSIVE ENERGY after imprint! This will trigger the 1000.0 clamp!")
+        
+        if energy_change > 10.0 or post_energy > 500.0 or intensity > 1.0:
+            self._maintenance_imprint_metrics.append({
+                'intensity': intensity,
+                'pre_energy': pre_energy,
+                'post_energy': post_energy,
+                'change': energy_change,
+                'timestamp': time.time()
+            })
+            
+            # Keep only recent imprint metrics (last 10)
+            if len(self._maintenance_imprint_metrics) > 10:
+                self._maintenance_imprint_metrics.pop(0)
     
     def _imprint_into_tensor(self, tensor: torch.Tensor, x_center: int, y_center: int, 
                            z_center: int, intensity: float, dynamics_values: List[float]):
@@ -641,6 +651,10 @@ class MultiTensorFieldImplementation(FieldImplementation):
         # ENERGY DEBUG: Track energy before individual tensor evolution
         pre_individual_energy = sum(torch.sum(tensor).item() for tensor in self.field_tensors.values())
         
+        # PERFORMANCE OPTIMIZATION: Calculate total energy once per cycle for adaptive decay
+        # This prevents expensive recalculation for every tensor evolution
+        self._cached_total_energy = pre_individual_energy
+        
         for tensor_name, tensor in active_tensors:
             self._evolve_individual_tensor(tensor, dt)
         
@@ -654,27 +668,55 @@ class MultiTensorFieldImplementation(FieldImplementation):
         post_coupling_energy = sum(torch.sum(tensor).item() for tensor in self.field_tensors.values())
         coupling_change = post_coupling_energy - pre_coupling_energy
         
-        # Phase 3: Update gradient flows (already optimized to run every 2nd cycle)
+        # Phase 3: Update gradient flows (MAINTENANCE OPTIMIZED - run less frequently)
         pre_gradient_energy = sum(torch.sum(tensor).item() for tensor in self.field_tensors.values())
-        self._update_multi_tensor_gradients()
+        
+        # MAINTENANCE OPTIMIZATION: Reduce gradient update frequency for better performance
+        if not hasattr(self, '_gradient_update_counter'):
+            self._gradient_update_counter = 0
+        self._gradient_update_counter += 1
+        
+        # Only update gradients every 5th cycle instead of every 2nd (less critical for main loop)
+        if self._gradient_update_counter % 5 == 0:
+            self._update_multi_tensor_gradients()
+        
         post_gradient_energy = sum(torch.sum(tensor).item() for tensor in self.field_tensors.values())
         gradient_change = post_gradient_energy - pre_gradient_energy
         
-        # ENERGY DEBUG: Track energy after evolution to find where it grows
+        # MAINTENANCE OPTIMIZATION: Move expensive debugging to maintenance cycles
+        # Store energy metrics for maintenance analysis instead of real-time debugging
+        if not hasattr(self, '_maintenance_energy_metrics'):
+            self._maintenance_energy_metrics = {
+                'recent_changes': [],
+                'phase_breakdowns': [],
+                'high_energy_events': []
+            }
+        
         post_evolution_energy = sum(torch.sum(tensor).item() for tensor in self.field_tensors.values())
         energy_change = post_evolution_energy - pre_evolution_energy
+        
+        # Store metrics for maintenance analysis (much faster than printing)
         if energy_change > 20.0 or post_evolution_energy > 500.0:
-            print(f"🔍 ENERGY DEBUG [evolve_field]: pre={pre_evolution_energy:.3f} → post={post_evolution_energy:.3f}, change=+{energy_change:.3f}")
-            print(f"   └─ Phase breakdown: individual=+{individual_change:.3f}, coupling=+{coupling_change:.3f}, gradients=+{gradient_change:.3f}")
+            self._maintenance_energy_metrics['recent_changes'].append({
+                'pre': pre_evolution_energy,
+                'post': post_evolution_energy,
+                'change': energy_change,
+                'individual': individual_change,
+                'coupling': coupling_change,
+                'gradients': gradient_change,
+                'timestamp': time.time()
+            })
             
-            # Identify the biggest contributor
-            phases = [("individual", individual_change), ("coupling", coupling_change), ("gradients", gradient_change)]
-            biggest_phase = max(phases, key=lambda x: abs(x[1]))
-            if abs(biggest_phase[1]) > 10.0:
-                print(f"   🎯 BIGGEST ENERGY SOURCE: {biggest_phase[0]} (+{biggest_phase[1]:.3f})")
+            # Keep only recent metrics (last 10 significant changes)
+            if len(self._maintenance_energy_metrics['recent_changes']) > 10:
+                self._maintenance_energy_metrics['recent_changes'].pop(0)
             
+            # Flag high energy events for maintenance attention
             if post_evolution_energy > 1000.0:
-                print(f"   ⚠️  FIELD EVOLUTION CREATED EXCESSIVE ENERGY! This will be clamped to 1000.0")
+                self._maintenance_energy_metrics['high_energy_events'].append({
+                    'energy': post_evolution_energy,
+                    'timestamp': time.time()
+                })
     
     def _inject_input_stream(self, input_stream: List[float], dt: float):
         """Inject input stream into field tensors to stimulate evolution."""
@@ -728,9 +770,9 @@ class MultiTensorFieldImplementation(FieldImplementation):
                                 tensor[x, y, z, dim_idx] += injection_strength
     
     def _evolve_individual_tensor(self, tensor: torch.Tensor, dt: float):
-        """Evolve an individual field tensor (optimized)."""
-        # Apply decay (vectorized)
-        tensor.mul_(0.995)  # In-place operation is faster
+        """Evolve an individual field tensor (optimized - decay moved to maintenance)."""
+        # MAINTENANCE OPTIMIZATION: Decay moved to maintenance thread for better performance
+        # Main processing loop now focuses purely on field evolution and dynamics
         
         # AGGRESSIVE OPTIMIZATION: Skip diffusion during stable periods or use simplified diffusion
         if not hasattr(self, '_diffusion_skip_counter'):
@@ -937,24 +979,44 @@ class MultiTensorFieldImplementation(FieldImplementation):
             max_activation = max(torch.max(tensor).item() for tensor in self.field_tensors.values())
             mean_activation = total_activation / total_elements if total_elements > 0 else 0.0
         
-        # ENERGY DEBUG: Log before artificial clamping
-        original_total = total_activation
-        if total_activation > 500.0:
-            print(f"🔍 ENERGY DEBUG [get_field_statistics]: PRE-CLAMP total={total_activation:.3f}")
+        # MAINTENANCE OPTIMIZATION: Store clamping events for maintenance analysis
+        if not hasattr(self, '_maintenance_clamp_events'):
+            self._maintenance_clamp_events = []
         
-        # Additional safety bounds with debugging
+        original_total = total_activation
+        
+        # Additional safety bounds with maintenance logging
         if total_activation > 1000.0:
-            print(f"⚠️  ENERGY CLAMP: {total_activation:.3f} → 1000.0 (this explains the mysterious 1000.000!)")
+            self._maintenance_clamp_events.append({
+                'type': 'energy_clamp',
+                'original': total_activation,
+                'clamped': 1000.0,
+                'timestamp': time.time()
+            })
             total_activation = 1000.0
         elif np.isinf(total_activation) or np.isnan(total_activation):
-            print(f"⚠️  ENERGY RESET: {total_activation} → 10.0 (inf/nan detected)")
+            self._maintenance_clamp_events.append({
+                'type': 'energy_reset',
+                'original': str(total_activation),
+                'reset': 10.0,
+                'timestamp': time.time()
+            })
             total_activation = 10.0
             
         if max_activation > 100.0:
-            print(f"⚠️  MAX_ACTIVATION CLAMP: {max_activation:.3f} → 100.0")
+            self._maintenance_clamp_events.append({
+                'type': 'max_activation_clamp',
+                'original': max_activation,
+                'clamped': 100.0,
+                'timestamp': time.time()
+            })
             max_activation = 100.0
         elif np.isinf(max_activation) or np.isnan(max_activation):
             max_activation = 1.0
+        
+        # Keep only recent clamp events (last 5)
+        if len(self._maintenance_clamp_events) > 5:
+            self._maintenance_clamp_events.pop(0)
         
         # Per-tensor statistics
         tensor_stats = {}
@@ -1015,3 +1077,80 @@ def create_adaptive_field_implementation(field_dimensions: List[FieldDimension],
         return MultiTensorFieldImplementation(
             spatial_resolution, field_dimensions, actual_device, quiet_mode
         )
+
+
+# Add decay maintenance method to MultiTensorFieldImplementation
+def _add_decay_maintenance_to_multi_tensor():
+    """Add decay maintenance method to MultiTensorFieldImplementation class."""
+    
+    def perform_adaptive_decay_maintenance(self) -> Dict[str, float]:
+        """
+        Perform adaptive energy decay during maintenance cycles.
+        
+        This was moved from the main processing loop to improve performance.
+        Returns decay statistics for monitoring.
+        """
+        if not hasattr(self, 'field_tensors') or not self.field_tensors:
+            return {'total_energy': 0.0, 'decay_rate': 0.0, 'energy_after_decay': 0.0}
+        
+        # Calculate total field energy
+        total_field_energy = sum(torch.sum(tensor).item() for tensor in self.field_tensors.values())
+        
+        # Determine adaptive decay rate based on energy level
+        if total_field_energy > 200.0:
+            decay_rate = 0.95  # 5% decay for very high energy
+            energy_level = "very_high"
+        elif total_field_energy > 100.0:
+            decay_rate = 0.97  # 3% decay for high energy  
+            energy_level = "high"
+        elif total_field_energy > 50.0:
+            decay_rate = 0.985  # 1.5% decay for medium energy
+            energy_level = "medium"
+        elif total_field_energy > 25.0:
+            decay_rate = 0.992  # 0.8% decay for moderate energy
+            energy_level = "moderate"
+        else:
+            decay_rate = 0.995  # 0.5% decay for low energy
+            energy_level = "low"
+        
+        # Apply decay to all field tensors
+        for tensor_name, tensor in self.field_tensors.items():
+            tensor.mul_(decay_rate)
+        
+        # Calculate energy after decay
+        energy_after_decay = sum(torch.sum(tensor).item() for tensor in self.field_tensors.values())
+        energy_removed = total_field_energy - energy_after_decay
+        
+        # Store decay statistics for analysis
+        if not hasattr(self, '_decay_statistics'):
+            self._decay_statistics = []
+        
+        decay_stats = {
+            'timestamp': time.time(),
+            'total_energy_before': total_field_energy,
+            'energy_after_decay': energy_after_decay,
+            'energy_removed': energy_removed,
+            'decay_rate': decay_rate,
+            'energy_level': energy_level,
+            'tensors_processed': len(self.field_tensors)
+        }
+        
+        self._decay_statistics.append(decay_stats)
+        
+        # Keep only recent decay statistics
+        if len(self._decay_statistics) > 20:
+            self._decay_statistics.pop(0)
+        
+        return {
+            'total_energy': total_field_energy,
+            'decay_rate': decay_rate,
+            'energy_after_decay': energy_after_decay,
+            'energy_removed': energy_removed,
+            'energy_level': energy_level
+        }
+    
+    # Add method to the class
+    MultiTensorFieldImplementation.perform_adaptive_decay_maintenance = perform_adaptive_decay_maintenance
+
+# Apply the method addition
+_add_decay_maintenance_to_multi_tensor()

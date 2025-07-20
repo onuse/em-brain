@@ -139,7 +139,7 @@ class BrainMaintenanceInterface(ABC):
         Get maintenance recommendations based on idle time and last maintenance.
         
         Args:
-            idle_time_seconds: How long the brain has been idle
+            idle_time_seconds: How long the brain has been idle (cognitive load < 0.3)
             
         Returns:
             Dictionary indicating which maintenance operations are recommended
@@ -151,18 +151,25 @@ class BrainMaintenanceInterface(ABC):
         time_since_heavy = current_time - self.last_heavy_maintenance
         time_since_deep = current_time - self.last_deep_consolidation
         
+        # Enhanced recommendations for continuous processing scenarios
         return {
             'light_maintenance': (
-                idle_time_seconds > 5.0 or  # 5+ seconds idle
-                time_since_light > 60.0     # Or 60+ seconds since last light
+                # Cognitive idle periods (preferred)
+                (idle_time_seconds > 10.0 and time_since_light > 30.0) or  
+                # Time-based fallback for continuous processing
+                time_since_light > 300.0     # Force light maintenance every 5 minutes
             ),
             'heavy_maintenance': (
-                idle_time_seconds > 30.0 or  # 30+ seconds idle
-                time_since_heavy > 300.0     # Or 5+ minutes since last heavy
+                # Cognitive idle periods (preferred) 
+                (idle_time_seconds > 30.0 and time_since_heavy > 60.0) or  
+                # Time-based fallback for continuous processing
+                time_since_heavy > 1200.0    # Force heavy maintenance every 20 minutes
             ),
             'deep_consolidation': (
-                idle_time_seconds > 60.0 or  # 60+ seconds idle
-                time_since_deep > 600.0      # Or 10+ minutes since last deep
+                # Cognitive idle periods (preferred)
+                (idle_time_seconds > 120.0 and time_since_deep > 300.0) or  
+                # Time-based fallback for continuous processing
+                time_since_deep > 3600.0     # Force deep consolidation every hour
             )
         }
 
@@ -176,10 +183,24 @@ class MaintenanceScheduler:
         """Initialize scheduler with brain instance."""
         self.brain = brain
         self.last_activity_time = time.time()
+        self.last_maintenance_check = 0.0  # Throttle maintenance checks
     
-    def mark_activity(self) -> None:
-        """Mark that the brain is actively processing."""
-        self.last_activity_time = time.time()
+    def mark_activity(self, cognitive_load: float = 1.0) -> None:
+        """
+        Mark brain activity with cognitive load indicator.
+        
+        Args:
+            cognitive_load: 0.0-1.0 where:
+                0.0-0.3 = routine/background processing (sensors, but nothing interesting)
+                0.3-0.7 = moderate cognitive activity (learning, adaptation) 
+                0.7-1.0 = high cognitive activity (novel situations, problem solving)
+        """
+        current_time = time.time()
+        
+        # Only reset idle timer for significant cognitive activity
+        if cognitive_load > 0.3:  # Moderate to high cognitive load
+            self.last_activity_time = current_time
+        # Low cognitive load (routine processing) doesn't reset idle timer
     
     def get_idle_time(self) -> float:
         """Get current idle time in seconds."""
@@ -192,6 +213,18 @@ class MaintenanceScheduler:
         Returns:
             Dictionary indicating which maintenance operations were performed
         """
+        current_time = time.time()
+        
+        # Throttle maintenance checks to prevent excessive calls
+        # Reduced throttle for continuous processing scenarios
+        if current_time - self.last_maintenance_check < 2.0:  # Minimum 2 seconds between checks
+            return {
+                'light_maintenance': False,
+                'heavy_maintenance': False,
+                'deep_consolidation': False
+            }
+        
+        self.last_maintenance_check = current_time
         idle_time = self.get_idle_time()
         recommendations = self.brain.get_maintenance_recommendations(idle_time)
         
@@ -202,15 +235,48 @@ class MaintenanceScheduler:
         }
         
         if recommendations['light_maintenance']:
+            start_time = time.time()
             self.brain.safe_light_maintenance()
+            duration_ms = (time.time() - start_time) * 1000
+            
+            # Determine trigger reason
+            time_since_light = current_time - self.brain.last_light_maintenance
+            if idle_time > 10.0 and time_since_light > 30.0:
+                trigger = f"cognitive idle: {idle_time:.1f}s"
+            else:
+                trigger = f"time-based: {time_since_light/60:.1f}min since last"
+            
+            print(f"🔧 SCHEDULER: Light maintenance completed ({duration_ms:.1f}ms, {trigger})")
             performed['light_maintenance'] = True
         
         if recommendations['heavy_maintenance']:
+            start_time = time.time()
             self.brain.safe_heavy_maintenance() 
+            duration_ms = (time.time() - start_time) * 1000
+            
+            # Determine trigger reason
+            time_since_heavy = current_time - self.brain.last_heavy_maintenance
+            if idle_time > 30.0 and time_since_heavy > 60.0:
+                trigger = f"cognitive idle: {idle_time:.1f}s"
+            else:
+                trigger = f"time-based: {time_since_heavy/60:.1f}min since last"
+            
+            print(f"🔧 SCHEDULER: Heavy maintenance completed ({duration_ms:.1f}ms, {trigger})")
             performed['heavy_maintenance'] = True
             
         if recommendations['deep_consolidation']:
+            start_time = time.time()
             self.brain.safe_deep_consolidation()
+            duration_ms = (time.time() - start_time) * 1000
+            
+            # Determine trigger reason  
+            time_since_deep = current_time - self.brain.last_deep_consolidation
+            if idle_time > 120.0 and time_since_deep > 300.0:
+                trigger = f"cognitive idle: {idle_time:.1f}s"
+            else:
+                trigger = f"time-based: {time_since_deep/60:.1f}min since last"
+            
+            print(f"🔧 SCHEDULER: Deep consolidation completed ({duration_ms:.1f}ms, {trigger})")
             performed['deep_consolidation'] = True
         
         return performed

@@ -154,6 +154,30 @@ class SensorBuffer:
             if client_id in self.client_data:
                 del self.client_data[client_id]
     
+    def add_sensor_data(self, client_id: str, sensor_vector: List[float]) -> bool:
+        """Alias for add_sensor_input for consistency."""
+        return self.add_sensor_input(client_id, sensor_vector)
+    
+    def consume_client_data(self, client_id: str) -> Optional[SensorData]:
+        """
+        Get and remove sensor data for a client (marking it as consumed).
+        
+        This is different from get_latest_sensor_data which leaves data in buffer.
+        Use this when you want to process data and mark it as consumed.
+        
+        Args:
+            client_id: ID of the client
+            
+        Returns:
+            Latest sensor data or None if no fresh data available
+        """
+        with self.lock:
+            data = self.get_latest_sensor_data(client_id)
+            if data:
+                # Remove the data after getting it (mark as consumed)
+                del self.client_data[client_id]
+            return data
+    
     def get_statistics(self) -> Dict[str, any]:
         """Get buffer statistics for monitoring."""
         with self.lock:

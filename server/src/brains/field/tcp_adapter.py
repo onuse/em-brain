@@ -13,6 +13,7 @@ from dataclasses import dataclass
 
 from .generic_brain import GenericFieldBrain, StreamCapabilities
 from .field_logger import FieldBrainLogger
+from ..brain_maintenance_interface import BrainMaintenanceInterface
 
 
 @dataclass
@@ -38,7 +39,7 @@ class FieldBrainConfig:
     target_cycle_time_ms: float = 150.0
 
 
-class FieldBrainTCPAdapter:
+class FieldBrainTCPAdapter(BrainMaintenanceInterface):
     """
     Adapter that makes GenericFieldBrain compatible with MinimalTCPServer.
     
@@ -48,6 +49,9 @@ class FieldBrainTCPAdapter:
     
     def __init__(self, config: FieldBrainConfig = None):
         """Initialize the field brain TCP adapter."""
+        # Initialize maintenance interface first
+        super().__init__()
+        
         self.config = config or FieldBrainConfig()
         
         # Initialize field-specific logger
@@ -181,7 +185,7 @@ class FieldBrainTCPAdapter:
             # Create compatible brain state response
             brain_state_response = {
                 'prediction_method': 'field_dynamics',
-                'prediction_confidence': min(1.0, brain_state.get('field_total_energy', 0.0) / 1000.0),
+                'prediction_confidence': brain_state.get('prediction_confidence', 0.001),  # Use proper confidence from brain state
                 'field_energy': brain_state.get('field_total_energy', 0.0),
                 'field_activation': brain_state.get('field_mean_activation', 0.0),
                 'topology_regions': brain_state.get('topology_regions', 0),
@@ -319,6 +323,24 @@ class FieldBrainTCPAdapter:
             'biological_optimizations': True,
             'tcp_compatibility': True
         }
+    
+    def light_maintenance(self) -> None:
+        """Quick cleanup operations for field brain."""
+        # Delegate to field brain's light maintenance
+        if hasattr(self.field_brain, 'light_maintenance'):
+            self.field_brain.light_maintenance()
+    
+    def heavy_maintenance(self) -> None:
+        """Moderate maintenance operations for field brain."""
+        # Delegate to field brain's heavy maintenance
+        if hasattr(self.field_brain, 'heavy_maintenance'):
+            self.field_brain.heavy_maintenance()
+    
+    def deep_consolidation(self) -> None:
+        """Intensive consolidation operations for field brain."""
+        # Delegate to field brain's deep consolidation
+        if hasattr(self.field_brain, 'deep_consolidation'):
+            self.field_brain.deep_consolidation()
     
     def __str__(self) -> str:
         return f"FieldBrainTCPAdapter({self.sensory_dim}D→{self.motor_dim}D, {self.total_cycles} cycles)"

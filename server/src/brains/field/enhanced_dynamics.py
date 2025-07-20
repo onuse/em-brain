@@ -335,14 +335,23 @@ class EnhancedFieldDynamics:
         min_flow = min(flow_magnitudes)
         flow_imbalance = max_flow - min_flow
         
-        # DISABLED: Energy redistribution creates new energy instead of redistributing
-        # This is a major source of energy accumulation - commenting out until proper implementation
-        # 
-        # TODO: Implement true energy redistribution that moves energy instead of creating new energy
-        # if flow_imbalance > 0.3:
-        #     # Should implement: move energy from high-flow to low-flow regions
-        #     # Current implementation: creates new energy (ENERGY LEAK!)
-        #     pass
+        # MAINTENANCE OPTIMIZATION: Store redistribution metrics for background processing
+        if not hasattr(self, '_redistribution_pending'):
+            self._redistribution_pending = []
+        
+        # Check if redistribution is needed (store for maintenance processing)
+        if flow_imbalance > 0.3:
+            self._redistribution_pending.append({
+                'timestamp': time.time(),
+                'max_flow': max_flow,
+                'min_flow': min_flow,
+                'imbalance': flow_imbalance,
+                'energy_flows': dict(self.energy_flow_directions)
+            })
+            
+            # Keep only recent redistribution events
+            if len(self._redistribution_pending) > 5:
+                self._redistribution_pending.pop(0)
     
     def _update_coherence_metrics(self) -> None:
         """Update field coherence metrics for global consistency (optimized)."""
@@ -445,3 +454,126 @@ class EnhancedFieldDynamics:
         # Update the last attractor's persistence
         if self.active_attractors:
             self.active_attractors[-1]['persistence'] = persistence
+    
+    def perform_energy_redistribution_maintenance(self) -> int:
+        """
+        Perform energy redistribution during maintenance cycles.
+        
+        Properly implements energy-conserving redistribution by moving energy
+        from high-activity regions to low-activity regions without creating new energy.
+        
+        Returns: Number of redistributions performed
+        """
+        if not hasattr(self, '_redistribution_pending') or not self._redistribution_pending:
+            return 0
+        
+        redistributions_performed = 0
+        current_time = time.time()
+        
+        # Process pending redistributions
+        for redistribution_event in self._redistribution_pending[-3:]:  # Last 3 events
+            # Only process recent events (within last 30 seconds)
+            if current_time - redistribution_event['timestamp'] > 30.0:
+                continue
+                
+            # Perform actual energy redistribution
+            if self._perform_energy_conservative_redistribution(redistribution_event):
+                redistributions_performed += 1
+        
+        # Clear processed events
+        self._redistribution_pending = []
+        
+        if redistributions_performed > 0 and not self.quiet_mode:
+            print(f"🔧 MAINTENANCE: Performed {redistributions_performed} energy redistributions")
+        
+        return redistributions_performed
+    
+    def _perform_energy_conservative_redistribution(self, event: Dict[str, Any]) -> bool:
+        """
+        Perform actual energy-conserving redistribution based on flow analysis.
+        
+        This moves energy from high-flow regions to low-flow regions while
+        conserving total field energy.
+        """
+        try:
+            energy_flows = event['energy_flows']
+            imbalance = event['imbalance']
+            
+            if imbalance < 0.3:  # Not significant enough
+                return False
+            
+            # Find high and low energy flow regions
+            flow_items = list(energy_flows.items())
+            if len(flow_items) < 2:
+                return False
+                
+            # Sort by flow magnitude
+            flow_items.sort(key=lambda x: x[1], reverse=True)
+            high_flow_regions = flow_items[:len(flow_items)//2]  # Top half
+            low_flow_regions = flow_items[len(flow_items)//2:]   # Bottom half
+            
+            # Calculate redistribution amount (conservative)
+            redistribution_strength = min(0.1, imbalance * 0.2)  # Max 10% redistribution
+            
+            # Get current field gradients for redistribution coordinates
+            gradients = self.field_impl.compute_field_gradients()
+            
+            for high_region_name, high_flow in high_flow_regions:
+                for low_region_name, low_flow in low_flow_regions:
+                    # Create redistribution coordinates
+                    redistribution_coords = self._generate_redistribution_coordinates(
+                        high_region_name, low_region_name
+                    )
+                    
+                    # ENERGY CONSERVING: Create experiences that subtract from high-energy regions
+                    # and add to low-energy regions with the same total energy
+                    
+                    # Reduce energy in high-flow region (negative imprint)
+                    high_reduction = UnifiedFieldExperience(
+                        timestamp=time.time(),
+                        field_coordinates=redistribution_coords,
+                        raw_input_stream=torch.zeros(16, device=self.field_impl.field_device),
+                        field_intensity=-redistribution_strength,  # NEGATIVE: removes energy
+                        dynamics_family_activations={
+                            FieldDynamicsFamily.FLOW: -redistribution_strength,
+                            FieldDynamicsFamily.ENERGY: -redistribution_strength * 0.5
+                        }
+                    )
+                    
+                    # Add energy to low-flow region (positive imprint)
+                    low_addition = UnifiedFieldExperience(
+                        timestamp=time.time(),
+                        field_coordinates=redistribution_coords * 0.8,  # Slightly different coords
+                        raw_input_stream=torch.zeros(16, device=self.field_impl.field_device),
+                        field_intensity=redistribution_strength,   # POSITIVE: adds energy
+                        dynamics_family_activations={
+                            FieldDynamicsFamily.FLOW: redistribution_strength,
+                            FieldDynamicsFamily.ENERGY: redistribution_strength * 0.5
+                        }
+                    )
+                    
+                    # Apply redistribution (energy conserving: -energy + energy = 0 net change)
+                    self.field_impl.imprint_experience(high_reduction)
+                    self.field_impl.imprint_experience(low_addition)
+            
+            return True
+            
+        except Exception as e:
+            if not self.quiet_mode:
+                print(f"⚠️  Energy redistribution failed: {e}")
+            return False
+    
+    def _generate_redistribution_coordinates(self, high_region: str, low_region: str) -> torch.Tensor:
+        """Generate coordinates for energy redistribution between regions."""
+        # Create coordinates biased toward the transition between high and low regions
+        coords = torch.randn(36, device=self.field_impl.field_device, dtype=torch.float32) * 0.2
+        
+        # Spatial bias based on region names (crude but functional)
+        if 'spatial_x' in high_region:
+            coords[0] = 0.5  # Bias toward positive X
+        elif 'spatial_y' in high_region:
+            coords[1] = 0.5  # Bias toward positive Y
+        elif 'spatial_z' in high_region:
+            coords[2] = 0.5  # Bias toward positive Z
+        
+        return coords

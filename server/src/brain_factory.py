@@ -230,6 +230,13 @@ class BrainFactory:
         """
         process_start_time = time.time()
         
+        # Calculate initial cognitive load estimate (will refine after processing)
+        input_novelty = min(1.0, len(sensory_input) / max(1, self.sensory_dim)) * 0.5  # Basic novelty estimate
+        
+        # Mark brain as active for maintenance scheduling with initial estimate
+        if self.maintenance_scheduler:
+            self.maintenance_scheduler.mark_activity(input_novelty)
+        
         # Ensure sensory input matches expected dimensions
         if len(sensory_input) > self.sensory_dim:
             # Truncate if too long
@@ -257,12 +264,10 @@ class BrainFactory:
                 # Pad with zeros
                 predicted_action = predicted_action + [0.0] * (action_dimensions - len(predicted_action))
         
-        # Mark activity for maintenance scheduler
-        if self.maintenance_scheduler:
-            self.maintenance_scheduler.mark_activity()
+        # Use cognitive autopilot state for maintenance scheduling
+        confidence = vector_brain_state['prediction_confidence']
         
         # Update cognitive autopilot with vector stream confidence
-        confidence = vector_brain_state['prediction_confidence']
         prediction_error = 1.0 - confidence
         
         # Calculate actual prediction error if we have previous prediction
@@ -289,6 +294,23 @@ class BrainFactory:
         autopilot_state = self.cognitive_autopilot.update_cognitive_state(
             confidence, prediction_error, initial_brain_state
         )
+        
+        # Use cognitive autopilot mode for maintenance activity marking
+        if self.maintenance_scheduler:
+            cognitive_mode = autopilot_state.get('cognitive_mode', 'deep_think')
+            
+            # Convert autopilot modes to cognitive load for maintenance scheduling:
+            # - autopilot: low cognitive load (0.1) - brain coasting, maintenance OK
+            # - focused: medium cognitive load (0.5) - moderate thinking, some maintenance OK  
+            # - deep_think: high cognitive load (0.9) - intensive thinking, avoid maintenance
+            cognitive_load_map = {
+                'autopilot': 0.1,   # Coasting - maintenance encouraged
+                'focused': 0.5,     # Moderate - light maintenance OK
+                'deep_think': 0.9   # Working hard - avoid maintenance
+            }
+            
+            cognitive_load = cognitive_load_map.get(cognitive_mode, 0.9)
+            self.maintenance_scheduler.mark_activity(cognitive_load)
         
         # Log prediction outcome if logging enabled
         if self.logger and predicted_action:

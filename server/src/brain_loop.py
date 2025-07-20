@@ -147,10 +147,39 @@ class DecoupledBrainLoop:
     def _process_client_sensors(self, client_id: str, sensor_data):
         """Process sensor input for a specific client."""
         try:
-            # TODO: For now, skip brain processing to avoid blocking
-            # Later we'll add: action_vector, brain_state = self.brain.process_sensory_input(...)
-            # Just log that we received the data
-            pass
+            # SMART PROCESSING: Only process if enough time has passed since last brain cycle
+            # This prevents the 50ms brain loop from blocking on 350ms brain processing
+            current_time = time.time()
+            
+            # Track last processing time per client to avoid overwhelming brain
+            if not hasattr(self, '_last_brain_processing'):
+                self._last_brain_processing = {}
+            
+            last_processing = self._last_brain_processing.get(client_id, 0.0)
+            time_since_processing = current_time - last_processing
+            
+            # Only process if enough time passed (respect brain's natural cycle time)
+            min_processing_interval = 0.2  # 200ms minimum between brain processing
+            
+            if time_since_processing >= min_processing_interval:
+                if hasattr(sensor_data, 'vector') and sensor_data.vector:
+                    # Process through brain
+                    action_vector, brain_state = self.brain.process_sensory_input(sensor_data.vector)
+                    
+                    # Mark data as consumed
+                    self.sensor_buffer.clear_client_data(client_id)
+                    self._last_brain_processing[client_id] = current_time
+                    
+                    # Log occasionally with cognitive mode info
+                    if self.total_cycles % 50 == 0:
+                        confidence = brain_state.get('prediction_confidence', 0.0)
+                        cycle_time_ms = brain_state.get('cycle_time_ms', 0.0)
+                        cognitive_mode = brain_state.get('cognitive_autopilot', {}).get('cognitive_mode', 'unknown')
+                        print(f"🧠 BRAIN_LOOP: Processed {client_id} -> confidence: {confidence:.2f}, cycle: {cycle_time_ms:.1f}ms, mode: {cognitive_mode}")
+            else:
+                # Don't process yet - data is fresh but we recently processed this client
+                # This will eventually allow idle cycles when no new data arrives
+                pass
             
         except Exception as e:
             print(f"⚠️ Error processing sensors for {client_id}: {e}")
@@ -164,6 +193,11 @@ class DecoupledBrainLoop:
                 performed = self.brain.run_recommended_maintenance()
                 if any(performed.values()):
                     self.maintenance_tasks_performed += 1
+                    # Log maintenance scheduling decision
+                    performed_types = [k for k, v in performed.items() if v]
+                    print(f"🔧 BRAIN_LOOP: Maintenance triggered -> {', '.join(performed_types)}")
+                elif self.total_cycles % 100 == 0:  # Periodic logging
+                    print(f"🔧 BRAIN_LOOP: No maintenance needed (cycle {self.total_cycles}, idle: {self.idle_cycles})")
             else:
                 # Fallback to legacy maintenance tasks
                 # Task 1: Cleanup old experiences if needed
