@@ -57,6 +57,9 @@ try:
         UnifiedFieldExperience, FieldNativeAction
     )
     from .adaptive_field_impl import create_adaptive_field_implementation, FieldImplementation
+    from .enhanced_dynamics import EnhancedFieldDynamics, PhaseTransitionConfig, AttractorConfig
+    from .attention_guided import AttentionGuidedProcessing, AttentionConfig
+    from .hierarchical_processing import EfficientHierarchicalProcessing, HierarchicalConfig
 except ImportError:
     from brains.field.dynamics.constraint_field_dynamics import ConstraintField4D, FieldConstraint, FieldConstraintType
     from brains.field.dynamics.temporal_field_dynamics import TemporalExperience, TemporalImprint
@@ -65,6 +68,9 @@ except ImportError:
         UnifiedFieldExperience, FieldNativeAction
     )
     from brains.field.adaptive_field_impl import create_adaptive_field_implementation, FieldImplementation
+    from brains.field.enhanced_dynamics import EnhancedFieldDynamics, PhaseTransitionConfig, AttractorConfig
+    from brains.field.attention_guided import AttentionGuidedProcessing, AttentionConfig
+    from brains.field.hierarchical_processing import EfficientHierarchicalProcessing, HierarchicalConfig
 
 
 class GenericFieldBrain:
@@ -86,6 +92,10 @@ class GenericFieldBrain:
                  temporal_window: float = 10.0,
                  field_evolution_rate: float = 0.1,
                  constraint_discovery_rate: float = 0.15,
+                 enable_enhanced_dynamics: bool = True,
+                 enable_attention_guidance: bool = True,
+                 enable_hierarchical_processing: bool = True,
+                 hierarchical_max_time_ms: float = 80.0,
                  quiet_mode: bool = False):
         
         self.spatial_resolution = spatial_resolution
@@ -93,6 +103,9 @@ class GenericFieldBrain:
         self.field_evolution_rate = field_evolution_rate
         self.constraint_discovery_rate = constraint_discovery_rate
         self.quiet_mode = quiet_mode
+        self.enable_enhanced_dynamics = enable_enhanced_dynamics
+        self.enable_attention_guidance = enable_attention_guidance
+        self.enable_hierarchical_processing = enable_hierarchical_processing
         
         # Initialize field dimension architecture
         self.field_dimensions = self._initialize_field_dimensions()
@@ -106,6 +119,47 @@ class GenericFieldBrain:
         
         # Store the device the implementation actually uses
         self.field_device = self.field_impl.field_device
+        
+        # Initialize enhanced features if enabled
+        self.enhanced_dynamics = None
+        self.attention_processor = None
+        self.hierarchical_processor = None
+        
+        if enable_enhanced_dynamics:
+            phase_config = PhaseTransitionConfig(
+                energy_threshold=0.7,
+                stability_threshold=0.3,
+                transition_strength=0.4
+            )
+            attractor_config = AttractorConfig(
+                attractor_strength=0.3,
+                auto_discovery=True
+            )
+            self.enhanced_dynamics = EnhancedFieldDynamics(
+                self.field_impl, phase_config, attractor_config, quiet_mode
+            )
+        
+        if enable_attention_guidance:
+            attention_config = AttentionConfig(
+                attention_threshold=0.1,
+                max_attention_regions=5,
+                novelty_boost=0.3
+            )
+            self.attention_processor = AttentionGuidedProcessing(
+                self.field_impl, attention_config, quiet_mode
+            )
+        
+        if enable_hierarchical_processing:
+            hierarchy_config = HierarchicalConfig(
+                max_hierarchy_time_ms=hierarchical_max_time_ms,
+                coarse_frequency=5,
+                relational_frequency=2,
+                detailed_frequency=1
+            )
+            self.hierarchical_processor = EfficientHierarchicalProcessing(
+                self.field_impl, self.attention_processor, hierarchy_config, 
+                spatial_resolution, quiet_mode
+            )
         
         # Backward compatibility: provide unified_field property for legacy code
         if hasattr(self.field_impl, 'unified_field'):
@@ -163,6 +217,18 @@ class GenericFieldBrain:
             if self.field_device.type != DEVICE.type:
                 device_info += f" (fallback from {DEVICE} due to dimension limits)"
             print(f"   Device: {device_info} ({'GPU' if self.field_device.type != 'cpu' else 'CPU'} acceleration)")
+            
+            # Enhanced features status
+            enhancements = []
+            if enable_enhanced_dynamics:
+                enhancements.append("Enhanced Dynamics")
+            if enable_attention_guidance:
+                enhancements.append("Attention Guidance")
+            if enable_hierarchical_processing:
+                enhancements.append("Hierarchical Processing")
+            if enhancements:
+                print(f"   Enhanced features: {', '.join(enhancements)}")
+            
             self._print_dimension_summary()
     
     def _initialize_field_dimensions(self) -> List[FieldDimension]:
@@ -358,22 +424,50 @@ class GenericFieldBrain:
         # 1. Convert input stream to unified field experience
         field_experience = self._input_stream_to_field_experience(input_stream, timestamp)
         
-        # 2. Imprint experience into adaptive field implementation
-        self.field_impl.imprint_experience(field_experience)
+        # 2. Process with attention guidance if enabled
+        if self.attention_processor:
+            output_stream_tensor = self.attention_processor.process_with_attention(input_stream)
+        else:
+            # Standard processing: imprint experience into adaptive field implementation
+            self.field_impl.imprint_experience(field_experience)
         
-        # 3. Evolve field dynamics using adaptive implementation
-        self.field_impl.evolve_field(self.field_evolution_rate, input_stream)
+        # 3. Evolve field dynamics with enhancements if enabled
+        if self.enhanced_dynamics:
+            self.enhanced_dynamics.evolve_with_enhancements(self.field_evolution_rate, input_stream)
+        else:
+            # Standard field evolution
+            self.field_impl.evolve_field(self.field_evolution_rate, input_stream)
         
         # 4. Generate output stream from field gradients
-        field_action = self._field_gradients_to_output_stream(timestamp)
+        if self.attention_processor and 'output_stream_tensor' in locals():
+            # Use attention-guided output
+            field_action = FieldNativeAction(
+                timestamp=timestamp,
+                output_stream=output_stream_tensor,
+                field_gradients=self._get_field_gradients_summary(),
+                confidence=self._calculate_output_confidence(output_stream_tensor),
+                dynamics_family_contributions=field_experience.dynamics_family_activations
+            )
+        else:
+            # Standard output generation
+            field_action = self._field_gradients_to_output_stream(timestamp)
         
-        # 5. Update tracking
+        # 5. Process hierarchical intelligence if enabled
+        hierarchical_results = {}
+        if self.hierarchical_processor:
+            hierarchical_results = self.hierarchical_processor.process_hierarchical_intelligence(
+                self.field_evolution_rate
+            )
+        
+        # 6. Update tracking
         self.field_experiences.append(field_experience)
         self.field_actions.append(field_action)
         self.brain_cycles += 1
         
-        # 6. Compile brain state
+        # 7. Compile brain state with enhanced features
         brain_state = self._get_brain_state()
+        if hierarchical_results:
+            brain_state['hierarchical_intelligence'] = hierarchical_results
         
         return field_action.output_stream.tolist(), brain_state
     
@@ -1385,6 +1479,33 @@ class GenericFieldBrain:
             dynamics_family_contributions=family_contributions
         )
     
+    def _get_field_gradients_summary(self) -> torch.Tensor:
+        """Get summary of field gradients for action generation."""
+        gradients = self.field_impl.compute_field_gradients()
+        if gradients:
+            # Combine all gradients into summary tensor
+            grad_values = []
+            for grad_tensor in gradients.values():
+                if grad_tensor.numel() > 0:
+                    grad_values.append(torch.mean(grad_tensor))
+            
+            if grad_values:
+                return torch.stack(grad_values)
+        
+        # Fallback
+        return torch.zeros(4, device=self.field_device)
+    
+    def _calculate_output_confidence(self, output_tensor: torch.Tensor) -> float:
+        """Calculate confidence in the output based on field state."""
+        # Simple confidence based on output magnitude and field statistics
+        output_norm = torch.norm(output_tensor).item()
+        field_stats = self.field_impl.get_field_statistics()
+        field_energy = field_stats.get('total_activation', 0.0)
+        
+        # Confidence increases with output strength and field energy
+        confidence = min(1.0, (output_norm + field_energy * 0.1) / 2.0)
+        return max(0.0, confidence)
+    
     def _get_brain_state(self) -> Dict[str, Any]:
         """Get brain state information for monitoring."""
         
@@ -1428,7 +1549,7 @@ class GenericFieldBrain:
             else:
                 family_activities[family.value] = 0.0
         
-        return {
+        brain_state = {
             'brain_cycles': self.brain_cycles,
             'field_evolution_cycles': field_stats.get('evolution_cycles', 0),
             'topology_discoveries': self.topology_discoveries,
@@ -1458,6 +1579,12 @@ class GenericFieldBrain:
             'topology_regions': len(self.topology_regions),
             'gradient_flows': len(field_gradients),
         }
+        
+        # Add enhanced features status
+        enhanced_status = self.get_enhanced_features_status()
+        brain_state['enhanced_features'] = enhanced_status
+        
+        return brain_state
     
     def get_field_memory_stats(self) -> Dict[str, Any]:
         """Get comprehensive field memory statistics."""
@@ -1617,6 +1744,51 @@ class GenericFieldBrain:
             if not self.quiet_mode:
                 print(f"❌ Failed to load field state: {e}")
             return False
+    
+    def get_enhanced_features_status(self) -> Dict[str, Any]:
+        """Get status and statistics for enhanced features."""
+        status = {
+            'enhanced_dynamics_enabled': self.enhanced_dynamics is not None,
+            'attention_guidance_enabled': self.attention_processor is not None,
+            'hierarchical_processing_enabled': self.hierarchical_processor is not None
+        }
+        
+        if self.enhanced_dynamics:
+            status['enhanced_dynamics'] = self.enhanced_dynamics.get_enhancement_statistics()
+        
+        if self.attention_processor:
+            status['attention_guidance'] = self.attention_processor.get_attention_statistics()
+        
+        if self.hierarchical_processor:
+            status['hierarchical_processing'] = self.hierarchical_processor.get_hierarchy_statistics()
+        
+        return status
+    
+    def set_attention_goals(self, goals: List[str]) -> None:
+        """Set top-down attention goals."""
+        if self.attention_processor:
+            self.attention_processor.set_attention_goals(goals)
+    
+    def trigger_phase_transition(self, target_phase: str) -> bool:
+        """Manually trigger a phase transition."""
+        if self.enhanced_dynamics:
+            return self.enhanced_dynamics.manual_phase_transition(target_phase)
+        return False
+    
+    def add_attractor(self, coordinates: torch.Tensor, intensity: float, persistence: Optional[float] = None) -> None:
+        """Manually add an attractor at specified coordinates."""
+        if self.enhanced_dynamics:
+            self.enhanced_dynamics.add_manual_attractor(coordinates, intensity, persistence)
+    
+    def enable_hierarchical_processing(self, enable: bool = True) -> None:
+        """Enable or disable hierarchical processing."""
+        if self.hierarchical_processor:
+            self.hierarchical_processor.enable_hierarchy(enable)
+    
+    def adjust_hierarchical_budget(self, max_time_ms: float) -> None:
+        """Adjust the performance budget for hierarchical processing."""
+        if self.hierarchical_processor:
+            self.hierarchical_processor.adjust_performance_budget(max_time_ms)
 
 
 # Factory function for easy creation
