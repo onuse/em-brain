@@ -207,20 +207,20 @@ class EnhancedFieldDynamics:
         transition_coords = self._generate_transition_coordinates()
         
         if new_phase == "high_energy":
-            # Create stabilizing attractors
-            self._create_phase_attractor(transition_coords, "stabilizing", 0.4)
+            # Create stabilizing attractors (reduced intensity)
+            self._create_phase_attractor(transition_coords, "stabilizing", 0.1)
         
         elif new_phase == "chaotic":
-            # Introduce controlled perturbations
-            self._create_phase_attractor(transition_coords, "perturbation", 0.2)
+            # Introduce controlled perturbations (reduced intensity)
+            self._create_phase_attractor(transition_coords, "perturbation", 0.05)
         
         elif new_phase == "low_energy":
-            # Boost energy through activation
-            self._create_phase_attractor(transition_coords, "energizing", 0.6)
+            # Boost energy through activation (reduced intensity)
+            self._create_phase_attractor(transition_coords, "energizing", 0.15)
         
         elif new_phase == "stable":
-            # Gentle coherence enhancement
-            self._create_phase_attractor(transition_coords, "coherence", 0.3)
+            # Gentle coherence enhancement (reduced intensity)
+            self._create_phase_attractor(transition_coords, "coherence", 0.08)
     
     def _generate_transition_coordinates(self) -> torch.Tensor:
         """Generate field coordinates for phase transition."""
@@ -255,6 +255,10 @@ class EnhancedFieldDynamics:
     
     def _create_phase_attractor(self, coordinates: torch.Tensor, attractor_type: str, intensity: float) -> None:
         """Create a phase-specific attractor."""
+        # DEBUG: Log attractor creation
+        if intensity > 1.0:
+            coords_norm = torch.norm(coordinates).item()
+            print(f"🔍 ATTRACTOR CREATE: type={attractor_type}, intensity={intensity:.6f}, coords_norm={coords_norm:.6f}")
         experience = UnifiedFieldExperience(
             timestamp=time.time(),
             field_coordinates=coordinates,
@@ -295,8 +299,10 @@ class EnhancedFieldDynamics:
             age = current_time - attractor['creation_time']
             decay_factor = math.exp(-age / attractor['persistence'])
             
-            # Apply attractor influence
+            # Apply attractor influence with bounds checking
             current_intensity = attractor['intensity'] * decay_factor * self.attractor_config.attractor_strength
+            # Prevent intensity amplification beyond biological range
+            current_intensity = min(current_intensity, 1.0)
             
             if current_intensity > 0.01:  # Only apply if significant
                 experience = UnifiedFieldExperience(

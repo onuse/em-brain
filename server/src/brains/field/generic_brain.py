@@ -497,8 +497,16 @@ class GenericFieldBrain:
                 family_activation = torch.mean(torch.abs(field_coordinates[start_idx:end_idx])).item()
                 family_activations[family] = family_activation
         
-        # Calculate field intensity
-        field_intensity = torch.norm(field_coordinates).item()
+        # Calculate field intensity with proper normalization
+        # Normalize by field dimension count to keep intensity in reasonable range
+        raw_intensity = torch.norm(field_coordinates).item()
+        normalized_intensity = raw_intensity / math.sqrt(len(field_coordinates))
+        field_intensity = min(normalized_intensity, 1.0)
+        
+        # DEBUG: Log intensity calculation steps
+        if raw_intensity > 6.0 or normalized_intensity > 1.0:
+            coords_max = torch.max(torch.abs(field_coordinates)).item()
+            print(f"🔍 INTENSITY CALC: raw={raw_intensity:.6f}, normalized={normalized_intensity:.6f}, final={field_intensity:.6f}, coords_max={coords_max:.6f}")
         
         return UnifiedFieldExperience(
             timestamp=timestamp,

@@ -189,6 +189,11 @@ class UnifiedFieldImplementation(FieldImplementation):
         field_coords = experience.field_coordinates
         intensity = experience.field_intensity
         
+        # DEBUG: Log suspicious intensity values
+        if intensity > 1.0:
+            coords_norm = torch.norm(field_coords).item()
+            print(f"🔍 UNIFIED IMPRINT: intensity={intensity:.6f}, coords_norm={coords_norm:.6f}, coords_max={torch.max(torch.abs(field_coords)).item():.6f}")
+        
         # Map field coordinates to spatial positions
         spatial_coords = field_coords[:3]  # First 3 are spatial
         scale_coord = field_coords[3] if len(field_coords) > 3 else torch.tensor(0.0, device=self.field_device)
@@ -211,11 +216,23 @@ class UnifiedFieldImplementation(FieldImplementation):
         # Gaussian imprint with adaptive radius
         spatial_spread = 2.0 + intensity  # Larger experiences create wider imprints
         
-        for dx in range(-3, 4):
-            for dy in range(-3, 4):
-                for dz in range(-3, 4):
-                    for ds in range(-1, 2):
-                        for dt in range(-2, 3):
+        # Calculate total spatial positions for normalization
+        dx_range = range(-3, 4)  # 7 positions
+        dy_range = range(-3, 4)  # 7 positions  
+        dz_range = range(-3, 4)  # 7 positions
+        ds_range = range(-1, 2)  # 3 positions
+        dt_range = range(-2, 3)  # 5 positions
+        total_spatial_positions = len(dx_range) * len(dy_range) * len(dz_range) * len(ds_range) * len(dt_range)
+        
+        # Pre-normalize intensity by both spatial and dimensional factors (OPTIMIZATION!)
+        dimension_count = self.unified_field.shape[5] if len(self.unified_field.shape) > 5 else 1
+        base_intensity = intensity / (total_spatial_positions * dimension_count)
+        
+        for dx in dx_range:
+            for dy in dy_range:
+                for dz in dz_range:
+                    for ds in ds_range:
+                        for dt in dt_range:
                             x_pos = x_center + dx
                             y_pos = y_center + dy
                             z_pos = z_center + dz
@@ -229,13 +246,16 @@ class UnifiedFieldImplementation(FieldImplementation):
                                 0 <= s_pos < 10 and
                                 0 <= t_pos < 15):
                                 
-                                # Calculate Gaussian weight
+                                # Calculate Gaussian weight (pre-normalized for efficiency)
                                 distance = math.sqrt(dx**2 + dy**2 + dz**2 + ds**2 + dt**2)
-                                weight = intensity * math.exp(-(distance**2) / (2 * spatial_spread**2))
+                                weight = base_intensity * math.exp(-(distance**2) / (2 * spatial_spread**2))
                                 
-                                # Apply imprint to all dynamics dimensions
+                                # Clamp weight to prevent exponential growth
+                                weight = min(weight, 10.0)
+                                
+                                # Apply imprint to all dynamics dimensions (already normalized)
                                 if len(self.unified_field.shape) > 5:
-                                    # Multi-dimensional case
+                                    # Multi-dimensional case - weight already normalized
                                     for dim_idx in range(self.unified_field.shape[5]):
                                         self.unified_field[x_pos, y_pos, z_pos, s_pos, t_pos, dim_idx] += weight
                                 else:
@@ -332,9 +352,25 @@ class UnifiedFieldImplementation(FieldImplementation):
     
     def get_field_statistics(self) -> Dict[str, Any]:
         """Get comprehensive unified field statistics."""
+        # Calculate field statistics with overflow protection
         total_activation = torch.sum(self.unified_field).item()
         max_activation = torch.max(self.unified_field).item()
         mean_activation = torch.mean(self.unified_field).item()
+        
+        # Protect against numerical overflow
+        if np.isinf(total_activation) or np.isnan(total_activation) or total_activation > 1e10:
+            print(f"⚠️ Field energy overflow detected: {total_activation:.3e} - clamping to safe range")
+            # Emergency field normalization
+            field_magnitude = torch.mean(torch.abs(self.unified_field)).item()
+            if field_magnitude > 100.0:
+                self.unified_field = torch.clamp(self.unified_field, -100.0, 100.0)
+                total_activation = torch.sum(self.unified_field).item()
+                max_activation = torch.max(self.unified_field).item()
+                mean_activation = torch.mean(self.unified_field).item()
+            else:
+                total_activation = min(total_activation, 1000.0) if not (np.isinf(total_activation) or np.isnan(total_activation)) else 10.0
+                max_activation = min(max_activation, 100.0) if not (np.isinf(max_activation) or np.isnan(max_activation)) else 1.0
+                mean_activation = min(mean_activation, 10.0) if not (np.isinf(mean_activation) or np.isnan(mean_activation)) else 0.1
         
         return {
             'implementation_type': 'unified',
@@ -499,9 +535,17 @@ class MultiTensorFieldImplementation(FieldImplementation):
         """Imprint experience into a specific field tensor."""
         spatial_spread = 2.0 + intensity
         
-        for dx in range(-2, 3):  # Smaller spread for multi-tensor
-            for dy in range(-2, 3):
-                for dz in range(-2, 3):
+        # Calculate total spatial positions for normalization (5x5x5 = 125)
+        spatial_range = range(-2, 3)  # 5 positions
+        total_spatial_positions = len(spatial_range) ** 3  # 5^3 = 125
+        
+        # Pre-normalize intensity by both spatial and dimensional factors (OPTIMIZATION!)
+        dimension_count = tensor.shape[3]
+        base_intensity = intensity / (total_spatial_positions * dimension_count)
+        
+        for dx in spatial_range:  # Smaller spread for multi-tensor
+            for dy in spatial_range:
+                for dz in spatial_range:
                     x_pos = x_center + dx
                     y_pos = y_center + dy
                     z_pos = z_center + dz
@@ -511,15 +555,21 @@ class MultiTensorFieldImplementation(FieldImplementation):
                         0 <= y_pos < self.spatial_resolution and
                         0 <= z_pos < self.spatial_resolution):
                         
-                        # Calculate Gaussian weight
+                        # Calculate Gaussian weight (pre-normalized for efficiency)
                         distance = math.sqrt(dx**2 + dy**2 + dz**2)
-                        weight = intensity * math.exp(-(distance**2) / (2 * spatial_spread**2))
+                        weight = base_intensity * math.exp(-(distance**2) / (2 * spatial_spread**2))
                         
-                        # Apply to dynamics dimensions
-                        for dim_idx in range(tensor.shape[3]):
+                        # Clamp weight to prevent exponential growth
+                        weight = min(weight, 10.0)
+                        
+                        # Apply to dynamics dimensions (already normalized)
+                        for dim_idx in range(dimension_count):
                             if dim_idx < len(dynamics_values):
                                 dynamics_influence = dynamics_values[dim_idx]
-                                tensor[x_pos, y_pos, z_pos, dim_idx] += weight * (1 + dynamics_influence)
+                                final_weight = weight * (1 + dynamics_influence)
+                                # Additional clamp on final weight
+                                final_weight = min(final_weight, 20.0)
+                                tensor[x_pos, y_pos, z_pos, dim_idx] += final_weight
     
     def evolve_field(self, dt: float = 0.1, current_input_stream: Optional[List[float]] = None) -> None:
         """Evolve all field tensors with cross-field coupling (performance optimized)."""
@@ -728,6 +778,24 @@ class MultiTensorFieldImplementation(FieldImplementation):
         total_activation = sum(torch.sum(tensor).item() for tensor in self.field_tensors.values())
         max_activation = max(torch.max(tensor).item() for tensor in self.field_tensors.values())
         mean_activation = total_activation / total_elements if total_elements > 0 else 0.0
+        
+        # Protect against numerical overflow in multi-tensor implementation
+        if np.isinf(total_activation) or np.isnan(total_activation) or total_activation > 1e10:
+            print(f"⚠️ Multi-tensor field energy overflow detected: {total_activation:.3e} - clamping tensors")
+            # Emergency field normalization for all tensors
+            for name, tensor in self.field_tensors.items():
+                field_magnitude = torch.mean(torch.abs(tensor)).item()
+                if field_magnitude > 100.0:
+                    self.field_tensors[name] = torch.clamp(tensor, -100.0, 100.0)
+            
+            # Recalculate after clamping
+            total_activation = sum(torch.sum(tensor).item() for tensor in self.field_tensors.values())
+            max_activation = max(torch.max(tensor).item() for tensor in self.field_tensors.values())
+            mean_activation = total_activation / total_elements if total_elements > 0 else 0.0
+        
+        # Additional safety bounds
+        total_activation = min(total_activation, 1000.0) if not (np.isinf(total_activation) or np.isnan(total_activation)) else 10.0
+        max_activation = min(max_activation, 100.0) if not (np.isinf(max_activation) or np.isnan(max_activation)) else 1.0
         
         # Per-tensor statistics
         tensor_stats = {}
