@@ -169,11 +169,12 @@ class RecoveryManager:
         result = RecoveryResult()
         
         try:
-            # Find all incremental files
-            incremental_files = self.storage.list_files(
+            # Find all incremental files (exclude integrity files)
+            all_files = self.storage.list_files(
                 self.config.get_incremental_dir(),
-                "delta_*.json*"
+                "delta_*.json.gz"
             )
+            incremental_files = [f for f in all_files if not f['filename'].endswith('.integrity')]
             
             if not incremental_files:
                 result.warnings.append("No incremental files found")
@@ -221,16 +222,17 @@ class RecoveryManager:
         try:
             # Scan all directories for brain state files
             search_dirs = [
-                (self.config.get_consolidated_dir(), "brain_state_*.json*"),
-                (self.config.get_incremental_dir(), "delta_*.json*"),
-                (self.config.get_recovery_dir(), "*.json*")
+                (self.config.get_consolidated_dir(), "brain_state_*.json.gz"),
+                (self.config.get_incremental_dir(), "delta_*.json.gz"),
+                (self.config.get_recovery_dir(), "*.json.gz")
             ]
             
             valid_files = []
             
             for search_dir, pattern in search_dirs:
                 if os.path.exists(search_dir):
-                    files = self.storage.list_files(search_dir, pattern)
+                    all_files = self.storage.list_files(search_dir, pattern)
+                    files = [f for f in all_files if not f['filename'].endswith('.integrity')]
                     for file_info in files:
                         try:
                             # Try to load and validate
@@ -336,11 +338,12 @@ class RecoveryManager:
                     brain_state = self.brain_serializer.from_dict(brain_dict)
                     return brain_state, "latest_consolidated.json"
             
-            # Fall back to finding most recent consolidated file
-            consolidated_files = self.storage.list_files(
+            # Fall back to finding most recent consolidated file (exclude integrity files)
+            all_consolidated_files = self.storage.list_files(
                 self.config.get_consolidated_dir(),
-                "brain_state_*.json*"
+                "brain_state_*.json.gz"
             )
+            consolidated_files = [f for f in all_consolidated_files if not f['filename'].endswith('.integrity')]
             
             if not consolidated_files:
                 return None, ""
@@ -363,11 +366,12 @@ class RecoveryManager:
     def _find_incremental_files_since_base(self, base_state: SerializedBrainState) -> List[Dict[str, Any]]:
         """Find incremental files created after the base state."""
         try:
-            # Get all incremental files
-            incremental_files = self.storage.list_files(
+            # Get all incremental files (exclude integrity files)
+            all_files = self.storage.list_files(
                 self.config.get_incremental_dir(),
-                "delta_*.json*"
+                "delta_*.json.gz"
             )
+            incremental_files = [f for f in all_files if not f['filename'].endswith('.integrity')]
             
             # Filter files created after base state
             base_timestamp = base_state.save_timestamp
@@ -539,16 +543,18 @@ class RecoveryManager:
     
     def get_recovery_status(self) -> Dict[str, Any]:
         """Get current recovery system status."""
-        # Check what files are available
-        consolidated_files = self.storage.list_files(
+        # Check what files are available (exclude integrity files)
+        all_consolidated_files = self.storage.list_files(
             self.config.get_consolidated_dir(),
-            "brain_state_*.json*"
+            "brain_state_*.json.gz"
         )
+        consolidated_files = [f for f in all_consolidated_files if not f['filename'].endswith('.integrity')]
         
-        incremental_files = self.storage.list_files(
+        all_files = self.storage.list_files(
             self.config.get_incremental_dir(),
-            "delta_*.json*"
+            "delta_*.json.gz"
         )
+        incremental_files = [f for f in all_files if not f['filename'].endswith('.integrity')]
         
         return {
             'consolidated_snapshots_available': len(consolidated_files),

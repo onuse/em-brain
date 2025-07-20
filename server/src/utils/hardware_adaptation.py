@@ -67,16 +67,20 @@ class HardwareAdaptation:
     4. Graceful degradation under pressure, scaling up when possible
     """
     
-    def __init__(self):
+    def __init__(self, config: Dict[str, Any] = None):
         self.enabled = True  # Hardware adaptation enabled by default
         self.hardware_profile: Optional[HardwareProfile] = None
         self.performance_history = []  # Recent cycle times for adaptation
         self.adaptation_rate = 0.1  # How aggressively to adapt (conservative)
         self.min_samples_for_adaptation = 10  # Minimum cycles before adapting
         
-        # Performance targets (biological constraints)
-        self.target_cycle_time_ms = 50.0  # Ideal: 50ms cycles
-        self.max_acceptable_cycle_time_ms = 100.0  # Upper bound: 100ms
+        # Performance targets from configuration (biological constraints)
+        self.config = config or {}
+        brain_config = self.config.get('brain', {})
+        
+        # Read target cycle time from settings.json instead of hardcoding
+        self.target_cycle_time_ms = brain_config.get('target_cycle_time_ms', 150.0)  # Default: 150ms for field brain
+        self.max_acceptable_cycle_time_ms = self.target_cycle_time_ms * 2.0  # Upper bound: 2x target
         self.memory_pressure_threshold = 0.8  # Start adapting at 80% memory usage
         
         # Performance reporting
@@ -501,11 +505,11 @@ class HardwareAdaptation:
 # Global hardware adaptation instance
 _hardware_adaptation = None
 
-def get_hardware_adaptation() -> HardwareAdaptation:
+def get_hardware_adaptation(config: Dict[str, Any] = None) -> HardwareAdaptation:
     """Get the global hardware adaptation instance."""
     global _hardware_adaptation
     if _hardware_adaptation is None:
-        _hardware_adaptation = HardwareAdaptation()
+        _hardware_adaptation = HardwareAdaptation(config)
     return _hardware_adaptation
 
 def get_adaptive_cognitive_limits() -> Dict[str, int]:

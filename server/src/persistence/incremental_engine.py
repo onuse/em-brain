@@ -247,7 +247,10 @@ class IncrementalEngine:
             return []
         
         files = []
-        for filepath in incremental_dir.glob("delta_*.json*"):
+        for filepath in incremental_dir.glob("delta_*.json.gz"):
+            # Skip integrity files - only process actual brain state files
+            if filepath.name.endswith('.integrity'):
+                continue
             try:
                 stat = filepath.stat()
                 file_info = {

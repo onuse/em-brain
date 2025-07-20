@@ -16,8 +16,8 @@ __author__ = "Robot Brain Project"
 
 # Core brain systems
 from .brain import MinimalBrain
-from .vector_stream.vector_stream_brain import MinimalVectorStreamBrain
-from .vector_stream.goldilocks_brain import GoldilocksBrain
+from .brains.minimal.core_brain import MinimalVectorStreamBrain
+from .brains.sparse_goldilocks.base_brain import GoldilocksBrain
 
 # Modular systems
 from .attention import UniversalAttentionSystem, CrossModalAttentionSystem

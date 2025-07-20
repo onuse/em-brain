@@ -8,13 +8,13 @@
     "field_temporal_window": 10.0,
     "field_evolution_rate": 0.1,
     "constraint_discovery_rate": 0.15,
-    "target_cycle_time_ms": 150.0,
+    "target_cycle_time_ms": 50.0,
     "learning_rate": 0.1,
     "prediction_threshold": 0.7,
     "novelty_threshold": 0.3
   },
   "memory": {
-    "persistent_memory_path": "./robot_memory",
+    "persistent_memory_path": "./robot_memory_field",
     "enable_persistence": true,
     "checkpoint_interval_experiences": 100,
     "checkpoint_interval_seconds": 300,

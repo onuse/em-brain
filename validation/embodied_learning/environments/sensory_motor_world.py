@@ -26,6 +26,20 @@ from dataclasses import dataclass, asdict
 from enum import Enum
 import math
 
+class LightType(Enum):
+    RED = 0
+    GREEN = 1  
+    BLUE = 2
+    WHITE = 3
+    PULSING = 4
+
+class SurfaceType(Enum):
+    SMOOTH = 0
+    ROUGH = 1
+    METALLIC = 2
+    SOFT = 3
+    WARM = 4
+
 class ActionType(Enum):
     MOVE_FORWARD = 0
     TURN_LEFT = 1
@@ -52,17 +66,44 @@ class RobotState:
             'action_history': [a.value for a in self.action_history[-10:]]  # Last 10 actions
         }
 
+@dataclass  
+class LightSource:
+    """Enhanced light source with color and behavior."""
+    x: float
+    y: float
+    light_type: LightType
+    base_intensity: float
+    color_wavelength: float  # nanometers
+    pulse_frequency: float = 0.0  # Hz (0 = no pulse)
+    
+@dataclass
+class Obstacle:
+    """Enhanced obstacle with surface properties."""
+    x: float
+    y: float
+    radius: float
+    surface_type: SurfaceType
+    reflectance: float
+    temperature: float  # Celsius
+    hardness: float  # 0-1 scale
+
 @dataclass
 class EnvironmentState:
     """Environment state for reproducible experiments."""
     time_step: int
-    light_positions: List[Tuple[float, float]]
-    obstacle_positions: List[Tuple[float, float, float]]  # x, y, radius
-    light_intensity: float
+    light_sources: List[LightSource]
+    obstacles: List[Obstacle]
+    ambient_light: float
     noise_level: float
     
     def to_dict(self):
-        return asdict(self)
+        return {
+            'time_step': self.time_step,
+            'light_sources': [asdict(ls) for ls in self.light_sources],
+            'obstacles': [asdict(obs) for obs in self.obstacles],
+            'ambient_light': self.ambient_light,
+            'noise_level': self.noise_level
+        }
 
 class SensoryMotorWorld:
     """
@@ -111,9 +152,9 @@ class SensoryMotorWorld:
         # Environment state
         self.environment_state = EnvironmentState(
             time_step=0,
-            light_positions=self._generate_light_sources(num_light_sources),
-            obstacle_positions=self._generate_obstacles(num_obstacles),
-            light_intensity=1.0,
+            light_sources=self._generate_light_sources(num_light_sources),
+            obstacles=self._generate_obstacles(num_obstacles),
+            ambient_light=0.1,
             noise_level=0.05
         )
         
@@ -131,10 +172,12 @@ class SensoryMotorWorld:
             ActionType.STOP: 0.1
         }
         
-        # Sensory system
+        # Enhanced sensory system
         self.num_distance_sensors = 8
         self.max_sensor_range = 3.0  # meters
         self.num_light_sensors = 4
+        self.num_color_sensors = 3  # RGB color detection
+        self.num_surface_sensors = 4  # Surface property detection
         
         # Learning adaptation
         self.difficulty_level = 1
@@ -147,22 +190,42 @@ class SensoryMotorWorld:
         print(f"   Battery capacity: {battery_capacity}")
         print(f"   Random seed: {random_seed}")
     
-    def _generate_light_sources(self, num_sources: int) -> List[Tuple[float, float]]:
-        """Generate light source positions."""
+    def _generate_light_sources(self, num_sources: int) -> List[LightSource]:
+        """Generate diverse light sources with colors and behaviors."""
         sources = []
+        light_types = [LightType.RED, LightType.GREEN, LightType.BLUE, LightType.WHITE, LightType.PULSING]
+        wavelengths = [650, 520, 450, 550, 600]  # nanometers
+        
         for i in range(num_sources):
             # Place light sources away from center and walls
             angle = (i / num_sources) * 2 * np.pi
             radius = self.world_size * 0.3
             x = self.world_size/2 + radius * np.cos(angle)
             y = self.world_size/2 + radius * np.sin(angle)
-            sources.append((x, y))
+            
+            # Assign diverse light properties
+            light_type = light_types[i % len(light_types)]
+            wavelength = wavelengths[i % len(wavelengths)]
+            intensity = np.random.uniform(0.7, 1.0)
+            pulse_freq = 2.0 if light_type == LightType.PULSING else 0.0
+            
+            source = LightSource(
+                x=x, y=y,
+                light_type=light_type,
+                base_intensity=intensity,
+                color_wavelength=wavelength,
+                pulse_frequency=pulse_freq
+            )
+            sources.append(source)
+        
         return sources
     
-    def _generate_obstacles(self, num_obstacles: int) -> List[Tuple[float, float, float]]:
-        """Generate obstacle positions (x, y, radius)."""
+    def _generate_obstacles(self, num_obstacles: int) -> List[Obstacle]:
+        """Generate obstacles with diverse surface properties."""
         obstacles = []
-        for _ in range(num_obstacles):
+        surface_types = [SurfaceType.SMOOTH, SurfaceType.ROUGH, SurfaceType.METALLIC, SurfaceType.SOFT, SurfaceType.WARM]
+        
+        for i in range(num_obstacles):
             # Random position, avoiding center and light sources
             x = np.random.uniform(1.0, self.world_size - 1.0)
             y = np.random.uniform(1.0, self.world_size - 1.0)
@@ -171,17 +234,40 @@ class SensoryMotorWorld:
             # Ensure not too close to center
             center_dist = np.linalg.norm([x - self.world_size/2, y - self.world_size/2])
             if center_dist > 1.0:
-                obstacles.append((x, y, radius))
+                # Assign diverse surface properties
+                surface_type = surface_types[i % len(surface_types)]
+                
+                # Surface-specific properties
+                if surface_type == SurfaceType.SMOOTH:
+                    reflectance, temperature, hardness = 0.9, 20.0, 0.8
+                elif surface_type == SurfaceType.ROUGH:
+                    reflectance, temperature, hardness = 0.4, 18.0, 0.9
+                elif surface_type == SurfaceType.METALLIC:
+                    reflectance, temperature, hardness = 0.8, 15.0, 1.0
+                elif surface_type == SurfaceType.SOFT:
+                    reflectance, temperature, hardness = 0.6, 25.0, 0.3
+                else:  # WARM
+                    reflectance, temperature, hardness = 0.5, 35.0, 0.6
+                
+                obstacle = Obstacle(
+                    x=x, y=y, radius=radius,
+                    surface_type=surface_type,
+                    reflectance=reflectance,
+                    temperature=temperature,
+                    hardness=hardness
+                )
+                obstacles.append(obstacle)
         
         return obstacles
     
     def get_sensory_input(self) -> List[float]:
         """
-        Get 16-dimensional sensory input vector.
+        Get 23-dimensional rich sensory input vector.
         
         Returns:
-            16D vector: [position(2), orientation(1), battery(1), 
-                        distance_sensors(8), light_sensors(4)]
+            23D vector: [position(2), orientation(1), battery(1), 
+                        distance_sensors(8), light_sensors(4),
+                        color_sensors(3), surface_sensors(4), time(1)]
         """
         
         # Position (normalized to [0, 1])
@@ -199,13 +285,25 @@ class SensoryMotorWorld:
         # Light sensors
         light_readings = self._get_light_sensor_readings()
         
-        # Combine into 16D vector
+        # Color sensors (RGB wavelength detection)
+        color_readings = self._get_color_sensor_readings()
+        
+        # Surface property sensors
+        surface_readings = self._get_surface_sensor_readings()
+        
+        # Time sensor (circadian rhythm simulation)
+        time_reading = [(self.time_step % 1000) / 1000.0]  # Normalized time cycle
+        
+        # Combine into 23D vector
         sensory_vector = [
             norm_position[0], norm_position[1],  # Position (2D)
             norm_orientation,                     # Orientation (1D)
             norm_battery,                        # Battery (1D)
             *distance_readings,                  # Distance sensors (8D)
-            *light_readings                      # Light sensors (4D)
+            *light_readings,                     # Light sensors (4D)
+            *color_readings,                     # Color sensors (3D)
+            *surface_readings,                   # Surface sensors (4D)
+            *time_reading                        # Time sensor (1D)
         ]
         
         # Add sensor noise
@@ -261,11 +359,11 @@ class SensoryMotorWorld:
         min_distance = min(wall_dist_x, wall_dist_y)
         
         # Check distance to obstacles
-        for obs_x, obs_y, obs_radius in self.environment_state.obstacle_positions:
+        for obstacle in self.environment_state.obstacles:
             # Ray-circle intersection
             # Vector from ray start to circle center
-            to_center_x = obs_x - ray_x
-            to_center_y = obs_y - ray_y
+            to_center_x = obstacle.x - ray_x
+            to_center_y = obstacle.y - ray_y
             
             # Project onto ray direction
             proj_length = to_center_x * dx + to_center_y * dy
@@ -276,12 +374,12 @@ class SensoryMotorWorld:
                 closest_y = ray_y + proj_length * dy
                 
                 # Distance from circle center to closest point
-                dist_to_ray = np.sqrt((closest_x - obs_x)**2 + (closest_y - obs_y)**2)
+                dist_to_ray = np.sqrt((closest_x - obstacle.x)**2 + (closest_y - obstacle.y)**2)
                 
-                if dist_to_ray <= obs_radius:
+                if dist_to_ray <= obstacle.radius:
                     # Ray intersects circle
                     # Calculate intersection distance
-                    intersection_offset = np.sqrt(obs_radius**2 - dist_to_ray**2)
+                    intersection_offset = np.sqrt(obstacle.radius**2 - dist_to_ray**2)
                     intersection_dist = proj_length - intersection_offset
                     
                     if intersection_dist > 0:
@@ -308,10 +406,10 @@ class SensoryMotorWorld:
         """Calculate light intensity in a given direction."""
         total_intensity = 0.0
         
-        for light_x, light_y in self.environment_state.light_positions:
+        for light_source in self.environment_state.light_sources:
             # Vector from robot to light
-            to_light_x = light_x - self.robot_state.position[0]
-            to_light_y = light_y - self.robot_state.position[1]
+            to_light_x = light_source.x - self.robot_state.position[0]
+            to_light_y = light_source.y - self.robot_state.position[1]
             
             # Distance to light
             light_distance = np.sqrt(to_light_x**2 + to_light_y**2)
@@ -325,10 +423,78 @@ class SensoryMotorWorld:
                 
                 # Light intensity falls off with distance and angle
                 if angle_diff < np.pi/4:  # 45 degree field of view
-                    intensity = (1.0 / (1.0 + light_distance)) * np.cos(angle_diff)
-                    total_intensity += intensity
+                    # Base intensity with distance falloff
+                    base_intensity = (light_source.base_intensity / (1.0 + light_distance)) * np.cos(angle_diff)
+                    
+                    # Add pulsing behavior
+                    if light_source.pulse_frequency > 0:
+                        pulse_phase = (self.time_step * self.dt * light_source.pulse_frequency * 2 * np.pi) % (2 * np.pi)
+                        pulse_modifier = (1.0 + 0.5 * np.sin(pulse_phase)) / 1.5  # 0.33 to 1.0
+                        base_intensity *= pulse_modifier
+                    
+                    total_intensity += base_intensity
         
-        return min(1.0, total_intensity * self.environment_state.light_intensity)
+        return min(1.0, total_intensity + self.environment_state.ambient_light)
+    
+    def _get_color_sensor_readings(self) -> List[float]:
+        """Get RGB color sensor readings from nearby light sources."""
+        rgb_totals = [0.0, 0.0, 0.0]  # Red, Green, Blue
+        
+        for light_source in self.environment_state.light_sources:
+            # Distance to light source
+            distance = np.linalg.norm(self.robot_state.position - np.array([light_source.x, light_source.y]))
+            
+            if distance < self.max_sensor_range:
+                # Wavelength to RGB conversion (simplified)
+                wavelength = light_source.color_wavelength
+                intensity = light_source.base_intensity / (1.0 + distance)
+                
+                # Pulsing effect
+                if light_source.pulse_frequency > 0:
+                    pulse_phase = (self.time_step * self.dt * light_source.pulse_frequency * 2 * np.pi) % (2 * np.pi)
+                    intensity *= (1.0 + 0.5 * np.sin(pulse_phase)) / 1.5
+                
+                # Convert wavelength to RGB (simplified spectral response)
+                if 620 <= wavelength <= 700:  # Red
+                    rgb_totals[0] += intensity
+                elif 495 <= wavelength <= 570:  # Green  
+                    rgb_totals[1] += intensity
+                elif 450 <= wavelength <= 495:  # Blue
+                    rgb_totals[2] += intensity
+                else:  # White/mixed
+                    rgb_totals[0] += intensity * 0.3
+                    rgb_totals[1] += intensity * 0.6
+                    rgb_totals[2] += intensity * 0.1
+        
+        # Normalize and clamp
+        return [min(1.0, rgb) for rgb in rgb_totals]
+    
+    def _get_surface_sensor_readings(self) -> List[float]:
+        """Get surface property sensor readings from nearby obstacles."""
+        surface_readings = [0.0, 0.0, 0.0, 0.0]  # Reflectance, Temperature, Hardness, Proximity
+        
+        closest_distance = float('inf')
+        closest_obstacle = None
+        
+        # Find closest obstacle
+        for obstacle in self.environment_state.obstacles:
+            distance = np.linalg.norm(self.robot_state.position - np.array([obstacle.x, obstacle.y]))
+            obstacle_edge_distance = distance - obstacle.radius
+            
+            if obstacle_edge_distance < closest_distance:
+                closest_distance = obstacle_edge_distance
+                closest_obstacle = obstacle
+        
+        # If close enough to sense surface properties
+        if closest_obstacle and closest_distance < 1.0:  # Within 1 meter
+            proximity = max(0.0, 1.0 - closest_distance)  # Closer = higher reading
+            
+            surface_readings[0] = closest_obstacle.reflectance * proximity
+            surface_readings[1] = (closest_obstacle.temperature - 10.0) / 30.0 * proximity  # Normalize temp
+            surface_readings[2] = closest_obstacle.hardness * proximity
+            surface_readings[3] = proximity
+        
+        return surface_readings
     
     def execute_action(self, action_vector: List[float]) -> Dict:
         """
@@ -417,9 +583,9 @@ class SensoryMotorWorld:
                 
                 # Check collision with obstacles
                 collision = False
-                for obs_x, obs_y, obs_radius in self.environment_state.obstacle_positions:
-                    distance = np.linalg.norm(new_position - np.array([obs_x, obs_y]))
-                    if distance < obs_radius + 0.1:  # Robot has 0.1m radius
+                for obstacle in self.environment_state.obstacles:
+                    distance = np.linalg.norm(new_position - np.array([obstacle.x, obstacle.y]))
+                    if distance < obstacle.radius + 0.1:  # Robot has 0.1m radius
                         collision = True
                         break
                 
@@ -449,8 +615,8 @@ class SensoryMotorWorld:
         
         # Distance to nearest light source
         light_distances = []
-        for light_x, light_y in self.environment_state.light_positions:
-            distance = np.linalg.norm(self.robot_state.position - np.array([light_x, light_y]))
+        for light_source in self.environment_state.light_sources:
+            distance = np.linalg.norm(self.robot_state.position - np.array([light_source.x, light_source.y]))
             light_distances.append(distance)
         
         min_light_distance = min(light_distances)
@@ -558,25 +724,25 @@ class SensoryMotorWorld:
         """Increase environment difficulty."""
         # Add more obstacles
         new_obstacles = self._generate_obstacles(2)
-        self.environment_state.obstacle_positions.extend(new_obstacles)
+        self.environment_state.obstacles.extend(new_obstacles)
         
         # Increase sensor noise
         self.sensor_noise_std = min(0.2, self.sensor_noise_std + 0.02)
         
-        # Reduce light intensity
-        self.environment_state.light_intensity = max(0.3, self.environment_state.light_intensity - 0.1)
+        # Reduce ambient light
+        self.environment_state.ambient_light = max(0.05, self.environment_state.ambient_light - 0.02)
     
     def _decrease_difficulty(self):
         """Decrease environment difficulty."""
         # Remove some obstacles
-        if len(self.environment_state.obstacle_positions) > 2:
-            self.environment_state.obstacle_positions.pop()
+        if len(self.environment_state.obstacles) > 2:
+            self.environment_state.obstacles.pop()
         
         # Decrease sensor noise
         self.sensor_noise_std = max(0.01, self.sensor_noise_std - 0.02)
         
-        # Increase light intensity
-        self.environment_state.light_intensity = min(1.0, self.environment_state.light_intensity + 0.1)
+        # Increase ambient light
+        self.environment_state.ambient_light = min(0.2, self.environment_state.ambient_light + 0.02)
 
 
 if __name__ == "__main__":
@@ -593,6 +759,9 @@ if __name__ == "__main__":
     print(f"   Battery: {sensors[3]:.3f}")
     print(f"   Distance sensors: {[f'{s:.3f}' for s in sensors[4:12]]}")
     print(f"   Light sensors: {[f'{s:.3f}' for s in sensors[12:16]]}")
+    print(f"   Color sensors (RGB): {[f'{s:.3f}' for s in sensors[16:19]]}")
+    print(f"   Surface sensors: {[f'{s:.3f}' for s in sensors[19:23]]}")
+    print(f"   Time sensor: {sensors[23]:.3f}")
     
     # Test action execution
     print("\n🚀 Testing action execution:")

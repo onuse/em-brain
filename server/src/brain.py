@@ -14,8 +14,9 @@ continuous processing that handles timing and dead reckoning naturally.
 import time
 from typing import List, Dict, Tuple, Optional, Any
 
-from .vector_stream.vector_stream_brain import MinimalVectorStreamBrain
-from .vector_stream.sparse_goldilocks_brain import SparseGoldilocksBrain
+from .brains.minimal.core_brain import MinimalVectorStreamBrain
+from .brains.sparse_goldilocks.core_brain import SparseGoldilocksBrain
+from .brains.field.tcp_adapter import FieldBrainTCPAdapter, FieldBrainConfig
 from .utils.cognitive_autopilot import CognitiveAutopilot
 from .utils.brain_logger import BrainLogger
 from .utils.hardware_adaptation import get_hardware_adaptation, record_brain_cycle_performance
@@ -57,7 +58,7 @@ class MinimalBrain:
         # Initialize biological oscillator for Phase 7 parallel processing
         self.biological_oscillator = None
         if brain_config.get('enable_biological_timing', True):
-            from .vector_stream.biological_oscillator import create_biological_oscillator
+            from .brains.sparse_goldilocks.systems.biological_oscillator import create_biological_oscillator
             oscillator_config = {
                 'gamma_freq': 1000.0 / self.target_cycle_time_ms,  # Convert ms to Hz
                 'theta_freq': brain_config.get('theta_freq', 6.0)
@@ -67,7 +68,7 @@ class MinimalBrain:
         # Initialize Phase 7b: Parallel Brain Coordinator for async stream processing
         self.parallel_coordinator = None
         if brain_config.get('enable_parallel_processing', False) and self.biological_oscillator:
-            from .vector_stream.parallel_brain_coordinator import ParallelBrainCoordinator
+            from .brains.sparse_goldilocks.systems.parallel_brain_coordinator import ParallelBrainCoordinator
             self.parallel_coordinator = ParallelBrainCoordinator(
                 None,  # Will be set after vector brain initialization
                 self.biological_oscillator,
@@ -91,7 +92,7 @@ class MinimalBrain:
             print(f"   Parallel processing: {parallel_status}")
         
         # Hardware adaptation system
-        self.hardware_adaptation = get_hardware_adaptation()
+        self.hardware_adaptation = get_hardware_adaptation(self.config)
         
         # Select brain implementation based on type
         if self.brain_type == "sparse_goldilocks":
@@ -108,8 +109,21 @@ class MinimalBrain:
                 motor_dim=self.motor_dim, 
                 temporal_dim=self.temporal_dim
             )
+        elif self.brain_type == "field":
+            # Create field brain configuration
+            field_config = FieldBrainConfig(
+                sensory_dimensions=self.sensory_dim,
+                motor_dimensions=self.motor_dim,
+                spatial_resolution=brain_config.get('field_spatial_resolution', 20),
+                temporal_window=brain_config.get('field_temporal_window', 10.0),
+                field_evolution_rate=brain_config.get('field_evolution_rate', 0.1),
+                constraint_discovery_rate=brain_config.get('constraint_discovery_rate', 0.15),
+                quiet_mode=quiet_mode
+            )
+            
+            self.vector_brain = FieldBrainTCPAdapter(field_config)
         else:
-            raise ValueError(f"Unknown brain_type: {self.brain_type}. Options: 'sparse_goldilocks', 'minimal'")
+            raise ValueError(f"Unknown brain_type: {self.brain_type}. Options: 'sparse_goldilocks', 'minimal', 'field'")
         
         # Connect parallel coordinator to vector brain after initialization
         if self.parallel_coordinator:

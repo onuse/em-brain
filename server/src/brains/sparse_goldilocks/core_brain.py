@@ -26,20 +26,20 @@ import threading
 import queue
 from collections import defaultdict
 
-from .sparse_representations import (
+from .systems.sparse_representations import (
     SparsePattern, 
     SparsePatternEncoder, 
     SparsePatternStorage
 )
-from .goldilocks_brain import StreamConfig, CrossStreamCoactivation
-from .emergent_temporal_constraints import EmergentTemporalHierarchy
-from .emergent_competitive_dynamics import EmergentCompetitiveDynamics
-from .emergent_confidence_system import EmergentConfidenceSystem
+from .base_brain import StreamConfig, CrossStreamCoactivation
+from .systems.emergent_temporal_constraints import EmergentTemporalHierarchy
+from .systems.emergent_competitive_dynamics import EmergentCompetitiveDynamics
+from .systems.emergent_confidence_system import EmergentConfidenceSystem
 # Removed imports for deleted files:
 # from .unified_cortical_storage import UnifiedCorticalStorage  
 # from .emergent_hierarchical_abstraction import EmergentHierarchicalAbstraction, PhysicalConstraints
 # from .emergent_adaptive_plasticity import EmergentAdaptivePlasticity, TimescaleConstraints
-from ..statistics_control import should_collect_stream_stats, should_collect_coactivation_stats, should_collect_hierarchy_stats, should_collect_competition_stats
+from ...statistics_control import should_collect_stream_stats, should_collect_coactivation_stats, should_collect_hierarchy_stats, should_collect_competition_stats
 
 
 class UnifiedCorticalStreamStorage:
@@ -859,7 +859,7 @@ class SparseGoldilocksBrain:
         )
         
         # Encode combined pattern as sparse for competitive dynamics
-        from .sparse_representations import SparsePatternEncoder
+        from .systems.sparse_representations import SparsePatternEncoder
         encoder = SparsePatternEncoder(
             self.emergent_competition.unified_storage.pattern_dim, 
             sparsity=0.02, 
@@ -1122,7 +1122,7 @@ class SparseGoldilocksBrain:
             combined_input = torch.cat([combined_input, padding])
         
         # Encode as sparse pattern
-        from .sparse_representations import SparsePatternEncoder
+        from .systems.sparse_representations import SparsePatternEncoder
         encoder = SparsePatternEncoder(storage_dim, sparsity=0.02, quiet_mode=True)
         query_pattern = encoder.encode_top_k(combined_input, f"motor_query_{self.total_cycles}")
         
@@ -1166,39 +1166,45 @@ class SparseGoldilocksBrain:
                                                 temporal_activation: torch.Tensor, 
                                                 current_time: float) -> torch.Tensor:
         """
-        Predict motor output using competitive decision-making.
+        Predict motor output using curiosity-based decision-making.
         
-        DUAL MOTIVATION SYSTEM:
+        CURIOSITY SYSTEM:
         - Generates multiple motor options (decisions)
-        - Uses competitive priorities to weight each option
-        - Restlessness emerges as preference for uncertain actions
-        - Anxiety emerges as preference for predictable actions
+        - Estimates learning potential for each option
+        - Prefers actions that might lead to interesting learning opportunities
+        - Balances learning potential with information preservation
         """
         
         # Generate motor options (discrete decisions)
         motor_options = self._generate_motor_options()
         
-        # Calculate competitive priorities for each option
+        # Calculate curiosity-based priorities for each option
         option_priorities = []
-        sophistication_threshold = self.emergent_competition.resource_storage._calculate_sophistication_threshold()
         
         for i, option in enumerate(motor_options):
-            # Estimate confidence if we took this action
-            predicted_confidence = self._estimate_action_confidence(
+            # Estimate what patterns this action might activate/learn
+            learning_potential = self._estimate_action_learning_potential(
                 option, sensory_activation, temporal_activation
             )
             
-            # DUAL MOTIVATION: Apply sophistication-based restlessness
-            if predicted_confidence > sophistication_threshold:
-                # High confidence = restlessness = low priority
-                priority = 0.2 - (predicted_confidence - sophistication_threshold) * 0.5
-            else:
-                # Low confidence = anxiety for accuracy = high priority  
-                priority = 0.8 + (sophistication_threshold - predicted_confidence) * 0.5
+            # Estimate how much this action preserves existing knowledge
+            knowledge_preservation = self._estimate_action_knowledge_preservation(
+                option, sensory_activation, temporal_activation
+            )
+            
+            # CURIOSITY MOTIVATION: Balance learning potential with knowledge preservation
+            # High learning potential = exciting new patterns to discover
+            # High knowledge preservation = valuable to maintain existing understanding
+            
+            learning_excitement = learning_potential * 2.0  # Strong preference for learning opportunities
+            preservation_value = knowledge_preservation * 0.8  # Moderate preference for preserving knowledge
+            
+            # Total priority = curiosity for new learning + value of preserving knowledge
+            priority = learning_excitement + preservation_value
             
             option_priorities.append(max(0.01, priority))  # Ensure positive
         
-        # Weighted decision based on competitive priorities
+        # Weighted decision based on curiosity priorities
         chosen_option = self._weighted_motor_decision(motor_options, option_priorities)
         
         return chosen_option
@@ -1226,6 +1232,162 @@ class SparseGoldilocksBrain:
         
         return padded_options
     
+    def _estimate_action_learning_potential(self, action: torch.Tensor, sensory_activation: torch.Tensor, 
+                                           temporal_activation: torch.Tensor) -> float:
+        """
+        Estimate how much new learning this action might generate.
+        
+        Actions that lead to novel sensory experiences have high learning potential.
+        """
+        try:
+            # Simulate what sensory input this action might produce
+            predicted_sensory = self._simulate_action_outcome(action, sensory_activation)
+            
+            # Check how familiar this predicted outcome is
+            familiarity = self._calculate_pattern_familiarity(predicted_sensory)
+            
+            # Learning potential = 1 - familiarity (novel outcomes have high learning potential)
+            learning_potential = 1.0 - familiarity
+            
+            # Boost learning potential for actions that might discover new pattern relationships
+            complexity_bonus = self._estimate_pattern_complexity(predicted_sensory) * 0.3
+            
+            return min(1.0, learning_potential + complexity_bonus)
+            
+        except Exception:
+            # Default to moderate learning potential if estimation fails
+            return 0.5
+    
+    def _estimate_action_knowledge_preservation(self, action: torch.Tensor, sensory_activation: torch.Tensor, 
+                                              temporal_activation: torch.Tensor) -> float:
+        """
+        Estimate how much this action preserves existing valuable knowledge.
+        
+        Actions that maintain patterns we've learned well have high preservation value.
+        """
+        try:
+            # Check if this action reinforces existing valuable patterns
+            predicted_outcome = self._simulate_action_outcome(action, sensory_activation)
+            
+            # Find patterns that would be activated by this action
+            activated_patterns = self._find_activated_patterns(predicted_outcome)
+            
+            # Calculate average learning satisfaction of activated patterns
+            total_preservation_value = 0.0
+            pattern_count = 0
+            
+            for pattern_id in activated_patterns:
+                if pattern_id in self.emergent_competition.resource_storage.pattern_resources:
+                    resource = self.emergent_competition.resource_storage.pattern_resources[pattern_id]
+                    # Preserve patterns with high confidence (valuable knowledge)
+                    preservation_value = resource.prediction_confidence * 0.8
+                    # But also preserve patterns with active learning (ongoing value)
+                    preservation_value += resource.learning_satisfaction * 0.4
+                    
+                    total_preservation_value += preservation_value
+                    pattern_count += 1
+            
+            return total_preservation_value / pattern_count if pattern_count > 0 else 0.2
+            
+        except Exception:
+            # Default to low preservation value if estimation fails
+            return 0.2
+
+    def _simulate_action_outcome(self, action: torch.Tensor, sensory_activation: torch.Tensor) -> torch.Tensor:
+        """Simulate what sensory input might result from taking this action."""
+        # Simple simulation: modify current sensory state based on action
+        # This is a placeholder - in a full implementation this would use learned dynamics
+        
+        # Create a predicted sensory state by combining current state with action influence
+        action_influence = torch.mean(action).item() * 0.1  # Scale action influence
+        
+        # Simulate slight changes to sensory input based on action
+        simulated_sensory = sensory_activation.clone()
+        
+        # Add small perturbations based on action type (very simplified)
+        if len(action) >= 4:  # Standard 4D motor output
+            # Forward action might change position-related sensors
+            if action[0] > 0.5:  # Forward
+                simulated_sensory[:2] += action_influence  # Modify position sensors
+            # Turn actions might change orientation
+            elif action[1] > 0.5 or action[2] > 0.5:  # Turn left/right
+                if len(simulated_sensory) > 2:
+                    simulated_sensory[2] += action_influence * 0.5  # Modify orientation
+        
+        return torch.clamp(simulated_sensory, 0.0, 1.0)
+    
+    def _calculate_pattern_familiarity(self, pattern: torch.Tensor) -> float:
+        """Calculate how familiar this pattern is based on existing patterns."""
+        try:
+            # Look for similar patterns in storage
+            if hasattr(self.emergent_competition, 'unified_storage'):
+                storage = self.emergent_competition.unified_storage
+                
+                # Find most similar existing pattern
+                max_similarity = 0.0
+                for stored_pattern in storage.patterns.values():
+                    similarity = self._calculate_pattern_similarity(pattern, stored_pattern.pattern_data)
+                    max_similarity = max(max_similarity, similarity)
+                
+                return max_similarity
+            
+            return 0.0  # No storage available = unfamiliar
+            
+        except Exception:
+            return 0.5  # Default moderate familiarity
+    
+    def _estimate_pattern_complexity(self, pattern: torch.Tensor) -> float:
+        """Estimate the complexity/richness of a pattern."""
+        # Simple complexity measures
+        variance = torch.var(pattern).item()
+        sparsity = (pattern > 0.1).float().mean().item()
+        entropy_estimate = -torch.sum(pattern * torch.log(pattern + 1e-8)).item() / len(pattern)
+        
+        # Combine measures (higher = more complex)
+        complexity = (variance * 0.4 + sparsity * 0.3 + entropy_estimate * 0.3)
+        return min(1.0, complexity)
+    
+    def _find_activated_patterns(self, predicted_outcome: torch.Tensor) -> list:
+        """Find which existing patterns would be activated by this predicted outcome."""
+        activated_patterns = []
+        
+        try:
+            if hasattr(self.emergent_competition, 'unified_storage'):
+                storage = self.emergent_competition.unified_storage
+                
+                # Check which patterns are similar enough to be activated
+                activation_threshold = 0.6
+                
+                for pattern_id, stored_pattern in storage.patterns.items():
+                    similarity = self._calculate_pattern_similarity(predicted_outcome, stored_pattern.pattern_data)
+                    if similarity > activation_threshold:
+                        activated_patterns.append(pattern_id)
+                        
+        except Exception:
+            pass  # Return empty list if anything fails
+        
+        return activated_patterns
+    
+    def _calculate_pattern_similarity(self, pattern1: torch.Tensor, pattern2: torch.Tensor) -> float:
+        """Calculate similarity between two patterns."""
+        try:
+            # Ensure same dimensions
+            min_len = min(len(pattern1), len(pattern2))
+            p1 = pattern1[:min_len]
+            p2 = pattern2[:min_len] if hasattr(pattern2, '__len__') else torch.tensor([pattern2])
+            
+            # Cosine similarity
+            dot_product = torch.dot(p1, p2)
+            norm_product = torch.norm(p1) * torch.norm(p2)
+            
+            if norm_product > 0:
+                return (dot_product / norm_product).item()
+            else:
+                return 0.0
+                
+        except Exception:
+            return 0.0
+
     def _estimate_action_confidence(self, action: torch.Tensor, 
                                   sensory_activation: torch.Tensor,
                                   temporal_activation: torch.Tensor) -> float:
@@ -1381,7 +1543,7 @@ class SparseGoldilocksBrain:
     def _setup_confidence_hardware_adaptation(self):
         """Setup hardware-adapted GPU thresholds for confidence system."""
         try:
-            from ..utils.hardware_adaptation import get_hardware_adaptation
+            from ...utils.hardware_adaptation import get_hardware_adaptation
             hardware_adaptation = get_hardware_adaptation()
             
             # Get adaptive threshold for coherence calculation operations
@@ -1401,7 +1563,7 @@ class SparseGoldilocksBrain:
     def _setup_fast_path_cache(self):
         """Setup pre-allocated encoder and caching for fast reflex path optimization."""
         try:
-            from .sparse_representations import SparsePatternEncoder
+            from .systems.sparse_representations import SparsePatternEncoder
             
             # Pre-allocate encoder to avoid object creation in hot path
             unified_dim = self.unified_storage.pattern_dim

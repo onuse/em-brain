@@ -28,7 +28,7 @@ import heapq
 try:
     from .sparse_representations import SparsePattern, SparsePatternEncoder, SparsePatternStorage
 except ImportError:
-    from sparse_representations import SparsePattern, SparsePatternEncoder, SparsePatternStorage
+    from brains.sparse_goldilocks.systems.sparse_representations import SparsePattern, SparsePatternEncoder, SparsePatternStorage
 
 
 @dataclass
@@ -52,6 +52,14 @@ class PatternResource:
     storage_priority: float     # Priority for remaining in storage
     prediction_confidence: float = 0.5  # How predictable this pattern is (0.0-1.0)
     active: bool = False        # Whether pattern is currently active
+    
+    # CURIOSITY SYSTEM: Learning velocity tracking
+    learning_velocity: float = 0.0   # How fast this pattern is being learned
+    learning_satisfaction: float = 0.0  # Satisfaction from learning this pattern
+    
+    def __post_init__(self):
+        if not hasattr(self, 'confidence_history') or self.confidence_history is None:
+            self.confidence_history = []  # Recent confidence values for learning rate
 
 
 class ResourceConstrainedStorage:
@@ -169,18 +177,42 @@ class ResourceConstrainedStorage:
     
     def update_pattern_confidence(self, pattern_id: str, prediction_confidence: float):
         """
-        Update prediction confidence for a pattern.
+        Update prediction confidence and calculate learning velocity.
         
-        This creates the dual motivation system:
-        - High confidence (>0.9) creates "boredom cost" (restlessness)
-        - Low confidence creates competitive advantage (anxiety for accuracy)
+        CURIOSITY SYSTEM: Learning velocity creates satisfaction, not boredom.
+        - High learning velocity = high satisfaction (exciting progress!)
+        - Low learning velocity = low satisfaction (need novelty)
         """
         if pattern_id in self.pattern_resources:
-            # Smooth update to prevent oscillation
-            current = self.pattern_resources[pattern_id].prediction_confidence
-            # Exponential moving average with 0.1 learning rate
-            self.pattern_resources[pattern_id].prediction_confidence = \
-                0.9 * current + 0.1 * prediction_confidence
+            resource = self.pattern_resources[pattern_id]
+            
+            # Update confidence with exponential moving average
+            old_confidence = resource.prediction_confidence
+            resource.prediction_confidence = 0.9 * old_confidence + 0.1 * prediction_confidence
+            
+            # Track confidence history for learning velocity calculation
+            resource.confidence_history.append(prediction_confidence)
+            if len(resource.confidence_history) > 10:  # Keep last 10 values
+                resource.confidence_history.pop(0)
+            
+            # Calculate learning velocity (how fast confidence is improving)
+            if len(resource.confidence_history) >= 3:
+                # Learning velocity = rate of confidence improvement
+                recent_changes = []
+                for i in range(1, len(resource.confidence_history)):
+                    change = resource.confidence_history[i] - resource.confidence_history[i-1]
+                    recent_changes.append(max(0.0, change))  # Only positive improvements count
+                
+                # Average improvement rate
+                resource.learning_velocity = sum(recent_changes) / len(recent_changes) if recent_changes else 0.0
+                
+                # Learning satisfaction = learning velocity * intensity scaling
+                # High learning velocity = high satisfaction
+                resource.learning_satisfaction = min(1.0, resource.learning_velocity * 20.0)
+            else:
+                # Not enough history yet - assume moderate learning
+                resource.learning_velocity = 0.1
+                resource.learning_satisfaction = 0.2
     
     def _compete_for_storage_slot(self, new_pattern: SparsePattern, current_time: float) -> bool:
         """
@@ -255,19 +287,17 @@ class ResourceConstrainedStorage:
         # Activation energy (current energy level)
         energy_bonus = resource.activation_energy
         
-        # DUAL MOTIVATION: Boredom cost based on pattern sophistication
-        # Smart brains tolerate higher confidence before becoming restless
-        sophistication_threshold = self._calculate_sophistication_threshold()
-        boredom_cost = 0.0
-        if resource.prediction_confidence > sophistication_threshold:
-            # Excess confidence creates restlessness pressure
-            excess_confidence = resource.prediction_confidence - sophistication_threshold
-            boredom_cost = (excess_confidence * 10.0) ** 2  # Quadratic scaling
+        # CURIOSITY SYSTEM: Learning satisfaction boosts priority
+        # Patterns being actively learned get prioritized, not avoided
+        learning_satisfaction_bonus = resource.learning_satisfaction * 2.0  # Scale to significant impact
         
-        base_priority = (0.4 * age_penalty + 0.4 * frequency_bonus + 0.2 * energy_bonus)
+        # Information preservation bonus - patterns with high confidence are valuable knowledge
+        knowledge_value_bonus = resource.prediction_confidence * 0.5  # Reward accumulated knowledge
         
-        # Subtract boredom cost - highly predictable patterns lose priority
-        priority = base_priority - boredom_cost
+        base_priority = (0.3 * age_penalty + 0.3 * frequency_bonus + 0.2 * energy_bonus)
+        
+        # Add curiosity bonuses - learning and knowledge preservation increase priority
+        priority = base_priority + learning_satisfaction_bonus + knowledge_value_bonus
         return max(0.0, priority)  # Ensure non-negative
     
     def _calculate_activation_priority(self, pattern_id: str, current_time: float) -> float:
@@ -287,18 +317,17 @@ class ResourceConstrainedStorage:
         # Frequency of recent accesses
         frequency = resource.access_frequency
         
-        # DUAL MOTIVATION: Boredom cost based on pattern sophistication
-        # Restlessness emerges when patterns exceed sophistication-appropriate confidence
-        sophistication_threshold = self._calculate_sophistication_threshold()
-        boredom_cost = 0.0
-        if resource.prediction_confidence > sophistication_threshold:
-            excess_confidence = resource.prediction_confidence - sophistication_threshold
-            boredom_cost = (excess_confidence * 5.0) ** 2  # Lighter cost for activation than storage
+        # CURIOSITY SYSTEM: Learning satisfaction and knowledge value boost activation
+        # Patterns being learned actively and patterns with high knowledge value get priority
+        learning_satisfaction_bonus = resource.learning_satisfaction * 1.5  # Strong activation preference for learning
+        
+        # Novelty seeking: patterns with low learning satisfaction need replacement
+        novelty_seeking_penalty = 0.5 if resource.learning_satisfaction < 0.1 else 0.0
         
         base_priority = (0.5 * recency_bonus + 0.3 * energy + 0.2 * np.log1p(frequency) / 10.0)
         
-        # Subtract boredom cost - brain becomes "restless" with predictable patterns
-        priority = base_priority - boredom_cost
+        # Add curiosity dynamics - encourage learning patterns, discourage stagnant ones
+        priority = base_priority + learning_satisfaction_bonus - novelty_seeking_penalty
         return max(0.0, priority)  # Ensure non-negative
     
     def _calculate_sophistication_threshold(self) -> float:

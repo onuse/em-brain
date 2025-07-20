@@ -27,7 +27,7 @@ from collections import deque
 try:
     from .sparse_representations import SparsePattern, SparsePatternEncoder, SparsePatternStorage
 except ImportError:
-    from sparse_representations import SparsePattern, SparsePatternEncoder, SparsePatternStorage
+    from brains.sparse_goldilocks.systems.sparse_representations import SparsePattern, SparsePatternEncoder, SparsePatternStorage
 
 
 @dataclass
