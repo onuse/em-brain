@@ -185,12 +185,12 @@ class FieldBrainLogger:
         # Energy variance and trend
         if len(self.metrics.field_energy_history) >= 5:
             recent_energies = self.metrics.field_energy_history[-10:]  # Last 10 values
-            energy_variance = float(np.var(recent_energies))
+            energy_variance = float(np.var(recent_energies).astype(np.float32))
             
             if len(recent_energies) >= 5:
                 # Calculate trend (early vs recent)
-                early = np.mean(recent_energies[:3])
-                recent = np.mean(recent_energies[-3:])
+                early = float(np.mean(recent_energies[:3]).astype(np.float32))
+                recent = float(np.mean(recent_energies[-3:]).astype(np.float32))
                 energy_trend = recent - early
         
         # Coordinate diversity (exploration measure)

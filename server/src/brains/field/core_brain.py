@@ -559,7 +559,7 @@ class UnifiedFieldBrain:
             ]
             
             region_mean = torch.mean(local_region).item()
-            region_std = torch.std(local_region).item()
+            region_std = torch.std(local_region.float()).item()
             
             # High activation + low variance = stable topology
             if region_mean > stability_threshold and region_std < 0.1:

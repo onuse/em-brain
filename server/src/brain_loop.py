@@ -158,19 +158,27 @@ class DecoupledBrainLoop:
     def _perform_maintenance_tasks(self):
         """Perform brain maintenance during idle cycles."""
         try:
-            # Task 1: Cleanup old experiences if needed
-            if self.total_cycles % 20 == 0:  # Every 1 second
-                self._cleanup_old_experiences()
-            
-            # Task 2: Optimize similarity search structures
-            if self.total_cycles % 100 == 0:  # Every 5 seconds
-                self._optimize_similarity_structures()
-            
-            # Task 3: Update prediction models
-            if self.total_cycles % 200 == 0:  # Every 10 seconds
-                self._update_prediction_models()
-            
-            self.maintenance_tasks_performed += 1
+            # Use brain maintenance interface if available
+            if hasattr(self.brain, 'run_recommended_maintenance'):
+                # Modern unified maintenance system
+                performed = self.brain.run_recommended_maintenance()
+                if any(performed.values()):
+                    self.maintenance_tasks_performed += 1
+            else:
+                # Fallback to legacy maintenance tasks
+                # Task 1: Cleanup old experiences if needed
+                if self.total_cycles % 20 == 0:  # Every 1 second
+                    self._cleanup_old_experiences()
+                
+                # Task 2: Optimize similarity search structures
+                if self.total_cycles % 100 == 0:  # Every 5 seconds
+                    self._optimize_similarity_structures()
+                
+                # Task 3: Update prediction models
+                if self.total_cycles % 200 == 0:  # Every 10 seconds
+                    self._update_prediction_models()
+                
+                self.maintenance_tasks_performed += 1
             
         except Exception as e:
             print(f"⚠️ Maintenance task error: {e}")

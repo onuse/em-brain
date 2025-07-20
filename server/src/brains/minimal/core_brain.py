@@ -17,6 +17,7 @@ import numpy as np
 import torch
 from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass
+from ..brain_maintenance_interface import BrainMaintenanceInterface
 
 
 @dataclass
@@ -178,7 +179,7 @@ class VectorStream:
         }
 
 
-class MinimalVectorStreamBrain:
+class MinimalVectorStreamBrain(BrainMaintenanceInterface):
     """
     Minimal vector stream brain with 3 modular streams:
     - Sensory stream (external world)
@@ -187,6 +188,9 @@ class MinimalVectorStreamBrain:
     """
     
     def __init__(self, sensory_dim: int = 16, motor_dim: int = 8, temporal_dim: int = 4):
+        # Initialize maintenance interface
+        super().__init__()
+        
         # Create modular streams
         self.sensory_stream = VectorStream(sensory_dim, name="sensory")
         self.motor_stream = VectorStream(motor_dim, name="motor")
@@ -348,3 +352,129 @@ class MinimalVectorStreamBrain:
             },
             'prediction_confidence': self._estimate_prediction_confidence()
         }
+    
+    def light_maintenance(self) -> None:
+        """Quick cleanup operations for minimal vector stream brain."""
+        current_time = time.time()
+        
+        # Clean up old patterns from each stream (light cleanup)
+        for stream in [self.sensory_stream, self.motor_stream, self.temporal_stream]:
+            if len(stream.patterns) > 40:  # Only if we have many patterns
+                # Remove least recently used patterns
+                stream.patterns.sort(key=lambda p: p.last_seen)
+                stream.patterns = stream.patterns[-35:]  # Keep most recent 35
+        
+        # Clear old prediction accuracy history
+        if len(self.prediction_accuracy_history) > 100:
+            self.prediction_accuracy_history = self.prediction_accuracy_history[-50:]
+    
+    def heavy_maintenance(self) -> None:
+        """Moderate maintenance operations for minimal vector stream brain."""
+        # Normalize cross-stream weights to prevent drift
+        weight_scale = 0.95  # Slight decay to prevent unbounded growth
+        self.sensory_to_motor *= weight_scale
+        self.temporal_to_motor *= weight_scale
+        self.sensory_to_temporal *= weight_scale
+        
+        # Consolidate similar patterns in each stream
+        for stream in [self.sensory_stream, self.motor_stream, self.temporal_stream]:
+            if len(stream.patterns) > 20:
+                self._consolidate_similar_patterns(stream)
+    
+    def deep_consolidation(self) -> None:
+        """Intensive consolidation operations for minimal vector stream brain."""
+        # Reset buffer indices to defragment memory
+        for stream in [self.sensory_stream, self.motor_stream, self.temporal_stream]:
+            if stream.buffer_full:
+                # Rotate buffer to bring most recent data to the front
+                recent_data = stream.activation_buffer[stream.buffer_index:].clone()
+                older_data = stream.activation_buffer[:stream.buffer_index].clone()
+                stream.activation_buffer = torch.cat([recent_data, older_data])
+                
+                recent_times = stream.time_buffer[stream.buffer_index:].clone()
+                older_times = stream.time_buffer[:stream.buffer_index].clone()
+                stream.time_buffer = torch.cat([recent_times, older_times])
+                
+                stream.buffer_index = 0
+                stream.buffer_full = False
+        
+        # Aggressive pattern consolidation and cleanup
+        for stream in [self.sensory_stream, self.motor_stream, self.temporal_stream]:
+            # Remove low-frequency patterns
+            stream.patterns = [p for p in stream.patterns if p.frequency > 1]
+            
+            # Consolidate very similar patterns
+            self._consolidate_similar_patterns(stream, threshold=0.9)  # Higher threshold
+            
+            # Limit pattern count
+            if len(stream.patterns) > 30:
+                stream.patterns.sort(key=lambda p: p.frequency * (1.0 / (time.time() - p.last_seen + 1)), reverse=True)
+                stream.patterns = stream.patterns[:25]  # Keep top 25
+        
+        # Reset cross-stream weights if they've become too large
+        max_weight = 2.0
+        if torch.max(torch.abs(self.sensory_to_motor)) > max_weight:
+            self.sensory_to_motor = torch.clamp(self.sensory_to_motor, -max_weight, max_weight)
+        if torch.max(torch.abs(self.temporal_to_motor)) > max_weight:
+            self.temporal_to_motor = torch.clamp(self.temporal_to_motor, -max_weight, max_weight)
+        if torch.max(torch.abs(self.sensory_to_temporal)) > max_weight:
+            self.sensory_to_temporal = torch.clamp(self.sensory_to_temporal, -max_weight, max_weight)
+    
+    def _consolidate_similar_patterns(self, stream: VectorStream, threshold: float = 0.85):
+        """Consolidate patterns that are very similar to reduce memory usage."""
+        if len(stream.patterns) < 2:
+            return
+        
+        consolidated_patterns = []
+        used_indices = set()
+        
+        for i, pattern1 in enumerate(stream.patterns):
+            if i in used_indices:
+                continue
+            
+            # Find similar patterns
+            similar_patterns = [pattern1]
+            used_indices.add(i)
+            
+            for j, pattern2 in enumerate(stream.patterns):
+                if j <= i or j in used_indices:
+                    continue
+                
+                # Calculate similarity
+                if (torch.norm(pattern1.activation_pattern) > 1e-8 and 
+                    torch.norm(pattern2.activation_pattern) > 1e-8):
+                    similarity = torch.cosine_similarity(
+                        pattern1.activation_pattern, 
+                        pattern2.activation_pattern, 
+                        dim=0
+                    ).item()
+                    
+                    if similarity > threshold:
+                        similar_patterns.append(pattern2)
+                        used_indices.add(j)
+            
+            # Create consolidated pattern from similar patterns
+            if len(similar_patterns) > 1:
+                total_frequency = sum(p.frequency for p in similar_patterns)
+                total_weight = sum(p.frequency for p in similar_patterns)
+                
+                # Weighted average of activation patterns
+                consolidated_activation = torch.zeros_like(similar_patterns[0].activation_pattern)
+                for pattern in similar_patterns:
+                    weight = pattern.frequency / total_weight
+                    consolidated_activation += weight * pattern.activation_pattern
+                
+                # Use most recent temporal context and last_seen
+                most_recent = max(similar_patterns, key=lambda p: p.last_seen)
+                
+                consolidated_pattern = VectorPattern(
+                    activation_pattern=consolidated_activation,
+                    temporal_context=most_recent.temporal_context,
+                    frequency=total_frequency,
+                    last_seen=most_recent.last_seen
+                )
+                consolidated_patterns.append(consolidated_pattern)
+            else:
+                consolidated_patterns.append(pattern1)
+        
+        stream.patterns = consolidated_patterns

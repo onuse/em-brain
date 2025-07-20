@@ -288,7 +288,7 @@ class AnalogField2D:
         r2_flat = region2.flatten()
         
         # Calculate Pearson correlation
-        if torch.std(r1_flat) > 0 and torch.std(r2_flat) > 0:
+        if torch.std(r1_flat.float()) > 0 and torch.std(r2_flat.float()) > 0:
             correlation = torch.corrcoef(torch.stack([r1_flat, r2_flat]))[0, 1]
             return correlation.item() if not torch.isnan(correlation) else 0.0
         else:

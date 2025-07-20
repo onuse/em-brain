@@ -242,7 +242,12 @@ class FieldNativeRobotInterface:
         
         # FLOW FAMILY (8 dimensions: gradients and momentum)
         # Map motion and attention as flow dynamics with equal amplification
-        motion_intensity = np.sqrt(sensor_tensor[18]**2 + sensor_tensor[19]**2 + sensor_tensor[20]**2) if len(sensor_tensor) > 20 else 0.5
+        # Use torch operations to avoid MPS float64 conversion issues
+        if len(sensor_tensor) > 20:
+            motion_sq = sensor_tensor[18]**2 + sensor_tensor[19]**2 + sensor_tensor[20]**2
+            motion_intensity = torch.sqrt(motion_sq).item()
+        else:
+            motion_intensity = 0.5
         attention_grad = self._calculate_attention_gradient(sensor_data)
         temperature_flow = sensor_tensor[10] if len(sensor_tensor) > 10 else 0.5
         
@@ -272,7 +277,7 @@ class FieldNativeRobotInterface:
         # Equal amplification for energy-related signals 
         battery_level = sensor_tensor[11] if len(sensor_tensor) > 11 else 0.8
         overall_activation = torch.mean(sensor_tensor).item()
-        activation_variance = torch.std(sensor_tensor).item()
+        activation_variance = torch.std(sensor_tensor.float()).item()
         
         field_coords[25] = (1.0 - battery_level) * 3.0  # Battery depletion → Energy urgency
         field_coords[26] = overall_activation * 3.0     # Overall activation
@@ -291,7 +296,7 @@ class FieldNativeRobotInterface:
             group1 = sensor_tensor[:12]
             group2 = sensor_tensor[12:24]
             # Check for sufficient variance to avoid NaN
-            if torch.std(group1) > 1e-6 and torch.std(group2) > 1e-6:
+            if torch.std(group1.float()) > 1e-6 and torch.std(group2.float()) > 1e-6:
                 sensor_matrix = torch.stack([group1, group2])
                 corr_matrix = torch.corrcoef(sensor_matrix)
                 correlation = corr_matrix[0,1].item() if corr_matrix.shape[0] > 1 else 0.0
@@ -325,7 +330,9 @@ class FieldNativeRobotInterface:
             return 0.5
         
         # High variance in sensors indicates interesting/attention-worthy stimuli
-        variance = np.var(sensor_data[:6])
+        # Use torch operations to avoid numpy float64 issues on MPS
+        sensor_slice = torch.tensor(sensor_data[:6], dtype=torch.float32)
+        variance = torch.var(sensor_slice.float()).item()
         return min(1.0, variance * 2.0)
     
     def _calculate_object_stability(self, sensor_data: List[float]) -> float:

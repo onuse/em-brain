@@ -16,6 +16,9 @@ Key Design Principles:
 import torch
 import numpy as np
 import time
+
+# Force float32 as default to prevent MPS float64 issues
+torch.set_default_dtype(torch.float32)
 import math
 from typing import Dict, List, Tuple, Optional, Any, Union
 from dataclasses import dataclass
@@ -225,8 +228,19 @@ class UnifiedFieldImplementation(FieldImplementation):
         total_spatial_positions = len(dx_range) * len(dy_range) * len(dz_range) * len(ds_range) * len(dt_range)
         
         # Pre-normalize intensity by both spatial and dimensional factors (OPTIMIZATION!)
-        dimension_count = self.unified_field.shape[5] if len(self.unified_field.shape) > 5 else 1
-        base_intensity = intensity / (total_spatial_positions * dimension_count)
+        # Calculate TOTAL field dimensions for proper normalization
+        if len(self.unified_field.shape) > 5:
+            # Multi-dimensional field: use the total number of dynamics dimensions
+            dimension_count = self.unified_field.shape[5]
+            # Also account for the field coordinates dimension count (37D field)
+            total_field_dimensions = len(field_coords)  # This should be 37 for full field
+            normalization_factor = total_spatial_positions * dimension_count * total_field_dimensions
+        else:
+            # 5D field case
+            total_field_dimensions = len(field_coords) if hasattr('field_coords', '__len__') else 37
+            normalization_factor = total_spatial_positions * total_field_dimensions
+        
+        base_intensity = intensity / normalization_factor
         
         for dx in dx_range:
             for dy in dy_range:
@@ -269,7 +283,14 @@ class UnifiedFieldImplementation(FieldImplementation):
         self.field_evolution_cycles += 1
         
         # Biological optimization: decay and diffusion
-        decay_rate = 0.995  # Slight decay to prevent unlimited growth
+        # Adaptive decay rate based on field energy to prevent accumulation
+        field_energy = torch.sum(self.unified_field).item()
+        if field_energy > 100.0:
+            decay_rate = 0.98  # Stronger decay for high energy
+        elif field_energy > 50.0:
+            decay_rate = 0.99  # Moderate decay for medium energy
+        else:
+            decay_rate = 0.995  # Light decay for low energy
         diffusion_rate = 0.02  # Gentle diffusion for natural spreading
         
         # Apply decay
@@ -487,6 +508,11 @@ class MultiTensorFieldImplementation(FieldImplementation):
         field_coords = experience.field_coordinates
         intensity = experience.field_intensity
         
+        # ENERGY DEBUG: Track energy before imprinting
+        pre_energy = sum(torch.sum(tensor).item() for tensor in self.field_tensors.values())
+        if intensity > 1.0 or pre_energy > 500.0:
+            print(f"🔍 ENERGY DEBUG [imprint_experience]: intensity={intensity:.6f}, pre_energy={pre_energy:.3f}")
+        
         # Extract spatial coordinates
         spatial_coords = field_coords[:3]
         scale_coord = field_coords[3] if len(field_coords) > 3 else torch.tensor(0.0, device=self.field_device)
@@ -529,6 +555,14 @@ class MultiTensorFieldImplementation(FieldImplementation):
                                      family_intensity, dynamics_values)
         
         self.total_imprints += 1
+        
+        # ENERGY DEBUG: Track energy after imprinting  
+        post_energy = sum(torch.sum(tensor).item() for tensor in self.field_tensors.values())
+        energy_change = post_energy - pre_energy
+        if energy_change > 10.0 or post_energy > 500.0:
+            print(f"🔍 ENERGY DEBUG [imprint_experience]: post_energy={post_energy:.3f}, change=+{energy_change:.3f}")
+            if post_energy > 1000.0:
+                print(f"   ⚠️  EXCESSIVE ENERGY after imprint! This will trigger the 1000.0 clamp!")
     
     def _imprint_into_tensor(self, tensor: torch.Tensor, x_center: int, y_center: int, 
                            z_center: int, intensity: float, dynamics_values: List[float]):
@@ -573,6 +607,9 @@ class MultiTensorFieldImplementation(FieldImplementation):
     
     def evolve_field(self, dt: float = 0.1, current_input_stream: Optional[List[float]] = None) -> None:
         """Evolve all field tensors with cross-field coupling (performance optimized)."""
+        # ENERGY DEBUG: Track energy before evolution
+        pre_evolution_energy = sum(torch.sum(tensor).item() for tensor in self.field_tensors.values())
+        
         self.field_evolution_cycles += 1
         
         # PERFORMANCE OPTIMIZATION: Skip evolution every few cycles during stable periods
@@ -582,27 +619,113 @@ class MultiTensorFieldImplementation(FieldImplementation):
         # Check field activity level to determine if we can skip
         field_activity = sum(torch.sum(torch.abs(tensor)).item() for tensor in self.field_tensors.values())
         
-        # If field is relatively stable (low activity), skip evolution occasionally
-        if field_activity < 10.0 and self._evolution_skip_counter % 3 == 0:
+        # FIXED: Only skip if field has significant activity AND has been running for a while
+        # This prevents skipping during initial field development
+        if field_activity > 50.0 and self.field_evolution_cycles > 100 and self._evolution_skip_counter % 5 == 0:
             self._evolution_skip_counter += 1
-            return  # Skip this evolution cycle
+            return  # Skip this evolution cycle only when field is well-established
         
         self._evolution_skip_counter += 1
         
+        # CRITICAL FIX: Inject input stream into field if provided
+        if current_input_stream is not None:
+            self._inject_input_stream(current_input_stream, dt)
+        
         # Phase 1: Individual field evolution (optimized - process fewer tensors when stable)
         active_tensors = list(self.field_tensors.items())
-        if field_activity < 5.0:
-            # When very stable, only evolve core and first 2 dynamics tensors
-            active_tensors = active_tensors[:3]
+        # FIXED: Only limit tensors if field is well-established and has high activity
+        if field_activity > 100.0 and self.field_evolution_cycles > 200:
+            # When field is mature and very active, focus on core tensors for efficiency
+            active_tensors = active_tensors[:4]  # Process more tensors, not fewer
+        
+        # ENERGY DEBUG: Track energy before individual tensor evolution
+        pre_individual_energy = sum(torch.sum(tensor).item() for tensor in self.field_tensors.values())
         
         for tensor_name, tensor in active_tensors:
             self._evolve_individual_tensor(tensor, dt)
         
+        # ENERGY DEBUG: Track energy after individual tensor evolution
+        post_individual_energy = sum(torch.sum(tensor).item() for tensor in self.field_tensors.values())
+        individual_change = post_individual_energy - pre_individual_energy
+        
         # Phase 2: Cross-field coupling (already optimized to run every 3rd cycle)
+        pre_coupling_energy = sum(torch.sum(tensor).item() for tensor in self.field_tensors.values())
         self._apply_cross_field_coupling(dt)
+        post_coupling_energy = sum(torch.sum(tensor).item() for tensor in self.field_tensors.values())
+        coupling_change = post_coupling_energy - pre_coupling_energy
         
         # Phase 3: Update gradient flows (already optimized to run every 2nd cycle)
+        pre_gradient_energy = sum(torch.sum(tensor).item() for tensor in self.field_tensors.values())
         self._update_multi_tensor_gradients()
+        post_gradient_energy = sum(torch.sum(tensor).item() for tensor in self.field_tensors.values())
+        gradient_change = post_gradient_energy - pre_gradient_energy
+        
+        # ENERGY DEBUG: Track energy after evolution to find where it grows
+        post_evolution_energy = sum(torch.sum(tensor).item() for tensor in self.field_tensors.values())
+        energy_change = post_evolution_energy - pre_evolution_energy
+        if energy_change > 20.0 or post_evolution_energy > 500.0:
+            print(f"🔍 ENERGY DEBUG [evolve_field]: pre={pre_evolution_energy:.3f} → post={post_evolution_energy:.3f}, change=+{energy_change:.3f}")
+            print(f"   └─ Phase breakdown: individual=+{individual_change:.3f}, coupling=+{coupling_change:.3f}, gradients=+{gradient_change:.3f}")
+            
+            # Identify the biggest contributor
+            phases = [("individual", individual_change), ("coupling", coupling_change), ("gradients", gradient_change)]
+            biggest_phase = max(phases, key=lambda x: abs(x[1]))
+            if abs(biggest_phase[1]) > 10.0:
+                print(f"   🎯 BIGGEST ENERGY SOURCE: {biggest_phase[0]} (+{biggest_phase[1]:.3f})")
+            
+            if post_evolution_energy > 1000.0:
+                print(f"   ⚠️  FIELD EVOLUTION CREATED EXCESSIVE ENERGY! This will be clamped to 1000.0")
+    
+    def _inject_input_stream(self, input_stream: List[float], dt: float):
+        """Inject input stream into field tensors to stimulate evolution."""
+        if not input_stream:
+            return
+        
+        # Convert input to tensor
+        input_tensor = torch.tensor(input_stream, dtype=torch.float32, device=self.field_device)
+        input_intensity = torch.mean(torch.abs(input_tensor)).item()
+        
+        # Don't inject if input is too weak
+        if input_intensity < 0.01:
+            return
+        
+        # Inject input into multiple field tensors with different patterns
+        spatial_positions = min(self.spatial_resolution, 5)  # Limit for performance
+        
+        for i, (tensor_name, tensor) in enumerate(self.field_tensors.items()):
+            if i >= len(input_stream):
+                break
+            
+            # Get input value for this tensor
+            input_value = input_stream[i % len(input_stream)]
+            if abs(input_value) < 0.01:
+                continue
+            
+            # Inject into center region of field
+            center_x = spatial_positions // 2
+            center_y = spatial_positions // 2
+            center_z = spatial_positions // 2
+            
+            # Add input with spatial spread
+            for dx in range(-1, 2):
+                for dy in range(-1, 2):
+                    for dz in range(-1, 2):
+                        x = center_x + dx
+                        y = center_y + dy
+                        z = center_z + dz
+                        
+                        if (0 <= x < spatial_positions and 
+                            0 <= y < spatial_positions and 
+                            0 <= z < spatial_positions):
+                            
+                            # Distance-based weighting
+                            dist = abs(dx) + abs(dy) + abs(dz)
+                            weight = 1.0 / (1.0 + dist)
+                            
+                            # Inject into multiple dimensions of this tensor
+                            for dim_idx in range(min(tensor.shape[3], 3)):
+                                injection_strength = input_value * weight * dt * 0.1
+                                tensor[x, y, z, dim_idx] += injection_strength
     
     def _evolve_individual_tensor(self, tensor: torch.Tensor, dt: float):
         """Evolve an individual field tensor (optimized)."""
@@ -616,8 +739,9 @@ class MultiTensorFieldImplementation(FieldImplementation):
         # Check tensor activity to decide on diffusion complexity
         tensor_activity = torch.sum(torch.abs(tensor)).item()
         
-        # Skip diffusion entirely if tensor is very stable
-        if tensor_activity < 1.0 and self._diffusion_skip_counter % 4 == 0:
+        # FIXED: Only skip diffusion if tensor has significant activity and field is established
+        # This prevents skipping during initial field development
+        if tensor_activity > 10.0 and hasattr(self, 'field_evolution_cycles') and self.field_evolution_cycles > 50 and self._diffusion_skip_counter % 4 == 0:
             self._diffusion_skip_counter += 1
             return
         
@@ -670,23 +794,33 @@ class MultiTensorFieldImplementation(FieldImplementation):
         if self._coupling_cycle % 3 != 0:
             return
         
-        # Core field influences all dynamics fields
+        # Core field influences all dynamics fields (ENERGY CONSERVING VERSION)
         core_influence = torch.mean(core_tensor, dim=3, keepdim=True)
         coupling_strength = self.coupling_strengths['core_to_dynamics']
         
-        # Optimized: Vectorized operations instead of loops
-        for tensor_name, tensor in self.field_tensors.items():
-            if tensor_name == 'core':
-                continue
-            
-            # Efficient broadcasting - apply influence to all dimensions at once
-            tensor.add_(core_influence, alpha=coupling_strength)
+        # Count dynamics tensors to properly distribute energy
+        dynamics_tensor_count = len([t for name, t in self.field_tensors.items() if name != 'core'])
         
-        # Dynamics fields influence core field back (optimized)
+        if dynamics_tensor_count > 0:
+            # ENERGY CONSERVATION: Transfer energy instead of creating it
+            energy_per_tensor = coupling_strength / dynamics_tensor_count  # Distribute core energy
+            
+            for tensor_name, tensor in self.field_tensors.items():
+                if tensor_name == 'core':
+                    continue
+                
+                # Add energy to dynamics tensor
+                tensor.add_(core_influence, alpha=energy_per_tensor)
+                
+            # CRITICAL: Remove transferred energy from core to conserve total energy
+            core_tensor.add_(core_influence, alpha=-coupling_strength)
+        
+        # Dynamics fields influence core field back (ENERGY CONSERVING VERSION)
         if len(self.field_tensors) > 1:  # Only if we have dynamics tensors
             dynamics_influence = torch.zeros_like(core_tensor)
             dynamics_count = 0
             
+            # Collect influence and reduce source tensors
             for tensor_name, tensor in self.field_tensors.items():
                 if tensor_name == 'core':
                     continue
@@ -697,9 +831,19 @@ class MultiTensorFieldImplementation(FieldImplementation):
                 dynamics_count += 1
             
             if dynamics_count > 0:
-                # Normalize and apply
-                dynamics_influence *= (self.coupling_strengths['dynamics_to_core'] / dynamics_count)
+                # ENERGY CONSERVATION: Transfer energy from dynamics to core
+                transfer_strength = self.coupling_strengths['dynamics_to_core'] / dynamics_count
+                dynamics_influence *= transfer_strength
+                
+                # Add transferred energy to core
                 core_tensor.add_(dynamics_influence)
+                
+                # CRITICAL: Remove transferred energy from dynamics tensors
+                for tensor_name, tensor in self.field_tensors.items():
+                    if tensor_name == 'core':
+                        continue
+                    tensor_influence = torch.mean(tensor, dim=3, keepdim=True)
+                    tensor.add_(tensor_influence, alpha=-transfer_strength)
     
     def _update_multi_tensor_gradients(self):
         """Update gradient flows across all field tensors (optimized)."""
@@ -793,9 +937,24 @@ class MultiTensorFieldImplementation(FieldImplementation):
             max_activation = max(torch.max(tensor).item() for tensor in self.field_tensors.values())
             mean_activation = total_activation / total_elements if total_elements > 0 else 0.0
         
-        # Additional safety bounds
-        total_activation = min(total_activation, 1000.0) if not (np.isinf(total_activation) or np.isnan(total_activation)) else 10.0
-        max_activation = min(max_activation, 100.0) if not (np.isinf(max_activation) or np.isnan(max_activation)) else 1.0
+        # ENERGY DEBUG: Log before artificial clamping
+        original_total = total_activation
+        if total_activation > 500.0:
+            print(f"🔍 ENERGY DEBUG [get_field_statistics]: PRE-CLAMP total={total_activation:.3f}")
+        
+        # Additional safety bounds with debugging
+        if total_activation > 1000.0:
+            print(f"⚠️  ENERGY CLAMP: {total_activation:.3f} → 1000.0 (this explains the mysterious 1000.000!)")
+            total_activation = 1000.0
+        elif np.isinf(total_activation) or np.isnan(total_activation):
+            print(f"⚠️  ENERGY RESET: {total_activation} → 10.0 (inf/nan detected)")
+            total_activation = 10.0
+            
+        if max_activation > 100.0:
+            print(f"⚠️  MAX_ACTIVATION CLAMP: {max_activation:.3f} → 100.0")
+            max_activation = 100.0
+        elif np.isinf(max_activation) or np.isnan(max_activation):
+            max_activation = 1.0
         
         # Per-tensor statistics
         tensor_stats = {}

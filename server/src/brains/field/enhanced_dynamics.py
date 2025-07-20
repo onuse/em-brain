@@ -150,12 +150,12 @@ class EnhancedFieldDynamics:
         
         recent_energy = self.phase_energy_history[-5:]
         
-        # Protected variance calculation to prevent NaN
-        energy_tensor = torch.tensor(recent_energy)
+        # Protected variance calculation to prevent NaN and MPS float64 issues
+        energy_tensor = torch.tensor(recent_energy, dtype=torch.float32)
         if len(energy_tensor) <= 1:
             energy_variance = 0.0
         else:
-            variance_result = torch.var(energy_tensor)
+            variance_result = torch.var(energy_tensor.float())
             energy_variance = 0.0 if torch.isnan(variance_result) or torch.isinf(variance_result) else variance_result.item()
         
         energy_trend = recent_energy[-1] - recent_energy[0]
@@ -241,24 +241,27 @@ class EnhancedFieldDynamics:
                     if grad_tensor.numel() > 0:
                         peak_indices = torch.argmax(torch.abs(grad_tensor.flatten()))
                         # Convert to normalized coordinates
-                        coords = torch.randn(36, device=self.field_impl.field_device) * 0.1
-                        coords[:3] = torch.rand(3, device=self.field_impl.field_device) * 2 - 1
+                        coords = torch.randn(36, device=self.field_impl.field_device, dtype=torch.float32) * 0.1
+                        coords[:3] = torch.rand(3, device=self.field_impl.field_device, dtype=torch.float32) * 2 - 1
                         best_coords = coords
             
             if best_coords is not None:
                 return best_coords
         
         # Fallback: random coordinates with slight spatial bias
-        coords = torch.randn(36, device=self.field_impl.field_device) * 0.3
-        coords[:3] = torch.rand(3, device=self.field_impl.field_device) * 0.6 - 0.3
+        coords = torch.randn(36, device=self.field_impl.field_device, dtype=torch.float32) * 0.3
+        coords[:3] = torch.rand(3, device=self.field_impl.field_device, dtype=torch.float32) * 0.6 - 0.3
         return coords
     
     def _create_phase_attractor(self, coordinates: torch.Tensor, attractor_type: str, intensity: float) -> None:
         """Create a phase-specific attractor."""
-        # DEBUG: Log attractor creation
-        if intensity > 1.0:
-            coords_norm = torch.norm(coordinates).item()
-            print(f"🔍 ATTRACTOR CREATE: type={attractor_type}, intensity={intensity:.6f}, coords_norm={coords_norm:.6f}")
+        # ENERGY DEBUG: Log ALL attractor creation - this could be the energy source!
+        coords_norm = torch.norm(coordinates).item()
+        print(f"🔍 ATTRACTOR CREATE: type={attractor_type}, intensity={intensity:.6f}, coords_norm={coords_norm:.6f}")
+        
+        # CRITICAL: Check if attractor intensity is excessive
+        if intensity > 0.5:
+            print(f"   ⚠️  HIGH INTENSITY ATTRACTOR! This could cause energy spikes.")
         experience = UnifiedFieldExperience(
             timestamp=time.time(),
             field_coordinates=coordinates,
@@ -332,25 +335,14 @@ class EnhancedFieldDynamics:
         min_flow = min(flow_magnitudes)
         flow_imbalance = max_flow - min_flow
         
-        # If significant imbalance, redistribute energy
-        if flow_imbalance > 0.3:
-            redistribution_strength = min(0.2, flow_imbalance * 0.1)
-            
-            # Create redistribution experience
-            redistribution_coords = torch.randn(36, device=self.field_impl.field_device) * 0.2
-            
-            experience = UnifiedFieldExperience(
-                timestamp=time.time(),
-                field_coordinates=redistribution_coords,
-                raw_input_stream=torch.zeros(16, device=self.field_impl.field_device),
-                field_intensity=redistribution_strength,
-                dynamics_family_activations={
-                    FieldDynamicsFamily.FLOW: redistribution_strength,
-                    FieldDynamicsFamily.ENERGY: redistribution_strength * 0.8
-                }
-            )
-            
-            self.field_impl.imprint_experience(experience)
+        # DISABLED: Energy redistribution creates new energy instead of redistributing
+        # This is a major source of energy accumulation - commenting out until proper implementation
+        # 
+        # TODO: Implement true energy redistribution that moves energy instead of creating new energy
+        # if flow_imbalance > 0.3:
+        #     # Should implement: move energy from high-flow to low-flow regions
+        #     # Current implementation: creates new energy (ENERGY LEAK!)
+        #     pass
     
     def _update_coherence_metrics(self) -> None:
         """Update field coherence metrics for global consistency (optimized)."""
@@ -399,12 +391,12 @@ class EnhancedFieldDynamics:
                 
                 for grad_name, grad_tensor in gradients.items():
                     if grad_tensor.numel() > 0:
-                        grad_variance = torch.var(grad_tensor).item()
+                        grad_variance = torch.var(grad_tensor.float()).item()
                         grad_mean = torch.mean(torch.abs(grad_tensor)).item()
                         
                         # High activity + low variance = potential attractor
                         if grad_mean > 0.4 and grad_variance < 0.1:
-                            discovery_coords = torch.randn(36, device=self.field_impl.field_device) * 0.2
+                            discovery_coords = torch.randn(36, device=self.field_impl.field_device, dtype=torch.float32) * 0.2
                             
                             self._create_phase_attractor(
                                 discovery_coords, 

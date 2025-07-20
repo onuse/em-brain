@@ -17,7 +17,27 @@ Key Principles:
 import torch
 import numpy as np
 import time
+
+# Force float32 as default to prevent MPS float64 issues
+torch.set_default_dtype(torch.float32)
+
+# MPS-safe tensor creation helpers
+def mps_safe_tensor(*args, **kwargs):
+    """Create tensor with explicit float32 dtype for MPS compatibility."""
+    kwargs['dtype'] = kwargs.get('dtype', torch.float32)
+    return torch.tensor(*args, **kwargs)
+
+def mps_safe_zeros(*args, **kwargs):
+    """Create zeros tensor with explicit float32 dtype for MPS compatibility."""
+    kwargs['dtype'] = kwargs.get('dtype', torch.float32)
+    return torch.zeros(*args, **kwargs)
+
+def mps_safe_randn(*args, **kwargs):
+    """Create randn tensor with explicit float32 dtype for MPS compatibility."""
+    kwargs['dtype'] = kwargs.get('dtype', torch.float32)
+    return torch.randn(*args, **kwargs)
 from typing import Dict, List, Tuple, Optional, Any, Union
+from ..brain_maintenance_interface import BrainMaintenanceInterface
 from dataclasses import dataclass, field
 from enum import Enum
 import math
@@ -48,6 +68,53 @@ def get_field_device(tensor_dims: int) -> torch.device:
         return torch.device('cpu')  # MPS limitation fallback
     return DEVICE
 
+def ensure_mps_float32(tensor: torch.Tensor) -> torch.Tensor:
+    """
+    Ensure tensor is float32 when using MPS to avoid float64 conversion errors.
+    
+    MPS doesn't support float64, so we must ensure all tensors stay as float32.
+    """
+    if tensor.device.type == 'mps' and tensor.dtype != torch.float32:
+        return tensor.to(dtype=torch.float32)
+    return tensor
+
+def safe_tensor_operation(operation, *tensors, **kwargs):
+    """
+    Safely perform tensor operations with MPS float32 enforcement.
+    
+    This wrapper ensures all tensors are float32 before operations that might
+    cause dtype conversion issues on MPS.
+    """
+    try:
+        # Ensure all tensors are float32 if on MPS
+        safe_tensors = []
+        for tensor in tensors:
+            if isinstance(tensor, torch.Tensor):
+                safe_tensors.append(ensure_mps_float32(tensor))
+            else:
+                safe_tensors.append(tensor)
+        
+        # Perform operation
+        result = operation(*safe_tensors, **kwargs)
+        
+        # Ensure result is also float32 if on MPS
+        if isinstance(result, torch.Tensor):
+            result = ensure_mps_float32(result)
+            
+        return result
+        
+    except RuntimeError as e:
+        if "float64" in str(e) and "MPS" in str(e):
+            # Fallback to CPU for problematic operations
+            cpu_tensors = [t.cpu() if isinstance(t, torch.Tensor) else t for t in tensors]
+            result = operation(*cpu_tensors, **kwargs)
+            # Move result back to original device if needed
+            if isinstance(result, torch.Tensor) and tensors and isinstance(tensors[0], torch.Tensor):
+                result = result.to(device=tensors[0].device, dtype=torch.float32)
+            return result
+        else:
+            raise
+
 # Import our field dynamics foundation
 try:
     from .dynamics.constraint_field_dynamics import ConstraintField4D, FieldConstraint, FieldConstraintType
@@ -73,7 +140,7 @@ except ImportError:
     from brains.field.hierarchical_processing import EfficientHierarchicalProcessing, HierarchicalConfig
 
 
-class GenericFieldBrain:
+class GenericFieldBrain(BrainMaintenanceInterface):
     """
     Generic Platform-Agnostic Field Brain
     
@@ -98,6 +165,9 @@ class GenericFieldBrain:
                  hierarchical_max_time_ms: float = 80.0,
                  quiet_mode: bool = False,
                  logger: Optional[Any] = None):
+        
+        # Initialize parent maintenance interface
+        super().__init__()
         
         self.spatial_resolution = spatial_resolution
         self.temporal_window = temporal_window
@@ -407,6 +477,47 @@ class GenericFieldBrain:
             print(f"   Output mapping: {self.total_dimensions}D → {capabilities.output_dimensions}D")
     
     def process_input_stream(self, input_stream: List[float], timestamp: Optional[float] = None) -> Tuple[List[float], Dict[str, Any]]:
+        """Process input stream with MPS float64 error protection."""
+        try:
+            return self._process_input_stream_internal(input_stream, timestamp)
+        except RuntimeError as e:
+            if "float64" in str(e) and "MPS" in str(e):
+                # Fallback: temporarily switch to CPU for this cycle
+                return self._process_input_stream_cpu_fallback(input_stream, timestamp)
+            else:
+                raise
+    
+    def _process_input_stream_cpu_fallback(self, input_stream: List[float], timestamp: Optional[float] = None) -> Tuple[List[float], Dict[str, Any]]:
+        """CPU fallback for MPS float64 issues."""
+        # Temporarily move field to CPU, process, then move back
+        original_device = self.field_device
+        
+        try:
+            # Move field tensors to CPU
+            if hasattr(self.field_impl, 'field_tensors'):
+                for tensor in self.field_impl.field_tensors.values():
+                    tensor.data = tensor.cpu()
+            self.unified_field = self.unified_field.cpu()
+            self.field_device = torch.device('cpu')
+            
+            # Process on CPU
+            result = self._process_input_stream_internal(input_stream, timestamp)
+            
+            return result
+            
+        finally:
+            # Move back to original device if possible
+            try:
+                if hasattr(self.field_impl, 'field_tensors'):
+                    for tensor in self.field_impl.field_tensors.values():
+                        tensor.data = tensor.to(original_device, dtype=torch.float32)
+                self.unified_field = self.unified_field.to(original_device, dtype=torch.float32)
+                self.field_device = original_device
+            except:
+                # If moving back fails, stay on CPU
+                self.field_device = torch.device('cpu')
+    
+    def _process_input_stream_internal(self, input_stream: List[float], timestamp: Optional[float] = None) -> Tuple[List[float], Dict[str, Any]]:
         """
         Process input stream through unified field dynamics (event-driven).
         
@@ -1013,7 +1124,7 @@ class GenericFieldBrain:
         try:
             # Calculate field gradient magnitude as stability indicator
             field_mean = torch.mean(torch.abs(self.unified_field))
-            field_std = torch.std(self.unified_field)
+            field_std = torch.std(self.unified_field.float())
             
             # More stable field = lower standard deviation relative to mean
             if field_mean > 0.001:
@@ -1799,6 +1910,121 @@ class GenericFieldBrain:
         """Adjust the performance budget for hierarchical processing."""
         if self.hierarchical_processor:
             self.hierarchical_processor.adjust_performance_budget(max_time_ms)
+    
+    # BrainMaintenanceInterface implementation
+    def light_maintenance(self) -> None:
+        """
+        Quick cleanup operations (<1ms) - safe during active processing.
+        """
+        # Cleanup expired attractors from enhanced dynamics
+        if self.enhanced_dynamics:
+            current_time = time.time()
+            # Remove attractors older than their persistence time
+            self.enhanced_dynamics.active_attractors = [
+                attr for attr in self.enhanced_dynamics.active_attractors
+                if (current_time - attr['creation_time']) < attr['persistence']
+            ]
+        
+        # Update simple field metrics
+        if hasattr(self, 'field_impl') and self.field_impl:
+            # Light metrics update without heavy computation
+            self.brain_cycles += 0  # Ensure counter is accessible
+    
+    def heavy_maintenance(self) -> None:
+        """
+        Moderate maintenance (10-50ms) - during short idle periods.
+        """
+        # Energy redistribution and field optimization
+        if hasattr(self, 'field_impl') and self.field_impl:
+            # Get current field statistics
+            stats = self.field_impl.get_field_statistics()
+            field_energy = stats.get('total_activation', 0.0)
+            
+            # Apply stronger decay if energy is getting high
+            if field_energy > 500.0:
+                # Emergency energy reduction
+                if hasattr(self.field_impl, 'unified_field'):
+                    self.field_impl.unified_field *= 0.95
+                elif hasattr(self.field_impl, 'field_tensors'):
+                    for tensor in self.field_impl.field_tensors.values():
+                        tensor *= 0.95
+        
+        # Optimize attention regions if enabled
+        if self.attention_processor:
+            # Clean up inactive attention regions
+            pass  # TODO: Implement attention cleanup
+    
+    def deep_consolidation(self) -> None:
+        """
+        Intensive consolidation (100-500ms) - during extended idle periods.
+        """
+        # Comprehensive field optimization and consolidation
+        if hasattr(self, 'field_impl') and self.field_impl:
+            # Deep field structure optimization
+            self._consolidate_field_patterns()
+            
+            # Rebuild spatial indices if needed
+            if hasattr(self.field_impl, '_rebuild_spatial_indices'):
+                self.field_impl._rebuild_spatial_indices()
+        
+        # Enhanced dynamics deep cleanup
+        if self.enhanced_dynamics:
+            # Reset accumulated coherence metrics
+            self.enhanced_dynamics.coherence_metrics = {}
+            
+            # Optimize attractor placement
+            self._optimize_attractor_placement()
+        
+        # Hierarchical processing optimization
+        if self.hierarchical_processor:
+            # Clear accumulated patterns that may be consuming memory
+            pass  # TODO: Implement hierarchical cleanup
+        
+        # Memory consolidation
+        self._consolidate_memory_patterns()
+    
+    def _consolidate_field_patterns(self) -> None:
+        """Consolidate and optimize field patterns during deep maintenance."""
+        if not hasattr(self, 'field_impl') or not self.field_impl:
+            return
+        
+        # Apply gentle normalization to prevent energy accumulation
+        stats = self.field_impl.get_field_statistics()
+        field_energy = stats.get('total_activation', 0.0)
+        
+        if field_energy > 100.0:
+            # Normalize field energy to reasonable range
+            normalization_factor = 50.0 / field_energy
+            
+            if hasattr(self.field_impl, 'unified_field'):
+                self.field_impl.unified_field *= normalization_factor
+            elif hasattr(self.field_impl, 'field_tensors'):
+                for tensor in self.field_impl.field_tensors.values():
+                    tensor *= normalization_factor
+    
+    def _optimize_attractor_placement(self) -> None:
+        """Optimize attractor placement during deep maintenance."""
+        if not self.enhanced_dynamics:
+            return
+        
+        # Remove weak attractors (intensity < 0.01)
+        self.enhanced_dynamics.active_attractors = [
+            attr for attr in self.enhanced_dynamics.active_attractors
+            if attr.get('intensity', 0.0) > 0.01
+        ]
+        
+        # Limit total number of attractors to prevent accumulation
+        max_attractors = 5
+        if len(self.enhanced_dynamics.active_attractors) > max_attractors:
+            # Keep only the most recent attractors
+            self.enhanced_dynamics.active_attractors = \
+                self.enhanced_dynamics.active_attractors[-max_attractors:]
+    
+    def _consolidate_memory_patterns(self) -> None:
+        """Consolidate memory patterns during deep maintenance."""
+        # This is where we could implement pattern consolidation
+        # For now, just ensure memory usage is reasonable
+        pass
 
 
 # Factory function for easy creation

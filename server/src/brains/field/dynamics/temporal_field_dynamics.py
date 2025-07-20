@@ -561,7 +561,7 @@ class TemporalField4D:
         r2_flat = region2.flatten()
         
         # Calculate Pearson correlation
-        if torch.std(r1_flat) > 0 and torch.std(r2_flat) > 0:
+        if torch.std(r1_flat.float()) > 0 and torch.std(r2_flat.float()) > 0:
             correlation = torch.corrcoef(torch.stack([r1_flat, r2_flat]))[0, 1]
             return correlation.item() if not torch.isnan(correlation) else 0.0
         else:
@@ -579,7 +579,7 @@ class TemporalField4D:
             slice_current = self.field[:, :, :, t].flatten()
             slice_next = self.field[:, :, :, t + 1].flatten()
             
-            if torch.std(slice_current) > 0 and torch.std(slice_next) > 0:
+            if torch.std(slice_current.float()) > 0 and torch.std(slice_next.float()) > 0:
                 corr = torch.corrcoef(torch.stack([slice_current, slice_next]))[0, 1]
                 if not torch.isnan(corr):
                     correlations.append(corr.item())

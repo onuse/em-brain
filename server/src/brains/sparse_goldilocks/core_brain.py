@@ -40,6 +40,7 @@ from .systems.emergent_confidence_system import EmergentConfidenceSystem
 # from .emergent_hierarchical_abstraction import EmergentHierarchicalAbstraction, PhysicalConstraints
 # from .emergent_adaptive_plasticity import EmergentAdaptivePlasticity, TimescaleConstraints
 from ...statistics_control import should_collect_stream_stats, should_collect_coactivation_stats, should_collect_hierarchy_stats, should_collect_competition_stats
+from ..brain_maintenance_interface import BrainMaintenanceInterface
 
 
 class UnifiedCorticalStreamStorage:
@@ -404,7 +405,7 @@ class SparseGoldilocksVectorStream:
         }
 
 
-class SparseGoldilocksBrain:
+class SparseGoldilocksBrain(BrainMaintenanceInterface):
     """
     The Goldilocks Brain enhanced with sparse distributed representations.
     
@@ -414,6 +415,9 @@ class SparseGoldilocksBrain:
     
     def __init__(self, sensory_dim: int = 16, motor_dim: int = 8, temporal_dim: int = 4,
                  max_patterns: int = 1_000_000, quiet_mode: bool = False):
+        
+        # Initialize maintenance interface
+        super().__init__()
         
         # Store quiet_mode for access by setup methods
         self.quiet_mode = quiet_mode
@@ -1701,6 +1705,109 @@ class SparseGoldilocksBrain:
         return (f"SparseGoldilocksBrain({self.total_cycles} cycles, "
                 f"evolutionary_enhanced_architecture)")
     
+    def light_maintenance(self) -> None:
+        """Quick cleanup operations for sparse goldilocks brain."""
+        # Clean up old entries from pattern caches
+        current_time = time.time()
+        
+        # Clear expired fast path cache entries (older than 30 seconds)
+        if hasattr(self, 'fast_path_pattern_cache'):
+            expired_keys = []
+            for key in self.fast_path_pattern_cache.keys():
+                # Simple age-based cleanup for now
+                if len(expired_keys) < 10:  # Limit cleanup per cycle
+                    expired_keys.append(key)
+            
+            for key in expired_keys[:5]:  # Clean max 5 per light maintenance
+                if key in self.fast_path_pattern_cache:
+                    del self.fast_path_pattern_cache[key]
+        
+        # Clean up old surprise events (older than 5 minutes)
+        if hasattr(self, 'emergent_hierarchy') and hasattr(self.emergent_hierarchy, 'predictor'):
+            predictor = self.emergent_hierarchy.predictor
+            if hasattr(predictor, 'surprise_events'):
+                cutoff_time = current_time - 300  # 5 minutes
+                predictor.surprise_events = [t for t in predictor.surprise_events if t > cutoff_time]
+    
+    def heavy_maintenance(self) -> None:
+        """Moderate maintenance operations for sparse goldilocks brain."""
+        # Optimize background storage if queue is getting large
+        if hasattr(self, 'unified_storage'):
+            storage = self.unified_storage
+            
+            # Force optimization if storage queue is large
+            if hasattr(storage, 'storage_queue') and storage.storage_queue.qsize() > 100:
+                try:
+                    storage.optimization_queue.put_nowait({
+                        'type': 'rebuild_columns',
+                        'stream_type': 'all'  # Optimize all streams
+                    })
+                except:
+                    pass  # Queue full, skip
+            
+            # Clean up similarity cache if it's getting large
+            if hasattr(storage, 'similarity_cache') and len(storage.similarity_cache) > 500:
+                with storage.column_lock:
+                    # Keep only the most recent 300 entries
+                    cache_items = list(storage.similarity_cache.items())
+                    storage.similarity_cache = dict(cache_items[-300:])
+        
+        # Rebalance competitive dynamics resources
+        if hasattr(self, 'emergent_competition'):
+            if hasattr(self.emergent_competition.resource_storage, 'rebalance_resources'):
+                self.emergent_competition.resource_storage.rebalance_resources()
+            else:
+                # Fallback: basic cleanup if rebalance not available
+                pass
+    
+    def deep_consolidation(self) -> None:
+        """Intensive consolidation operations for sparse goldilocks brain."""
+        # Force pattern consolidation across all streams
+        if hasattr(self, 'unified_storage'):
+            storage = self.unified_storage
+            
+            # Trigger full optimization for all streams
+            for stream_type in ['sensory', 'motor', 'temporal']:
+                try:
+                    storage.optimization_queue.put_nowait({
+                        'type': 'rebuild_columns',
+                        'stream_type': stream_type
+                    })
+                except:
+                    pass  # Queue full, skip
+            
+            # Clean up old patterns if we're at capacity
+            if len(storage.patterns) > storage.max_patterns * 0.9:
+                with storage.pattern_lock:
+                    # Remove oldest 10% of patterns
+                    pattern_items = list(storage.patterns.items())
+                    patterns_to_remove = int(len(pattern_items) * 0.1)
+                    
+                    for pattern_id, _ in pattern_items[:patterns_to_remove]:
+                        if pattern_id in storage.patterns:
+                            del storage.patterns[pattern_id]
+                        # Remove from stream patterns
+                        for stream_list in storage.stream_patterns.values():
+                            if pattern_id in stream_list:
+                                stream_list.remove(pattern_id)
+        
+        # Deep consolidation of competitive dynamics
+        if hasattr(self, 'emergent_competition'):
+            # Force resource cleanup
+            if hasattr(self.emergent_competition.resource_storage, 'cleanup_expired_resources'):
+                self.emergent_competition.resource_storage.cleanup_expired_resources()
+            
+            # Rebuild resource index
+            if hasattr(self.emergent_competition.resource_storage, 'rebuild_resource_index'):
+                self.emergent_competition.resource_storage.rebuild_resource_index()
+        
+        # Clear and rebuild fast path caches
+        if hasattr(self, 'fast_path_pattern_cache'):
+            self.fast_path_pattern_cache.clear()
+        
+        if hasattr(self, 'fast_path_padding_cache'):
+            self.fast_path_padding_cache.clear()
+
     def __del__(self):
         """Cleanup background threads when brain is destroyed"""
         if hasattr(self, 'unified_storage') and hasattr(self.unified_storage, 'shutdown'):

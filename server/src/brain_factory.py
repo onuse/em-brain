@@ -16,6 +16,7 @@ from typing import List, Dict, Tuple, Optional, Any
 from .brains.minimal.core_brain import MinimalVectorStreamBrain
 from .brains.sparse_goldilocks.core_brain import SparseGoldilocksBrain
 from .brains.field.tcp_adapter import FieldBrainTCPAdapter, FieldBrainConfig
+from .brains.brain_maintenance_interface import BrainMaintenanceInterface, MaintenanceScheduler
 from .utils.cognitive_autopilot import CognitiveAutopilot
 from .utils.brain_logger import BrainLogger
 from .utils.hardware_adaptation import get_hardware_adaptation, record_brain_cycle_performance
@@ -144,6 +145,13 @@ class BrainFactory:
         # Initialize cognitive autopilot for adaptive intensity control
         self.cognitive_autopilot = CognitiveAutopilot()
         
+        # Initialize maintenance scheduler if brain supports maintenance interface
+        self.maintenance_scheduler = None
+        if isinstance(self.vector_brain, BrainMaintenanceInterface):
+            self.maintenance_scheduler = MaintenanceScheduler(self.vector_brain)
+            if not quiet_mode:
+                print(f"🔧 Maintenance interface enabled for {self.brain_type} brain")
+        
         # Factory state tracking
         self.total_cycles = 0
         self.brain_start_time = time.time()
@@ -158,24 +166,24 @@ class BrainFactory:
         # Logging system for emergence analysis
         self.enable_logging = enable_logging
         if enable_logging:
-            self.logger = BrainLogger(session_name=log_session_name, config=config)
+            self.logger = BrainLogger(session_name=log_session_name, config=self.config)
         else:
             self.logger = None
         
         # Persistence system for cross-session learning
-        self.enable_persistence = config.get('memory', {}).get('enable_persistence', True)
+        self.enable_persistence = self.config.get('memory', {}).get('enable_persistence', True)
         self.persistence_manager = None
         self.session_count = 0
         
         if self.enable_persistence:
-            memory_path = config.get('memory', {}).get('persistent_memory_path', './robot_memory')
+            memory_path = self.config.get('memory', {}).get('persistent_memory_path', './robot_memory')
             
             # Create persistence configuration
             persistence_config = PersistenceConfig(
                 memory_root_path=memory_path,
-                incremental_save_interval_cycles=config.get('memory', {}).get('save_interval_cycles', 100),
-                enable_compression=config.get('memory', {}).get('enable_compression', True),
-                enable_corruption_detection=config.get('memory', {}).get('enable_corruption_detection', True)
+                incremental_save_interval_cycles=self.config.get('memory', {}).get('save_interval_cycles', 100),
+                enable_compression=self.config.get('memory', {}).get('enable_compression', True),
+                enable_corruption_detection=self.config.get('memory', {}).get('enable_corruption_detection', True)
             )
             
             # Initialize production persistence manager
@@ -248,6 +256,10 @@ class BrainFactory:
             else:
                 # Pad with zeros
                 predicted_action = predicted_action + [0.0] * (action_dimensions - len(predicted_action))
+        
+        # Mark activity for maintenance scheduler
+        if self.maintenance_scheduler:
+            self.maintenance_scheduler.mark_activity()
         
         # Update cognitive autopilot with vector stream confidence
         confidence = vector_brain_state['prediction_confidence']
@@ -591,6 +603,39 @@ class BrainFactory:
             return self.parallel_coordinator.get_performance_comparison()
         else:
             return {'parallel_processing_available': False}
+    
+    def light_maintenance(self) -> None:
+        """Trigger light maintenance operations on the brain."""
+        if isinstance(self.vector_brain, BrainMaintenanceInterface):
+            self.vector_brain.safe_light_maintenance()
+    
+    def heavy_maintenance(self) -> None:
+        """Trigger heavy maintenance operations on the brain."""
+        if isinstance(self.vector_brain, BrainMaintenanceInterface):
+            self.vector_brain.safe_heavy_maintenance()
+    
+    def deep_consolidation(self) -> None:
+        """Trigger deep consolidation operations on the brain."""
+        if isinstance(self.vector_brain, BrainMaintenanceInterface):
+            self.vector_brain.safe_deep_consolidation()
+    
+    def run_recommended_maintenance(self) -> Dict[str, bool]:
+        """Run maintenance operations recommended for current idle time."""
+        if self.maintenance_scheduler:
+            return self.maintenance_scheduler.run_recommended_maintenance()
+        else:
+            return {
+                'light_maintenance': False,
+                'heavy_maintenance': False,
+                'deep_consolidation': False
+            }
+    
+    def get_maintenance_status(self) -> Dict[str, Any]:
+        """Get maintenance metrics and timing information."""
+        if isinstance(self.vector_brain, BrainMaintenanceInterface):
+            return self.vector_brain.get_maintenance_status()
+        else:
+            return {'maintenance_available': False}
     
     def _apply_recovered_state(self, recovered_state):
         """Apply recovered brain state to the brain (biological wake-up process)."""
