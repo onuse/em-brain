@@ -50,6 +50,9 @@ class SerializedBrainState:
     # Learning trajectories
     learning_history: List[Dict[str, Any]]
     emergence_events: List[Dict[str, Any]]
+    
+    # Field brain specific state
+    field_brain_state: Optional[Dict[str, Any]] = None
 
 
 class BrainSerializer:
@@ -88,6 +91,9 @@ class BrainSerializer:
             # Extract emergence events
             emergence_events = self._extract_emergence_events(brain)
             
+            # Handle field brain specific state
+            field_brain_state = self._extract_field_brain_state(brain)
+            
             # Create complete brain state
             brain_state = SerializedBrainState(
                 version=self.version,
@@ -104,7 +110,8 @@ class BrainSerializer:
                 motor_dim=brain.motor_dim,
                 temporal_dim=brain.temporal_dim,
                 learning_history=learning_history,
-                emergence_events=emergence_events
+                emergence_events=emergence_events,
+                field_brain_state=field_brain_state
             )
             
             # Update statistics
@@ -141,6 +148,10 @@ class BrainSerializer:
             # Restore cross-stream associations
             self._restore_cross_stream_associations(brain, brain_state.cross_stream_associations)
             
+            # Restore field brain state if present
+            if brain_state.field_brain_state and brain.brain_type == "field":
+                self._restore_field_brain_state(brain, brain_state.field_brain_state)
+            
             # Restore experience counters
             brain.total_experiences = brain_state.total_experiences
             
@@ -159,6 +170,12 @@ class BrainSerializer:
         """Extract all patterns from vector brain streams."""
         patterns = []
         current_time = time.time()
+        
+        # Handle field brain (uses intrinsic field state instead of discrete patterns)
+        if hasattr(vector_brain, 'field_brain'):
+            # Field brain uses its own persistence system
+            # Return empty patterns list since field state is saved separately
+            return patterns
         
         # Extract from sparse goldilocks brain if available
         if hasattr(vector_brain, 'sparse_representations'):
@@ -381,6 +398,55 @@ class BrainSerializer:
         
         return events
     
+    def _extract_field_brain_state(self, brain) -> Optional[Dict[str, Any]]:
+        """Extract field brain state for persistence."""
+        if brain.brain_type != "field" or not hasattr(brain, 'vector_brain'):
+            return None
+        
+        try:
+            vector_brain = brain.vector_brain
+            if not hasattr(vector_brain, 'field_brain'):
+                return None
+            
+            field_brain = vector_brain.field_brain
+            
+            # Get field brain statistics and state
+            field_stats = vector_brain.get_brain_stats()
+            
+            # Extract essential field state (not the full tensor - too large)
+            field_state = {
+                'field_dimensions': field_brain.total_dimensions,
+                'spatial_resolution': field_brain.spatial_resolution,
+                'temporal_window': field_brain.temporal_window,
+                'field_parameters': {
+                    'field_decay_rate': field_brain.field_decay_rate,
+                    'field_diffusion_rate': field_brain.field_diffusion_rate,
+                    'gradient_following_strength': field_brain.gradient_following_strength,
+                    'field_evolution_rate': field_brain.field_evolution_rate,
+                    'constraint_discovery_rate': field_brain.constraint_discovery_rate,
+                },
+                'field_statistics': {
+                    'brain_cycles': field_brain.brain_cycles,
+                    'field_evolution_cycles': field_brain.field_evolution_cycles,
+                    'topology_discoveries': field_brain.topology_discoveries,
+                    'gradient_actions': field_brain.gradient_actions,
+                },
+                'stream_capabilities': {
+                    'input_dimensions': vector_brain.sensory_dim,
+                    'output_dimensions': vector_brain.motor_dim,
+                    'capabilities_negotiated': True
+                },
+                'field_memory_stats': field_stats.get('field_brain', {}),
+                'save_timestamp': time.time(),
+                'persistence_version': '1.0'
+            }
+            
+            return field_state
+            
+        except Exception as e:
+            print(f"⚠️ Failed to extract field brain state: {e}")
+            return None
+    
     def _validate_compatibility(self, brain, brain_state: SerializedBrainState) -> bool:
         """Validate that brain state is compatible with current brain."""
         # For fresh states with no patterns, allow dimensional mismatches
@@ -509,6 +575,37 @@ class BrainSerializer:
             for attr, value in associations.items():
                 if hasattr(coactivation, attr):
                     setattr(coactivation, attr, value)
+    
+    def _restore_field_brain_state(self, brain, field_state: Dict[str, Any]):
+        """Restore field brain state from persistence."""
+        try:
+            vector_brain = brain.vector_brain
+            if not hasattr(vector_brain, 'field_brain'):
+                print("⚠️ Cannot restore field brain state: no field brain found")
+                return
+            
+            field_brain = vector_brain.field_brain
+            
+            # Restore field parameters
+            if 'field_parameters' in field_state:
+                params = field_state['field_parameters']
+                for param_name, value in params.items():
+                    if hasattr(field_brain, param_name):
+                        setattr(field_brain, param_name, value)
+            
+            # Restore field statistics
+            if 'field_statistics' in field_state:
+                stats = field_state['field_statistics']
+                for stat_name, value in stats.items():
+                    if hasattr(field_brain, stat_name):
+                        setattr(field_brain, stat_name, value)
+            
+            print(f"✅ Field brain state restored from persistence")
+            print(f"   Cycles: {field_state.get('field_statistics', {}).get('brain_cycles', 0)}")
+            print(f"   Evolution cycles: {field_state.get('field_statistics', {}).get('field_evolution_cycles', 0)}")
+            
+        except Exception as e:
+            print(f"⚠️ Failed to restore field brain state: {e}")
     
     def _update_serialization_stats(self, pattern_count: int, time_ms: float):
         """Update serialization performance statistics."""

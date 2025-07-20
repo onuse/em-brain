@@ -394,20 +394,24 @@ class MinimalBrain:
                         confidence_change  # significance parameter
                     )
                 
-                # Detect mode changes in cognitive autopilot
-                current_mode = autopilot_state.get('cognitive_mode', 'unknown')
-                last_mode = self.last_brain_state.get('cognitive_autopilot', {}).get('cognitive_mode', 'unknown')
-                if current_mode != last_mode:
-                    self.logger.log_emergence_event(
-                        'cognitive_mode_transition',
-                        f"Mode changed from {last_mode} to {current_mode}",
-                        {
-                            'before_mode': last_mode,
-                            'after_mode': current_mode,
-                            'cycle': self.total_cycles
-                        },
-                        1.0  # significance parameter (mode changes are always significant)
-                    )
+                # Track meaningful field brain learning metrics (for field brains only)
+                if self.brain_type == "field" and hasattr(self.vector_brain, 'field_brain'):
+                    field_brain = self.vector_brain.field_brain
+                    
+                    # Log significant field evolution events
+                    if hasattr(field_brain, 'field_evolution_cycles'):
+                        current_evolution_cycles = field_brain.field_evolution_cycles
+                        last_evolution_cycles = getattr(self, '_last_evolution_cycles', 0)
+                        
+                        # Report every 10 field evolution cycles (meaningful learning activity)
+                        if current_evolution_cycles > 0 and current_evolution_cycles % 10 == 0 and current_evolution_cycles != last_evolution_cycles:
+                            try:
+                                field_energy = field_brain.unified_field.sum().item()
+                            except:
+                                field_energy = 0.0
+                                
+                            print(f"🧠 Field Learning: {current_evolution_cycles} evolution cycles, field energy: {field_energy:.1f}")
+                            self._last_evolution_cycles = current_evolution_cycles
             
             # Store current state for next cycle comparison
             self.last_brain_state = brain_state.copy()
