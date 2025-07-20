@@ -12,7 +12,7 @@ import os
 from pathlib import Path
 from typing import Optional, Dict, Any
 
-from src.brain import MinimalBrain
+from src.brain_factory import BrainFactory
 from src.communication import MinimalTCPServer
 
 
@@ -27,8 +27,8 @@ class MinimalBrainServer:
         self.config = self._load_settings()
         self._setup_paths()
         
-        # Initialize brain with config - use quiet mode to reduce startup spam
-        self.brain = MinimalBrain(config=self.config, quiet_mode=True)
+        # Initialize brain factory with config - use quiet mode to reduce startup spam
+        self.brain = BrainFactory(config=self.config, quiet_mode=True)
         self.tcp_server = MinimalTCPServer(self.brain, host, port)
         self.running = False
     

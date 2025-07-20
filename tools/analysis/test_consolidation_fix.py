@@ -18,7 +18,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 
 from server.src.persistence.consolidation_engine import ConsolidationEngine
 from server.src.persistence.persistence_config import PersistenceConfig
-from server.src.brain import MinimalBrain
+from server.src.brain_factory import MinimalBrain
 
 
 def create_test_delta_file(temp_dir: str, filename: str, patterns_data=None):

@@ -24,7 +24,7 @@ sys.path.insert(0, brain_dir)
 
 from src.utils.cognitive_autopilot import CognitiveAutopilot, CognitiveMode
 from src.prediction.adaptive_engine import AdaptivePredictionEngine
-from src.brain import MinimalBrain
+from server.src.brain_factory import MinimalBrain
 
 
 class AdaptiveIntensityTestSuite:

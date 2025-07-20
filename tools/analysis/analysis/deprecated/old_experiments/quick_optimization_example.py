@@ -11,7 +11,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import time
 import numpy as np
-from server.src.brain import MinimalBrain
+from server.src.brain_factory import MinimalBrain
 from server.src.utils.tensor_optimization_integration import quick_optimize_brain
 
 

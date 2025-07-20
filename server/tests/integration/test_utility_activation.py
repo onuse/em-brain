@@ -12,7 +12,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import time
 import numpy as np
-from src.brain import MinimalBrain
+from server.src.brain_factory import MinimalBrain
 
 def test_utility_vs_traditional_activation():
     """Compare utility-based activation against traditional activation."""

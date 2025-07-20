@@ -16,7 +16,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.brain import MinimalBrain
+from server.src.brain_factory import MinimalBrain
 from src.persistence import PersistenceConfig, PersistenceManager
 
 

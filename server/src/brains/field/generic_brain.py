@@ -96,12 +96,14 @@ class GenericFieldBrain:
                  enable_attention_guidance: bool = True,
                  enable_hierarchical_processing: bool = True,
                  hierarchical_max_time_ms: float = 80.0,
-                 quiet_mode: bool = False):
+                 quiet_mode: bool = False,
+                 logger: Optional[Any] = None):
         
         self.spatial_resolution = spatial_resolution
         self.temporal_window = temporal_window
         self.field_evolution_rate = field_evolution_rate
         self.constraint_discovery_rate = constraint_discovery_rate
+        self.logger = logger
         self.quiet_mode = quiet_mode
         self.enable_enhanced_dynamics = enable_enhanced_dynamics
         self.enable_attention_guidance = enable_attention_guidance

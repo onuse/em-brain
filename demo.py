@@ -190,7 +190,7 @@ def quick_test():
     print("="*25)
     
     try:
-        from server.src.brain import MinimalBrain
+        from server.src.brain_factory import MinimalBrain
         
         # Test brain creation
         brain = MinimalBrain()

@@ -10,7 +10,7 @@ import os
 # Add server directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from src.brain import MinimalBrain
+from server.src.brain_factory import MinimalBrain
 import numpy as np
 
 

@@ -15,7 +15,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from collections import defaultdict
 
-from server.src.brain import MinimalBrain
+from server.src.brain_factory import MinimalBrain
 from server.src.utils.tensor_optimization import TensorOptimizationCoordinator, TensorOptimizationConfig
 from server.src.activation.optimized_dynamics import OptimizedActivationDynamics
 

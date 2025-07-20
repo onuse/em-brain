@@ -11,7 +11,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'server'))
 
-from server.src.brain import MinimalBrain
+from server.src.brain_factory import MinimalBrain
 import numpy as np
 import time
 

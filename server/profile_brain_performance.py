@@ -16,7 +16,7 @@ from contextlib import contextmanager
 # Add project root to path  
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from src.brain import MinimalBrain
+from src.brain_factory import BrainFactory
 
 
 @contextmanager
@@ -56,7 +56,7 @@ def profile_brain_cycle_detailed():
         
         print("🧠 Creating brain...")
         with timer("Brain initialization"):
-            brain = MinimalBrain(config=config, enable_logging=True, quiet_mode=True)
+            brain = BrainFactory(config=config, enable_logging=True, quiet_mode=True)
         
         # Warm up (exclude startup costs)
         print("\n🔥 Warming up (5 cycles)...")
@@ -155,7 +155,7 @@ def profile_brain_loop_cprofile():
             }
         }
         
-        brain = MinimalBrain(config=config, enable_logging=True, quiet_mode=True)
+        brain = BrainFactory(config=config, enable_logging=True, quiet_mode=True)
         
         def run_brain_cycles():
             """Function to be profiled."""
@@ -203,7 +203,7 @@ def profile_logging_overhead():
             'logging': {'log_brain_cycles': True}
         }
         
-        brain_logged = MinimalBrain(config=config_with_logging, enable_logging=True, quiet_mode=True)
+        brain_logged = BrainFactory(config=config_with_logging, enable_logging=True, quiet_mode=True)
         
         # Warmup
         for i in range(5):
@@ -225,7 +225,7 @@ def profile_logging_overhead():
             'logging': {'log_brain_cycles': False}
         }
         
-        brain_no_log = MinimalBrain(config=config_no_logging, enable_logging=False, quiet_mode=True)
+        brain_no_log = BrainFactory(config=config_no_logging, enable_logging=False, quiet_mode=True)
         
         # Warmup
         for i in range(5):

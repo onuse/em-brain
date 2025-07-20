@@ -63,7 +63,8 @@ class FieldBrainTCPAdapter:
             enable_attention_guidance=self.config.enable_attention_guidance,
             enable_hierarchical_processing=self.config.enable_hierarchical_processing,
             hierarchical_max_time_ms=self.config.hierarchical_max_time_ms,
-            quiet_mode=self.config.quiet_mode
+            quiet_mode=self.config.quiet_mode,
+            logger=self.logger
         )
         
         # Negotiate stream capabilities automatically

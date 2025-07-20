@@ -15,7 +15,7 @@ import uuid
 from .protocol import MessageProtocol, MessageProtocolError
 from .error_codes import BrainErrorCode, create_brain_error, log_brain_error
 from .sensor_buffer import get_sensor_buffer
-from ..brain import MinimalBrain
+from ..brain_factory import MinimalBrain
 
 
 class MinimalTCPServer:

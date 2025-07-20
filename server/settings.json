@@ -16,7 +16,7 @@
     "enable_enhanced_dynamics": true,
     "enable_attention_guidance": true,
     "enable_hierarchical_processing": true,
-    "enable_attention_super_resolution": true,
+    "enable_attention_super_resolution": false,
     "attention_base_resolution": 50,
     "attention_focus_resolution": 100,
     "hierarchical_max_time_ms": 60.0

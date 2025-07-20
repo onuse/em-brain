@@ -16,7 +16,7 @@ import statistics
 from typing import List, Dict, Any, Tuple
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from server.src.brain import MinimalBrain
+from server.src.brain_factory import MinimalBrain
 from server.src.communication.client import MinimalBrainClient
 import threading
 import subprocess

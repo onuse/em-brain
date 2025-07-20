@@ -16,7 +16,7 @@ from src.similarity.learnable_similarity import LearnableSimilarity
 from src.activation.dynamics import ActivationDynamics
 from src.activation.utility_based_activation import UtilityBasedActivation
 from src.experience.models import Experience
-from src.brain import MinimalBrain
+from server.src.brain_factory import MinimalBrain
 
 
 def create_test_experiences(num_experiences: int, dimensions: int = 30):

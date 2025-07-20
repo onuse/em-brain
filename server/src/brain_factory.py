@@ -1,14 +1,13 @@
 """
-Minimal Brain Coordinator - Vector Stream Architecture
+Brain Factory - Multi-Implementation Brain Coordinator
 
-The central orchestrator that coordinates vector stream processing:
-1. Modular Streams - continuous sensory, motor, and temporal vectors
-2. Cross-Stream Learning - associations between stream patterns  
-3. Temporal Integration - time as data stream with organic metronome
-4. Continuous Prediction - emergent from vector flow dynamics
+Factory that creates and manages different brain implementations:
+1. Field Brain - unified field dynamics for spatial intelligence
+2. Sparse Goldilocks - sparse pattern learning with biological timing
+3. Minimal Brain - lightweight vector stream processing
 
-Vector streams replace discrete experience packages with biologically-realistic
-continuous processing that handles timing and dead reckoning naturally.
+Provides a unified interface while delegating to specialized brain implementations
+based on configuration and requirements.
 """
 
 import time
@@ -23,27 +22,28 @@ from .utils.hardware_adaptation import get_hardware_adaptation, record_brain_cyc
 from .persistence import PersistenceManager, PersistenceConfig
 
 
-class MinimalBrain:
+class BrainFactory:
     """
-    The complete minimal brain - vector stream processing for biological realism.
+    Factory for creating and managing different brain implementations.
     
-    Everything emerges from continuous vector flow:
-    - Spatial navigation emerges from sensory stream patterns
-    - Motor skills emerge from sensory-motor stream associations
-    - Temporal adaptation emerges from organic metronome integration
-    - Dead reckoning emerges from cross-stream prediction dynamics
+    Supports multiple brain architectures:
+    - field: Unified field dynamics with spatial intelligence
+    - sparse_goldilocks: Sparse pattern learning with biological timing
+    - minimal: Lightweight vector stream processing
+    
+    Provides unified interface while delegating to specialized implementations.
     """
     
     def __init__(self, config=None, enable_logging=True, log_session_name=None, quiet_mode=False, 
                  sensory_dim=None, motor_dim=None, temporal_dim=None, max_patterns=None, 
                  brain_type=None):
-        """Initialize the minimal brain with vector stream architecture."""
+        """Initialize the brain factory with specified implementation type."""
         
         # Store config for use in other methods
         self.config = config or {}
         self.quiet_mode = quiet_mode
         
-        # Get brain configuration from settings with defaults
+        # Get brain implementation configuration from settings
         brain_config = self.config.get('brain', {})
         self.brain_type = brain_type or brain_config.get('type', 'sparse_goldilocks')
         self.sensory_dim = sensory_dim or brain_config.get('sensory_dim', 16)
@@ -51,11 +51,11 @@ class MinimalBrain:
         self.temporal_dim = temporal_dim or brain_config.get('temporal_dim', 4)
         max_patterns = max_patterns or brain_config.get('max_patterns', 100000)
         
-        # Biological timing configuration (Phase 7: gamma frequency)
+        # Biological timing configuration (for sparse_goldilocks brain)
         self.target_cycle_time_ms = brain_config.get('target_cycle_time_ms', 25.0)  # Gamma frequency: 40Hz = 25ms
         self.target_cycle_time_s = self.target_cycle_time_ms / 1000.0
         
-        # Initialize biological oscillator for Phase 7 parallel processing
+        # Initialize biological oscillator for sparse_goldilocks brain
         self.biological_oscillator = None
         if brain_config.get('enable_biological_timing', True):
             from .brains.sparse_goldilocks.systems.biological_oscillator import create_biological_oscillator
@@ -65,7 +65,7 @@ class MinimalBrain:
             }
             self.biological_oscillator = create_biological_oscillator(oscillator_config, quiet_mode)
         
-        # Initialize Phase 7b: Parallel Brain Coordinator for async stream processing
+        # Initialize parallel coordinator for sparse_goldilocks brain
         self.parallel_coordinator = None
         if brain_config.get('enable_parallel_processing', False) and self.biological_oscillator:
             from .brains.sparse_goldilocks.systems.parallel_brain_coordinator import ParallelBrainCoordinator
@@ -75,9 +75,9 @@ class MinimalBrain:
                 quiet_mode
             )
         
-        # Log dimension configuration sources for traceability
+        # Log brain factory configuration for traceability
         if not quiet_mode:
-            print(f"🧠 Brain Dimension Configuration:")
+            print(f"🏭 Brain Factory Configuration:")
             sensory_source = "param" if sensory_dim else ("config" if 'sensory_dim' in brain_config else "default")
             motor_source = "param" if motor_dim else ("config" if 'motor_dim' in brain_config else "default") 
             temporal_source = "param" if temporal_dim else ("config" if 'temporal_dim' in brain_config else "default")
@@ -91,13 +91,13 @@ class MinimalBrain:
             parallel_status = "enabled" if self.parallel_coordinator else "disabled"
             print(f"   Parallel processing: {parallel_status}")
         
-        # Hardware adaptation system (disabled for field brains - they have their own optimizations)
+        # Hardware adaptation system (field brains have their own optimizations)
         if self.brain_type == "field":
             self.hardware_adaptation = None
         else:
             self.hardware_adaptation = get_hardware_adaptation(self.config)
         
-        # Select brain implementation based on type
+        # Create brain implementation based on configured type
         if self.brain_type == "sparse_goldilocks":
             self.vector_brain = SparseGoldilocksBrain(
                 sensory_dim=self.sensory_dim,
@@ -137,14 +137,14 @@ class MinimalBrain:
         else:
             raise ValueError(f"Unknown brain_type: {self.brain_type}. Options: 'sparse_goldilocks', 'minimal', 'field'")
         
-        # Connect parallel coordinator to vector brain after initialization
+        # Connect parallel coordinator to brain implementation after initialization
         if self.parallel_coordinator:
             self.parallel_coordinator.set_vector_brain(self.vector_brain)
         
         # Initialize cognitive autopilot for adaptive intensity control
         self.cognitive_autopilot = CognitiveAutopilot()
         
-        # Brain state tracking
+        # Factory state tracking
         self.total_cycles = 0
         self.brain_start_time = time.time()
         self.last_prediction = None  # For prediction error calculation
@@ -162,7 +162,7 @@ class MinimalBrain:
         else:
             self.logger = None
         
-        # Production-grade persistence system for cross-session learning
+        # Persistence system for cross-session learning
         self.enable_persistence = config.get('memory', {}).get('enable_persistence', True)
         self.persistence_manager = None
         self.session_count = 0
@@ -194,27 +194,24 @@ class MinimalBrain:
                     print(f"🧠 Starting fresh brain state - session {self.session_count}")
         
         if not quiet_mode:
-            print(f"🧠 MinimalBrain initialized - {self.brain_type.title()} Architecture")
+            print(f"🏭 BrainFactory initialized - {self.brain_type.title()} Implementation")
             print(f"   Sensory stream: {self.sensory_dim}D")
             print(f"   Motor stream: {self.motor_dim}D") 
             print(f"   Temporal stream: {self.temporal_dim}D")
             if self.brain_type == "sparse_goldilocks":
                 print(f"   Max patterns: {max_patterns:,}")
-                print(f"   🧬 Evolutionary Win #1: Sparse Distributed Representations")
+                print(f"   🧬 Sparse Distributed Representations enabled")
             print(f"   Continuous prediction and dead reckoning enabled")
-        else:
-            # Show minimal essential summary
-            print(f"🧠 Vector Brain ready: {self.sensory_dim}D→{self.motor_dim}D processing")
     
     def process_sensory_input(self, sensory_input: List[float], 
                             action_dimensions: int = 4) -> Tuple[List[float], Dict[str, Any]]:
         """
-        Process sensory input and return predicted action using vector streams.
+        Process sensory input through the configured brain implementation.
         
-        This is the complete brain cycle:
-        1. Update vector streams with current input
-        2. Generate action through cross-stream prediction
-        3. Return action with brain state info
+        Delegates to the configured brain implementation:
+        1. Field brain: unified field dynamics processing
+        2. Sparse goldilocks: sparse pattern learning  
+        3. Minimal brain: lightweight vector processing
         
         Args:
             sensory_input: Current sensory observation vector
@@ -622,10 +619,14 @@ class MinimalBrain:
     
     
     def __str__(self) -> str:
-        return (f"MinimalBrain({self.total_cycles} cycles, "
-                f"{self.brain_type}_architecture, "
+        return (f"BrainFactory({self.total_cycles} cycles, "
+                f"{self.brain_type}_implementation, "
                 f"sensory={self.sensory_dim}D, "
                 f"motor={self.motor_dim}D)")
     
     def __repr__(self) -> str:
         return self.__str__()
+
+
+# Backwards compatibility alias
+MinimalBrain = BrainFactory

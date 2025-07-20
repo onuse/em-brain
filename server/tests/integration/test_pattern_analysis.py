@@ -15,7 +15,7 @@ import numpy as np
 import pytest
 from src.prediction.pattern_analyzer import GPUPatternAnalyzer
 from src.prediction.engine import PredictionEngine
-from src.brain import MinimalBrain
+from server.src.brain_factory import MinimalBrain
 
 
 def create_pattern_sequence(base_pattern: np.ndarray, pattern_length: int, 

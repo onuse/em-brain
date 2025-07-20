@@ -29,7 +29,7 @@ def test_field_brain_integration():
     # Test 1: Import test
     print("\n1️⃣ Testing imports...")
     try:
-        from src.brain import MinimalBrain
+        from server.src.brain_factory import MinimalBrain
         from src.communication.tcp_server import MinimalTCPServer
         print("✅ Core imports successful")
         test_results["imports"] = True

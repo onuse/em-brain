@@ -15,7 +15,7 @@ __version__ = "0.3.0"
 __author__ = "Robot Brain Project"
 
 # Core brain systems
-from .brain import MinimalBrain
+from .brain_factory import BrainFactory
 from .brains.minimal.core_brain import MinimalVectorStreamBrain
 from .brains.sparse_goldilocks.base_brain import GoldilocksBrain
 
@@ -26,7 +26,7 @@ from .parameters import EmergentParameterSystem, ConstraintType
 
 __all__ = [
     # Core brain systems
-    "MinimalBrain",
+    "BrainFactory",
     "MinimalVectorStreamBrain", 
     "GoldilocksBrain",
     

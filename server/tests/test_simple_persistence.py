@@ -12,7 +12,7 @@ import tempfile
 # Add project root to path  
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from src.brain import MinimalBrain
+from server.src.brain_factory import MinimalBrain
 
 
 def test_simple_persistence():

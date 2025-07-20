@@ -15,7 +15,7 @@ import time
 import threading
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from server.src.brain import MinimalBrain
+from server.src.brain_factory import MinimalBrain
 from server.src.brain_loop import DecoupledBrainLoop
 from server.src.communication.sensor_buffer import get_sensor_buffer
 

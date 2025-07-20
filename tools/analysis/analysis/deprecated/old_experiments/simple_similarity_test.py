@@ -9,7 +9,7 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from server.src.brain import MinimalBrain
+from server.src.brain_factory import MinimalBrain
 from server.src.similarity.engine import SimilarityEngine
 import numpy as np
 

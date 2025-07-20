@@ -8,7 +8,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.brain import MinimalBrain
+from server.src.brain_factory import MinimalBrain
 import time
 import random
 

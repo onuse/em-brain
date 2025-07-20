@@ -16,7 +16,7 @@ from typing import List, Dict, Any
 # Add project root to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.brain import MinimalBrain
+from server.src.brain_factory import MinimalBrain
 
 
 def simulate_robot_experiences(brain: MinimalBrain, experience_type: str, num_experiences: int = 10):

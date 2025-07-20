@@ -77,7 +77,7 @@ def test_with_brain():
     """Test how this affects the brain's prediction capability."""
     print("\n=== Testing Brain Impact ===")
     
-    from server.src.brain import MinimalBrain
+    from server.src.brain_factory import MinimalBrain
     
     # Create brain (uses learnable similarity by default)
     brain = MinimalBrain()

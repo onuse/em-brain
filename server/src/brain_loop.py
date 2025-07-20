@@ -12,7 +12,7 @@ import time
 import threading
 from typing import Dict, List, Optional, Any
 
-from .brain import MinimalBrain
+from .brain_factory import MinimalBrain
 from .communication.sensor_buffer import get_sensor_buffer
 
 

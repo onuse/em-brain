@@ -14,7 +14,7 @@ import tempfile
 # Add project root to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from server.src.brain import MinimalBrain
+from server.src.brain_factory import MinimalBrain
 from server.src.vector_stream.stream_types import StreamType, ConstraintType
 from server.src.vector_stream.adaptive_constraint_thresholds import create_adaptive_thresholds
 
