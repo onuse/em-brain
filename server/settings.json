@@ -4,7 +4,7 @@
     "sensory_dim": 16,
     "motor_dim": 4,
     "temporal_dim": 4,
-    "field_spatial_resolution": 20,
+    "field_spatial_resolution": 100,
     "field_temporal_window": 10.0,
     "field_evolution_rate": 0.1,
     "constraint_discovery_rate": 0.15,

@@ -52,65 +52,19 @@ def get_field_device(tensor_dims: int) -> torch.device:
 try:
     from .dynamics.constraint_field_dynamics import ConstraintField4D, FieldConstraint, FieldConstraintType
     from .dynamics.temporal_field_dynamics import TemporalExperience, TemporalImprint
+    from .field_types import (
+        FieldDynamicsFamily, FieldDimension, StreamCapabilities,
+        UnifiedFieldExperience, FieldNativeAction
+    )
+    from .adaptive_field_impl import create_adaptive_field_implementation, FieldImplementation
 except ImportError:
     from brains.field.dynamics.constraint_field_dynamics import ConstraintField4D, FieldConstraint, FieldConstraintType
     from brains.field.dynamics.temporal_field_dynamics import TemporalExperience, TemporalImprint
-
-
-class FieldDynamicsFamily(Enum):
-    """Families of field dynamics that organize dimensions."""
-    SPATIAL = "spatial"              # Position, orientation, scale
-    OSCILLATORY = "oscillatory"     # Frequencies, rhythms, periods
-    FLOW = "flow"                   # Gradients, momentum, direction
-    TOPOLOGY = "topology"           # Stable configurations, boundaries
-    ENERGY = "energy"               # Intensity, activation, depletion
-    COUPLING = "coupling"           # Relationships, correlations, binding
-    EMERGENCE = "emergence"         # Novelty, creativity, phase transitions
-
-
-@dataclass
-class FieldDimension:
-    """A single dimension in the unified field."""
-    name: str
-    family: FieldDynamicsFamily
-    index: int
-    min_value: float = -1.0
-    max_value: float = 1.0
-    default_value: float = 0.0
-    description: str = ""
-
-
-@dataclass
-class StreamCapabilities:
-    """Describes the capabilities of connected streams."""
-    input_dimensions: int
-    output_dimensions: int
-    input_labels: List[str] = field(default_factory=list)
-    output_labels: List[str] = field(default_factory=list)
-    input_ranges: List[Tuple[float, float]] = field(default_factory=list)
-    output_ranges: List[Tuple[float, float]] = field(default_factory=list)
-    update_frequency_hz: Optional[float] = None
-    latency_ms: Optional[float] = None
-
-
-@dataclass
-class UnifiedFieldExperience:
-    """A unified field experience - replaces all discrete pattern storage."""
-    timestamp: float
-    field_coordinates: torch.Tensor      # Position in 36D unified field
-    raw_input_stream: torch.Tensor       # Original input stream
-    field_intensity: float               # Overall field activation strength
-    dynamics_family_activations: Dict[FieldDynamicsFamily, float]
-
-
-@dataclass
-class FieldNativeAction:
-    """A field-native action - replaces discrete action generation."""
-    timestamp: float
-    output_stream: torch.Tensor          # Generic output stream
-    field_gradients: torch.Tensor        # Field gradients that generated action
-    confidence: float                    # Action confidence from field stability
-    dynamics_family_contributions: Dict[FieldDynamicsFamily, float]
+    from brains.field.field_types import (
+        FieldDynamicsFamily, FieldDimension, StreamCapabilities,
+        UnifiedFieldExperience, FieldNativeAction
+    )
+    from brains.field.adaptive_field_impl import create_adaptive_field_implementation, FieldImplementation
 
 
 class GenericFieldBrain:
@@ -144,15 +98,22 @@ class GenericFieldBrain:
         self.field_dimensions = self._initialize_field_dimensions()
         self.total_dimensions = len(self.field_dimensions)
         
-        # Create unified multi-dimensional field
-        # Dimensions: [spatial_x, spatial_y, spatial_z, scale, time, ...dynamics_families]
-        field_shape = [spatial_resolution] * 3 + [10] + [15] + [1] * (self.total_dimensions - 5)
+        # ADAPTIVE FIELD IMPLEMENTATION - let it select optimal device internally
+        # Don't pre-select device based on total dimensions since multi-tensor handles MPS limits
+        self.field_impl = create_adaptive_field_implementation(
+            self.field_dimensions, spatial_resolution, DEVICE, quiet_mode
+        )
         
-        # Core unified field - this replaces ALL discrete structures
-        # Use appropriate device (CPU fallback for MPS dimension limits)
-        field_device = get_field_device(len(field_shape))
-        self.unified_field = torch.zeros(field_shape, dtype=torch.float32, device=field_device)
-        self.field_device = field_device  # Store for other tensor operations
+        # Store the device the implementation actually uses
+        self.field_device = self.field_impl.field_device
+        
+        # Backward compatibility: provide unified_field property for legacy code
+        if hasattr(self.field_impl, 'unified_field'):
+            # Unified implementation - direct access
+            self._unified_field_ref = self.field_impl.unified_field
+        else:
+            # Multi-tensor implementation - create a compatibility wrapper
+            self._unified_field_ref = self._create_unified_field_wrapper()
         
         # Field dynamics systems
         self.constraint_field = ConstraintField4D(
@@ -198,10 +159,10 @@ class GenericFieldBrain:
             print(f"   Spatial resolution: {spatial_resolution}³")
             print(f"   Temporal window: {temporal_window}s")
             print(f"   Field families: {len(FieldDynamicsFamily)} dynamics types")
-            device_info = f"{field_device}"
-            if field_device.type != DEVICE.type:
+            device_info = f"{self.field_device}"
+            if self.field_device.type != DEVICE.type:
                 device_info += f" (fallback from {DEVICE} due to dimension limits)"
-            print(f"   Device: {device_info} ({'GPU' if field_device.type != 'cpu' else 'CPU'} acceleration)")
+            print(f"   Device: {device_info} ({'GPU' if self.field_device.type != 'cpu' else 'CPU'} acceleration)")
             self._print_dimension_summary()
     
     def _initialize_field_dimensions(self) -> List[FieldDimension]:
@@ -304,6 +265,29 @@ class GenericFieldBrain:
         
         return dimensions
     
+    @property
+    def unified_field(self):
+        """Backward compatibility property for legacy code."""
+        return self._unified_field_ref
+    
+    @unified_field.setter
+    def unified_field(self, value):
+        """Backward compatibility setter for legacy code."""
+        self._unified_field_ref = value
+    
+    def _create_unified_field_wrapper(self):
+        """Create a wrapper that simulates unified_field for multi-tensor implementation."""
+        # For multi-tensor implementation, create a smaller compatibility tensor
+        # Real field operations should use self.field_impl, this is just for legacy code
+        if self.field_device.type == 'mps':
+            # Create smaller tensor that fits MPS limits
+            field_shape = [self.spatial_resolution] * 3 + [2]  # Just spatial + minimal dims
+            return torch.zeros(field_shape, dtype=torch.float32, device=torch.device('cpu'))  # Use CPU for compatibility
+        else:
+            # Full tensor for non-MPS devices
+            field_shape = [self.spatial_resolution] * 3 + [10] + [15] + [1] * (self.total_dimensions - 5)
+            return torch.zeros(field_shape, dtype=torch.float32, device=self.field_device)
+    
     def _print_dimension_summary(self):
         """Print summary of field dimensions organized by family."""
         if self.quiet_mode:
@@ -341,7 +325,8 @@ class GenericFieldBrain:
         
         # Create input mapping: stream → field dimensions
         # Use a learnable linear transformation that adapts to any input size
-        mapping_device = get_field_device(max(capabilities.input_dimensions, self.total_dimensions))
+        # Use the same device as the field implementation for consistency
+        mapping_device = self.field_device
         self.input_mapping = torch.randn(capabilities.input_dimensions, self.total_dimensions, device=mapping_device) * 0.1
         
         # Create output mapping: field dimensions → stream
@@ -373,11 +358,11 @@ class GenericFieldBrain:
         # 1. Convert input stream to unified field experience
         field_experience = self._input_stream_to_field_experience(input_stream, timestamp)
         
-        # 2. Imprint experience into unified field
-        self._imprint_field_experience(field_experience)
+        # 2. Imprint experience into adaptive field implementation
+        self.field_impl.imprint_experience(field_experience)
         
-        # 3. Evolve unified field dynamics with predictive caching
-        self._evolve_unified_field(input_stream)
+        # 3. Evolve field dynamics using adaptive implementation
+        self.field_impl.evolve_field(self.field_evolution_rate, input_stream)
         
         # 4. Generate output stream from field gradients
         field_action = self._field_gradients_to_output_stream(timestamp)
@@ -1338,51 +1323,64 @@ class GenericFieldBrain:
     
     def _field_gradients_to_output_stream(self, timestamp: float) -> FieldNativeAction:
         """
-        Generate output stream from field gradients.
+        Generate output stream from field gradients using adaptive implementation.
         
         Uses learned mapping - no assumptions about what outputs represent.
         """
-        # Extract current field state as feature vector
-        field_features = torch.zeros(self.total_dimensions)
+        # Get field coordinates for output generation (using center position)
+        center_coords = torch.zeros(self.total_dimensions, device=self.field_device)
         
-        # Sample field state at center position
-        center = self.spatial_resolution // 2
-        try:
-            field_slice = self.unified_field[center, center, center, :, :]
-            field_activation = torch.mean(field_slice, dim=(0, 1))
-            
-            # Map to field dimensions
-            for i, dim in enumerate(self.field_dimensions):
-                if i < len(field_activation):
-                    field_features[i] = field_activation[i % len(field_activation)]
-        except:
-            pass  # Use zeros if sampling fails
+        # Generate output using adaptive field implementation
+        output_tensor = self.field_impl.generate_field_output(center_coords)
         
-        # Map field features to output stream using learned transformation
-        output_stream = torch.matmul(field_features, self.output_mapping)
+        # Map output tensor to negotiated output dimensions
+        if hasattr(self, 'output_mapping') and self.output_mapping is not None:
+            # Use learned mapping if available
+            output_stream = torch.matmul(output_tensor, self.output_mapping[:len(output_tensor), :])
+        else:
+            # Direct mapping if no learned transformation
+            output_stream = output_tensor
         
-        # Apply activation function for output range
-        output_stream = torch.tanh(output_stream)
+        # Ensure correct output dimensions
+        if self.stream_capabilities:
+            target_dims = self.stream_capabilities.output_dimensions
+            if len(output_stream) < target_dims:
+                # Pad with zeros
+                padding = torch.zeros(target_dims - len(output_stream), device=self.field_device)
+                output_stream = torch.cat([output_stream, padding])
+            elif len(output_stream) > target_dims:
+                # Truncate
+                output_stream = output_stream[:target_dims]
         
-        # Calculate dynamics family contributions
+        # Calculate dynamics family contributions from field implementation
+        field_gradients = self.field_impl.compute_field_gradients()
         family_contributions = {}
-        for family in FieldDynamicsFamily:
-            family_dims = [d for d in self.field_dimensions if d.family == family]
-            if family_dims:
-                start_idx = family_dims[0].index
-                end_idx = family_dims[-1].index + 1
-                contribution = torch.mean(torch.abs(field_features[start_idx:end_idx])).item()
-                family_contributions[family] = contribution
         
-        # Calculate confidence from field stability
-        confidence = min(1.0, torch.norm(field_features).item() / 10.0)
+        # Estimate family contributions from gradient flows
+        for family in FieldDynamicsFamily:
+            family_contribution = 0.0
+            family_count = 0
+            
+            # Look for gradients related to this family
+            for grad_name, grad_tensor in field_gradients.items():
+                if family.value.lower() in grad_name.lower() or 'core' in grad_name:
+                    family_contribution += torch.mean(torch.abs(grad_tensor)).item()
+                    family_count += 1
+            
+            if family_count > 0:
+                family_contributions[family] = family_contribution / family_count
+            else:
+                family_contributions[family] = 0.0
+        
+        # Calculate confidence from output magnitude
+        confidence = min(1.0, torch.norm(output_tensor).item())
         
         self.gradient_actions += 1
         
         return FieldNativeAction(
             timestamp=timestamp,
             output_stream=output_stream,
-            field_gradients=field_features,
+            field_gradients=output_tensor,
             confidence=confidence,
             dynamics_family_contributions=family_contributions
         )
@@ -1408,35 +1406,43 @@ class GenericFieldBrain:
             except:
                 return default
         
-        # Calculate field state metrics
-        field_magnitude = torch.abs(self.unified_field)
+        # Get field state metrics from adaptive implementation
+        field_stats = self.field_impl.get_field_statistics()
+        field_state = self.field_impl.get_field_state_summary()
         
-        # Get dynamics family activities
+        # Get dynamics family activities from field gradients
+        field_gradients = self.field_impl.compute_field_gradients()
         family_activities = {}
         for family in FieldDynamicsFamily:
-            family_dims = [d for d in self.field_dimensions if d.family == family]
-            if family_dims:
-                start_idx = family_dims[0].index
-                end_idx = family_dims[-1].index + 1
-                
-                # Sample field activity for this family
-                center = self.spatial_resolution // 2
-                try:
-                    activity = torch.mean(self.unified_field[center-1:center+2, center-1:center+2, center, :, :]).item()
-                    family_activities[family.value] = safe_tensor_value(torch.tensor(activity))
-                except:
-                    family_activities[family.value] = 0.0
+            family_activity = 0.0
+            family_count = 0
+            
+            # Calculate activity from gradients
+            for grad_name, grad_tensor in field_gradients.items():
+                if family.value.lower() in grad_name.lower() or 'core' in grad_name:
+                    family_activity += safe_tensor_mean(grad_tensor)
+                    family_count += 1
+            
+            if family_count > 0:
+                family_activities[family.value] = family_activity / family_count
+            else:
+                family_activities[family.value] = 0.0
         
         return {
             'brain_cycles': self.brain_cycles,
-            'field_evolution_cycles': self.field_evolution_cycles,
+            'field_evolution_cycles': field_stats.get('evolution_cycles', 0),
             'topology_discoveries': self.topology_discoveries,
             'gradient_actions': self.gradient_actions,
             
-            # Field state metrics
-            'field_total_energy': safe_tensor_value(torch.sum(field_magnitude)),
-            'field_max_activation': safe_tensor_value(torch.max(field_magnitude)),
-            'field_mean_activation': safe_tensor_value(torch.mean(field_magnitude)),
+            # Field state metrics from adaptive implementation
+            'field_total_energy': field_state.get('field_energy', 0.0),
+            'field_max_activation': field_stats.get('max_activation', 0.0),
+            'field_mean_activation': field_stats.get('mean_activation', 0.0),
+            'field_utilization': field_state.get('field_utilization', 0.0),
+            
+            # Implementation details
+            'implementation_type': field_stats.get('implementation_type', 'unknown'),
+            'memory_usage_mb': field_stats.get('memory_mb', 0.0),
             
             # Dynamics family activities
             'family_activities': family_activities,
@@ -1450,7 +1456,7 @@ class GenericFieldBrain:
             
             # Topology and gradient metrics
             'topology_regions': len(self.topology_regions),
-            'gradient_flows': len(self.gradient_flows),
+            'gradient_flows': len(field_gradients),
         }
     
     def get_field_memory_stats(self) -> Dict[str, Any]:
