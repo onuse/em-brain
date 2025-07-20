@@ -25,6 +25,17 @@ class FieldBrainConfig:
     sensory_dimensions: int = 16
     motor_dimensions: int = 4
     quiet_mode: bool = False
+    
+    # Performance mode settings
+    performance_mode: str = "balanced"
+    enable_enhanced_dynamics: bool = True
+    enable_attention_guidance: bool = True
+    enable_hierarchical_processing: bool = True
+    enable_attention_super_resolution: bool = False
+    attention_base_resolution: int = 50
+    attention_focus_resolution: int = 100
+    hierarchical_max_time_ms: float = 40.0
+    target_cycle_time_ms: float = 150.0
 
 
 class FieldBrainTCPAdapter:
@@ -48,6 +59,10 @@ class FieldBrainTCPAdapter:
             temporal_window=self.config.temporal_window,
             field_evolution_rate=self.config.field_evolution_rate,
             constraint_discovery_rate=self.config.constraint_discovery_rate,
+            enable_enhanced_dynamics=self.config.enable_enhanced_dynamics,
+            enable_attention_guidance=self.config.enable_attention_guidance,
+            enable_hierarchical_processing=self.config.enable_hierarchical_processing,
+            hierarchical_max_time_ms=self.config.hierarchical_max_time_ms,
             quiet_mode=self.config.quiet_mode
         )
         

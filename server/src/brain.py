@@ -121,6 +121,15 @@ class MinimalBrain:
                 temporal_window=brain_config.get('field_temporal_window', 10.0),
                 field_evolution_rate=brain_config.get('field_evolution_rate', 0.1),
                 constraint_discovery_rate=brain_config.get('constraint_discovery_rate', 0.15),
+                performance_mode=brain_config.get('performance_mode', 'balanced'),
+                enable_enhanced_dynamics=brain_config.get('enable_enhanced_dynamics', True),
+                enable_attention_guidance=brain_config.get('enable_attention_guidance', True),
+                enable_hierarchical_processing=brain_config.get('enable_hierarchical_processing', True),
+                enable_attention_super_resolution=brain_config.get('enable_attention_super_resolution', False),
+                attention_base_resolution=brain_config.get('attention_base_resolution', 50),
+                attention_focus_resolution=brain_config.get('attention_focus_resolution', 100),
+                hierarchical_max_time_ms=brain_config.get('hierarchical_max_time_ms', 40.0),
+                target_cycle_time_ms=brain_config.get('target_cycle_time_ms', 150.0),
                 quiet_mode=quiet_mode
             )
             
