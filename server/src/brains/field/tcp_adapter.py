@@ -80,6 +80,9 @@ class FieldBrainTCPAdapter(BrainMaintenanceInterface):
         self.total_predictions = 0
         self.brain_start_time = time.time()
         
+        # Field evolution tracking for proper event detection
+        self.last_field_evolution_cycles = 0
+        
         # Interface properties
         self.sensory_dim = self.config.sensory_dimensions
         self.motor_dim = self.config.motor_dimensions
@@ -171,8 +174,11 @@ class FieldBrainTCPAdapter(BrainMaintenanceInterface):
             self.logger.log_field_cycle(cycle_time_ms, sparse_regions, field_update_time)
             
             # Check for field evolution/consolidation events
-            if brain_state.get('field_evolved', False):
+            current_evolution_cycles = brain_state.get('field_evolution_cycles', 0)
+            field_evolved = current_evolution_cycles > self.last_field_evolution_cycles
+            if field_evolved:
                 self.logger.log_field_evolution()
+                self.last_field_evolution_cycles = current_evolution_cycles
             
             if brain_state.get('field_consolidated', False):
                 compression_ratio = brain_state.get('compression_ratio', 0.0)
@@ -190,6 +196,7 @@ class FieldBrainTCPAdapter(BrainMaintenanceInterface):
                 'field_activation': brain_state.get('field_mean_activation', 0.0),
                 'topology_regions': brain_state.get('topology_regions', 0),
                 'brain_cycles': brain_state.get('brain_cycles', 0),
+                'field_evolution_cycles': brain_state.get('field_evolution_cycles', 0),  # CRITICAL: Include evolution cycles
                 'processing_mode': 'field_native',
                 'dynamics_families': brain_state.get('family_activities', {}),
                 'stream_status': brain_state.get('stream_capabilities', {})

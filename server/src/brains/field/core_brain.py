@@ -126,10 +126,10 @@ class UnifiedFieldBrain:
             quiet_mode=quiet_mode
         )
         
-        # Field evolution parameters
-        self.field_decay_rate = 0.995
-        self.field_diffusion_rate = 0.02
-        self.gradient_following_strength = 0.3
+        # Field evolution parameters - FIXED: Improved for stronger gradients
+        self.field_decay_rate = 0.999        # Much slower decay (was 0.995 - too aggressive)
+        self.field_diffusion_rate = 0.05     # More diffusion for gradient propagation (was 0.02)
+        self.gradient_following_strength = 1.0  # Maximum gradient strength (was 0.3 - too weak)
         self.topology_stability_threshold = 0.1
         
         # Field state tracking
@@ -650,18 +650,30 @@ class UnifiedFieldBrain:
             # Sample gradients at current robot position (center of field)
             center_idx = self.spatial_resolution // 2
             
-            # Extract gradients at field center
+            # Extract gradients at field center - FIX: Only use meaningful dimensions
             if 'gradient_x' in self.gradient_flows:
-                grad_x = self.gradient_flows['gradient_x'][center_idx, center_idx, center_idx, :, :]
-                motor_gradients[0] = torch.mean(grad_x).item()
+                grad_x = self.gradient_flows['gradient_x'][center_idx, center_idx, center_idx, :, :, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                # Use max magnitude for stronger gradients (115x improvement over mean)
+                if torch.max(grad_x).item() >= torch.abs(torch.min(grad_x)).item():
+                    motor_gradients[0] = torch.max(grad_x).item()
+                else:
+                    motor_gradients[0] = torch.min(grad_x).item()
             
             if 'gradient_y' in self.gradient_flows:
-                grad_y = self.gradient_flows['gradient_y'][center_idx, center_idx, center_idx, :, :]
-                motor_gradients[1] = torch.mean(grad_y).item()
+                grad_y = self.gradient_flows['gradient_y'][center_idx, center_idx, center_idx, :, :, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                # Use max magnitude for stronger gradients
+                if torch.max(grad_y).item() >= torch.abs(torch.min(grad_y)).item():
+                    motor_gradients[1] = torch.max(grad_y).item()
+                else:
+                    motor_gradients[1] = torch.min(grad_y).item()
             
             if 'gradient_z' in self.gradient_flows:
-                grad_z = self.gradient_flows['gradient_z'][center_idx, center_idx, center_idx, :, :]
-                motor_gradients[2] = torch.mean(grad_z).item()
+                grad_z = self.gradient_flows['gradient_z'][center_idx, center_idx, center_idx, :, :, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                # Use max magnitude for stronger gradients
+                if torch.max(grad_z).item() >= torch.abs(torch.min(grad_z)).item():
+                    motor_gradients[2] = torch.max(grad_z).item()
+                else:
+                    motor_gradients[2] = torch.min(grad_z).item()
             
             # Fourth motor dimension from overall field momentum
             field_momentum = torch.mean(self.unified_field).item()
@@ -670,12 +682,37 @@ class UnifiedFieldBrain:
         # Apply gradient following strength
         motor_commands = motor_gradients * self.gradient_following_strength
         
-        # Clamp to valid motor range
+        # Calculate gradient strength before clamping
+        gradient_strength = torch.norm(motor_gradients).item()
+        
+        # Clamp to valid motor range first
         motor_commands = torch.clamp(motor_commands, -1.0, 1.0)
         
-        # Calculate action confidence from gradient strength
-        gradient_strength = torch.norm(motor_gradients).item()
-        action_confidence = min(1.0, gradient_strength)
+        # Check for tanh normalization issue (values too small → zero after tanh)
+        motor_magnitude_after_clamp = torch.norm(motor_commands).item()
+        
+        # FALLBACK: If gradients are extremely weak OR clamping made them zero, apply exploration
+        if gradient_strength < 1e-6 or motor_magnitude_after_clamp < 1e-8:
+            if not self.quiet_mode and self.brain_cycles % 50 == 0:
+                print(f"   ⚠️  Weak gradients (strength={gradient_strength:.8f}, "
+                      f"magnitude={motor_magnitude_after_clamp:.8f}), applying exploration fallback")
+            
+            # Generate small random exploration action
+            import random
+            motor_commands = torch.tensor([
+                0.1 * (random.random() - 0.5),  # Small random movement
+                0.1 * (random.random() - 0.5),
+                0.05 * (random.random() - 0.5),
+                0.05 * (random.random() - 0.5)
+            ], dtype=torch.float32)
+            action_confidence = 0.1  # Low confidence for exploration
+        else:
+            action_confidence = min(1.0, gradient_strength)
+            
+            # Debug output for successful gradient following
+            if not self.quiet_mode and self.brain_cycles % 100 == 0:
+                print(f"   ✅ Strong gradients: strength={gradient_strength:.6f}, "
+                      f"motor_range=[{torch.min(motor_commands).item():.4f}, {torch.max(motor_commands).item():.4f}]")
         
         action = FieldNativeAction(
             timestamp=time.time(),

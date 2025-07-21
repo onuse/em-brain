@@ -151,11 +151,11 @@ class EnhancedFieldDynamics:
         recent_energy = self.phase_energy_history[-5:]
         
         # Protected variance calculation to prevent NaN and MPS float64 issues
-        energy_tensor = torch.tensor(recent_energy, dtype=torch.float32)
+        energy_tensor = torch.tensor(recent_energy, dtype=torch.float32, device='cpu')
         if len(energy_tensor) <= 1:
             energy_variance = 0.0
         else:
-            variance_result = torch.var(energy_tensor.float())
+            variance_result = torch.var(energy_tensor)
             energy_variance = 0.0 if torch.isnan(variance_result) or torch.isinf(variance_result) else variance_result.item()
         
         energy_trend = recent_energy[-1] - recent_energy[0]

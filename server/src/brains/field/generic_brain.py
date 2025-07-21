@@ -272,6 +272,9 @@ class GenericFieldBrain(BrainMaintenanceInterface):
         self.topology_discoveries = 0
         self.gradient_actions = 0
         
+        # Prediction accuracy history for confidence calculation
+        self.prediction_accuracy_history: List[float] = []
+        
         # Initialize field approximation tables (biological optimization lookup tables)
         self.field_approximation_tables = {}
         
@@ -1122,9 +1125,21 @@ class GenericFieldBrain(BrainMaintenanceInterface):
     def _calculate_field_stability(self) -> float:
         """Calculate current field stability for prediction confidence."""
         try:
-            # Calculate field gradient magnitude as stability indicator
-            field_mean = torch.mean(torch.abs(self.unified_field))
-            field_std = torch.std(self.unified_field.float())
+            # Check if we're using unified field or multi-tensor implementation
+            if hasattr(self, 'unified_field'):
+                # Unified field implementation
+                field_mean = torch.mean(torch.abs(self.unified_field))
+                field_std = torch.std(self.unified_field.float())
+            elif hasattr(self.field_impl, 'field_tensors'):
+                # Multi-tensor implementation - calculate stability across all tensors
+                all_values = torch.cat([tensor.flatten() for tensor in self.field_impl.field_tensors.values()])
+                field_mean = torch.mean(torch.abs(all_values))
+                field_std = torch.std(all_values.float())
+            else:
+                # Fallback - use field statistics from implementation
+                field_stats = self.field_impl.get_field_statistics()
+                field_mean = field_stats.get('mean_activation', 0.0)
+                field_std = field_mean * 0.5  # Rough estimate
             
             # More stable field = lower standard deviation relative to mean
             if field_mean > 0.001:
@@ -1134,7 +1149,9 @@ class GenericFieldBrain(BrainMaintenanceInterface):
             
             return float(stability)
             
-        except Exception:
+        except Exception as e:
+            # Enhanced error logging for debugging
+            print(f"⚠️ Field stability calculation failed: {e}")
             return 0.5
     
     def _generate_anticipated_action(self, predicted_field_state: torch.Tensor) -> List[float]:
@@ -1243,6 +1260,9 @@ class GenericFieldBrain(BrainMaintenanceInterface):
                 # Keep history manageable
                 if len(self.prediction_accuracy_history) > 20:
                     self.prediction_accuracy_history = self.prediction_accuracy_history[-20:]
+                
+                # CRITICAL: Use prediction accuracy to modulate field evolution rate
+                self._update_prediction_driven_learning_rate(avg_accuracy)
             
         except Exception:
             pass  # Graceful failure for validation
@@ -1268,6 +1288,42 @@ class GenericFieldBrain(BrainMaintenanceInterface):
             
         except Exception:
             return 0.0
+    
+    def _update_prediction_driven_learning_rate(self, current_accuracy: float):
+        """
+        Update field evolution rate based on prediction accuracy.
+        
+        INTELLIGENCE PRINCIPLE: Poor predictions → increase learning/exploration
+                               Good predictions → maintain stable patterns
+        """
+        if not hasattr(self, 'base_field_evolution_rate'):
+            self.base_field_evolution_rate = self.field_evolution_rate
+        
+        if len(self.prediction_accuracy_history) >= 3:
+            # Calculate recent prediction performance
+            recent_accuracy = sum(self.prediction_accuracy_history[-3:]) / 3
+            
+            # Learning rate adaptation based on prediction success
+            if recent_accuracy < 0.4:  # Poor predictions
+                # Increase exploration and learning
+                adaptive_rate = self.base_field_evolution_rate * 2.0
+                if not self.quiet_mode:
+                    print(f"🔍 Low prediction accuracy ({recent_accuracy:.3f}) → Increasing exploration")
+            elif recent_accuracy > 0.7:  # Good predictions
+                # Maintain stability, reduce unnecessary changes
+                adaptive_rate = self.base_field_evolution_rate * 0.7
+                if not self.quiet_mode:
+                    print(f"🎯 High prediction accuracy ({recent_accuracy:.3f}) → Stabilizing patterns")
+            else:  # Moderate predictions
+                # Balanced learning rate
+                adaptive_rate = self.base_field_evolution_rate * 1.2
+            
+            # Update field evolution rate
+            self.field_evolution_rate = min(adaptive_rate, 0.5)  # Cap maximum exploration
+            
+            # Also update field implementation if it has evolution rate
+            if hasattr(self.field_impl, 'field_evolution_rate'):
+                self.field_impl.field_evolution_rate = self.field_evolution_rate
     
     def _initialize_approximation_tables(self):
         """Initialize field approximation lookup tables for fast computation.
@@ -1549,8 +1605,14 @@ class GenericFieldBrain(BrainMaintenanceInterface):
         output_tensor = self.field_impl.generate_field_output(center_coords)
         
         # Map output tensor to negotiated output dimensions
-        if hasattr(self, 'output_mapping') and self.output_mapping is not None:
-            # Use learned mapping if available
+        target_dims = self.stream_capabilities.output_dimensions if self.stream_capabilities else 4
+        
+        if len(output_tensor) == target_dims:
+            # OPTIMIZATION: Raw output already has correct dimensions - use directly
+            # This preserves the full strength of amplified gradients
+            output_stream = output_tensor
+        elif hasattr(self, 'output_mapping') and self.output_mapping is not None:
+            # Use learned mapping only when dimensions don't match
             output_stream = torch.matmul(output_tensor, self.output_mapping[:len(output_tensor), :])
         else:
             # Direct mapping if no learned transformation
@@ -1739,8 +1801,9 @@ class GenericFieldBrain(BrainMaintenanceInterface):
             final_confidence = min(1.0, max(0.001, base_confidence + experience_boost))
             return final_confidence
             
-        except Exception:
+        except Exception as e:
             # Fallback to minimal confidence if calculation fails
+            print(f"⚠️ Field confidence calculation failed: {e}")
             return 0.001
     
     def get_field_memory_stats(self) -> Dict[str, Any]:
@@ -1764,7 +1827,7 @@ class GenericFieldBrain(BrainMaintenanceInterface):
             'mean_activation': torch.mean(field_magnitude).item(),
             'topology_regions': len(self.topology_regions),
             'brain_cycles': self.brain_cycles,
-            'field_evolution_cycles': self.field_evolution_cycles,
+            'field_evolution_cycles': self.field_impl.field_evolution_cycles,
         }
     
     # Include the persistence methods from the original field brain
@@ -1797,7 +1860,7 @@ class GenericFieldBrain(BrainMaintenanceInterface):
                 },
                 'field_statistics': {
                     'brain_cycles': self.brain_cycles,
-                    'field_evolution_cycles': self.field_evolution_cycles,
+                    'field_evolution_cycles': self.field_impl.field_evolution_cycles,
                     'topology_discoveries': self.topology_discoveries,
                     'gradient_actions': self.gradient_actions,
                 },

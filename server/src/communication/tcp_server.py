@@ -318,6 +318,13 @@ class MinimalTCPServer:
                 sensory_vector, action_dimensions=4  # Standard 4D action space
             )
             
+            # CRITICAL: Run maintenance operations for field brain health
+            if hasattr(self.brain, 'run_recommended_maintenance'):
+                maintenance_performed = self.brain.run_recommended_maintenance()
+                if any(maintenance_performed.values()):
+                    # Note: Maintenance messages are already printed by the scheduler
+                    pass
+            
             # Store current experience data for next cycle
             self.client_experiences[client_id] = {
                 'sensory_input': sensory_vector.copy(),

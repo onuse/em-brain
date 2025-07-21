@@ -351,25 +351,33 @@ class UnifiedFieldImplementation(FieldImplementation):
     
     def generate_field_output(self, field_coordinates: torch.Tensor) -> torch.Tensor:
         """Generate output stream from unified field state."""
-        # Use gradient flows to generate output
+        # Use gradient flows to generate output with proper magnitude extraction
         if self.gradient_flows:
             # Extract dominant gradients for output
             grad_x = self.gradient_flows.get('spatial_x', torch.zeros(1, device=self.field_device))
             grad_y = self.gradient_flows.get('spatial_y', torch.zeros(1, device=self.field_device))
             grad_z = self.gradient_flows.get('spatial_z', torch.zeros(1, device=self.field_device))
             
+            # Fix: Use max magnitude instead of mean to preserve gradient strength
+            grad_x_mag = torch.max(torch.abs(grad_x)) * torch.sign(torch.sum(grad_x))
+            grad_y_mag = torch.max(torch.abs(grad_y)) * torch.sign(torch.sum(grad_y))
+            grad_z_mag = torch.max(torch.abs(grad_z)) * torch.sign(torch.sum(grad_z))
+            
             # Compute output as dominant gradient direction
             output_tensor = torch.stack([
-                torch.mean(grad_x),
-                torch.mean(grad_y), 
-                torch.mean(grad_z),
-                torch.norm(torch.stack([torch.mean(grad_x), torch.mean(grad_y), torch.mean(grad_z)]))
+                grad_x_mag,
+                grad_y_mag, 
+                grad_z_mag,
+                torch.norm(torch.stack([grad_x_mag, grad_y_mag, grad_z_mag]))
             ])
             
             return torch.tanh(output_tensor)  # Normalize to [-1, 1]
         else:
-            # Fallback output
-            return torch.zeros(4, device=self.field_device)
+            # Exploration-driven fallback: Generate weak random actions instead of zeros
+            # This prevents the brain from learning complete stillness
+            exploration_strength = 0.1  # Small but non-zero exploration
+            random_output = torch.randn(4, device=self.field_device) * exploration_strength
+            return torch.tanh(random_output)  # Normalize to [-1, 1]
     
     def get_field_statistics(self) -> Dict[str, Any]:
         """Get comprehensive unified field statistics."""
@@ -393,7 +401,7 @@ class UnifiedFieldImplementation(FieldImplementation):
                 max_activation = min(max_activation, 100.0) if not (np.isinf(max_activation) or np.isnan(max_activation)) else 1.0
                 mean_activation = min(mean_activation, 10.0) if not (np.isinf(mean_activation) or np.isnan(mean_activation)) else 0.1
         
-        return {
+        stats = {
             'implementation_type': 'unified',
             'field_shape': list(self.unified_field.shape),
             'total_elements': self.unified_field.numel(),
@@ -405,6 +413,12 @@ class UnifiedFieldImplementation(FieldImplementation):
             'gradient_flows_count': len(self.gradient_flows),
             'memory_mb': (self.unified_field.numel() * 4) / (1024 * 1024)
         }
+        
+        # DEBUG: Check evolution cycles reporting
+        if self.field_evolution_cycles > 0:
+            print(f"🔄 Field stats reporting evolution_cycles: {self.field_evolution_cycles}")
+        
+        return stats
     
     def get_field_state_summary(self) -> Dict[str, Any]:
         """Get current unified field state summary."""
@@ -622,31 +636,16 @@ class MultiTensorFieldImplementation(FieldImplementation):
         
         self.field_evolution_cycles += 1
         
-        # PERFORMANCE OPTIMIZATION: Skip evolution every few cycles during stable periods
-        if not hasattr(self, '_evolution_skip_counter'):
-            self._evolution_skip_counter = 0
-        
-        # Check field activity level to determine if we can skip
-        field_activity = sum(torch.sum(torch.abs(tensor)).item() for tensor in self.field_tensors.values())
-        
-        # FIXED: Only skip if field has significant activity AND has been running for a while
-        # This prevents skipping during initial field development
-        if field_activity > 50.0 and self.field_evolution_cycles > 100 and self._evolution_skip_counter % 5 == 0:
-            self._evolution_skip_counter += 1
-            return  # Skip this evolution cycle only when field is well-established
-        
-        self._evolution_skip_counter += 1
+        # Field evolution should run every cycle for proper learning
+        # Previous "optimization" was skipping evolution and preventing learning
         
         # CRITICAL FIX: Inject input stream into field if provided
         if current_input_stream is not None:
             self._inject_input_stream(current_input_stream, dt)
         
-        # Phase 1: Individual field evolution (optimized - process fewer tensors when stable)
+        # Phase 1: Individual field evolution (process all tensors for proper learning)
         active_tensors = list(self.field_tensors.items())
-        # FIXED: Only limit tensors if field is well-established and has high activity
-        if field_activity > 100.0 and self.field_evolution_cycles > 200:
-            # When field is mature and very active, focus on core tensors for efficiency
-            active_tensors = active_tensors[:4]  # Process more tensors, not fewer
+        # Always process all tensors to ensure proper learning and field evolution
         
         # ENERGY DEBUG: Track energy before individual tensor evolution
         pre_individual_energy = sum(torch.sum(tensor).item() for tensor in self.field_tensors.values())
@@ -676,8 +675,9 @@ class MultiTensorFieldImplementation(FieldImplementation):
             self._gradient_update_counter = 0
         self._gradient_update_counter += 1
         
-        # Only update gradients every 5th cycle instead of every 2nd (less critical for main loop)
-        if self._gradient_update_counter % 5 == 0:
+        # CRITICAL FIX: Ensure gradients are calculated early for action generation
+        # Always update gradients in first 10 cycles, then every 3rd cycle for performance
+        if self._gradient_update_counter <= 10 or self._gradient_update_counter % 3 == 0:
             self._update_multi_tensor_gradients()
         
         post_gradient_energy = sum(torch.sum(tensor).item() for tensor in self.field_tensors.values())
@@ -894,9 +894,10 @@ class MultiTensorFieldImplementation(FieldImplementation):
             self._gradient_cycle = 0
         self._gradient_cycle += 1
         
-        # Update gradients every 2nd cycle to reduce computational load
-        if self._gradient_cycle % 2 != 0:
-            return  # Keep previous gradients
+        # CRITICAL FIX: Always update gradients in early cycles for action generation
+        # Only skip gradient updates after the first 10 cycles and only every other cycle
+        if self._gradient_cycle > 10 and self._gradient_cycle % 2 != 0:
+            return  # Keep previous gradients after initial period
         
         self.gradient_flows = {}
         
@@ -928,11 +929,18 @@ class MultiTensorFieldImplementation(FieldImplementation):
         # Combine gradients from all field tensors
         output_components = []
         
-        # Use core field gradients as primary output
+        # Use core field gradients as primary output with proper magnitude extraction
         if 'core_grad_x' in self.gradient_flows:
-            core_grad_x = torch.mean(self.gradient_flows['core_grad_x'])
-            core_grad_y = torch.mean(self.gradient_flows['core_grad_y'])
-            core_grad_z = torch.mean(self.gradient_flows['core_grad_z'])
+            # Fix: Use max magnitude instead of mean to preserve gradient strength
+            core_grad_x = torch.max(torch.abs(self.gradient_flows['core_grad_x'])) * torch.sign(torch.sum(self.gradient_flows['core_grad_x']))
+            core_grad_y = torch.max(torch.abs(self.gradient_flows['core_grad_y'])) * torch.sign(torch.sum(self.gradient_flows['core_grad_y']))
+            core_grad_z = torch.max(torch.abs(self.gradient_flows['core_grad_z'])) * torch.sign(torch.sum(self.gradient_flows['core_grad_z']))
+            
+            # AMPLIFICATION: Scale up gradients for meaningful action generation
+            gradient_amplification = 100.0  # Scale tiny gradients to actionable range
+            core_grad_x *= gradient_amplification
+            core_grad_y *= gradient_amplification  
+            core_grad_z *= gradient_amplification
             
             output_components.extend([core_grad_x, core_grad_y, core_grad_z])
         
@@ -947,6 +955,8 @@ class MultiTensorFieldImplementation(FieldImplementation):
         
         if dynamics_count > 0:
             dynamics_influence /= dynamics_count
+            # AMPLIFICATION: Scale dynamics influence to match core gradients
+            dynamics_influence *= gradient_amplification
             output_components.append(dynamics_influence)
         else:
             output_components.append(torch.tensor(0.0, device=self.field_device))
@@ -956,7 +966,11 @@ class MultiTensorFieldImplementation(FieldImplementation):
             output_tensor = torch.stack(output_components)
             return torch.tanh(output_tensor)  # Normalize to [-1, 1]
         else:
-            return torch.zeros(4, device=self.field_device)
+            # Exploration-driven fallback: Generate weak random actions instead of zeros
+            # This prevents the brain from learning complete stillness
+            exploration_strength = 0.1  # Small but non-zero exploration
+            random_output = torch.randn(4, device=self.field_device) * exploration_strength
+            return torch.tanh(random_output)  # Normalize to [-1, 1]
     
     def get_field_statistics(self) -> Dict[str, Any]:
         """Get comprehensive multi-tensor field statistics."""
