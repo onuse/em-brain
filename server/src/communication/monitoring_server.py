@@ -121,7 +121,7 @@ class BrainMonitoringServer:
         print(f"📋 Monitoring client {client_id} registered from {client_address}")
         
         try:
-            client_socket.settimeout(60.0)  # 1 minute timeout
+            client_socket.settimeout(1800.0)  # 30 minute timeout for long experiments
             
             # Main client communication loop
             while self.running:

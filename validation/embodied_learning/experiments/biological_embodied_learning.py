@@ -433,12 +433,20 @@ class BiologicalEmbodiedLearningExperiment:
             # Sleep for 30 seconds
             time.sleep(30)
             
-            # Send keepalive ping via robot socket
+            # Send keepalive pings to both sockets
             if (time.time() - start_time) < duration_seconds:
                 try:
+                    # Robot socket keepalive
                     self.robot_client.get_action([0.0, 0.0, 0.0, 0.0], timeout=5.0)
                 except Exception:
-                    pass  # Ignore keepalive failures
+                    pass  # Ignore robot keepalive failures
+                
+                try:
+                    # Monitoring socket keepalive
+                    if self.monitoring_client:
+                        self.monitoring_client.ping()
+                except Exception:
+                    pass  # Ignore monitoring keepalive failures
     
     def _run_transfer_test(self) -> Dict:
         """Test transfer learning to new environment."""

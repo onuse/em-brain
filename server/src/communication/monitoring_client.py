@@ -62,25 +62,34 @@ class BrainMonitoringClient:
     
     def get_brain_stats(self) -> Optional[Dict[str, Any]]:
         """Get comprehensive brain statistics."""
-        return self._make_request("brain_stats")
+        return self._send_request("brain_stats")
     
     def get_brain_state(self) -> Optional[Dict[str, Any]]:
         """Get current brain state (for validation)."""
-        return self._make_request("brain_state")
+        return self._send_request("brain_state")
     
     def get_prediction_metrics(self) -> Optional[Dict[str, Any]]:
         """Get prediction-driven learning metrics."""
-        return self._make_request("prediction_metrics")
+        return self._send_request("prediction_metrics")
+    
+    def ping(self) -> bool:
+        """
+        Send keepalive ping to server.
+        
+        Returns:
+            True if server responded, False if disconnected
+        """
+        response = self._send_request("ping")
+        if response is None:
+            return False
+        return response.get('status') == 'pong'
     
     def get_server_status(self) -> Optional[Dict[str, Any]]:
         """Get monitoring server status."""
-        return self._make_request("server_status")
+        return self._send_request("server_status")
     
-    def ping(self) -> Optional[Dict[str, Any]]:
-        """Ping the monitoring server."""
-        return self._make_request("ping")
     
-    def _make_request(self, request: str) -> Optional[Dict[str, Any]]:
+    def _send_request(self, request: str) -> Optional[Dict[str, Any]]:
         """
         Make a monitoring request to the server.
         
@@ -98,27 +107,48 @@ class BrainMonitoringClient:
             # Send request
             self.socket.send((request + "\n").encode('utf-8'))
             
-            # Receive JSON response
+            # Receive JSON response with timeout
             response_data = b""
+            timeout_start = time.time()
+            timeout_seconds = 10.0  # 10 second timeout for monitoring requests
+            
             while True:
-                chunk = self.socket.recv(4096)
-                if not chunk:
-                    break
-                response_data += chunk
+                # Check for timeout
+                if time.time() - timeout_start > timeout_seconds:
+                    print(f"⚠️  Monitoring request timeout ({timeout_seconds}s)")
+                    self._cleanup_connection()
+                    return None
                 
-                # Check if we have a complete JSON response
                 try:
-                    response_str = response_data.decode('utf-8')
-                    response = json.loads(response_str)
+                    # Set short timeout for recv to allow periodic timeout checks
+                    self.socket.settimeout(1.0)
+                    chunk = self.socket.recv(4096)
                     
-                    if response.get('status') == 'success':
-                        return response.get('data')
-                    else:
-                        print(f"⚠️  Monitoring server error: {response.get('error', 'Unknown error')}")
+                    if not chunk:
+                        print("⚠️  Monitoring server disconnected (empty response)")
+                        self._cleanup_connection()
                         return None
                         
-                except (json.JSONDecodeError, UnicodeDecodeError):
-                    # Need more data
+                    response_data += chunk
+                    
+                    # Check if we have a complete JSON response
+                    try:
+                        response_str = response_data.decode('utf-8')
+                        # Try to parse JSON - if it fails, we need more data
+                        response = json.loads(response_str)
+                        
+                        if response.get('status') == 'success':
+                            return response.get('data')
+                        else:
+                            print(f"⚠️  Monitoring server error: {response.get('error', 'Unknown error')}")
+                            return None
+                            
+                    except (json.JSONDecodeError, UnicodeDecodeError):
+                        # Need more data - continue receiving
+                        continue
+                        
+                except socket.timeout:
+                    # Normal timeout - continue and check overall timeout
                     continue
                 
         except Exception as e:
