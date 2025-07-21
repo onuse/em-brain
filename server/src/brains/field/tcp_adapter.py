@@ -8,6 +8,7 @@ the established communication protocol without changing the server.
 """
 
 import time
+import numpy as np
 from typing import List, Tuple, Dict, Any
 from dataclasses import dataclass
 
@@ -23,7 +24,7 @@ class FieldBrainConfig:
     temporal_window: float = 10.0
     field_evolution_rate: float = 0.1
     constraint_discovery_rate: float = 0.15
-    sensory_dimensions: int = 16
+    sensory_dimensions: int = 16  # Will auto-adapt to actual client input size
     motor_dimensions: int = 4
     quiet_mode: bool = False
     
@@ -57,6 +58,21 @@ class FieldBrainTCPAdapter(BrainMaintenanceInterface):
         # Initialize field-specific logger
         self.logger = FieldBrainLogger(quiet_mode=self.config.quiet_mode)
         
+        # Interface properties (set before negotiation)
+        self.sensory_dim = self.config.sensory_dimensions
+        self.motor_dim = self.config.motor_dimensions
+        self.client_sensory_dim = None  # Will be detected from first input
+        self.dimension_adaptation_complete = False
+        
+        # Tracking for MinimalBrain compatibility
+        self.total_cycles = 0
+        self.total_experiences = 0
+        self.total_predictions = 0
+        self.brain_start_time = time.time()
+        
+        # Field evolution tracking for proper event detection
+        self.last_field_evolution_cycles = 0
+        
         # Create generic field brain
         self.field_brain = GenericFieldBrain(
             spatial_resolution=self.config.spatial_resolution,
@@ -74,19 +90,6 @@ class FieldBrainTCPAdapter(BrainMaintenanceInterface):
         # Negotiate stream capabilities automatically
         self._negotiate_capabilities()
         
-        # Tracking for MinimalBrain compatibility
-        self.total_cycles = 0
-        self.total_experiences = 0
-        self.total_predictions = 0
-        self.brain_start_time = time.time()
-        
-        # Field evolution tracking for proper event detection
-        self.last_field_evolution_cycles = 0
-        
-        # Interface properties
-        self.sensory_dim = self.config.sensory_dimensions
-        self.motor_dim = self.config.motor_dimensions
-        
         # Log field brain initialization
         config_dict = {
             'spatial_resolution': self.config.spatial_resolution,
@@ -101,12 +104,15 @@ class FieldBrainTCPAdapter(BrainMaintenanceInterface):
     
     def _negotiate_capabilities(self):
         """Set up stream capabilities for the field brain."""
+        # Use current sensory dimensions (which may have been auto-detected)
+        current_sensory_dim = self.sensory_dim
+        
         capabilities = StreamCapabilities(
-            input_dimensions=self.config.sensory_dimensions,
+            input_dimensions=current_sensory_dim,
             output_dimensions=self.config.motor_dimensions,
-            input_labels=[f"sensor_{i}" for i in range(self.config.sensory_dimensions)],
+            input_labels=[f"sensor_{i}" for i in range(current_sensory_dim)],
             output_labels=[f"action_{i}" for i in range(self.config.motor_dimensions)],
-            input_ranges=[(-1.0, 1.0)] * self.config.sensory_dimensions,
+            input_ranges=[(-1.0, 1.0)] * current_sensory_dim,
             output_ranges=[(-1.0, 1.0)] * self.config.motor_dimensions,
             update_frequency_hz=20.0,  # Typical robot update rate
             latency_ms=50.0            # Expected network latency
@@ -123,13 +129,94 @@ class FieldBrainTCPAdapter(BrainMaintenanceInterface):
         
         This is the main interface that the TCP server expects.
         """
-        # Validate input
-        if len(sensory_input) != self.sensory_dim:
-            # Pad or truncate to expected dimensions
-            if len(sensory_input) < self.sensory_dim:
-                sensory_input = sensory_input + [0.0] * (self.sensory_dim - len(sensory_input))
+        # Auto-detect client sensory dimensions and adapt
+        original_input_size = len(sensory_input)
+        
+        if not self.dimension_adaptation_complete and original_input_size > 0:
+            if self.client_sensory_dim is None:
+                self.client_sensory_dim = original_input_size
+                print(f"🔧 TCP Adapter auto-detected client input: {self.client_sensory_dim}D")
+                
+                # Adapt field brain to client dimensions if significantly different
+                if self.client_sensory_dim != self.sensory_dim:
+                    print(f"   Adapting from default {self.sensory_dim}D to client {self.client_sensory_dim}D")
+                    
+                    # Update internal dimensions
+                    self.sensory_dim = min(32, self.client_sensory_dim)  # Cap at reasonable limit
+                    
+                    # Re-negotiate capabilities with actual dimensions
+                    self._negotiate_capabilities()
+                    
+                    # CRITICAL: Also update the field brain's stream capabilities directly
+                    if hasattr(self.field_brain, 'field_impl') and self.field_brain.field_impl:
+                        # Update the unified field dimensions to match client input
+                        self.field_brain.field_impl.input_dimensions = self.sensory_dim
+                        print(f"   📡 Updated field brain input dimensions to {self.sensory_dim}D")
+                    
+                    self.dimension_adaptation_complete = True
+                    print(f"   ✅ Dimension adaptation complete: {self.sensory_dim}D sensors")
+        
+        # CRITICAL: Debug input patterns to understand field energy variance issue
+        input_diversity_metrics = {
+            'input_size': original_input_size,
+            'input_range': [min(sensory_input), max(sensory_input)] if sensory_input else [0.0, 0.0],
+            'input_variance': float(np.var(sensory_input)) if sensory_input else 0.0,
+            'input_mean': float(np.mean(sensory_input)) if sensory_input else 0.0,
+            'input_std': float(np.std(sensory_input)) if sensory_input else 0.0
+        }
+        
+        # Log input patterns for first few cycles or when variance is suspiciously low
+        if (self.total_cycles < 10 or 
+            (self.total_cycles % 100 == 0 and input_diversity_metrics['input_variance'] < 0.001)):
+            
+            print(f"🔍 TCP Input Debug (cycle {self.total_cycles}):")
+            print(f"   Original input: {original_input_size}D")
+            print(f"   Input range: {input_diversity_metrics['input_range'][0]:.6f} to {input_diversity_metrics['input_range'][1]:.6f}")
+            print(f"   Input variance: {input_diversity_metrics['input_variance']:.9f}")
+            print(f"   Input mean: {input_diversity_metrics['input_mean']:.6f}")
+            print(f"   Input std: {input_diversity_metrics['input_std']:.6f}")
+            
+            if original_input_size >= 20:
+                print(f"   First 16D: {[f'{x:.3f}' for x in sensory_input[:16]]}")
+                print(f"   Remaining {original_input_size-16}D: {[f'{x:.3f}' for x in sensory_input[16:]]}")
             else:
-                sensory_input = sensory_input[:self.sensory_dim]
+                print(f"   Full input: {[f'{x:.3f}' for x in sensory_input]}")
+        
+        # Validate input dimensions
+        if len(sensory_input) != self.sensory_dim:
+            # CRITICAL: 23D->16D truncation may remove dynamic parts!
+            if len(sensory_input) > self.sensory_dim:
+                # Instead of simple truncation, use a mixing strategy that preserves variation
+                original_sensory_input = sensory_input.copy()
+                
+                # Strategy 1: Take first 12D + mix last dimensions into remaining 4D 
+                base_input = sensory_input[:12]  # Position, orientation, battery, distance sensors
+                
+                # Mix remaining dimensions to preserve variation
+                remaining_dims = sensory_input[12:]
+                if len(remaining_dims) > 4:
+                    # Group remaining dimensions and average them into 4 slots
+                    mixed_dims = []
+                    dims_per_slot = len(remaining_dims) // 4
+                    for i in range(4):
+                        start_idx = i * dims_per_slot
+                        end_idx = start_idx + dims_per_slot if i < 3 else len(remaining_dims)
+                        slot_value = np.mean(remaining_dims[start_idx:end_idx])
+                        mixed_dims.append(float(slot_value))
+                    
+                    sensory_input = base_input + mixed_dims
+                    
+                    if not self.config.quiet_mode and self.total_cycles < 5:
+                        print(f"🔀 Mixed {original_input_size}D -> {len(sensory_input)}D:")
+                        print(f"   Original: {[f'{x:.3f}' for x in original_sensory_input[:8]]}...")
+                        print(f"   Mixed: {[f'{x:.3f}' for x in sensory_input[:8]]}...")
+                        print(f"   Preserved variation: original_var={np.var(original_sensory_input):.6f}, mixed_var={np.var(sensory_input):.6f}")
+                else:
+                    # Simple truncation for smaller oversize
+                    sensory_input = sensory_input[:self.sensory_dim]
+            else:
+                # Pad with zeros
+                sensory_input = sensory_input + [0.0] * (self.sensory_dim - len(sensory_input))
         
         # Validate action dimensions
         if action_dimensions != self.motor_dim:

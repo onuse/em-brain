@@ -145,10 +145,17 @@ class FieldBrainLogger:
         
         # Learning progress indicators
         if energy_variance is not None:
-            print(f"   Field energy: {self._get_latest_energy():.3f} ±{energy_variance:.3f} (variance)")
+            # Use adaptive precision to show meaningful variance digits
+            if energy_variance < 0.000001:
+                variance_str = f"{energy_variance:.9f}"
+            elif energy_variance < 0.001:
+                variance_str = f"{energy_variance:.6f}"
+            else:
+                variance_str = f"{energy_variance:.3f}"
+            print(f"   Field energy: {self._get_latest_energy():.3f} ±{variance_str} (variance)")
         if energy_trend is not None:
             trend_arrow = "↗" if energy_trend > 0.01 else "↘" if energy_trend < -0.01 else "→"
-            print(f"   Energy trend: {trend_arrow} {energy_trend:+.3f} (learning={energy_trend > 0})")
+            print(f"   Energy trend: {trend_arrow} {energy_trend:+.3f} (learning={energy_trend > -0.001})")
         if coords_diversity is not None:
             print(f"   Exploration: {coords_diversity:.3f} (diversity in field space)")
         
@@ -187,6 +194,10 @@ class FieldBrainLogger:
             recent_energies = self.metrics.field_energy_history[-10:]  # Last 10 values
             energy_variance = float(np.var(recent_energies).astype(np.float32))
             
+            # DEBUG: Show variance calculation
+            if len(recent_energies) >= 5:
+                print(f"🔍 DEBUG variance calc: energies={[f'{e:.6f}' for e in recent_energies[-5:]]}, var={energy_variance:.9f}")
+            
             if len(recent_energies) >= 5:
                 # Calculate trend (early vs recent)
                 early = float(np.mean(recent_energies[:3]).astype(np.float32))
@@ -219,6 +230,14 @@ class FieldBrainLogger:
     def log_field_energy(self, energy: float):
         """Log field energy for learning progress tracking."""
         self.metrics.field_energy_history.append(energy)
+        
+        # DEBUG: Track energy values to debug zero variance issue
+        if len(self.metrics.field_energy_history) <= 10:
+            print(f"🔍 DEBUG energy[{len(self.metrics.field_energy_history)}]: {energy:.9f}")
+        elif len(self.metrics.field_energy_history) % 50 == 0:  # Every 50th cycle
+            recent = self.metrics.field_energy_history[-3:]
+            print(f"🔍 DEBUG recent energies: {[f'{e:.9f}' for e in recent]}")
+        
         # Keep only last 50 values to prevent memory bloat
         if len(self.metrics.field_energy_history) > 50:
             self.metrics.field_energy_history.pop(0)

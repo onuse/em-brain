@@ -3,7 +3,7 @@
     "min_cycle_time_ms": 50,
     "base_spatial_resolution": 20,
     "base_temporal_window": 10.0,
-    "base_field_evolution_rate": 0.1,
+    "base_field_evolution_rate": 0.2,
     "base_learning_rate": 0.1,
     "base_constraint_discovery_rate": 0.15,
     "prediction_threshold": 0.7,

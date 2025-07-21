@@ -83,7 +83,7 @@ def profile_brain_cycle_detailed():
                 processed_input = sensory_input
         
         with timer("2. Vector brain processing"):
-            predicted_action, vector_brain_state = brain.vector_brain.process_sensory_input(processed_input)
+            predicted_action, vector_brain_state = brain.field_brain_adapter.process_sensory_input(processed_input)
         
         with timer("3. Confidence calculation"):
             confidence = vector_brain_state['prediction_confidence']

@@ -285,6 +285,10 @@ class UnifiedFieldImplementation(FieldImplementation):
         """Evolve unified field using original hierarchical coarse-to-fine processing."""
         self.field_evolution_cycles += 1
         
+        # CRITICAL FIX: Process input stream to create spatial patterns
+        if current_input_stream is not None:
+            self._inject_input_stream(current_input_stream, dt)
+        
         # Biological optimization: decay and diffusion
         # Adaptive decay rate based on field energy to prevent accumulation
         field_energy = torch.sum(self.unified_field).item()
@@ -347,6 +351,51 @@ class UnifiedFieldImplementation(FieldImplementation):
                 'spatial_y': grad_y, 
                 'spatial_z': grad_z
             }
+    
+    def _inject_input_stream(self, input_stream: List[float], dt: float):
+        """Inject input stream into unified field to create spatial patterns."""
+        if not input_stream:
+            return
+        
+        # Convert input to tensor
+        input_tensor = torch.tensor(input_stream, dtype=torch.float32, device=self.field_device)
+        input_intensity = torch.mean(torch.abs(input_tensor)).item()
+        
+        # Don't inject if input is too weak
+        if input_intensity < 0.01:
+            return
+        
+        # Map input dimensions to field positions
+        # Use a spatial grid approach for the unified field
+        max_positions = min(self.spatial_resolution, 8)  # Limit for performance
+        
+        for i, input_value in enumerate(input_stream):
+            if abs(input_value) < 0.01:
+                continue
+                
+            # Map input index to spatial position
+            x_pos = (i * 7) % max_positions  # Prime number for good distribution
+            y_pos = (i * 11) % max_positions 
+            z_pos = (i * 13) % max_positions
+            
+            # Add spatial spread around the position
+            for dx in range(-1, 2):
+                for dy in range(-1, 2):
+                    for dz in range(-1, 2):
+                        x = (x_pos + dx) % max_positions
+                        y = (y_pos + dy) % max_positions
+                        z = (z_pos + dz) % max_positions
+                        
+                        # Distance-based weighting
+                        dist = abs(dx) + abs(dy) + abs(dz)
+                        weight = 1.0 / (1.0 + dist)
+                        
+                        # Inject into unified field with proper strength
+                        injection_strength = input_value * weight * dt * 0.1  # Same as multi-tensor version
+                        
+                        # Inject across multiple dimensions of the unified field
+                        for dim_offset in range(min(self.unified_field.shape[3], 4)):
+                            self.unified_field[x, y, z, dim_offset] += injection_strength
     
     def compute_field_gradients(self) -> Dict[str, torch.Tensor]:
         """Compute gradients across field dimensions."""
@@ -434,13 +483,7 @@ class UnifiedFieldImplementation(FieldImplementation):
         }
 
 
-class MultiTensorFieldImplementation(FieldImplementation):
-    """
-    Multi-tensor field implementation for MPS compatibility.
-    
-    Uses multiple smaller tensors to work around MPS 16D limitation while
-    preserving unified field semantics through cross-field coupling.
-    """
+# MultiTensorFieldImplementation removed - UnifiedFieldImplementation is now the only implementation
     
     def __init__(self, spatial_resolution: int, field_dimensions: List[FieldDimension],
                  field_device: torch.device, quiet_mode: bool = False):
@@ -1090,78 +1133,4 @@ def create_adaptive_field_implementation(field_dimensions: List[FieldDimension],
     )
 
 
-# Add decay maintenance method to MultiTensorFieldImplementation
-def _add_decay_maintenance_to_multi_tensor():
-    """Add decay maintenance method to MultiTensorFieldImplementation class."""
-    
-    def perform_adaptive_decay_maintenance(self) -> Dict[str, float]:
-        """
-        Perform adaptive energy decay during maintenance cycles.
-        
-        This was moved from the main processing loop to improve performance.
-        Returns decay statistics for monitoring.
-        """
-        if not hasattr(self, 'field_tensors') or not self.field_tensors:
-            return {'total_energy': 0.0, 'decay_rate': 0.0, 'energy_after_decay': 0.0}
-        
-        # Calculate total field energy
-        total_field_energy = sum(torch.sum(tensor).item() for tensor in self.field_tensors.values())
-        
-        # Determine adaptive decay rate based on energy level
-        if total_field_energy > 200.0:
-            decay_rate = 0.95  # 5% decay for very high energy
-            energy_level = "very_high"
-        elif total_field_energy > 100.0:
-            decay_rate = 0.97  # 3% decay for high energy  
-            energy_level = "high"
-        elif total_field_energy > 50.0:
-            decay_rate = 0.985  # 1.5% decay for medium energy
-            energy_level = "medium"
-        elif total_field_energy > 25.0:
-            decay_rate = 0.992  # 0.8% decay for moderate energy
-            energy_level = "moderate"
-        else:
-            decay_rate = 0.995  # 0.5% decay for low energy
-            energy_level = "low"
-        
-        # Apply decay to all field tensors
-        for tensor_name, tensor in self.field_tensors.items():
-            tensor.mul_(decay_rate)
-        
-        # Calculate energy after decay
-        energy_after_decay = sum(torch.sum(tensor).item() for tensor in self.field_tensors.values())
-        energy_removed = total_field_energy - energy_after_decay
-        
-        # Store decay statistics for analysis
-        if not hasattr(self, '_decay_statistics'):
-            self._decay_statistics = []
-        
-        decay_stats = {
-            'timestamp': time.time(),
-            'total_energy_before': total_field_energy,
-            'energy_after_decay': energy_after_decay,
-            'energy_removed': energy_removed,
-            'decay_rate': decay_rate,
-            'energy_level': energy_level,
-            'tensors_processed': len(self.field_tensors)
-        }
-        
-        self._decay_statistics.append(decay_stats)
-        
-        # Keep only recent decay statistics
-        if len(self._decay_statistics) > 20:
-            self._decay_statistics.pop(0)
-        
-        return {
-            'total_energy': total_field_energy,
-            'decay_rate': decay_rate,
-            'energy_after_decay': energy_after_decay,
-            'energy_removed': energy_removed,
-            'energy_level': energy_level
-        }
-    
-    # Add method to the class
-    MultiTensorFieldImplementation.perform_adaptive_decay_maintenance = perform_adaptive_decay_maintenance
-
-# Apply the method addition
-_add_decay_maintenance_to_multi_tensor()
+# Legacy MultiTensorFieldImplementation code removed - UnifiedFieldImplementation now handles all functionality
