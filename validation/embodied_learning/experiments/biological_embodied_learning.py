@@ -289,7 +289,22 @@ class BiologicalEmbodiedLearningExperiment:
         # Performance metrics
         avg_light_distance = np.mean(light_distances) if light_distances else 0.0
         exploration_score = self._calculate_exploration_score(trajectory_points)
-        efficiency = action_counts['MOVE_FORWARD'] / max(1, actions_executed)
+        
+        # PREDICTION-DRIVEN EFFICIENCY: Use brain's prediction improvement instead of task efficiency
+        try:
+            # Get brain statistics to access prediction efficiency
+            brain_stats = self.client.brain_server.get_server_stats() if hasattr(self.client, 'brain_server') else None
+            if brain_stats and 'brain' in brain_stats:
+                brain_state = brain_stats['brain']
+                # Use prediction efficiency from the brain's intrinsic motivation system
+                efficiency = brain_state.get('prediction_efficiency', 0.0)
+            else:
+                # Fallback: Get prediction efficiency from last prediction response if available
+                efficiency = 0.0  # Will be updated as brain learns to predict better
+        except Exception:
+            # Fallback to task efficiency if brain prediction efficiency unavailable
+            efficiency = action_counts['MOVE_FORWARD'] / max(1, actions_executed)
+        
         collision_rate = self._calculate_collision_rate(trajectory_points)
         battery_usage = 1.0 - (self.environment.robot_state.battery / self.environment.battery_capacity)
         

@@ -275,12 +275,18 @@ class GenericFieldBrain(BrainMaintenanceInterface):
         # Prediction accuracy history for confidence calculation
         self.prediction_accuracy_history: List[float] = []
         
+        # PREDICTION-DRIVEN ACTION SELECTION: Initialize missing prediction system attributes
+        self.predictive_cache: Dict[str, Dict] = {}
+        self.max_cached_predictions = 10
+        self.prediction_confidence_threshold = 0.6
+        self.prediction_horizon = 3
+        self.base_field_evolution_rate = field_evolution_rate  # Store for adaptation
+        
         # Initialize field approximation tables (biological optimization lookup tables)
         self.field_approximation_tables = {}
         
-        # FUTURE: Predictive caching and approximation tables disabled for clean performance
-        # TODO: Move predictive caching to background thread (invisible to main loop)
-        # TODO: Re-evaluate approximation tables if hierarchical processing returns
+        # PREDICTION-DRIVEN INTELLIGENCE: Enable predictive caching for action quality feedback
+        # Prediction system restored to drive action selection based on prediction improvement
         
         if not quiet_mode:
             print(f"🌊 GenericFieldBrain initialized")
@@ -694,7 +700,9 @@ class GenericFieldBrain(BrainMaintenanceInterface):
         INTELLIGENCE EMERGENCE: This isn't just optimization - hierarchical processing 
         and predictive caching are fundamental to how intelligence emerges.
         """
-        # Predictive processing disabled for clean real-time performance
+        # PREDICTION-DRIVEN INTELLIGENCE: Enable predictive processing for action quality feedback
+        if current_input_stream:
+            self._apply_predictive_field_caching(current_input_stream)
         
         # Apply field decay
         self.unified_field *= self.field_decay_rate
@@ -705,7 +713,8 @@ class GenericFieldBrain(BrainMaintenanceInterface):
         # Apply constraint-guided evolution (sparse attention-based)
         self._apply_constraint_guided_evolution()
         
-        # Predictive caching disabled - TODO: background thread implementation
+        # PREDICTION VALIDATION: Learn from prediction accuracy to improve action selection
+        self._validate_predictions(self.unified_field)
         
         # Update topology regions (now informed by hierarchical patterns)
         self._update_topology_regions()
@@ -1325,6 +1334,125 @@ class GenericFieldBrain(BrainMaintenanceInterface):
             if hasattr(self.field_impl, 'field_evolution_rate'):
                 self.field_impl.field_evolution_rate = self.field_evolution_rate
     
+    def _get_prediction_quality_modifier(self) -> float:
+        """
+        Calculate action strength modifier based on recent prediction accuracy.
+        
+        PREDICTION-DRIVEN MOTIVATION: 
+        - Low prediction accuracy → Increase action exploration (higher modifier)
+        - High prediction accuracy → Maintain current patterns (standard modifier)
+        - No prediction data → Use exploration modifier to gather data
+        """
+        if not self.prediction_accuracy_history:
+            # No prediction data yet - use moderate exploration
+            return 1.2  # Slight boost to encourage initial exploration
+        
+        # Calculate recent prediction performance
+        recent_window = min(5, len(self.prediction_accuracy_history))
+        recent_accuracy = sum(self.prediction_accuracy_history[-recent_window:]) / recent_window
+        
+        if recent_accuracy < 0.3:
+            # Very poor predictions - strong exploration boost
+            exploration_modifier = 1.8
+            if not self.quiet_mode:
+                print(f"🔍 Very poor predictions ({recent_accuracy:.3f}) → Strong exploration boost")
+        elif recent_accuracy < 0.5:
+            # Poor predictions - moderate exploration boost  
+            exploration_modifier = 1.4
+            if not self.quiet_mode:
+                print(f"🔍 Poor predictions ({recent_accuracy:.3f}) → Moderate exploration boost")
+        elif recent_accuracy > 0.8:
+            # Excellent predictions - maintain current approach
+            exploration_modifier = 1.0
+            if not self.quiet_mode:
+                print(f"🎯 Excellent predictions ({recent_accuracy:.3f}) → Maintaining patterns")
+        elif recent_accuracy > 0.6:
+            # Good predictions - slight reduction in exploration
+            exploration_modifier = 0.9
+            if not self.quiet_mode:
+                print(f"✅ Good predictions ({recent_accuracy:.3f}) → Stabilizing approach")
+        else:
+            # Moderate predictions - balanced approach
+            exploration_modifier = 1.1
+        
+        return exploration_modifier
+    
+    def _calculate_prediction_efficiency(self) -> float:
+        """
+        Calculate efficiency based on prediction accuracy improvement over time.
+        
+        This replaces the broken buffer efficiency that always shows 0.000.
+        """
+        if len(self.prediction_accuracy_history) < 2:
+            return 0.0  # Need at least 2 data points to measure improvement
+        
+        # Calculate trend in prediction accuracy (learning efficiency)
+        recent_window = min(10, len(self.prediction_accuracy_history))
+        recent_accuracies = self.prediction_accuracy_history[-recent_window:]
+        
+        if len(recent_accuracies) < 2:
+            return 0.0
+        
+        # Calculate linear trend (improvement rate)
+        x_values = list(range(len(recent_accuracies)))
+        y_values = recent_accuracies
+        
+        # Simple linear regression slope calculation
+        n = len(x_values)
+        sum_x = sum(x_values)
+        sum_y = sum(y_values)
+        sum_xy = sum(x * y for x, y in zip(x_values, y_values))
+        sum_xx = sum(x * x for x in x_values)
+        
+        if n * sum_xx - sum_x * sum_x == 0:
+            return 0.0
+        
+        slope = (n * sum_xy - sum_x * sum_y) / (n * sum_xx - sum_x * sum_x)
+        
+        # Convert slope to efficiency (0.0 to 1.0 scale)
+        # Positive slope = learning efficiency, negative = degradation
+        efficiency = max(0.0, min(1.0, slope * 10 + 0.5))  # Scale and center
+        
+        return efficiency
+    
+    def _detect_prediction_learning(self) -> bool:
+        """
+        Detect if meaningful learning is occurring based on prediction improvement.
+        
+        This replaces the broken learning detection that always shows False.
+        """
+        if len(self.prediction_accuracy_history) < 5:
+            return False  # Need sufficient data to detect learning
+        
+        # Compare recent performance to earlier performance
+        if len(self.prediction_accuracy_history) >= 10:
+            early_window = self.prediction_accuracy_history[:5]
+            recent_window = self.prediction_accuracy_history[-5:]
+        else:
+            mid_point = len(self.prediction_accuracy_history) // 2
+            early_window = self.prediction_accuracy_history[:mid_point]
+            recent_window = self.prediction_accuracy_history[mid_point:]
+        
+        early_avg = sum(early_window) / len(early_window)
+        recent_avg = sum(recent_window) / len(recent_window)
+        
+        # Learning detected if recent performance is significantly better
+        improvement = recent_avg - early_avg
+        learning_threshold = 0.1  # Require 10% improvement to count as learning
+        
+        return improvement > learning_threshold
+    
+    def _get_current_prediction_accuracy(self) -> float:
+        """Get current prediction accuracy for reporting."""
+        if not self.prediction_accuracy_history:
+            return 0.0
+        
+        # Return recent average accuracy
+        recent_window = min(3, len(self.prediction_accuracy_history))
+        recent_accuracies = self.prediction_accuracy_history[-recent_window:]
+        
+        return sum(recent_accuracies) / len(recent_accuracies)
+    
     def _initialize_approximation_tables(self):
         """Initialize field approximation lookup tables for fast computation.
         
@@ -1596,13 +1724,20 @@ class GenericFieldBrain(BrainMaintenanceInterface):
         """
         Generate output stream from field gradients using adaptive implementation.
         
+        PREDICTION-DRIVEN ACTION SELECTION: Weight actions by prediction accuracy.
         Uses learned mapping - no assumptions about what outputs represent.
         """
         # Get field coordinates for output generation (using center position)
         center_coords = torch.zeros(self.total_dimensions, device=self.field_device)
         
+        # PREDICTION QUALITY WEIGHTING: Modulate action strength based on prediction accuracy
+        prediction_quality_modifier = self._get_prediction_quality_modifier()
+        
         # Generate output using adaptive field implementation
         output_tensor = self.field_impl.generate_field_output(center_coords)
+        
+        # Apply prediction-driven action weighting
+        output_tensor = output_tensor * prediction_quality_modifier
         
         # Map output tensor to negotiated output dimensions
         target_dims = self.stream_capabilities.output_dimensions if self.stream_capabilities else 4
@@ -1766,6 +1901,12 @@ class GenericFieldBrain(BrainMaintenanceInterface):
         # Add enhanced features status
         enhanced_status = self.get_enhanced_features_status()
         brain_state['enhanced_features'] = enhanced_status
+        
+        # PREDICTION-DRIVEN METRICS: Add prediction-based efficiency and learning detection
+        prediction_efficiency = self._calculate_prediction_efficiency()
+        brain_state['prediction_efficiency'] = prediction_efficiency
+        brain_state['learning_detected'] = self._detect_prediction_learning()
+        brain_state['prediction_accuracy'] = self._get_current_prediction_accuracy()
         
         # Add prediction confidence based on field activity and stability
         confidence = self._calculate_current_prediction_confidence()

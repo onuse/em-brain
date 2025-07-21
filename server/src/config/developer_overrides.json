@@ -1,0 +1,28 @@
+{
+  "experimental_features": {
+    "enable_experimental_attention": false,
+    "enable_debug_visualization": false,
+    "enable_performance_profiling": false
+  },
+  
+  "development_overrides": {
+    "force_cpu_mode": false,
+    "debug_field_evolution": false,
+    "verbose_gradient_logging": false,
+    "disable_hardware_adaptation": false
+  },
+  
+  "algorithm_tuning": {
+    "gradient_amplification_factor": 100.0,
+    "attention_focus_strength": 2.0,
+    "hierarchical_depth_limit": 3,
+    "pattern_match_threshold": 0.85
+  },
+  
+  "testing_overrides": {
+    "mock_gpu_memory_gb": null,
+    "mock_cpu_cores": null,
+    "force_cycle_time_ms": null,
+    "disable_persistence": false
+  }
+}

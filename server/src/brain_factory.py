@@ -44,6 +44,10 @@ class BrainFactory:
         self.config = config or {}
         self.quiet_mode = quiet_mode
         
+        # Configure GPU memory management
+        from .config.gpu_memory_manager import configure_gpu_memory
+        configure_gpu_memory(self.config)
+        
         # Get brain implementation configuration from settings
         brain_config = self.config.get('brain', {})
         self.brain_type = brain_type or brain_config.get('type', 'sparse_goldilocks')
