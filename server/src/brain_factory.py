@@ -447,8 +447,8 @@ class BrainFactory:
                         current_evolution_cycles = field_brain.field_evolution_cycles
                         last_evolution_cycles = getattr(self, '_last_evolution_cycles', 0)
                         
-                        # Report every 10 field evolution cycles (meaningful learning activity)
-                        if current_evolution_cycles > 0 and current_evolution_cycles % 10 == 0 and current_evolution_cycles != last_evolution_cycles:
+                        # Report every 100 field evolution cycles (reduce spam on fast CUDA machines)
+                        if current_evolution_cycles > 0 and current_evolution_cycles % 100 == 0 and current_evolution_cycles != last_evolution_cycles:
                             try:
                                 field_energy = field_brain.unified_field.sum().item()
                             except:

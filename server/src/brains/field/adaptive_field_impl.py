@@ -414,9 +414,7 @@ class UnifiedFieldImplementation(FieldImplementation):
             'memory_mb': (self.unified_field.numel() * 4) / (1024 * 1024)
         }
         
-        # DEBUG: Check evolution cycles reporting
-        if self.field_evolution_cycles > 0:
-            print(f"🔄 Field stats reporting evolution_cycles: {self.field_evolution_cycles}")
+        # DEBUG: Removed - was causing spam on CUDA machines
         
         return stats
     
