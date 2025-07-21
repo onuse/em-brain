@@ -278,7 +278,7 @@ class GenericFieldBrain(BrainMaintenanceInterface):
         # PREDICTION-DRIVEN ACTION SELECTION: Initialize missing prediction system attributes
         self.predictive_cache: Dict[str, Dict] = {}
         self.max_cached_predictions = 10
-        self.prediction_confidence_threshold = 0.6
+        self.prediction_confidence_threshold = 0.2  # LOWERED: Start with lower threshold for initial learning
         self.prediction_horizon = 3
         self.base_field_evolution_rate = field_evolution_rate  # Store for adaptation
         
@@ -985,11 +985,18 @@ class GenericFieldBrain(BrainMaintenanceInterface):
             prediction_key = f"pred_{self.brain_cycles}_{prediction['horizon']}"
             self.predictive_cache[prediction_key] = prediction
             
+            # DEBUGGING: Log prediction caching activity
+            if not self.quiet_mode and self.brain_cycles % 50 == 0:  # Log every 50 cycles
+                print(f"🔮 Prediction cached: confidence={prediction['confidence']:.3f}, cached={len(self.predictive_cache)}")
+            
             # Apply predictive field preparation (subtle pre-activation)
             self._apply_predictive_field_preparation(prediction)
             
             # Manage cache size (biological memory constraints)
             self._manage_prediction_cache()
+        elif prediction and not self.quiet_mode and self.brain_cycles % 100 == 0:
+            # DEBUGGING: Log when predictions are made but not cached
+            print(f"🔮 Prediction made but not cached: confidence={prediction['confidence']:.3f} < threshold={self.prediction_confidence_threshold}")
     
     def _generate_field_prediction(self, current_input_stream: List[float]) -> Optional[Dict]:
         """Generate prediction of future field state based on current trajectory.
@@ -1055,10 +1062,10 @@ class GenericFieldBrain(BrainMaintenanceInterface):
                 spatial_shift = sum(abs(curr_coords[j] - prev_coords[j]) for j in range(min(3, len(curr_coords))))
                 spatial_shifts.append(spatial_shift)
             
-            # Pattern strength based on consistency
+            # Pattern strength based on consistency (FIXED: More lenient threshold)
             pattern_strength = 1.0 / (1.0 + sum(activation_changes))  # More consistent = stronger
             
-            if pattern_strength > 0.3:  # Meaningful pattern detected
+            if pattern_strength > 0.1:  # LOWERED: More lenient pattern detection for initial learning
                 return {
                     'activation_changes': activation_changes,
                     'spatial_shifts': spatial_shifts,
@@ -1279,13 +1286,32 @@ class GenericFieldBrain(BrainMaintenanceInterface):
     def _calculate_prediction_accuracy(self, predicted_state: torch.Tensor, actual_state: torch.Tensor) -> float:
         """Calculate accuracy of a prediction."""
         try:
+            # FIXED: Handle multi-tensor vs unified field compatibility
+            # Ensure we're working with actual tensors, not wrappers
+            if hasattr(predicted_state, 'clone'):
+                pred_tensor = predicted_state.clone().detach()
+            else:
+                pred_tensor = torch.tensor(predicted_state, dtype=torch.float32)
+                
+            if hasattr(actual_state, 'clone'):
+                actual_tensor = actual_state.clone().detach()
+            else:
+                actual_tensor = torch.tensor(actual_state, dtype=torch.float32)
+            
             # Ensure same shape
-            if predicted_state.shape != actual_state.shape:
+            if pred_tensor.shape != actual_tensor.shape:
                 return 0.0
             
             # Calculate correlation between predicted and actual states
-            pred_flat = predicted_state.flatten()
-            actual_flat = actual_state.flatten()
+            pred_flat = pred_tensor.flatten()
+            actual_flat = actual_tensor.flatten()
+            
+            # ROBUST: Check for sufficient variance before correlation
+            if torch.std(pred_flat) < 1e-6 or torch.std(actual_flat) < 1e-6:
+                # Low variance - use simpler similarity measure
+                mse = torch.mean((pred_flat - actual_flat) ** 2)
+                accuracy = 1.0 / (1.0 + mse)  # Inverse MSE as similarity
+                return float(accuracy)
             
             # Pearson correlation coefficient
             correlation = torch.corrcoef(torch.stack([pred_flat, actual_flat]))[0, 1]

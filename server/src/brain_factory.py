@@ -469,6 +469,9 @@ class BrainFactory:
         if self.enable_persistence and self.persistence_manager:
             self.persistence_manager.process_brain_cycle(self)
         
+        # Store current brain state for monitoring server access
+        self._current_brain_state = brain_state.copy()
+        
         return predicted_action, brain_state
     
     def store_experience(self, sensory_input: List[float], action_taken: List[float], 

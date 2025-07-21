@@ -31,7 +31,9 @@ sys.path.insert(0, str(brain_root))
 sys.path.insert(0, str(brain_root / 'server'))
 
 from src.communication import MinimalBrainClient
+from src.communication.monitoring_client import create_monitoring_client
 from validation.embodied_learning.environments.sensory_motor_world import SensoryMotorWorld
+# TCP socket connection respects sensor→buffer→brain→buffer→motor architecture
 
 @dataclass
 class ExperimentConfig:
@@ -107,7 +109,14 @@ class BiologicalEmbodiedLearningExperiment:
     
     def __init__(self, config: ExperimentConfig):
         self.config = config
-        self.client = MinimalBrainClient()
+        
+        # DUAL SOCKET ARCHITECTURE: Robot simulation + monitoring access
+        # Robot socket: Acts like real robot (sensors → motor actions)
+        self.robot_client = MinimalBrainClient()
+        
+        # Monitoring socket: Gets brain statistics and validation metrics
+        self.monitoring_client = None  # Will be connected during experiment
+        
         self.environment = SensoryMotorWorld(
             world_size=config.world_size,
             num_light_sources=config.num_light_sources,
@@ -141,9 +150,19 @@ class BiologicalEmbodiedLearningExperiment:
         
         print(f"\n🔬 Starting biological embodied learning experiment...")
         
-        # Connect to brain server
-        if not self.client.connect():
-            raise ConnectionError("Failed to connect to brain server")
+        # Initialize dual socket connections
+        print(f"🔬 Connecting to brain server with dual sockets...")
+        print(f"   Robot socket (port 9999): Sensor/motor communication")
+        print(f"   Monitoring socket (port 9998): Brain statistics and validation metrics")
+        
+        # Connect robot client (acts like real robot)
+        if not self.robot_client.connect():
+            raise ConnectionError("Failed to connect robot client to brain server")
+        
+        # Connect monitoring client (gets brain statistics)
+        self.monitoring_client = create_monitoring_client()
+        if not self.monitoring_client:
+            raise ConnectionError("Failed to connect monitoring client to brain server")
         
         try:
             self.experiment_start_time = time.time()
@@ -212,7 +231,10 @@ class BiologicalEmbodiedLearningExperiment:
             return final_results
             
         finally:
-            self.client.disconnect()
+            # Disconnect both clients
+            self.robot_client.disconnect()
+            if self.monitoring_client:
+                self.monitoring_client.disconnect()
     
     def _run_learning_session(self, session_id: int, is_baseline: bool = False) -> SessionResults:
         """Run a single learning session."""
@@ -240,9 +262,11 @@ class BiologicalEmbodiedLearningExperiment:
                 # Get sensory input
                 sensory_input = self.environment.get_sensory_input()
                 
-                # Send to brain and get prediction
+                # Send to brain and get prediction via buffer interface
                 start_time = time.time()
-                prediction = self.client.get_action(sensory_input, timeout=3.0)
+                
+                # Get brain prediction via robot socket (acts like real robot)
+                prediction = self.robot_client.get_action(sensory_input, timeout=3.0)
                 
                 if prediction is None:
                     print("   ⚠️ No response from brain")
@@ -290,20 +314,27 @@ class BiologicalEmbodiedLearningExperiment:
         avg_light_distance = np.mean(light_distances) if light_distances else 0.0
         exploration_score = self._calculate_exploration_score(trajectory_points)
         
-        # PREDICTION-DRIVEN EFFICIENCY: Use brain's prediction improvement instead of task efficiency
+        # DUAL APPROACH EFFICIENCY: Combine behavioral analysis + brain monitoring
         try:
-            # Get brain statistics to access prediction efficiency
-            brain_stats = self.client.brain_server.get_server_stats() if hasattr(self.client, 'brain_server') else None
-            if brain_stats and 'brain' in brain_stats:
-                brain_state = brain_stats['brain']
-                # Use prediction efficiency from the brain's intrinsic motivation system
-                efficiency = brain_state.get('prediction_efficiency', 0.0)
+            # Primary: Get brain prediction metrics from monitoring socket
+            brain_metrics = self.monitoring_client.get_prediction_metrics() if self.monitoring_client else None
+            
+            if brain_metrics:
+                # Use actual brain prediction efficiency
+                efficiency = brain_metrics.get('prediction_efficiency', 0.0)
+                self.latest_brain_metrics = brain_metrics
+                print(f"   📊 Brain efficiency: {efficiency:.3f} (learning: {brain_metrics.get('learning_detected', False)})")
             else:
-                # Fallback: Get prediction efficiency from last prediction response if available
-                efficiency = 0.0  # Will be updated as brain learns to predict better
-        except Exception:
-            # Fallback to task efficiency if brain prediction efficiency unavailable
+                # Fallback: Calculate from observable behavior
+                efficiency = self._calculate_prediction_efficiency(prediction_errors)
+                self.latest_brain_metrics = {}
+                print(f"   🧮 Behavioral efficiency: {efficiency:.3f} (calculated from trends)")
+                
+        except Exception as e:
+            print(f"   ⚠️ Error accessing monitoring data: {e}")
+            # Final fallback to task efficiency
             efficiency = action_counts['MOVE_FORWARD'] / max(1, actions_executed)
+            self.latest_brain_metrics = {}
         
         collision_rate = self._calculate_collision_rate(trajectory_points)
         battery_usage = 1.0 - (self.environment.robot_state.battery / self.environment.battery_capacity)
@@ -382,9 +413,15 @@ class BiologicalEmbodiedLearningExperiment:
         )
         
         print(f"   🧠 Consolidation Analysis:")
+        print(f"      Pre-session performance: {pre_performance:.3f}")
+        print(f"      Post-session performance: {post_performance:.3f}")
         print(f"      Performance change: {consolidation_benefit:+.3f}")
         print(f"      Strategy refinement: {strategy_refinement:.3f}")
         print(f"      Memory stability: {memory_stability:.3f}")
+        
+        # Debug the components that make up performance
+        print(f"      Pre-session efficiency: {pre_session.efficiency:.3f}")
+        print(f"      Post-session efficiency: {post_session.efficiency:.3f}")
         
         return consolidation_analysis
     
@@ -396,10 +433,10 @@ class BiologicalEmbodiedLearningExperiment:
             # Sleep for 30 seconds
             time.sleep(30)
             
-            # Send keepalive ping
+            # Send keepalive ping via robot socket
             if (time.time() - start_time) < duration_seconds:
                 try:
-                    self.client.get_action([0.0, 0.0, 0.0, 0.0], timeout=5.0)
+                    self.robot_client.get_action([0.0, 0.0, 0.0, 0.0], timeout=5.0)
                 except Exception:
                     pass  # Ignore keepalive failures
     
@@ -509,22 +546,44 @@ class BiologicalEmbodiedLearningExperiment:
         # Check for biological learning characteristics
         performances = [self._calculate_session_performance(s) for s in self.session_results]
         
+        # Debug output for biological realism analysis
+        print(f"   🔬 Biological Realism Analysis:")
+        print(f"      Session performances: {[f'{p:.3f}' for p in performances[-5:]]}")  # Last 5 sessions
+        
         # Gradual improvement (not sudden jumps)
         gradual_learning = self._check_gradual_learning(performances)
+        print(f"      Gradual learning: {gradual_learning}")
         
         # Consolidation benefits
         consolidation_present = len(self.consolidation_analyses) > 0
-        consolidation_beneficial = np.mean([c.consolidation_benefit for c in self.consolidation_analyses]) > 0 if consolidation_present else False
+        consolidation_beneficial = False
+        avg_consolidation_benefit = 0.0
+        
+        if consolidation_present:
+            benefits = [c.consolidation_benefit for c in self.consolidation_analyses]
+            avg_consolidation_benefit = np.mean(benefits)
+            consolidation_beneficial = avg_consolidation_benefit > 0
+            print(f"      Consolidation benefits: {[f'{b:.3f}' for b in benefits[-3:]]}")  # Last 3 benefits
+            print(f"      Average consolidation benefit: {avg_consolidation_benefit:.3f}")
+        else:
+            print(f"      No consolidation data available")
         
         # Power law learning
         power_law_fit = self._check_power_law_learning(performances)
+        print(f"      Power law fit: {power_law_fit:.3f}")
+        
+        # Calculate final score
+        final_score = self._calculate_biological_realism_score(gradual_learning, consolidation_beneficial, power_law_fit)
+        print(f"      Final biological realism score: {final_score:.3f}")
         
         return {
             'gradual_learning': gradual_learning,
             'consolidation_present': consolidation_present,
             'consolidation_beneficial': consolidation_beneficial,
             'power_law_learning': power_law_fit,
-            'biological_realism_score': self._calculate_biological_realism_score(gradual_learning, consolidation_beneficial, power_law_fit)
+            'avg_consolidation_benefit': avg_consolidation_benefit,
+            'session_performances': performances,
+            'biological_realism_score': final_score
         }
     
     def _analyze_efficiency_trends(self) -> Dict:
@@ -543,10 +602,23 @@ class BiologicalEmbodiedLearningExperiment:
     # Helper methods for calculations
     def _calculate_session_performance(self, session: SessionResults) -> float:
         """Calculate overall session performance score."""
-        return (session.exploration_score * 0.3 + 
-                session.efficiency * 0.3 + 
-                (1.0 - session.collision_rate) * 0.2 + 
-                session.strategy_emergence_score * 0.2)
+        exploration_component = session.exploration_score * 0.3
+        efficiency_component = session.efficiency * 0.3
+        safety_component = (1.0 - session.collision_rate) * 0.2
+        strategy_component = session.strategy_emergence_score * 0.2
+        
+        total_performance = exploration_component + efficiency_component + safety_component + strategy_component
+        
+        # Debug output for first few sessions or when performance is notably low
+        if session.session_id <= 3 or total_performance < 0.1:
+            print(f"      Session {session.session_id} performance breakdown:")
+            print(f"        Exploration: {session.exploration_score:.3f} × 0.3 = {exploration_component:.3f}")
+            print(f"        Efficiency: {session.efficiency:.3f} × 0.3 = {efficiency_component:.3f}")
+            print(f"        Safety: {(1.0 - session.collision_rate):.3f} × 0.2 = {safety_component:.3f}")
+            print(f"        Strategy: {session.strategy_emergence_score:.3f} × 0.2 = {strategy_component:.3f}")
+            print(f"        Total: {total_performance:.3f}")
+        
+        return total_performance
     
     def _calculate_exploration_score(self, trajectory_points: List[Tuple[float, float]]) -> float:
         """Calculate exploration score based on trajectory."""
@@ -573,6 +645,89 @@ class BiologicalEmbodiedLearningExperiment:
         # Simplified collision detection
         return 0.0  # Placeholder
     
+    def _calculate_prediction_efficiency(self, prediction_errors: List[float]) -> float:
+        """Calculate prediction efficiency from error trends."""
+        if len(prediction_errors) < 20:
+            return 0.0
+        
+        # Compare recent errors to early errors
+        early_errors = prediction_errors[:10]
+        recent_errors = prediction_errors[-10:]
+        
+        early_avg = np.mean(early_errors)
+        recent_avg = np.mean(recent_errors)
+        
+        # Efficiency improves as prediction error decreases
+        if early_avg == 0:
+            return 0.0
+        
+        improvement = max(0.0, (early_avg - recent_avg) / early_avg)
+        return min(1.0, improvement)
+    
+    def _detect_learning_from_trends(self, prediction_errors: List[float]) -> bool:
+        """Detect if learning is occurring from prediction error trends."""
+        if len(prediction_errors) < 30:
+            return False
+        
+        # Check if prediction errors are generally decreasing
+        recent_window = prediction_errors[-15:]
+        earlier_window = prediction_errors[-30:-15]
+        
+        recent_avg = np.mean(recent_window)
+        earlier_avg = np.mean(earlier_window)
+        
+        # Learning detected if recent errors are lower than earlier ones
+        return recent_avg < earlier_avg * 0.95  # 5% improvement threshold
+    
+    def _calculate_biological_realism(self, light_distances: List[float], prediction_errors: List[float]) -> float:
+        """Calculate biological realism score from behavior patterns."""
+        if not light_distances or not prediction_errors:
+            return 0.0
+        
+        # Biological systems show adaptation and learning
+        light_seeking_improvement = self._calculate_light_seeking_improvement(light_distances)
+        error_reduction = self._calculate_prediction_efficiency(prediction_errors)
+        
+        # Average of behavioral improvements
+        return (light_seeking_improvement + error_reduction) / 2.0
+    
+    def _calculate_light_seeking_improvement(self, light_distances: List[float]) -> float:
+        """Calculate improvement in light-seeking behavior."""
+        if len(light_distances) < 20:
+            return 0.0
+        
+        early_distances = light_distances[:10]
+        recent_distances = light_distances[-10:]
+        
+        early_avg = np.mean(early_distances)
+        recent_avg = np.mean(recent_distances)
+        
+        # Improvement if getting closer to light sources
+        if early_avg == 0:
+            return 0.0
+        
+        improvement = max(0.0, (early_avg - recent_avg) / early_avg)
+        return min(1.0, improvement)
+    
+    def _calculate_strategy_emergence(self, prediction_errors: List[float]) -> float:
+        """Calculate strategy emergence from prediction patterns."""
+        if len(prediction_errors) < 20:
+            return 0.0
+        
+        # Strategy emergence shown by consistent improvement
+        early_errors = prediction_errors[:10]
+        recent_errors = prediction_errors[-10:]
+        
+        early_variance = np.var(early_errors)
+        recent_variance = np.var(recent_errors)
+        
+        # Lower variance in recent errors suggests strategy formation
+        if early_variance == 0:
+            return 0.0
+        
+        variance_reduction = max(0.0, (early_variance - recent_variance) / early_variance)
+        return min(1.0, variance_reduction)
+
     def _calculate_learning_trend(self, prediction_errors: List[float]) -> List[float]:
         """Calculate learning trend from prediction errors."""
         if len(prediction_errors) < 10:
@@ -667,25 +822,54 @@ class BiologicalEmbodiedLearningExperiment:
         
         # Check for smooth improvement without large jumps
         changes = np.diff(performances)
-        large_jumps = np.sum(np.abs(changes) > 0.2)  # More than 20% change
         
-        return large_jumps < len(changes) * 0.3  # Less than 30% large jumps
+        # Adjust threshold based on the actual performance range
+        max_performance = max(performances)
+        min_performance = min(performances)
+        performance_range = max_performance - min_performance
+        
+        if performance_range < 0.01:  # Very small range, likely no learning
+            return False
+        
+        # Dynamic threshold: 30% of the performance range or minimum 0.05
+        threshold = max(0.05, performance_range * 0.3)
+        large_jumps = np.sum(np.abs(changes) > threshold)
+        
+        gradual = large_jumps < len(changes) * 0.3  # Less than 30% large jumps
+        
+        print(f"        Performance range: {performance_range:.3f}, threshold: {threshold:.3f}")
+        print(f"        Large jumps: {large_jumps}/{len(changes)} (gradual: {gradual})")
+        
+        return gradual
     
     def _check_power_law_learning(self, performances: List[float]) -> float:
         """Check if learning follows power law (biological characteristic)."""
         if len(performances) < 5:
             return 0.0
         
+        # Check if there's meaningful variation
+        performance_range = max(performances) - min(performances)
+        if performance_range < 0.01:
+            print(f"        Power law: insufficient variation ({performance_range:.4f})")
+            return 0.0
+        
         # Fit power law: performance = a * trial^b
         try:
             trials = np.arange(1, len(performances) + 1)
             log_trials = np.log(trials)
-            log_performances = np.log(np.array(performances) + 1e-10)
+            
+            # Add small constant to handle zero/negative performances
+            safe_performances = np.array(performances) + 0.01
+            log_performances = np.log(safe_performances)
             
             # Linear fit in log space
             correlation = np.corrcoef(log_trials, log_performances)[0, 1]
-            return abs(correlation)
-        except:
+            power_law_strength = abs(correlation) if not np.isnan(correlation) else 0.0
+            
+            print(f"        Power law correlation: {correlation:.3f} (strength: {power_law_strength:.3f})")
+            return power_law_strength
+        except Exception as e:
+            print(f"        Power law calculation failed: {e}")
             return 0.0
     
     def _calculate_biological_realism_score(self, gradual: bool, consolidation: bool, power_law: float) -> float:

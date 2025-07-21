@@ -11,11 +11,13 @@ import json
 import os
 import platform
 import psutil
+import threading
 from pathlib import Path
 from typing import Optional, Dict, Any
 
 from src.brain_factory import BrainFactory
 from src.communication import MinimalTCPServer
+from src.communication.monitoring_server import BrainMonitoringServer
 
 
 class MinimalBrainServer:
@@ -36,6 +38,11 @@ class MinimalBrainServer:
         # Initialize brain factory with config - use quiet mode to reduce startup spam
         self.brain = BrainFactory(config=self.config, quiet_mode=True)
         self.tcp_server = MinimalTCPServer(self.brain, self.host, self.port)
+        
+        # Initialize monitoring server on separate port
+        monitoring_port = self.port - 1  # Use port 9998 for monitoring if robot port is 9999
+        self.monitoring_server = BrainMonitoringServer(self.brain, self.host, monitoring_port)
+        
         self.running = False
     
     def _load_settings(self) -> Dict[str, Any]:
@@ -124,7 +131,17 @@ class MinimalBrainServer:
         
         try:
             self.running = True
+            
+            # Start monitoring server in background thread
+            monitoring_thread = threading.Thread(
+                target=self.monitoring_server.start,
+                daemon=True
+            )
+            monitoring_thread.start()
+            
+            # Start main TCP server (blocks until shutdown)
             self.tcp_server.start()
+            
         except Exception as e:
             print(f"❌ Server error: {e}")
             self.shutdown()
@@ -135,6 +152,7 @@ class MinimalBrainServer:
             print("🛑 Shutting down Minimal Brain Server")
             self.running = False
             self.tcp_server.stop()
+            self.monitoring_server.stop()
             
             # Finalize brain session (saves final checkpoint)
             self.brain.finalize_session()
