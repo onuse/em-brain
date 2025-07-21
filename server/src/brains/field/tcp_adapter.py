@@ -192,6 +192,7 @@ class FieldBrainTCPAdapter(BrainMaintenanceInterface):
             brain_state_response = {
                 'prediction_method': 'field_dynamics',
                 'prediction_confidence': brain_state.get('prediction_confidence', 0.001),  # Use proper confidence from brain state
+                'prediction_efficiency': brain_state.get('prediction_efficiency', 0.0),  # CRITICAL: Include prediction efficiency
                 'field_energy': brain_state.get('field_total_energy', 0.0),
                 'field_activation': brain_state.get('field_mean_activation', 0.0),
                 'topology_regions': brain_state.get('topology_regions', 0),

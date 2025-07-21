@@ -132,27 +132,16 @@ def select_optimal_field_implementation(field_dimensions: List[FieldDimension],
     
     Returns:
         Tuple of (implementation_type, actual_device)
-        - 'unified': Use single unified field tensor (optimal for CUDA)
-        - 'multi_tensor': Use multiple smaller tensors (required for MPS 16D limit)
+        - Always returns 'unified' to eliminate multi-tensor path confusion
     """
     total_field_dims = len(field_dimensions)
     
-    if requested_device.type == 'cuda':
-        # CUDA can handle any number of dimensions optimally
-        return 'unified', requested_device
-    elif requested_device.type == 'mps':
-        # Check if we need multi-tensor for MPS 16D limit
-        if total_field_dims > 16:
-            # Use multi-tensor approach to stay on MPS
-            if not quiet_mode:
-                print(f"🔧 MPS 16D limit detected ({total_field_dims}D field) → Using multi-tensor implementation")
-            return 'multi_tensor', requested_device
-        else:
-            # Can use unified on MPS
-            return 'unified', requested_device
-    else:
-        # Default to unified on CPU
-        return 'unified', requested_device
+    if not quiet_mode:
+        print(f"🔧 Using unified field implementation ({total_field_dims}D field)")
+    
+    # Always use unified implementation - single code path for clarity
+    # PyTorch will handle device limitations gracefully (fallback to CPU if needed)
+    return 'unified', requested_device
 
 
 class UnifiedFieldImplementation(FieldImplementation):
@@ -171,7 +160,21 @@ class UnifiedFieldImplementation(FieldImplementation):
         
         # Create unified multi-dimensional field - original approach
         field_shape = [spatial_resolution] * 3 + [10] + [15] + [1] * (self.total_dimensions - 5)
-        self.unified_field = torch.zeros(field_shape, dtype=torch.float32, device=field_device)
+        
+        # Try to create on requested device, fall back to CPU if dimensions exceed device limits
+        try:
+            self.unified_field = torch.zeros(field_shape, dtype=torch.float32, device=field_device)
+            self.field_device = field_device
+        except RuntimeError as e:
+            if "MPS supports tensors with dimensions" in str(e):
+                # MPS device limitation - fall back to CPU gracefully
+                if not quiet_mode:
+                    print(f"⚠️ MPS device cannot handle {len(field_shape)}D tensor, falling back to CPU")
+                self.unified_field = torch.zeros(field_shape, dtype=torch.float32, device=torch.device('cpu'))
+                self.field_device = torch.device('cpu')
+            else:
+                # Re-raise other errors
+                raise
         
         # Field dynamics tracking
         self.field_memory = []
@@ -1081,14 +1084,10 @@ def create_adaptive_field_implementation(field_dimensions: List[FieldDimension],
         field_dimensions, spatial_resolution, requested_device, quiet_mode
     )
     
-    if impl_type == 'unified':
-        return UnifiedFieldImplementation(
-            spatial_resolution, field_dimensions, actual_device, quiet_mode
-        )
-    else:  # multi_tensor
-        return MultiTensorFieldImplementation(
-            spatial_resolution, field_dimensions, actual_device, quiet_mode
-        )
+    # Always create unified implementation (multi-tensor path removed)
+    return UnifiedFieldImplementation(
+        spatial_resolution, field_dimensions, actual_device, quiet_mode
+    )
 
 
 # Add decay maintenance method to MultiTensorFieldImplementation

@@ -34,7 +34,7 @@ class PersistenceConfig:
     """Complete configuration for the persistence subsystem."""
     
     # Base directory for all persistence files
-    memory_root_path: str = "./robot_memory"
+    memory_root_path: str = "./server/robot_memory"
     
     # Incremental save frequency
     incremental_save_interval_cycles: int = 100
@@ -104,7 +104,7 @@ class PersistenceConfig:
         )
 
 
-def create_default_config(memory_path: str = "./robot_memory") -> PersistenceConfig:
+def create_default_config(memory_path: str = "./server/robot_memory") -> PersistenceConfig:
     """Create a default persistence configuration."""
     return PersistenceConfig(
         memory_root_path=memory_path,
@@ -118,7 +118,7 @@ def create_default_config(memory_path: str = "./robot_memory") -> PersistenceCon
     )
 
 
-def create_high_frequency_config(memory_path: str = "./robot_memory") -> PersistenceConfig:
+def create_high_frequency_config(memory_path: str = "./server/robot_memory") -> PersistenceConfig:
     """Create a high-frequency save configuration for critical applications."""
     return PersistenceConfig(
         memory_root_path=memory_path,
@@ -132,7 +132,7 @@ def create_high_frequency_config(memory_path: str = "./robot_memory") -> Persist
     )
 
 
-def create_low_overhead_config(memory_path: str = "./robot_memory") -> PersistenceConfig:
+def create_low_overhead_config(memory_path: str = "./server/robot_memory") -> PersistenceConfig:
     """Create a low-overhead configuration for resource-constrained environments."""
     return PersistenceConfig(
         memory_root_path=memory_path,

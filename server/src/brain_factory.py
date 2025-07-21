@@ -10,11 +10,11 @@ Provides a unified interface while delegating to specialized brain implementatio
 based on configuration and requirements.
 """
 
+import os
 import time
 from typing import List, Dict, Tuple, Optional, Any
 
-from .brains.minimal.core_brain import MinimalVectorStreamBrain
-from .brains.sparse_goldilocks.core_brain import SparseGoldilocksBrain
+# Removed non-field brain imports - using field brain only
 from .brains.field.tcp_adapter import FieldBrainTCPAdapter, FieldBrainConfig
 from .brains.brain_maintenance_interface import BrainMaintenanceInterface, MaintenanceScheduler
 from .utils.cognitive_autopilot import CognitiveAutopilot
@@ -50,7 +50,7 @@ class BrainFactory:
         
         # Get brain implementation configuration from settings
         brain_config = self.config.get('brain', {})
-        self.brain_type = brain_type or brain_config.get('type', 'sparse_goldilocks')
+        self.brain_type = brain_type or brain_config.get('type', 'field')
         self.sensory_dim = sensory_dim or brain_config.get('sensory_dim', 16)
         self.motor_dim = motor_dim or brain_config.get('motor_dim', 4)
         self.temporal_dim = temporal_dim or brain_config.get('temporal_dim', 4)
@@ -60,25 +60,9 @@ class BrainFactory:
         self.target_cycle_time_ms = brain_config.get('target_cycle_time_ms', 25.0)  # Gamma frequency: 40Hz = 25ms
         self.target_cycle_time_s = self.target_cycle_time_ms / 1000.0
         
-        # Initialize biological oscillator for sparse_goldilocks brain
+        # Field brain has its own timing system - no need for biological oscillator
         self.biological_oscillator = None
-        if brain_config.get('enable_biological_timing', True):
-            from .brains.sparse_goldilocks.systems.biological_oscillator import create_biological_oscillator
-            oscillator_config = {
-                'gamma_freq': 1000.0 / self.target_cycle_time_ms,  # Convert ms to Hz
-                'theta_freq': brain_config.get('theta_freq', 6.0)
-            }
-            self.biological_oscillator = create_biological_oscillator(oscillator_config, quiet_mode)
-        
-        # Initialize parallel coordinator for sparse_goldilocks brain
         self.parallel_coordinator = None
-        if brain_config.get('enable_parallel_processing', False) and self.biological_oscillator:
-            from .brains.sparse_goldilocks.systems.parallel_brain_coordinator import ParallelBrainCoordinator
-            self.parallel_coordinator = ParallelBrainCoordinator(
-                None,  # Will be set after vector brain initialization
-                self.biological_oscillator,
-                quiet_mode
-            )
         
         # Log brain factory configuration for traceability
         if not quiet_mode:
@@ -102,29 +86,15 @@ class BrainFactory:
         else:
             self.hardware_adaptation = get_hardware_adaptation(self.config)
         
-        # Create brain implementation based on configured type
-        if self.brain_type == "sparse_goldilocks":
-            self.vector_brain = SparseGoldilocksBrain(
-                sensory_dim=self.sensory_dim,
-                motor_dim=self.motor_dim, 
-                temporal_dim=self.temporal_dim,
-                max_patterns=max_patterns,
-                quiet_mode=quiet_mode
-            )
-        elif self.brain_type == "minimal":
-            self.vector_brain = MinimalVectorStreamBrain(
-                sensory_dim=self.sensory_dim,
-                motor_dim=self.motor_dim, 
-                temporal_dim=self.temporal_dim
-            )
-        elif self.brain_type == "field":
+        # Create field brain implementation (only option now)
+        if self.brain_type == "field":
             # Create field brain configuration
             field_config = FieldBrainConfig(
                 sensory_dimensions=self.sensory_dim,
                 motor_dimensions=self.motor_dim,
                 spatial_resolution=brain_config.get('field_spatial_resolution', 20),
                 temporal_window=brain_config.get('field_temporal_window', 10.0),
-                field_evolution_rate=brain_config.get('field_evolution_rate', 0.1),
+                field_evolution_rate=brain_config.get('field_evolution_rate', 0.2),  # INCREASED: Faster learning for 30% goal
                 constraint_discovery_rate=brain_config.get('constraint_discovery_rate', 0.15),
                 performance_mode=brain_config.get('performance_mode', 'balanced'),
                 enable_enhanced_dynamics=brain_config.get('enable_enhanced_dynamics', True),
@@ -138,21 +108,30 @@ class BrainFactory:
                 quiet_mode=quiet_mode
             )
             
-            self.vector_brain = FieldBrainTCPAdapter(field_config)
+            self.field_brain_adapter = FieldBrainTCPAdapter(field_config)
         else:
-            raise ValueError(f"Unknown brain_type: {self.brain_type}. Options: 'sparse_goldilocks', 'minimal', 'field'")
+            # Force field brain if invalid type specified
+            if not quiet_mode:
+                print(f"⚠️ Unknown brain_type '{self.brain_type}', using field brain")
+            self.brain_type = "field"
+            field_config = FieldBrainConfig(
+                sensory_dimensions=self.sensory_dim,
+                motor_dimensions=self.motor_dim,
+                quiet_mode=quiet_mode
+            )
+            self.field_brain_adapter = FieldBrainTCPAdapter(field_config)
         
         # Connect parallel coordinator to brain implementation after initialization
         if self.parallel_coordinator:
-            self.parallel_coordinator.set_vector_brain(self.vector_brain)
+            self.parallel_coordinator.set_field_brain_adapter(self.field_brain_adapter)
         
         # Initialize cognitive autopilot for adaptive intensity control
         self.cognitive_autopilot = CognitiveAutopilot()
         
         # Initialize maintenance scheduler if brain supports maintenance interface
         self.maintenance_scheduler = None
-        if isinstance(self.vector_brain, BrainMaintenanceInterface):
-            self.maintenance_scheduler = MaintenanceScheduler(self.vector_brain)
+        if isinstance(self.field_brain_adapter, BrainMaintenanceInterface):
+            self.maintenance_scheduler = MaintenanceScheduler(self.field_brain_adapter)
             if not quiet_mode:
                 print(f"🔧 Maintenance interface enabled for {self.brain_type} brain")
         
@@ -180,7 +159,18 @@ class BrainFactory:
         self.session_count = 0
         
         if self.enable_persistence:
-            memory_path = self.config.get('memory', {}).get('persistent_memory_path', './robot_memory')
+            # Read memory path from config, defaulting to server/robot_memory
+            server_dir = os.path.dirname(os.path.dirname(__file__))  # This is the server/ directory
+            config_memory_path = self.config.get('memory', {}).get('persistent_memory_path', './robot_memory')
+            
+            # If it's a relative path, make it relative to server directory
+            if config_memory_path.startswith('./'):
+                memory_path = os.path.join(server_dir, config_memory_path[2:])  # Remove './'
+            else:
+                memory_path = config_memory_path
+            
+            if not self.quiet_mode:
+                print(f"🗂️  Memory path: {memory_path}")
             
             # Create persistence configuration
             persistence_config = PersistenceConfig(
@@ -254,10 +244,10 @@ class BrainFactory:
         # Process through vector stream brain (with optional parallel coordination)
         if self.parallel_coordinator and self.parallel_coordinator.parallel_mode_enabled:
             # Use parallel processing with biological coordination
-            predicted_action, vector_brain_state = self.parallel_coordinator.process_with_parallel_coordination(processed_input)
+            predicted_action, field_brain_state = self.parallel_coordinator.process_with_parallel_coordination(processed_input)
         else:
             # Use traditional sequential processing
-            predicted_action, vector_brain_state = self.vector_brain.process_sensory_input(processed_input)
+            predicted_action, field_brain_state = self.field_brain_adapter.process_sensory_input(processed_input)
         
         # Adjust action dimensions if requested
         if action_dimensions and action_dimensions != len(predicted_action):
@@ -269,7 +259,7 @@ class BrainFactory:
                 predicted_action = predicted_action + [0.0] * (action_dimensions - len(predicted_action))
         
         # Use cognitive autopilot state for maintenance scheduling
-        confidence = vector_brain_state['prediction_confidence']
+        confidence = field_brain_state['prediction_confidence']
         
         # Update cognitive autopilot with vector stream confidence
         prediction_error = 1.0 - confidence
@@ -325,8 +315,8 @@ class BrainFactory:
             # Feature-flagged pattern storage logging for scientific analysis
             if self.config.get('logging', {}).get('log_pattern_storage', False):
                 # Log pattern storage events when streams update
-                if hasattr(self.vector_brain, 'last_pattern_storage_event'):
-                    storage_event = self.vector_brain.last_pattern_storage_event
+                if hasattr(self.field_brain_adapter, 'last_pattern_storage_event'):
+                    storage_event = self.field_brain_adapter.last_pattern_storage_event
                     if storage_event:
                         self.logger.log_similarity_evolution(
                             storage_event.get('pattern_id', 'unknown'),
@@ -344,7 +334,7 @@ class BrainFactory:
                             )
                         
                         # Clear the event after logging
-                        self.vector_brain.last_pattern_storage_event = None
+                        self.field_brain_adapter.last_pattern_storage_event = None
         
         # Performance monitoring
         cycle_time = time.time() - process_start_time
@@ -387,8 +377,8 @@ class BrainFactory:
             'hardware_adaptive_limits': self.hardware_adaptation.get_cognitive_limits() if self.hardware_adaptation else {},
             'cognitive_autopilot': autopilot_state,
             'brain_uptime': time.time() - self.brain_start_time,
-            'architecture': 'vector_stream_biological' if self.biological_oscillator else 'vector_stream',
-            **vector_brain_state  # Include vector stream specific state
+            'architecture': 'field_dynamics_biological' if self.biological_oscillator else 'field_dynamics',
+            **field_brain_state  # Include field brain adapter specific state
         }
         
         # Ensure parallel_processing flag is always present for compatibility
@@ -396,7 +386,7 @@ class BrainFactory:
             brain_state['parallel_processing'] = bool(
                 self.parallel_coordinator and 
                 self.parallel_coordinator.parallel_mode_enabled and
-                vector_brain_state.get('parallel_processing', False)
+                field_brain_state.get('parallel_processing', False)
             )
         
         # Add biological timing information if available
@@ -439,8 +429,8 @@ class BrainFactory:
                     )
                 
                 # Track meaningful field brain learning metrics (for field brains only)
-                if self.brain_type == "field" and hasattr(self.vector_brain, 'field_brain'):
-                    field_brain = self.vector_brain.field_brain
+                if self.brain_type == "field" and hasattr(self.field_brain_adapter, 'field_brain'):
+                    field_brain = self.field_brain_adapter.field_brain
                     
                     # Log significant field evolution events
                     if hasattr(field_brain, 'field_evolution_cycles'):
@@ -515,7 +505,7 @@ class BrainFactory:
     
     def get_brain_stats(self) -> Dict[str, Any]:
         """Get comprehensive brain performance statistics."""
-        vector_stats = self.vector_brain.get_brain_statistics()
+        field_adapter_stats = self.field_brain_adapter.get_brain_statistics()
         
         return {
             'brain_summary': {
@@ -525,28 +515,21 @@ class BrainFactory:
                 'uptime_seconds': time.time() - self.brain_start_time,
                 'cycles_per_minute': self.total_cycles / max(1, (time.time() - self.brain_start_time) / 60),
                 'experiences_per_minute': self.total_experiences / max(1, (time.time() - self.brain_start_time) / 60),
-                'architecture': vector_stats.get('architecture', 'vector_stream'),
-                'prediction_confidence': vector_stats.get('prediction_confidence', 0.0)
+                'architecture': field_adapter_stats.get('architecture', 'field_dynamics'),
+                'prediction_confidence': field_adapter_stats.get('prediction_confidence', 0.0)
             },
-            'vector_brain': vector_stats
+            'field_brain_adapter': field_adapter_stats
         }
     
     def reset_brain(self):
         """Reset the brain to initial state (for testing)."""
-        # Reset vector brain with same type and dimensions
-        if self.brain_type == "sparse_goldilocks":
-            self.vector_brain = SparseGoldilocksBrain(
-                sensory_dim=self.sensory_dim,
-                motor_dim=self.motor_dim,
-                temporal_dim=self.temporal_dim,
-                quiet_mode=self.quiet_mode
-            )
-        elif self.brain_type == "minimal":
-            self.vector_brain = MinimalVectorStreamBrain(
-                sensory_dim=self.sensory_dim,
-                motor_dim=self.motor_dim,
-                temporal_dim=self.temporal_dim
-            )
+        # Reset field brain
+        field_config = FieldBrainConfig(
+            sensory_dimensions=self.sensory_dim,
+            motor_dimensions=self.motor_dim,
+            quiet_mode=self.quiet_mode
+        )
+        self.field_brain_adapter = FieldBrainTCPAdapter(field_config)
         
         self.total_cycles = 0
         self.brain_start_time = time.time()
@@ -556,7 +539,7 @@ class BrainFactory:
             self.logger.close_session()
             self.logger = BrainLogger(config=self.config) if self.enable_logging else None
         
-        print("🧹 MinimalBrain reset to initial state")
+        print("🧹 Field brain reset to initial state")
     
     def close_logging_session(self):
         """Close the current logging session and generate final report."""
@@ -586,10 +569,10 @@ class BrainFactory:
         This is used by the BrainLogger to track learning progress.
         For the vector stream brain, we use confidence as intrinsic reward.
         """
-        if hasattr(self.vector_brain, 'emergent_confidence'):
-            return self.vector_brain.emergent_confidence.current_confidence
-        elif hasattr(self.vector_brain, '_estimate_prediction_confidence'):
-            return self.vector_brain._estimate_prediction_confidence()
+        if hasattr(self.field_brain_adapter, 'emergent_confidence'):
+            return self.field_brain_adapter.emergent_confidence.current_confidence
+        elif hasattr(self.field_brain_adapter, '_estimate_prediction_confidence'):
+            return self.field_brain_adapter._estimate_prediction_confidence()
         else:
             # Fallback: simple confidence based on cycle count
             return min(1.0, self.total_cycles / 1000.0)
@@ -605,8 +588,8 @@ class BrainFactory:
         basic_stats = self.get_brain_stats()
         
         # Get detailed stats from vector brain if available
-        if hasattr(self.vector_brain, 'get_brain_statistics'):
-            detailed_stats = self.vector_brain.get_brain_statistics()
+        if hasattr(self.field_brain_adapter, 'get_brain_statistics'):
+            detailed_stats = self.field_brain_adapter.get_brain_statistics()
             basic_stats.update(detailed_stats)
         
         # Add parallel processing stats if available
@@ -635,18 +618,18 @@ class BrainFactory:
     
     def light_maintenance(self) -> None:
         """Trigger light maintenance operations on the brain."""
-        if isinstance(self.vector_brain, BrainMaintenanceInterface):
-            self.vector_brain.safe_light_maintenance()
+        if isinstance(self.field_brain_adapter, BrainMaintenanceInterface):
+            self.field_brain_adapter.safe_light_maintenance()
     
     def heavy_maintenance(self) -> None:
         """Trigger heavy maintenance operations on the brain."""
-        if isinstance(self.vector_brain, BrainMaintenanceInterface):
-            self.vector_brain.safe_heavy_maintenance()
+        if isinstance(self.field_brain_adapter, BrainMaintenanceInterface):
+            self.field_brain_adapter.safe_heavy_maintenance()
     
     def deep_consolidation(self) -> None:
         """Trigger deep consolidation operations on the brain."""
-        if isinstance(self.vector_brain, BrainMaintenanceInterface):
-            self.vector_brain.safe_deep_consolidation()
+        if isinstance(self.field_brain_adapter, BrainMaintenanceInterface):
+            self.field_brain_adapter.safe_deep_consolidation()
     
     def run_recommended_maintenance(self) -> Dict[str, bool]:
         """Run maintenance operations recommended for current idle time."""
@@ -661,8 +644,8 @@ class BrainFactory:
     
     def get_maintenance_status(self) -> Dict[str, Any]:
         """Get maintenance metrics and timing information."""
-        if isinstance(self.vector_brain, BrainMaintenanceInterface):
-            return self.vector_brain.get_maintenance_status()
+        if isinstance(self.field_brain_adapter, BrainMaintenanceInterface):
+            return self.field_brain_adapter.get_maintenance_status()
         else:
             return {'maintenance_available': False}
     

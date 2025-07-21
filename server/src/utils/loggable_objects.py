@@ -35,8 +35,8 @@ class LoggableBrainState(LoggableObject):
         self.total_predictions = brain.total_predictions
         
         # Capture confidence if available
-        if hasattr(brain, 'vector_brain') and hasattr(brain.vector_brain, 'emergent_confidence'):
-            confidence_system = brain.vector_brain.emergent_confidence
+        if hasattr(brain, 'field_brain_adapter') and hasattr(brain.field_brain_adapter, 'emergent_confidence'):
+            confidence_system = brain.field_brain_adapter.emergent_confidence
             self.confidence_data = {
                 'current_confidence': confidence_system.current_confidence,
                 'volatility_confidence': confidence_system.volatility_confidence,

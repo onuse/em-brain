@@ -74,7 +74,7 @@ class BrainSerializer:
         
         try:
             # Extract patterns from vector brain
-            patterns = self._extract_all_patterns(brain.vector_brain)
+            patterns = self._extract_all_patterns(brain.field_brain_adapter)
             
             # Extract confidence dynamics
             confidence_state = self._extract_confidence_state(brain)
@@ -136,7 +136,7 @@ class BrainSerializer:
             
             # Restore patterns to vector brain
             restored_patterns = self._restore_patterns_to_vector_brain(
-                brain.vector_brain, brain_state.patterns
+                brain.field_brain_adapter, brain_state.patterns
             )
             
             # Restore confidence state
@@ -334,8 +334,8 @@ class BrainSerializer:
         """Extract confidence system state."""
         confidence_state = {}
         
-        if hasattr(brain.vector_brain, 'emergent_confidence'):
-            confidence_system = brain.vector_brain.emergent_confidence
+        if hasattr(brain.field_brain_adapter, 'emergent_confidence'):
+            confidence_system = brain.field_brain_adapter.emergent_confidence
             confidence_state = {
                 'current_confidence': getattr(confidence_system, 'current_confidence', 0.7),
                 'confidence_history': getattr(confidence_system, 'confidence_history', []),
@@ -366,8 +366,8 @@ class BrainSerializer:
         """Extract cross-stream association data."""
         associations = {}
         
-        if hasattr(brain.vector_brain, 'cross_stream_coactivation'):
-            coactivation = brain.vector_brain.cross_stream_coactivation
+        if hasattr(brain.field_brain_adapter, 'cross_stream_coactivation'):
+            coactivation = brain.field_brain_adapter.cross_stream_coactivation
             associations = {
                 'stream_connections': getattr(coactivation, 'stream_connections', {}),
                 'association_strength': getattr(coactivation, 'association_strength', {}),
@@ -400,18 +400,18 @@ class BrainSerializer:
     
     def _extract_field_brain_state(self, brain) -> Optional[Dict[str, Any]]:
         """Extract field brain state for persistence."""
-        if brain.brain_type != "field" or not hasattr(brain, 'vector_brain'):
+        if brain.brain_type != "field" or not hasattr(brain, 'field_brain_adapter'):
             return None
         
         try:
-            vector_brain = brain.vector_brain
-            if not hasattr(vector_brain, 'field_brain'):
+            field_brain_adapter = brain.field_brain_adapter
+            if not hasattr(field_brain_adapter, 'field_brain'):
                 return None
             
-            field_brain = vector_brain.field_brain
+            field_brain = field_brain_adapter.field_brain
             
             # Get field brain statistics and state
-            field_stats = vector_brain.get_brain_stats()
+            field_stats = field_brain_adapter.get_brain_stats()
             
             # Extract essential field state (not the full tensor - too large)
             field_state = {
@@ -432,11 +432,16 @@ class BrainSerializer:
                     'gradient_actions': field_brain.gradient_actions,
                 },
                 'stream_capabilities': {
-                    'input_dimensions': vector_brain.sensory_dim,
-                    'output_dimensions': vector_brain.motor_dim,
+                    'input_dimensions': field_brain_adapter.sensory_dim,
+                    'output_dimensions': field_brain_adapter.motor_dim,
                     'capabilities_negotiated': True
                 },
                 'field_memory_stats': field_stats.get('field_brain', {}),
+                'prediction_learning_state': {
+                    'prediction_confidence_history': getattr(field_brain, '_prediction_confidence_history', []),
+                    'current_prediction_confidence': getattr(field_brain, '_current_prediction_confidence', 0.5),
+                    'context_signature_history': getattr(field_brain, '_context_signature_history', [])
+                },
                 'save_timestamp': time.time(),
                 'persistence_version': '1.0'
             }
@@ -551,8 +556,8 @@ class BrainSerializer:
     
     def _restore_confidence_state(self, brain, confidence_state: Dict[str, Any]):
         """Restore confidence system state."""
-        if hasattr(brain.vector_brain, 'emergent_confidence') and confidence_state:
-            confidence_system = brain.vector_brain.emergent_confidence
+        if hasattr(brain.field_brain_adapter, 'emergent_confidence') and confidence_state:
+            confidence_system = brain.field_brain_adapter.emergent_confidence
             
             for attr, value in confidence_state.items():
                 if hasattr(confidence_system, attr):
@@ -569,8 +574,8 @@ class BrainSerializer:
     
     def _restore_cross_stream_associations(self, brain, associations: Dict[str, Any]):
         """Restore cross-stream association data."""
-        if hasattr(brain.vector_brain, 'cross_stream_coactivation') and associations:
-            coactivation = brain.vector_brain.cross_stream_coactivation
+        if hasattr(brain.field_brain_adapter, 'cross_stream_coactivation') and associations:
+            coactivation = brain.field_brain_adapter.cross_stream_coactivation
             
             for attr, value in associations.items():
                 if hasattr(coactivation, attr):
@@ -579,12 +584,12 @@ class BrainSerializer:
     def _restore_field_brain_state(self, brain, field_state: Dict[str, Any]):
         """Restore field brain state from persistence."""
         try:
-            vector_brain = brain.vector_brain
-            if not hasattr(vector_brain, 'field_brain'):
+            field_brain_adapter = brain.field_brain_adapter
+            if not hasattr(field_brain_adapter, 'field_brain'):
                 print("⚠️ Cannot restore field brain state: no field brain found")
                 return
             
-            field_brain = vector_brain.field_brain
+            field_brain = field_brain_adapter.field_brain
             
             # Restore field parameters
             if 'field_parameters' in field_state:
@@ -600,9 +605,25 @@ class BrainSerializer:
                     if hasattr(field_brain, stat_name):
                         setattr(field_brain, stat_name, value)
             
+            # Restore prediction learning state (CRITICAL for prediction improvement addiction)
+            if 'prediction_learning_state' in field_state:
+                learning_state = field_state['prediction_learning_state']
+                if 'prediction_confidence_history' in learning_state:
+                    field_brain._prediction_confidence_history = learning_state['prediction_confidence_history']
+                if 'current_prediction_confidence' in learning_state:
+                    field_brain._current_prediction_confidence = learning_state['current_prediction_confidence']
+                if 'context_signature_history' in learning_state:
+                    field_brain._context_signature_history = learning_state['context_signature_history']
+            
             print(f"✅ Field brain state restored from persistence")
             print(f"   Cycles: {field_state.get('field_statistics', {}).get('brain_cycles', 0)}")
             print(f"   Evolution cycles: {field_state.get('field_statistics', {}).get('field_evolution_cycles', 0)}")
+            
+            # Report prediction learning state restoration
+            prediction_state = field_state.get('prediction_learning_state', {})
+            confidence_history = prediction_state.get('prediction_confidence_history', [])
+            if confidence_history:
+                print(f"   Prediction confidence history: {len(confidence_history)} entries restored")
             
         except Exception as e:
             print(f"⚠️ Failed to restore field brain state: {e}")

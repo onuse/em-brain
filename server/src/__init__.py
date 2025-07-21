@@ -16,8 +16,6 @@ __author__ = "Robot Brain Project"
 
 # Core brain systems
 from .brain_factory import BrainFactory
-from .brains.minimal.core_brain import MinimalVectorStreamBrain
-from .brains.sparse_goldilocks.base_brain import GoldilocksBrain
 
 # Modular systems
 from .attention import UniversalAttentionSystem, CrossModalAttentionSystem
@@ -27,8 +25,6 @@ from .parameters import EmergentParameterSystem, ConstraintType
 __all__ = [
     # Core brain systems
     "BrainFactory",
-    "MinimalVectorStreamBrain", 
-    "GoldilocksBrain",
     
     # Attention systems
     "UniversalAttentionSystem",

@@ -79,7 +79,7 @@ class AdaptiveConfigManager:
             print(f"⚠️  User config not found at {self.user_config_path}, using defaults")
             return {
                 "brain": {"type": "field", "sensory_dim": 16, "motor_dim": 4},
-                "memory": {"persistent_memory_path": "./robot_memory", "enable_persistence": True},
+                "memory": {"persistent_memory_path": "./server/robot_memory", "enable_persistence": True},
                 "network": {"host": "0.0.0.0", "port": 9999},
                 "logging": {"log_directory": "./logs", "log_level": "info"}
             }

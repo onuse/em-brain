@@ -1,0 +1,481 @@
+{
+  "timestamp": 1753120750.922391,
+  "similar_pattern_snapshots": [
+    {
+      "timestamp": 1753120728.727272,
+      "pattern_type": "similar",
+      "cycle": 0,
+      "topology_dimensions": {
+        "topo_stable_1": 0.0,
+        "topo_stable_2": 0.0,
+        "topo_boundary": 0.0,
+        "topo_persistence": 0.0,
+        "topo_connectivity": 0.0,
+        "topo_homology": 0.0
+      },
+      "flow_dimensions": {
+        "flow_grad_x": 0.0,
+        "flow_grad_y": 0.0,
+        "flow_grad_z": 0.0,
+        "flow_momentum_1": NaN,
+        "flow_momentum_2": NaN,
+        "flow_divergence": 0.0,
+        "flow_curl": 0.0,
+        "flow_potential": 0.0
+      },
+      "coupling_dimensions": {
+        "coupling_correlation": NaN,
+        "coupling_binding": NaN,
+        "coupling_synchrony": 0.0,
+        "coupling_resonance": 0.0,
+        "coupling_interference": 0.0
+      },
+      "field_summary": {
+        "field_energy": 0.0,
+        "field_variance": 0.0,
+        "field_max_activation": 0.0,
+        "field_topology_signature": 0.0
+      }
+    },
+    {
+      "timestamp": 1753120729.9974039,
+      "pattern_type": "similar",
+      "cycle": 10,
+      "topology_dimensions": {
+        "topo_stable_1": 0.0,
+        "topo_stable_2": 1.6164186718015117e-06,
+        "topo_boundary": 0.0,
+        "topo_persistence": 0.0,
+        "topo_connectivity": 2.8740841629369684e-13,
+        "topo_homology": 2.4759729821965948e-09
+      },
+      "flow_dimensions": {
+        "flow_grad_x": 0.0,
+        "flow_grad_y": 0.0,
+        "flow_grad_z": 0.0,
+        "flow_momentum_1": NaN,
+        "flow_momentum_2": NaN,
+        "flow_divergence": 0.0,
+        "flow_curl": 0.0,
+        "flow_potential": 0.0
+      },
+      "coupling_dimensions": {
+        "coupling_correlation": NaN,
+        "coupling_binding": NaN,
+        "coupling_synchrony": 0.0,
+        "coupling_resonance": 0.0,
+        "coupling_interference": 0.0
+      },
+      "field_summary": {
+        "field_energy": 2.190549519553997e-09,
+        "field_variance": 1.820109691015961e-15,
+        "field_max_activation": 2.285256186951301e-06,
+        "field_topology_signature": 0.0
+      }
+    },
+    {
+      "timestamp": 1753120731.421173,
+      "pattern_type": "similar",
+      "cycle": 20,
+      "topology_dimensions": {
+        "topo_stable_1": 0.0,
+        "topo_stable_2": 2.6743825856101466e-06,
+        "topo_boundary": 0.0,
+        "topo_persistence": 0.0,
+        "topo_connectivity": 5.2613759703168395e-12,
+        "topo_homology": 8.259936734589246e-09
+      },
+      "flow_dimensions": {
+        "flow_grad_x": 0.0,
+        "flow_grad_y": 0.0,
+        "flow_grad_z": 0.0,
+        "flow_momentum_1": NaN,
+        "flow_momentum_2": NaN,
+        "flow_divergence": 0.0,
+        "flow_curl": 0.0,
+        "flow_potential": 0.0
+      },
+      "coupling_dimensions": {
+        "coupling_correlation": NaN,
+        "coupling_binding": NaN,
+        "coupling_synchrony": 0.0,
+        "coupling_resonance": 0.0,
+        "coupling_interference": 0.0
+      },
+      "field_summary": {
+        "field_energy": 5.893733057149575e-09,
+        "field_variance": 4.89699054147686e-15,
+        "field_max_activation": 3.799026899287128e-06,
+        "field_topology_signature": 0.0
+      }
+    },
+    {
+      "timestamp": 1753120732.7959769,
+      "pattern_type": "similar",
+      "cycle": 30,
+      "topology_dimensions": {
+        "topo_stable_1": 0.0,
+        "topo_stable_2": 3.3659300697763683e-06,
+        "topo_boundary": 0.0,
+        "topo_persistence": 0.0,
+        "topo_connectivity": 2.327973577798126e-11,
+        "topo_homology": 1.547858552441994e-08
+      },
+      "flow_dimensions": {
+        "flow_grad_x": 0.0,
+        "flow_grad_y": 0.0,
+        "flow_grad_z": 0.0,
+        "flow_momentum_1": NaN,
+        "flow_momentum_2": NaN,
+        "flow_divergence": 0.0,
+        "flow_curl": 0.0,
+        "flow_potential": 0.0
+      },
+      "coupling_dimensions": {
+        "coupling_correlation": NaN,
+        "coupling_binding": NaN,
+        "coupling_synchrony": 0.0,
+        "coupling_resonance": 0.0,
+        "coupling_interference": 0.0
+      },
+      "field_summary": {
+        "field_energy": 9.291363234353867e-09,
+        "field_variance": 7.719730379300658e-15,
+        "field_max_activation": 4.786262707057176e-06,
+        "field_topology_signature": 0.0
+      }
+    },
+    {
+      "timestamp": 1753120734.0430741,
+      "pattern_type": "similar",
+      "cycle": 40,
+      "topology_dimensions": {
+        "topo_stable_1": 0.0,
+        "topo_stable_2": 3.742826265806798e-06,
+        "topo_boundary": 0.0,
+        "topo_persistence": 0.0,
+        "topo_connectivity": 6.248424694321741e-11,
+        "topo_homology": 2.3223105216629847e-08
+      },
+      "flow_dimensions": {
+        "flow_grad_x": 0.0,
+        "flow_grad_y": 0.0,
+        "flow_grad_z": 0.0,
+        "flow_momentum_1": NaN,
+        "flow_momentum_2": NaN,
+        "flow_divergence": 0.0,
+        "flow_curl": 0.0,
+        "flow_potential": 0.0
+      },
+      "coupling_dimensions": {
+        "coupling_correlation": NaN,
+        "coupling_binding": NaN,
+        "coupling_synchrony": 0.0,
+        "coupling_resonance": 0.0,
+        "coupling_interference": 0.0
+      },
+      "field_summary": {
+        "field_energy": 1.1489611928539034e-08,
+        "field_variance": 9.545673374466122e-15,
+        "field_max_activation": 5.319868705555564e-06,
+        "field_topology_signature": 0.0
+      }
+    }
+  ],
+  "divergent_pattern_snapshots": [
+    {
+      "timestamp": 1753120739.835019,
+      "pattern_type": "divergent",
+      "cycle": 0,
+      "topology_dimensions": {
+        "topo_stable_1": 0.0,
+        "topo_stable_2": 0.0,
+        "topo_boundary": 0.0,
+        "topo_persistence": 0.0,
+        "topo_connectivity": 0.0,
+        "topo_homology": 0.0
+      },
+      "flow_dimensions": {
+        "flow_grad_x": 0.0,
+        "flow_grad_y": 0.0,
+        "flow_grad_z": 0.0,
+        "flow_momentum_1": NaN,
+        "flow_momentum_2": NaN,
+        "flow_divergence": 0.0,
+        "flow_curl": 0.0,
+        "flow_potential": 0.0
+      },
+      "coupling_dimensions": {
+        "coupling_correlation": NaN,
+        "coupling_binding": NaN,
+        "coupling_synchrony": 0.0,
+        "coupling_resonance": 0.0,
+        "coupling_interference": 0.0
+      },
+      "field_summary": {
+        "field_energy": 0.0,
+        "field_variance": 0.0,
+        "field_max_activation": 0.0,
+        "field_topology_signature": 0.0
+      }
+    },
+    {
+      "timestamp": 1753120740.988689,
+      "pattern_type": "divergent",
+      "cycle": 10,
+      "topology_dimensions": {
+        "topo_stable_1": 0.0,
+        "topo_stable_2": 0.0,
+        "topo_boundary": 0.0,
+        "topo_persistence": 0.0,
+        "topo_connectivity": 5.799764835057175e-11,
+        "topo_homology": 0.0
+      },
+      "flow_dimensions": {
+        "flow_grad_x": 0.0,
+        "flow_grad_y": 0.0,
+        "flow_grad_z": 0.0,
+        "flow_momentum_1": NaN,
+        "flow_momentum_2": NaN,
+        "flow_divergence": 0.0,
+        "flow_curl": 0.0,
+        "flow_potential": 0.0
+      },
+      "coupling_dimensions": {
+        "coupling_correlation": NaN,
+        "coupling_binding": NaN,
+        "coupling_synchrony": 0.0,
+        "coupling_resonance": 0.0,
+        "coupling_interference": 0.0
+      },
+      "field_summary": {
+        "field_energy": 2.203676796597165e-09,
+        "field_variance": 1.831014181420676e-15,
+        "field_max_activation": 2.2920980882190634e-06,
+        "field_topology_signature": 0.0
+      }
+    },
+    {
+      "timestamp": 1753120742.36027,
+      "pattern_type": "divergent",
+      "cycle": 20,
+      "topology_dimensions": {
+        "topo_stable_1": 0.0,
+        "topo_stable_2": 0.0,
+        "topo_boundary": 0.0,
+        "topo_persistence": 0.0,
+        "topo_connectivity": 4.926261065740789e-10,
+        "topo_homology": 0.0
+      },
+      "flow_dimensions": {
+        "flow_grad_x": 0.0,
+        "flow_grad_y": 0.0,
+        "flow_grad_z": 0.0,
+        "flow_momentum_1": NaN,
+        "flow_momentum_2": NaN,
+        "flow_divergence": 0.0,
+        "flow_curl": 0.0,
+        "flow_potential": 0.0
+      },
+      "coupling_dimensions": {
+        "coupling_correlation": NaN,
+        "coupling_binding": NaN,
+        "coupling_synchrony": 0.0,
+        "coupling_resonance": 0.0,
+        "coupling_interference": 0.0
+      },
+      "field_summary": {
+        "field_energy": 6.0177076655065775e-09,
+        "field_variance": 4.9999893243465095e-15,
+        "field_max_activation": 3.838510565401521e-06,
+        "field_topology_signature": 0.0
+      }
+    },
+    {
+      "timestamp": 1753120743.7546408,
+      "pattern_type": "divergent",
+      "cycle": 30,
+      "topology_dimensions": {
+        "topo_stable_1": 0.0,
+        "topo_stable_2": 0.0,
+        "topo_boundary": 0.0,
+        "topo_persistence": 0.0,
+        "topo_connectivity": 1.4737712161760896e-09,
+        "topo_homology": 0.0
+      },
+      "flow_dimensions": {
+        "flow_grad_x": 0.0,
+        "flow_grad_y": 0.0,
+        "flow_grad_z": 0.0,
+        "flow_momentum_1": NaN,
+        "flow_momentum_2": NaN,
+        "flow_divergence": 0.0,
+        "flow_curl": 0.0,
+        "flow_potential": 0.0
+      },
+      "coupling_dimensions": {
+        "coupling_correlation": NaN,
+        "coupling_binding": NaN,
+        "coupling_synchrony": 0.0,
+        "coupling_resonance": 0.0,
+        "coupling_interference": 0.0
+      },
+      "field_summary": {
+        "field_energy": 9.605211737095942e-09,
+        "field_variance": 7.98049370727763e-15,
+        "field_max_activation": 4.86610133521026e-06,
+        "field_topology_signature": 0.0
+      }
+    },
+    {
+      "timestamp": 1753120745.07996,
+      "pattern_type": "divergent",
+      "cycle": 40,
+      "topology_dimensions": {
+        "topo_stable_1": 0.0,
+        "topo_stable_2": 0.0,
+        "topo_boundary": 0.0,
+        "topo_persistence": 0.0,
+        "topo_connectivity": 3.035053319777603e-09,
+        "topo_homology": 0.0
+      },
+      "flow_dimensions": {
+        "flow_grad_x": 0.0,
+        "flow_grad_y": 0.0,
+        "flow_grad_z": 0.0,
+        "flow_momentum_1": NaN,
+        "flow_momentum_2": NaN,
+        "flow_divergence": 0.0,
+        "flow_curl": 0.0,
+        "flow_potential": 0.0
+      },
+      "coupling_dimensions": {
+        "coupling_correlation": NaN,
+        "coupling_binding": NaN,
+        "coupling_synchrony": 0.0,
+        "coupling_resonance": 0.0,
+        "coupling_interference": 0.0
+      },
+      "field_summary": {
+        "field_energy": 1.2321005549154052e-08,
+        "field_variance": 1.023642704888611e-14,
+        "field_max_activation": 5.512324150913628e-06,
+        "field_topology_signature": 0.0
+      }
+    }
+  ],
+  "topology_analysis": {
+    "topo_stable_1": {
+      "similar_mean": 0.0,
+      "divergent_mean": 0.0,
+      "separation_score": 0.0,
+      "clustering_detected": false
+    },
+    "topo_stable_2": {
+      "similar_mean": 2.279911518598965e-06,
+      "divergent_mean": 0.0,
+      "separation_score": 2.3634833916011098,
+      "clustering_detected": true
+    },
+    "topo_boundary": {
+      "similar_mean": 0.0,
+      "divergent_mean": 0.0,
+      "separation_score": 0.0,
+      "clustering_detected": false
+    },
+    "topo_persistence": {
+      "similar_mean": 0.0,
+      "divergent_mean": 0.0,
+      "separation_score": 0.0,
+      "clustering_detected": false
+    },
+    "topo_connectivity": {
+      "similar_mean": 1.8262553421561843e-11,
+      "divergent_mean": 1.0118896581756687e-09,
+      "separation_score": 0.09194275500945284,
+      "clustering_detected": false
+    },
+    "topo_homology": {
+      "similar_mean": 9.887520091567125e-09,
+      "divergent_mean": 0.0,
+      "separation_score": 0.616548302194655,
+      "clustering_detected": false
+    },
+    "flow_grad_x": {
+      "similar_mean": 0.0,
+      "divergent_mean": 0.0,
+      "separation_score": 0.0,
+      "clustering_detected": false
+    },
+    "flow_grad_y": {
+      "similar_mean": 0.0,
+      "divergent_mean": 0.0,
+      "separation_score": 0.0,
+      "clustering_detected": false
+    },
+    "flow_grad_z": {
+      "similar_mean": 0.0,
+      "divergent_mean": 0.0,
+      "separation_score": 0.0,
+      "clustering_detected": false
+    },
+    "flow_momentum_1": {
+      "similar_mean": NaN,
+      "divergent_mean": NaN,
+      "separation_score": NaN,
+      "clustering_detected": false
+    },
+    "flow_momentum_2": {
+      "similar_mean": NaN,
+      "divergent_mean": NaN,
+      "separation_score": NaN,
+      "clustering_detected": false
+    },
+    "flow_divergence": {
+      "similar_mean": 0.0,
+      "divergent_mean": 0.0,
+      "separation_score": 0.0,
+      "clustering_detected": false
+    },
+    "flow_curl": {
+      "similar_mean": 0.0,
+      "divergent_mean": 0.0,
+      "separation_score": 0.0,
+      "clustering_detected": false
+    },
+    "flow_potential": {
+      "similar_mean": 0.0,
+      "divergent_mean": 0.0,
+      "separation_score": 0.0,
+      "clustering_detected": false
+    }
+  },
+  "clustering_evidence": {
+    "strong_clustering_dimensions": [
+      {
+        "dimension": "topo_stable_2",
+        "separation": 2.3634833916011098,
+        "similar_mean": 2.279911518598965e-06,
+        "divergent_mean": 0.0
+      }
+    ],
+    "moderate_clustering_dimensions": [],
+    "no_clustering_dimensions": [
+      "topo_stable_1",
+      "topo_boundary",
+      "topo_persistence",
+      "topo_connectivity",
+      "topo_homology",
+      "flow_grad_x",
+      "flow_grad_y",
+      "flow_grad_z",
+      "flow_momentum_1",
+      "flow_momentum_2",
+      "flow_divergence",
+      "flow_curl",
+      "flow_potential"
+    ],
+    "overall_clustering_score": NaN,
+    "emergent_clustering_detected": false
+  }
+}

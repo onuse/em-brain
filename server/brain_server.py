@@ -99,10 +99,10 @@ class MinimalBrainServer:
             self.config['logging'] = {'log_directory': str(brain_root / 'logs')}
         
         if 'memory' in self.config:
-            memory_path = self.config['memory'].get('persistent_memory_path', './robot_memory')
+            memory_path = self.config['memory'].get('persistent_memory_path', './server/robot_memory')
             self.config['memory']['persistent_memory_path'] = str(brain_root / memory_path.lstrip('./'))
         else:
-            self.config['memory'] = {'persistent_memory_path': str(brain_root / 'robot_memory')}
+            self.config['memory'] = {'persistent_memory_path': str(brain_root / 'server/robot_memory')}
         
         # Create directories if they don't exist
         os.makedirs(self.config['logging']['log_directory'], exist_ok=True)

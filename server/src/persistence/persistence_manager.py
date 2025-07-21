@@ -30,7 +30,7 @@ class PersistenceManager:
     - Background threads for non-blocking operation
     """
     
-    def __init__(self, config: Optional[PersistenceConfig] = None, memory_path: str = "./robot_memory"):
+    def __init__(self, config: Optional[PersistenceConfig] = None, memory_path: str = "./server/robot_memory"):
         # Initialize configuration
         if config is None:
             config = create_default_config(memory_path)
