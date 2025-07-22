@@ -12,7 +12,7 @@ from typing import Dict, List, Any, Optional, Tuple
 from pathlib import Path
 from datetime import datetime, timedelta
 
-from .brain_serializer import BrainSerializer, SerializedBrainState, SerializedPattern
+from .brain_serializer import BrainSerializer, SerializedBrainState
 from .storage_backend import StorageBackend
 from .persistence_config import PersistenceConfig
 
@@ -153,7 +153,7 @@ class ConsolidationEngine:
             consolidation_time_ms = (time.perf_counter() - start_time) * 1000
             self._update_consolidation_stats(
                 len(incremental_files), 
-                len(consolidated_state.patterns),
+                1,  # Simplified - just one state
                 consolidation_time_ms,
                 original_size_mb
             )
@@ -162,7 +162,7 @@ class ConsolidationEngine:
             
             print(f"✅ Consolidation complete:")
             print(f"   Merged {len(incremental_files)} incremental files")
-            print(f"   Total patterns: {len(consolidated_state.patterns)}")
+            print(f"   Field dimensions: {consolidated_state.field_dimensions}D")
             print(f"   Archived {archived_count} files")
             print(f"   Time: {consolidation_time_ms:.1f}ms")
             
@@ -240,7 +240,7 @@ class ConsolidationEngine:
         # Start with base state or create new one
         if base_state:
             merged_state = base_state
-            print(f"📖 Base state: {len(base_state.patterns)} patterns, {base_state.total_experiences} experiences")
+            print(f"📖 Base state: {base_state.field_dimensions}D field, {base_state.brain_cycles} cycles")
         else:
             # Create initial state from first incremental file
             if not incremental_files:
@@ -257,7 +257,7 @@ class ConsolidationEngine:
             try:
                 merged_state = self.brain_serializer.from_dict(brain_dict)
                 incremental_files = incremental_files[1:]  # Skip first file
-                print(f"📖 Initial state: {len(merged_state.patterns)} patterns")
+                print(f"📖 Initial state: {merged_state.field_dimensions}D field")
             except Exception as e:
                 print(f"❌ Failed to parse initial file {first_file['filename']}: {e}")
                 print(f"   File keys: {list(brain_dict.keys()) if brain_dict else 'None'}")
@@ -279,81 +279,28 @@ class ConsolidationEngine:
             try:
                 incremental_state = self.brain_serializer.from_dict(brain_dict)
                 
-                # Merge this incremental state
-                merged_state = self._merge_two_states(merged_state, incremental_state)
+                # Merge this incremental state (simplified - just use latest state)
+                merged_state = incremental_state
             except Exception as e:
                 print(f"❌ Failed to parse incremental file {file_info['filename']}: {e}")
                 print(f"   File keys: {list(brain_dict.keys()) if brain_dict else 'None'}")
                 continue  # Skip this file and continue with others
         
         # Update consolidation metadata
-        merged_state.save_timestamp = time.time()
-        merged_state.version = self.brain_serializer.version
+        merged_state.timestamp = time.time()
+        merged_state.version = "1.0"
         
-        print(f"🔀 Final merged state: {len(merged_state.patterns)} patterns, {merged_state.total_experiences} experiences")
+        print(f"🔀 Final merged state: {merged_state.field_dimensions}D field, {merged_state.brain_cycles} cycles")
         
         return merged_state
     
     def _merge_two_states(self, base_state: SerializedBrainState, 
                          incremental_state: SerializedBrainState) -> SerializedBrainState:
-        """Merge two brain states, resolving conflicts."""
-        
-        # Use the more recent state's scalar values
-        merged_state = SerializedBrainState(
-            version=incremental_state.version,
-            session_count=incremental_state.session_count,
-            total_cycles=incremental_state.total_cycles,
-            total_experiences=incremental_state.total_experiences,
-            save_timestamp=incremental_state.save_timestamp,
-            patterns=[],  # Will be merged below
-            confidence_state=incremental_state.confidence_state,
-            hardware_adaptations=incremental_state.hardware_adaptations,
-            cross_stream_associations=incremental_state.cross_stream_associations,
-            brain_type=incremental_state.brain_type,
-            sensory_dim=incremental_state.sensory_dim,
-            motor_dim=incremental_state.motor_dim,
-            temporal_dim=incremental_state.temporal_dim,
-            learning_history=incremental_state.learning_history,
-            emergence_events=incremental_state.emergence_events
-        )
-        
-        # Merge patterns (this is the complex part)
-        merged_patterns = self._merge_patterns(base_state.patterns, incremental_state.patterns)
-        merged_state.patterns = merged_patterns
-        
-        return merged_state
+        """Merge two brain states - simplified for UnifiedFieldBrain."""
+        # With the simplified brain, just use the more recent state
+        return incremental_state
     
-    def _merge_patterns(self, base_patterns: List[SerializedPattern], 
-                       incremental_patterns: List[SerializedPattern]) -> List[SerializedPattern]:
-        """Merge pattern lists, resolving conflicts and deduplicating."""
-        
-        # Create lookup by pattern ID
-        pattern_map = {}
-        
-        # Add base patterns
-        for pattern in base_patterns:
-            pattern_map[pattern.pattern_id] = pattern
-        
-        # Merge incremental patterns
-        conflicts_resolved = 0
-        for inc_pattern in incremental_patterns:
-            if inc_pattern.pattern_id in pattern_map:
-                # Conflict: choose more recent pattern (higher last_accessed)
-                existing_pattern = pattern_map[inc_pattern.pattern_id]
-                if inc_pattern.last_accessed > existing_pattern.last_accessed:
-                    pattern_map[inc_pattern.pattern_id] = inc_pattern
-                    conflicts_resolved += 1
-            else:
-                # New pattern
-                pattern_map[inc_pattern.pattern_id] = inc_pattern
-        
-        self.stats['pattern_conflicts_resolved'] += conflicts_resolved
-        
-        if conflicts_resolved > 0:
-            print(f"🔀 Resolved {conflicts_resolved} pattern conflicts")
-        
-        # Return merged patterns as list
-        return list(pattern_map.values())
+    # Pattern merging removed - not needed with simplified UnifiedFieldBrain
     
     def _save_consolidated_snapshot(self, consolidated_state: SerializedBrainState) -> bool:
         """Save consolidated state as new snapshot."""
@@ -378,7 +325,7 @@ class ConsolidationEngine:
                 'consolidation_id': f"consolidation_{self.consolidation_counter:06d}",
                 'consolidation_timestamp': time.time(),
                 'consolidation_type': 'incremental_merge',
-                'patterns_count': len(consolidated_state.patterns),
+                'field_dimensions': consolidated_state.field_dimensions,
                 'source_files_count': 'unknown'  # Would need to pass this through
             }
             brain_dict['consolidation_metadata'] = consolidation_metadata

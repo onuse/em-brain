@@ -4,6 +4,8 @@
 
 *Constraint-based intelligence system implementing continuous multi-dimensional field dynamics alongside discrete pattern-based approaches.*
 
+The docs/ARCHITECTURE.md file should be kept updated and will give you a very good idea of how this project is structured.
+
 ## 🚀 Quick Start
 
 ### Installation & Test
@@ -30,7 +32,7 @@ python3 demo.py  # Interactive launcher
 **Field-based implementation** - position determines meaning, topology enables reasoning. This provides an alternative to discrete pattern-based approaches.
 
 ### Technical Implementation
-- **Field-Native Intelligence** - Cognition emerges from unified 36D field dynamics
+- **Field-Native Intelligence** - Cognition emerges from unified 37D field dynamics
 - **Physics-Based Organization** - Dimensions organized by dynamics families (oscillatory, flow, topology, energy, coupling, emergence) rather than sensory modalities
 - **Emergent Capabilities** - Creative reasoning, analogical thinking, hierarchical abstraction, temporal intelligence
 - **Substrate Independence** - Field patterns work independently of biological implementation details
@@ -102,7 +104,7 @@ This research extends foundational discoveries to test constraint necessity:
 ### **Implementation: Field-Native Brain Architecture** 🧠 **[PHASES B1-B4 COMPLETED]**
 
 ### **Phase B1: Unified Multi-Dimensional Field Brain** ✅ **[IMPLEMENTED]**
-- **36D Unified Field** organized by physics families rather than sensory modalities
+- **37D Unified Field** organized by physics families rather than sensory modalities
 - **Energy responsiveness**: 113.540 range across different inputs
 - **Topology formation**: 62 regions discovered during testing
 - **Cross-modal mapping**: Color and music both use oscillatory dynamics (frequency patterns)
@@ -117,7 +119,7 @@ This research extends foundational discoveries to test constraint necessity:
 ## 🎯 Core Architecture
 
 ### Field-Native Intelligence Processing
-**Unified 36D Field Architecture** organized by physics families:
+**Unified 37D Field Architecture** organized by physics families:
 - **Spatial Dimensions** (5D): Position, orientation, scale, time
 - **Oscillatory Dimensions** (6D): Frequencies, rhythms, periods (color, sound, neural gamma/theta)
 - **Flow Dimensions** (8D): Gradients, momentum, direction (motion, attention, curiosity)
@@ -137,7 +139,7 @@ This research extends foundational discoveries to test constraint necessity:
 
 ### Performance Characteristics
 - **Sub-millisecond field operations**: Real-time robot control capable
-- **High-dimensional processing**: 36D continuous space implementation
+- **High-dimensional processing**: 37D continuous space implementation
 - **GPU acceleration**: CUDA/MPS for high-dimensional field operations
 - **Biological optimizations**: Sparse updates, hierarchical processing, predictive caching
 - **Intrinsic persistence**: Field topology serves as memory system
@@ -152,7 +154,7 @@ brain/
 ├── server/                    # Complete brain implementation
 │   ├── src/brain.py          # Main coordinator
 │   ├── src/brains/field/     # Revolutionary field-native intelligence
-│   │   ├── generic_brain.py  # Platform-agnostic 36D field brain
+│   │   ├── generic_brain.py  # Platform-agnostic 37D field brain
 │   │   ├── core_brain.py     # Robot-specific field brain
 │   │   └── dynamics/         # Field dynamics families
 │   ├── src/brains/sparse_goldilocks/  # Legacy discrete brain (constraint-based)
@@ -195,7 +197,7 @@ Raw vector exchange only - no JSON overhead.
 **Technical Achievements:**
 - **Alternative Approach Developed**: Field dynamics provide alternative to discrete pattern limitations
 - **Field Intelligence Implemented**: Continuous field dynamics enable creative reasoning, analogical thinking, temporal intelligence
-- **36D Unified Field**: Physics-based organization implemented as alternative to sensory modality organization
+- **37D Unified Field**: Physics-based organization implemented as alternative to sensory modality organization
 - **Biological Optimizations**: Sparse updates, hierarchical processing, predictive caching implemented
 - **Production Ready**: Complete field brain deployable via configuration
 

@@ -7,7 +7,7 @@ streams in favor of unified multi-dimensional field dynamics. All intelligence
 emerges from field topology optimization and constraint satisfaction.
 
 Architecture:
-- Unified 36D field organized by dynamics families, not sensory modalities
+- Unified 37D field organized by dynamics families, not sensory modalities
 - All concepts emerge from field topology (no discrete pattern storage)
 - All actions emerge from field gradients (no discrete action generation)
 - All memory emerges from field persistence (no discrete pattern recall)
@@ -64,7 +64,7 @@ class UnifiedFieldExperience:
     """A complete experience in unified field space."""
     timestamp: float
     raw_sensory_input: torch.Tensor  # Original robot sensors
-    field_coordinates: torch.Tensor  # Mapped to 36D field space
+    field_coordinates: torch.Tensor  # Mapped to 37D field space
     field_intensity: float = 1.0
     experience_id: Optional[str] = None
 
@@ -537,54 +537,57 @@ class UnifiedFieldBrain:
     def _apply_spatial_diffusion(self):
         """Apply diffusion in spatial dimensions - OPTIMIZED with vectorized operations."""
         # PERFORMANCE FIX: Use vectorized averaging instead of nested loops
-        # Only diffuse in the first 3 spatial dimensions, keep other dimensions intact
-        
-        # Create a copy for diffusion calculation (3D spatial only)
-        original_field = self.unified_field.clone()
-        
-        # Apply 3D averaging in spatial dimensions using vectorized operations
-        # This replaces the O(n^6) nested loops with O(n^3) vectorized ops
-        diffused_field = torch.zeros_like(self.unified_field)
-        
-        # Vectorized 3D neighborhood averaging for spatial dimensions only
-        for x in range(1, self.spatial_resolution - 1):
-            for y in range(1, self.spatial_resolution - 1):
-                for z in range(1, self.spatial_resolution - 1):
-                    # Extract 3x3x3 neighborhood in spatial dims, all other dims preserved
-                    neighborhood = original_field[x-1:x+2, y-1:y+2, z-1:z+2, :, :, ...]
-                    # Average across spatial neighborhood (dimensions 0,1,2)
-                    diffused_value = torch.mean(neighborhood, dim=(0,1,2))
-                    # Assign to all positions in this neighborhood
-                    diffused_field[x, y, z, :, :, ...] = diffused_value
-        
-        # Apply diffusion rate blending (same math as before)
-        self.unified_field = (
-            (1 - self.field_diffusion_rate) * self.unified_field +
-            self.field_diffusion_rate * diffused_field
-        )
+        # OPTIMIZED: Apply spatial diffusion with minimal performance impact
+        # Only diffuse occasionally to avoid performance bottleneck  
+        if self.field_evolution_cycles % 10 == 0:  # Every 10th cycle
+            # Simple vectorized diffusion on first 3 spatial dimensions only
+            # Get interior points to avoid boundary issues
+            if self.spatial_resolution > 2:
+                interior_slice = slice(1, self.spatial_resolution - 1)
+                
+                # Calculate diffused values for interior points using slicing
+                # Average of 6-connected neighbors in 3D space
+                diffused_interior = (
+                    self.unified_field[interior_slice, interior_slice, interior_slice] +
+                    self.unified_field[2:, interior_slice, interior_slice] +
+                    self.unified_field[:-2, interior_slice, interior_slice] +
+                    self.unified_field[interior_slice, 2:, interior_slice] +
+                    self.unified_field[interior_slice, :-2, interior_slice] +
+                    self.unified_field[interior_slice, interior_slice, 2:] +
+                    self.unified_field[interior_slice, interior_slice, :-2]
+                ) / 7.0
+                
+                # Apply diffusion to interior points only
+                self.unified_field[interior_slice, interior_slice, interior_slice] = (
+                    (1 - self.field_diffusion_rate) * self.unified_field[interior_slice, interior_slice, interior_slice] +
+                    self.field_diffusion_rate * diffused_interior
+                )
     
     def _apply_constraint_guided_evolution(self):
         """Apply constraint-guided field evolution (simplified)."""
         # This would integrate with our constraint field dynamics
         # For now, apply simple constraint satisfaction
         
-        # Encourage smooth gradients (constraint on field smoothness)
-        gradient_penalty = 0.01
-        for x in range(1, self.spatial_resolution - 1):
-            for y in range(1, self.spatial_resolution - 1):
-                for z in range(1, self.spatial_resolution - 1):
-                    for s in range(1, 9):
-                        for t in range(1, 14):
-                            # Calculate local gradient magnitude
-                            grad_x = self.unified_field[x+1, y, z, s, t] - self.unified_field[x-1, y, z, s, t]
-                            grad_y = self.unified_field[x, y+1, z, s, t] - self.unified_field[x, y-1, z, s, t]
-                            grad_z = self.unified_field[x, y, z+1, s, t] - self.unified_field[x, y, z-1, s, t]
-                            
-                            gradient_magnitude = math.sqrt(grad_x**2 + grad_y**2 + grad_z**2)
-                            
-                            # Apply gradient penalty
-                            if gradient_magnitude > 0.5:  # Too steep
-                                self.unified_field[x, y, z, s, t] *= (1 - gradient_penalty)
+        # OPTIMIZED: Vectorized gradient smoothness constraint (replaces O(N^5) loops)
+        # Apply gradient penalty only occasionally to avoid performance bottleneck
+        if self.field_evolution_cycles % 10 == 0:  # Every 10th evolution cycle
+            gradient_penalty = 0.01
+            
+            # Vectorized gradient calculation (much faster than nested loops)
+            # Only compute gradients for interior points to avoid boundary issues
+            interior = self.unified_field[1:-1, 1:-1, 1:-1, 1:9, 1:14]
+            
+            # Calculate gradients using tensor slicing (vectorized)
+            grad_x = self.unified_field[2:, 1:-1, 1:-1, 1:9, 1:14] - self.unified_field[:-2, 1:-1, 1:-1, 1:9, 1:14]
+            grad_y = self.unified_field[1:-1, 2:, 1:-1, 1:9, 1:14] - self.unified_field[1:-1, :-2, 1:-1, 1:9, 1:14]  
+            grad_z = self.unified_field[1:-1, 1:-1, 2:, 1:9, 1:14] - self.unified_field[1:-1, 1:-1, :-2, 1:9, 1:14]
+            
+            # Compute gradient magnitude (vectorized)
+            gradient_magnitude = torch.sqrt(grad_x**2 + grad_y**2 + grad_z**2)
+            
+            # Apply penalty where gradients are too steep (vectorized)
+            steep_mask = gradient_magnitude > 0.5
+            self.unified_field[1:-1, 1:-1, 1:-1, 1:9, 1:14][steep_mask] *= (1 - gradient_penalty)
     
     def _discover_field_topology(self, experience: UnifiedFieldExperience):
         """Discover stable topology regions - this replaces discrete pattern storage."""

@@ -262,10 +262,10 @@ class SensoryMotorWorld:
     
     def get_sensory_input(self) -> List[float]:
         """
-        Get 23-dimensional rich sensory input vector.
+        Get 24-dimensional rich sensory input vector.
         
         Returns:
-            23D vector: [position(2), orientation(1), battery(1), 
+            24D vector: [position(2), orientation(1), battery(1), 
                         distance_sensors(8), light_sensors(4),
                         color_sensors(3), surface_sensors(4), time(1)]
         """
@@ -294,7 +294,7 @@ class SensoryMotorWorld:
         # Time sensor (circadian rhythm simulation)
         time_reading = [(self.time_step % 1000) / 1000.0]  # Normalized time cycle
         
-        # Combine into 23D vector
+        # Combine into 24D vector
         sensory_vector = [
             norm_position[0], norm_position[1],  # Position (2D)
             norm_orientation,                     # Orientation (1D)

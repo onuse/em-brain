@@ -61,7 +61,7 @@ class StreamCapabilities:
 class UnifiedFieldExperience:
     """A unified field experience - replaces all discrete pattern storage."""
     timestamp: float
-    field_coordinates: torch.Tensor      # Position in 36D unified field
+    field_coordinates: torch.Tensor      # Position in 37D unified field
     raw_input_stream: torch.Tensor       # Original input stream
     field_intensity: float               # Overall field activation strength
     dynamics_family_activations: Dict[FieldDynamicsFamily, float]

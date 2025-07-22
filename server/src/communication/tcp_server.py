@@ -15,7 +15,7 @@ import uuid
 from .protocol import MessageProtocol, MessageProtocolError
 from .error_codes import BrainErrorCode, create_brain_error, log_brain_error
 from .sensor_buffer import get_sensor_buffer
-from ..brain_factory import MinimalBrain
+from ..brain_factory import BrainFactory
 
 
 class MinimalTCPServer:
@@ -26,7 +26,7 @@ class MinimalTCPServer:
     through the brain to generate action outputs.
     """
     
-    def __init__(self, brain: MinimalBrain, host: str = '0.0.0.0', port: int = 9999):
+    def __init__(self, brain: BrainFactory, host: str = '0.0.0.0', port: int = 9999):
         """
         Initialize the TCP server.
         
@@ -232,9 +232,9 @@ class MinimalTCPServer:
         else:
             print(f"   ⚠️ Client sent incomplete capabilities: {capabilities}")
         
-        # Get server capabilities from actual brain configuration
-        server_sensory_dim = self.brain.sensory_dim
-        server_action_dim = self.brain.motor_dim
+        # Get server capabilities from UnifiedFieldBrain configuration
+        server_sensory_dim = self.brain.brain.expected_sensory_dim
+        server_action_dim = self.brain.brain.expected_motor_dim
         
         print(f"   Server: {server_sensory_dim}D sensors → {server_action_dim}D actions")
         
@@ -314,9 +314,7 @@ class MinimalTCPServer:
                           f"(total cycles: {total_cycles})")
             
             # Process current sensory input through brain
-            action_vector, brain_state = self.brain.process_sensory_input(
-                sensory_vector, action_dimensions=4  # Standard 4D action space
-            )
+            action_vector, brain_state = self.brain.process_sensory_input(sensory_vector)
             
             # CRITICAL: Run maintenance operations for field brain health
             if hasattr(self.brain, 'run_recommended_maintenance'):

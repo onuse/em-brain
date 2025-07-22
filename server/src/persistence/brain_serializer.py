@@ -1,122 +1,55 @@
 """
-Brain Pattern Serializer
+Simplified Brain Serializer - Unified Field Brain Only
 
-Extracts and restores complete brain state from vector stream architectures.
-This is the core component that actually saves/loads the brain's learned knowledge.
+This serializer handles persistence for the UnifiedFieldBrain only.
+All legacy brain type complexity has been removed.
 """
 
 import time
+import torch
 import json
-from typing import Dict, List, Any, Optional, Tuple
-from dataclasses import dataclass, asdict
-import numpy as np
-
-
-@dataclass
-class SerializedPattern:
-    """A pattern extracted from vector streams with metadata."""
-    pattern_id: str
-    stream_type: str  # 'sensory', 'motor', 'temporal', 'cross_stream'
-    pattern_data: Dict[str, Any]
-    activation_count: int
-    last_accessed: float
-    success_rate: float
-    energy_level: float
-    creation_time: float
-    importance_score: float
+from typing import Dict, List, Any, Optional
+from dataclasses import dataclass
 
 
 @dataclass
 class SerializedBrainState:
-    """Complete serialized brain state for persistence."""
-    version: str
-    session_count: int
-    total_cycles: int
-    total_experiences: int
-    save_timestamp: float
-    
-    # Core learned content
-    patterns: List[SerializedPattern]
-    confidence_state: Dict[str, Any]
-    hardware_adaptations: Dict[str, Any]
-    cross_stream_associations: Dict[str, Any]
-    
-    # Architecture metadata
+    """Simplified brain state for UnifiedFieldBrain only."""
     brain_type: str
-    sensory_dim: int
-    motor_dim: int
-    temporal_dim: int
-    
-    # Learning trajectories
-    learning_history: List[Dict[str, Any]]
-    emergence_events: List[Dict[str, Any]]
-    
-    # Field brain specific state
-    field_brain_state: Optional[Dict[str, Any]] = None
+    field_dimensions: int
+    brain_cycles: int
+    total_factory_cycles: int
+    field_parameters: Dict[str, Any]
+    timestamp: float
+    version: str = "1.0"
 
 
 class BrainSerializer:
-    """Extracts and restores complete brain patterns from vector stream architectures."""
+    """Simplified serializer for UnifiedFieldBrain only."""
     
-    def __init__(self):
-        self.version = "1.0"
-        self.serialization_stats = {
-            'total_serializations': 0,
-            'total_patterns_extracted': 0,
-            'total_patterns_restored': 0,
-            'avg_serialization_time_ms': 0.0,
-            'avg_restoration_time_ms': 0.0
-        }
+    def __init__(self, compression_enabled: bool = True):
+        self.compression_enabled = compression_enabled
     
-    def serialize_brain_state(self, brain) -> SerializedBrainState:
-        """Extract complete brain state for persistence."""
+    def serialize_brain_state(self, brain_factory) -> SerializedBrainState:
+        """Extract brain state for persistence - simplified for UnifiedFieldBrain only."""
         start_time = time.perf_counter()
         
         try:
-            # Extract patterns from vector brain
-            patterns = self._extract_all_patterns(brain.field_brain_adapter)
+            # Get state from the simplified factory method
+            state_data = brain_factory.get_brain_state_for_persistence()
             
-            # Extract confidence dynamics
-            confidence_state = self._extract_confidence_state(brain)
-            
-            # Extract hardware adaptations
-            hardware_adaptations = self._extract_hardware_adaptations(brain)
-            
-            # Extract cross-stream associations
-            cross_stream_associations = self._extract_cross_stream_associations(brain)
-            
-            # Extract learning history
-            learning_history = self._extract_learning_history(brain)
-            
-            # Extract emergence events
-            emergence_events = self._extract_emergence_events(brain)
-            
-            # Handle field brain specific state
-            field_brain_state = self._extract_field_brain_state(brain)
-            
-            # Create complete brain state
+            # Create serialized state
             brain_state = SerializedBrainState(
-                version=self.version,
-                session_count=getattr(brain, 'session_count', 1),
-                total_cycles=brain.total_cycles,
-                total_experiences=brain.total_experiences,
-                save_timestamp=time.time(),
-                patterns=patterns,
-                confidence_state=confidence_state,
-                hardware_adaptations=hardware_adaptations,
-                cross_stream_associations=cross_stream_associations,
-                brain_type=brain.brain_type,
-                sensory_dim=brain.sensory_dim,
-                motor_dim=brain.motor_dim,
-                temporal_dim=brain.temporal_dim,
-                learning_history=learning_history,
-                emergence_events=emergence_events,
-                field_brain_state=field_brain_state
+                brain_type=state_data['brain_type'],
+                field_dimensions=state_data['field_dimensions'],
+                brain_cycles=state_data['brain_cycles'],
+                total_factory_cycles=state_data['total_factory_cycles'],
+                field_parameters=state_data['field_parameters'],
+                timestamp=time.time()
             )
             
-            # Update statistics
-            serialization_time_ms = (time.perf_counter() - start_time) * 1000
-            self._update_serialization_stats(len(patterns), serialization_time_ms)
+            duration = time.perf_counter() - start_time
+            print(f"✅ Brain serialization completed in {duration*1000:.1f}ms")
             
             return brain_state
             
@@ -124,624 +57,72 @@ class BrainSerializer:
             print(f"⚠️ Brain serialization failed: {e}")
             raise
     
-    def restore_brain_state(self, brain, brain_state: SerializedBrainState) -> bool:
-        """Restore complete brain state from serialized data."""
+    def restore_brain_state(self, brain_factory, brain_state: SerializedBrainState) -> bool:
+        """Restore brain state - simplified for UnifiedFieldBrain only."""
         start_time = time.perf_counter()
         
         try:
             # Validate compatibility
-            if not self._validate_compatibility(brain, brain_state):
-                print("⚠️ Brain state incompatible with current brain architecture")
+            if brain_state.brain_type != 'unified_field':
+                print(f"⚠️ Cannot restore non-unified brain state: {brain_state.brain_type}")
                 return False
             
-            # Restore patterns to vector brain
-            restored_patterns = self._restore_patterns_to_vector_brain(
-                brain.field_brain_adapter, brain_state.patterns
-            )
+            # Convert to dict format expected by factory
+            state_dict = {
+                'brain_type': brain_state.brain_type,
+                'field_dimensions': brain_state.field_dimensions,
+                'brain_cycles': brain_state.brain_cycles,
+                'total_factory_cycles': brain_state.total_factory_cycles,
+                'field_parameters': brain_state.field_parameters,
+            }
             
-            # Restore confidence state
-            self._restore_confidence_state(brain, brain_state.confidence_state)
+            # Restore using factory method
+            success = brain_factory.restore_brain_state(state_dict)
             
-            # Restore hardware adaptations
-            self._restore_hardware_adaptations(brain, brain_state.hardware_adaptations)
+            if success:
+                duration = time.perf_counter() - start_time
+                print(f"✅ Brain restoration completed in {duration*1000:.1f}ms")
             
-            # Restore cross-stream associations
-            self._restore_cross_stream_associations(brain, brain_state.cross_stream_associations)
-            
-            # Restore field brain state if present
-            if brain_state.field_brain_state and brain.brain_type == "field":
-                self._restore_field_brain_state(brain, brain_state.field_brain_state)
-            
-            # Restore experience counters
-            brain.total_experiences = brain_state.total_experiences
-            
-            # Update statistics
-            restoration_time_ms = (time.perf_counter() - start_time) * 1000
-            self._update_restoration_stats(restored_patterns, restoration_time_ms)
-            
-            print(f"🧠 Brain state restored: {restored_patterns} patterns, {brain_state.total_experiences} experiences")
-            return True
+            return success
             
         except Exception as e:
             print(f"⚠️ Brain restoration failed: {e}")
             return False
     
-    def _extract_all_patterns(self, vector_brain) -> List[SerializedPattern]:
-        """Extract all patterns from vector brain streams."""
-        patterns = []
-        current_time = time.time()
-        
-        # Handle field brain (uses intrinsic field state instead of discrete patterns)
-        if hasattr(vector_brain, 'field_brain'):
-            # Field brain uses its own persistence system
-            # Return empty patterns list since field state is saved separately
-            return patterns
-        
-        # Extract from sparse goldilocks brain if available
-        if hasattr(vector_brain, 'sparse_representations'):
-            patterns.extend(self._extract_sparse_patterns(vector_brain, current_time))
-        
-        # Extract from stream-specific storage
-        for stream_name in ['sensory', 'motor', 'temporal']:
-            if hasattr(vector_brain, f'{stream_name}_stream'):
-                stream = getattr(vector_brain, f'{stream_name}_stream')
-                patterns.extend(self._extract_stream_patterns(stream, stream_name, current_time))
-        
-        # Extract cross-stream patterns
-        if hasattr(vector_brain, 'cross_stream_coactivation'):
-            patterns.extend(self._extract_cross_stream_patterns(vector_brain, current_time))
-        
-        return patterns
+    def serialize_to_dict(self, brain_state: SerializedBrainState) -> Dict[str, Any]:
+        """Convert brain state to dictionary for JSON serialization."""
+        return {
+            'brain_type': brain_state.brain_type,
+            'field_dimensions': brain_state.field_dimensions,
+            'brain_cycles': brain_state.brain_cycles,
+            'total_factory_cycles': brain_state.total_factory_cycles,
+            'field_parameters': brain_state.field_parameters,
+            'timestamp': brain_state.timestamp,
+            'version': brain_state.version
+        }
     
-    def _extract_sparse_patterns(self, vector_brain, current_time: float) -> List[SerializedPattern]:
-        """Extract patterns from sparse representations system."""
-        patterns = []
-        
-        if hasattr(vector_brain, 'sparse_representations'):
-            sparse_system = vector_brain.sparse_representations
-            
-            # Extract active patterns
-            if hasattr(sparse_system, 'active_patterns'):
-                for i, pattern in enumerate(sparse_system.active_patterns):
-                    if pattern is not None:
-                        pattern_data = {
-                            'pattern_vector': pattern.tolist() if hasattr(pattern, 'tolist') else pattern,
-                            'pattern_index': i,
-                            'sparsity_level': np.count_nonzero(pattern) / len(pattern) if hasattr(pattern, '__len__') else 0.02
-                        }
-                        
-                        serialized_pattern = SerializedPattern(
-                            pattern_id=f"sparse_{i}_{int(current_time)}",
-                            stream_type="sparse_distributed",
-                            pattern_data=pattern_data,
-                            activation_count=getattr(sparse_system, 'pattern_activations', {}).get(i, 1),
-                            last_accessed=current_time,
-                            success_rate=0.5,  # Default for now
-                            energy_level=1.0,  # Default for now
-                            creation_time=current_time,
-                            importance_score=0.5
-                        )
-                        patterns.append(serialized_pattern)
-        
-        return patterns
-    
-    def _extract_stream_patterns(self, stream, stream_name: str, current_time: float) -> List[SerializedPattern]:
-        """Extract patterns from a specific vector stream."""
-        patterns = []
-        
-        # Try different pattern storage approaches
-        pattern_sources = [
-            'patterns', 'stored_patterns', 'pattern_memory', 
-            'learned_patterns', 'active_patterns'
-        ]
-        
-        for source in pattern_sources:
-            if hasattr(stream, source):
-                source_patterns = getattr(stream, source)
-                if source_patterns:
-                    patterns.extend(self._convert_stream_patterns_to_serialized(
-                        source_patterns, stream_name, current_time
-                    ))
-                break
-        
-        return patterns
-    
-    def _convert_stream_patterns_to_serialized(self, source_patterns, stream_name: str, 
-                                             current_time: float) -> List[SerializedPattern]:
-        """Convert stream-specific patterns to serialized format."""
-        patterns = []
-        
-        # Handle different pattern storage formats
-        if isinstance(source_patterns, dict):
-            for pattern_id, pattern_data in source_patterns.items():
-                patterns.append(self._create_serialized_pattern(
-                    pattern_id, stream_name, pattern_data, current_time
-                ))
-        elif isinstance(source_patterns, list):
-            for i, pattern_data in enumerate(source_patterns):
-                pattern_id = f"{stream_name}_{i}_{int(current_time)}"
-                patterns.append(self._create_serialized_pattern(
-                    pattern_id, stream_name, pattern_data, current_time
-                ))
-        
-        return patterns
-    
-    def _create_serialized_pattern(self, pattern_id: str, stream_name: str, 
-                                 pattern_data: Any, current_time: float) -> SerializedPattern:
-        """Create a SerializedPattern from raw pattern data."""
-        # Convert numpy arrays to lists for JSON serialization
-        if hasattr(pattern_data, 'tolist'):
-            serializable_data = {'pattern': pattern_data.tolist()}
-        elif isinstance(pattern_data, dict):
-            serializable_data = self._make_serializable(pattern_data)
-        else:
-            serializable_data = {'pattern': pattern_data}
-        
-        return SerializedPattern(
-            pattern_id=pattern_id,
-            stream_type=stream_name,
-            pattern_data=serializable_data,
-            activation_count=1,
-            last_accessed=current_time,
-            success_rate=0.5,
-            energy_level=1.0,
-            creation_time=current_time,
-            importance_score=0.5
+    def deserialize_from_dict(self, data: Dict[str, Any]) -> SerializedBrainState:
+        """Create brain state from dictionary."""
+        return SerializedBrainState(
+            brain_type=data['brain_type'],
+            field_dimensions=data['field_dimensions'],
+            brain_cycles=data['brain_cycles'],
+            total_factory_cycles=data['total_factory_cycles'],
+            field_parameters=data['field_parameters'],
+            timestamp=data['timestamp'],
+            version=data.get('version', '1.0')
         )
     
-    def _make_serializable(self, data: Any) -> Any:
-        """Convert data to JSON-serializable format."""
-        if isinstance(data, np.ndarray):
-            return data.tolist()
-        elif isinstance(data, dict):
-            return {k: self._make_serializable(v) for k, v in data.items()}
-        elif isinstance(data, list):
-            return [self._make_serializable(item) for item in data]
-        elif isinstance(data, (np.integer, np.floating)):
-            return float(data)
-        else:
-            return data
-    
-    def _extract_cross_stream_patterns(self, vector_brain, current_time: float) -> List[SerializedPattern]:
-        """Extract cross-stream association patterns."""
-        patterns = []
-        
-        if hasattr(vector_brain, 'cross_stream_coactivation'):
-            coactivation = vector_brain.cross_stream_coactivation
-            
-            # Extract coactivation patterns
-            if hasattr(coactivation, 'association_patterns'):
-                associations = coactivation.association_patterns
-                for assoc_id, assoc_data in associations.items():
-                    pattern_data = self._make_serializable(assoc_data)
-                    
-                    serialized_pattern = SerializedPattern(
-                        pattern_id=f"cross_stream_{assoc_id}",
-                        stream_type="cross_stream",
-                        pattern_data=pattern_data,
-                        activation_count=assoc_data.get('activation_count', 1),
-                        last_accessed=current_time,
-                        success_rate=assoc_data.get('success_rate', 0.5),
-                        energy_level=assoc_data.get('energy_level', 1.0),
-                        creation_time=current_time,
-                        importance_score=assoc_data.get('importance_score', 0.5)
-                    )
-                    patterns.append(serialized_pattern)
-        
-        return patterns
-    
-    def _extract_confidence_state(self, brain) -> Dict[str, Any]:
-        """Extract confidence system state."""
-        confidence_state = {}
-        
-        if hasattr(brain.field_brain_adapter, 'emergent_confidence'):
-            confidence_system = brain.field_brain_adapter.emergent_confidence
-            confidence_state = {
-                'current_confidence': getattr(confidence_system, 'current_confidence', 0.7),
-                'confidence_history': getattr(confidence_system, 'confidence_history', []),
-                'total_updates': getattr(confidence_system, 'total_updates', 0),
-                'volatility_history': getattr(confidence_system, 'volatility_history', []),
-                'coherence_history': getattr(confidence_system, 'coherence_history', [])
-            }
-        
-        return confidence_state
-    
-    def _extract_hardware_adaptations(self, brain) -> Dict[str, Any]:
-        """Extract hardware adaptation state."""
-        hardware_state = {}
-        
-        if hasattr(brain, 'hardware_adaptation'):
-            adapter = brain.hardware_adaptation
-            hardware_state = {
-                'working_memory_limit': getattr(adapter, 'working_memory_limit', 671),
-                'similarity_search_limit': getattr(adapter, 'similarity_search_limit', 16777),
-                'cognitive_energy_budget': getattr(adapter, 'cognitive_energy_budget', 20800),
-                'cycle_time_history': getattr(adapter, 'cycle_time_history', []),
-                'adaptation_events': getattr(adapter, 'adaptation_events', [])
-            }
-        
-        return hardware_state
-    
-    def _extract_cross_stream_associations(self, brain) -> Dict[str, Any]:
-        """Extract cross-stream association data."""
-        associations = {}
-        
-        if hasattr(brain.field_brain_adapter, 'cross_stream_coactivation'):
-            coactivation = brain.field_brain_adapter.cross_stream_coactivation
-            associations = {
-                'stream_connections': getattr(coactivation, 'stream_connections', {}),
-                'association_strength': getattr(coactivation, 'association_strength', {}),
-                'coactivation_history': getattr(coactivation, 'coactivation_history', [])
-            }
-        
-        return associations
-    
-    def _extract_learning_history(self, brain) -> List[Dict[str, Any]]:
-        """Extract learning trajectory history."""
-        history = []
-        
-        if hasattr(brain, 'recent_learning_outcomes'):
-            for outcome in brain.recent_learning_outcomes[-100:]:  # Last 100 events
-                if isinstance(outcome, dict):
-                    history.append(outcome)
-        
-        return history
-    
-    def _extract_emergence_events(self, brain) -> List[Dict[str, Any]]:
-        """Extract emergence event history."""
-        events = []
-        
-        # This would be extracted from logger if available
-        if hasattr(brain, 'logger') and brain.logger:
-            # Extract from logger's emergence events if available
-            pass
-        
-        return events
-    
-    def _extract_field_brain_state(self, brain) -> Optional[Dict[str, Any]]:
-        """Extract field brain state for persistence."""
-        if brain.brain_type != "field" or not hasattr(brain, 'field_brain_adapter'):
-            return None
-        
-        try:
-            field_brain_adapter = brain.field_brain_adapter
-            if not hasattr(field_brain_adapter, 'field_brain'):
-                return None
-            
-            field_brain = field_brain_adapter.field_brain
-            
-            # Get field brain statistics and state
-            field_stats = field_brain_adapter.get_brain_stats()
-            
-            # Extract essential field state (not the full tensor - too large)
-            field_state = {
-                'field_dimensions': field_brain.total_dimensions,
-                'spatial_resolution': field_brain.spatial_resolution,
-                'temporal_window': field_brain.temporal_window,
-                'field_parameters': {
-                    'field_decay_rate': field_brain.field_decay_rate,
-                    'field_diffusion_rate': field_brain.field_diffusion_rate,
-                    'gradient_following_strength': field_brain.gradient_following_strength,
-                    'field_evolution_rate': field_brain.field_evolution_rate,
-                    'constraint_discovery_rate': field_brain.constraint_discovery_rate,
-                },
-                'field_statistics': {
-                    'brain_cycles': field_brain.brain_cycles,
-                    'field_evolution_cycles': field_brain.field_evolution_cycles,
-                    'topology_discoveries': field_brain.topology_discoveries,
-                    'gradient_actions': field_brain.gradient_actions,
-                },
-                'stream_capabilities': {
-                    'input_dimensions': field_brain_adapter.sensory_dim,
-                    'output_dimensions': field_brain_adapter.motor_dim,
-                    'capabilities_negotiated': True
-                },
-                'field_memory_stats': field_stats.get('field_brain', {}),
-                'prediction_learning_state': {
-                    'prediction_confidence_history': getattr(field_brain, '_prediction_confidence_history', []),
-                    'current_prediction_confidence': getattr(field_brain, '_current_prediction_confidence', 0.5),
-                    'context_signature_history': getattr(field_brain, '_context_signature_history', [])
-                },
-                'save_timestamp': time.time(),
-                'persistence_version': '1.0'
-            }
-            
-            return field_state
-            
-        except Exception as e:
-            print(f"⚠️ Failed to extract field brain state: {e}")
-            return None
-    
-    def _validate_compatibility(self, brain, brain_state: SerializedBrainState) -> bool:
-        """Validate that brain state is compatible with current brain."""
-        # For fresh states with no patterns, allow dimensional mismatches
-        # (this happens when default dimensions don't match config)
-        if len(brain_state.patterns) == 0 and brain_state.total_experiences == 0:
-            # Fresh state - only check brain type
-            return brain.brain_type == brain_state.brain_type
-        
-        # For actual saved states, require exact match
-        return (
-            brain.brain_type == brain_state.brain_type and
-            brain.sensory_dim == brain_state.sensory_dim and
-            brain.motor_dim == brain_state.motor_dim and
-            brain.temporal_dim == brain_state.temporal_dim
-        )
-    
-    def _restore_patterns_to_vector_brain(self, vector_brain, patterns: List[SerializedPattern]) -> int:
-        """Restore patterns to vector brain streams."""
-        restored_count = 0
-        
-        # Group patterns by stream type
-        patterns_by_stream = {}
-        for pattern in patterns:
-            stream_type = pattern.stream_type
-            if stream_type not in patterns_by_stream:
-                patterns_by_stream[stream_type] = []
-            patterns_by_stream[stream_type].append(pattern)
-        
-        # Restore patterns to appropriate streams
-        for stream_type, stream_patterns in patterns_by_stream.items():
-            if stream_type == "sparse_distributed":
-                restored_count += self._restore_sparse_patterns(vector_brain, stream_patterns)
-            elif stream_type in ["sensory", "motor", "temporal"]:
-                restored_count += self._restore_stream_patterns(vector_brain, stream_type, stream_patterns)
-            elif stream_type == "cross_stream":
-                restored_count += self._restore_cross_stream_patterns(vector_brain, stream_patterns)
-        
-        return restored_count
-    
-    def _restore_sparse_patterns(self, vector_brain, patterns: List[SerializedPattern]) -> int:
-        """Restore patterns to sparse representations system."""
-        restored_count = 0
-        
-        if hasattr(vector_brain, 'sparse_representations'):
-            sparse_system = vector_brain.sparse_representations
-            
-            # Initialize pattern storage if needed
-            if not hasattr(sparse_system, 'active_patterns'):
-                sparse_system.active_patterns = []
-            
-            for pattern in patterns:
-                try:
-                    pattern_vector = np.array(pattern.pattern_data['pattern'])
-                    sparse_system.active_patterns.append(pattern_vector)
-                    restored_count += 1
-                except Exception as e:
-                    print(f"⚠️ Failed to restore sparse pattern {pattern.pattern_id}: {e}")
-        
-        return restored_count
-    
-    def _restore_stream_patterns(self, vector_brain, stream_type: str, 
-                                patterns: List[SerializedPattern]) -> int:
-        """Restore patterns to a specific vector stream."""
-        restored_count = 0
-        
-        stream_attr = f"{stream_type}_stream"
-        if hasattr(vector_brain, stream_attr):
-            stream = getattr(vector_brain, stream_attr)
-            
-            # Initialize pattern storage if needed
-            if not hasattr(stream, 'patterns'):
-                stream.patterns = {}
-            
-            for pattern in patterns:
-                try:
-                    stream.patterns[pattern.pattern_id] = pattern.pattern_data
-                    restored_count += 1
-                except Exception as e:
-                    print(f"⚠️ Failed to restore {stream_type} pattern {pattern.pattern_id}: {e}")
-        
-        return restored_count
-    
-    def _restore_cross_stream_patterns(self, vector_brain, patterns: List[SerializedPattern]) -> int:
-        """Restore cross-stream association patterns."""
-        restored_count = 0
-        
-        if hasattr(vector_brain, 'cross_stream_coactivation'):
-            coactivation = vector_brain.cross_stream_coactivation
-            
-            # Initialize association storage if needed
-            if not hasattr(coactivation, 'association_patterns'):
-                coactivation.association_patterns = {}
-            
-            for pattern in patterns:
-                try:
-                    coactivation.association_patterns[pattern.pattern_id] = pattern.pattern_data
-                    restored_count += 1
-                except Exception as e:
-                    print(f"⚠️ Failed to restore cross-stream pattern {pattern.pattern_id}: {e}")
-        
-        return restored_count
-    
-    def _restore_confidence_state(self, brain, confidence_state: Dict[str, Any]):
-        """Restore confidence system state."""
-        if hasattr(brain.field_brain_adapter, 'emergent_confidence') and confidence_state:
-            confidence_system = brain.field_brain_adapter.emergent_confidence
-            
-            for attr, value in confidence_state.items():
-                if hasattr(confidence_system, attr):
-                    setattr(confidence_system, attr, value)
-    
-    def _restore_hardware_adaptations(self, brain, hardware_state: Dict[str, Any]):
-        """Restore hardware adaptation state."""
-        if hasattr(brain, 'hardware_adaptation') and hardware_state:
-            adapter = brain.hardware_adaptation
-            
-            for attr, value in hardware_state.items():
-                if hasattr(adapter, attr):
-                    setattr(adapter, attr, value)
-    
-    def _restore_cross_stream_associations(self, brain, associations: Dict[str, Any]):
-        """Restore cross-stream association data."""
-        if hasattr(brain.field_brain_adapter, 'cross_stream_coactivation') and associations:
-            coactivation = brain.field_brain_adapter.cross_stream_coactivation
-            
-            for attr, value in associations.items():
-                if hasattr(coactivation, attr):
-                    setattr(coactivation, attr, value)
-    
-    def _restore_field_brain_state(self, brain, field_state: Dict[str, Any]):
-        """Restore field brain state from persistence."""
-        try:
-            field_brain_adapter = brain.field_brain_adapter
-            if not hasattr(field_brain_adapter, 'field_brain'):
-                print("⚠️ Cannot restore field brain state: no field brain found")
-                return
-            
-            field_brain = field_brain_adapter.field_brain
-            
-            # Restore field parameters
-            if 'field_parameters' in field_state:
-                params = field_state['field_parameters']
-                for param_name, value in params.items():
-                    if hasattr(field_brain, param_name):
-                        setattr(field_brain, param_name, value)
-            
-            # Restore field statistics
-            if 'field_statistics' in field_state:
-                stats = field_state['field_statistics']
-                for stat_name, value in stats.items():
-                    if hasattr(field_brain, stat_name):
-                        setattr(field_brain, stat_name, value)
-            
-            # Restore prediction learning state (CRITICAL for prediction improvement addiction)
-            if 'prediction_learning_state' in field_state:
-                learning_state = field_state['prediction_learning_state']
-                if 'prediction_confidence_history' in learning_state:
-                    field_brain._prediction_confidence_history = learning_state['prediction_confidence_history']
-                if 'current_prediction_confidence' in learning_state:
-                    field_brain._current_prediction_confidence = learning_state['current_prediction_confidence']
-                if 'context_signature_history' in learning_state:
-                    field_brain._context_signature_history = learning_state['context_signature_history']
-            
-            print(f"✅ Field brain state restored from persistence")
-            print(f"   Cycles: {field_state.get('field_statistics', {}).get('brain_cycles', 0)}")
-            print(f"   Evolution cycles: {field_state.get('field_statistics', {}).get('field_evolution_cycles', 0)}")
-            
-            # Report prediction learning state restoration
-            prediction_state = field_state.get('prediction_learning_state', {})
-            confidence_history = prediction_state.get('prediction_confidence_history', [])
-            if confidence_history:
-                print(f"   Prediction confidence history: {len(confidence_history)} entries restored")
-            
-        except Exception as e:
-            print(f"⚠️ Failed to restore field brain state: {e}")
-    
-    def _update_serialization_stats(self, pattern_count: int, time_ms: float):
-        """Update serialization performance statistics."""
-        stats = self.serialization_stats
-        stats['total_serializations'] += 1
-        stats['total_patterns_extracted'] += pattern_count
-        
-        # Update average time
-        total_ops = stats['total_serializations']
-        stats['avg_serialization_time_ms'] = (
-            (stats['avg_serialization_time_ms'] * (total_ops - 1) + time_ms) / total_ops
-        )
-    
-    def _update_restoration_stats(self, pattern_count: int, time_ms: float):
-        """Update restoration performance statistics."""
-        stats = self.serialization_stats
-        stats['total_patterns_restored'] += pattern_count
-        
-        # Update average restoration time (approximate)
-        if stats['total_serializations'] > 0:
-            stats['avg_restoration_time_ms'] = (
-                (stats['avg_restoration_time_ms'] + time_ms) / 2
-            )
-        else:
-            stats['avg_restoration_time_ms'] = time_ms
-    
-    def get_stats(self) -> Dict[str, Any]:
-        """Get serialization performance statistics."""
-        return self.serialization_stats.copy()
-    
-    def to_dict(self, brain_state: SerializedBrainState) -> Dict[str, Any]:
-        """Convert SerializedBrainState to dictionary for JSON serialization."""
-        state_dict = asdict(brain_state)
-        
-        # Ensure all pattern data is serializable
-        for pattern_dict in state_dict['patterns']:
-            pattern_dict['pattern_data'] = self._make_serializable(pattern_dict['pattern_data'])
-        
-        return state_dict
-    
-    def from_dict(self, state_dict: Dict[str, Any]) -> SerializedBrainState:
-        """Create SerializedBrainState from dictionary."""
-        try:
-            # Convert pattern dictionaries to SerializedPattern objects
-            patterns = []
-            patterns_data = state_dict.get('patterns', [])
-            
-            if patterns_data is None:
-                patterns_data = []
-            
-            for pattern_dict in patterns_data:
-                if isinstance(pattern_dict, dict):
-                    patterns.append(SerializedPattern(**pattern_dict))
-                else:
-                    print(f"⚠️ Skipping invalid pattern data: {type(pattern_dict)}")
-            
-            # Define valid fields for SerializedBrainState to filter out integrity metadata
-            brain_state_fields = {
-                'version', 'session_count', 'total_cycles', 'total_experiences', 
-                'save_timestamp', 'patterns', 'confidence_state', 'hardware_adaptations',
-                'cross_stream_associations', 'brain_type', 'sensory_dim', 'motor_dim',
-                'temporal_dim', 'learning_history', 'emergence_events', 'field_brain_state'
-            }
-            
-            # Define FileIntegrityInfo fields that should be ignored (not brain data)
-            integrity_fields = {
-                'filepath', 'size_bytes', 'checksum_md5', 'created_time', 
-                'modified_time', 'is_compressed'
-            }
-            
-            # Separate brain data from integrity metadata
-            brain_state_dict = {}
-            integrity_metadata = {}
-            unknown_fields = []
-            
-            for key, value in state_dict.items():
-                if key in brain_state_fields:
-                    brain_state_dict[key] = value
-                elif key in integrity_fields:
-                    integrity_metadata[key] = value  # Separate but don't warn
-                elif key == 'incremental_metadata':
-                    # Skip incremental metadata (handled by consolidation engine)
-                    pass
-                else:
-                    unknown_fields.append(key)
-            
-            # Only warn about truly unknown fields
-            if unknown_fields:
-                print(f"⚠️ Skipping unknown fields from saved data: {unknown_fields}")
-            
-            # Set patterns from processed data
-            brain_state_dict['patterns'] = patterns
-            
-            # Ensure required fields exist with defaults
-            brain_state_dict.setdefault('version', '1.0')
-            brain_state_dict.setdefault('session_count', 1)
-            brain_state_dict.setdefault('total_cycles', 0)
-            brain_state_dict.setdefault('total_experiences', 0)
-            brain_state_dict.setdefault('save_timestamp', time.time())
-            brain_state_dict.setdefault('confidence_state', {})
-            brain_state_dict.setdefault('hardware_adaptations', {})
-            brain_state_dict.setdefault('cross_stream_associations', {})
-            brain_state_dict.setdefault('brain_type', 'sparse_goldilocks')
-            brain_state_dict.setdefault('sensory_dim', 16)
-            brain_state_dict.setdefault('motor_dim', 4)
-            brain_state_dict.setdefault('temporal_dim', 4)
-            brain_state_dict.setdefault('learning_history', [])
-            brain_state_dict.setdefault('emergence_events', [])
-            
-            return SerializedBrainState(**brain_state_dict)
-            
-        except Exception as e:
-            print(f"❌ Error in brain_serializer.from_dict: {e}")
-            print(f"   State dict keys: {list(state_dict.keys()) if state_dict else 'None'}")
-            if state_dict and 'patterns' in state_dict:
-                print(f"   Patterns type: {type(state_dict['patterns'])}")
-                print(f"   Patterns length: {len(state_dict['patterns']) if hasattr(state_dict['patterns'], '__len__') else 'No length'}")
-            raise
+    def get_serialization_info(self, brain_factory) -> Dict[str, Any]:
+        """Get information about what will be serialized."""
+        return {
+            'serializable_components': [
+                'field_dimensions',
+                'brain_cycles', 
+                'field_parameters',
+                'factory_cycles'
+            ],
+            'field_dimensions': brain_factory.brain.total_dimensions,
+            'brain_cycles': brain_factory.brain.brain_cycles,
+            'note': 'Field tensor not serialized - too large, reconstructed during operation'
+        }

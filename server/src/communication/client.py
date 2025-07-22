@@ -71,7 +71,7 @@ class MinimalBrainClient:
             if robot_capabilities is None:
                 robot_capabilities = [
                     1.0,  # Robot version
-                    16.0, # Sensory vector size
+                    24.0, # Sensory vector size (matches UnifiedFieldBrain expectation)
                     4.0,  # Action vector size
                     1.0   # Hardware type (1.0 = PiCar-X)
                 ]

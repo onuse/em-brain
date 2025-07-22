@@ -42,7 +42,7 @@ except ImportError:
 class FieldMemoryTrace:
     """A memory trace representing persistent field topology."""
     timestamp: float
-    field_coordinates: torch.Tensor  # 36D field position
+    field_coordinates: torch.Tensor  # 37D field position
     importance: float = 1.0          # Memory strength/importance
     access_count: int = 0            # How often this memory is accessed
     last_accessed: float = 0.0       # Last access timestamp
@@ -55,7 +55,7 @@ class FieldMemoryTrace:
 @dataclass
 class FieldTopologyRegion:
     """A stable region in field topology that persists as memory."""
-    center: torch.Tensor             # Center position in 36D field
+    center: torch.Tensor             # Center position in 37D field
     radius: float                    # Influence radius
     strength: float                  # Field strength at center
     stability: float                 # How stable this region is
