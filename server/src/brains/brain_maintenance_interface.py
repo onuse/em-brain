@@ -134,12 +134,13 @@ class BrainMaintenanceInterface(ABC):
             end_time = time.time()
             self._track_maintenance_timing('deep', start_time, end_time)
     
-    def get_maintenance_recommendations(self, idle_time_seconds: float) -> Dict[str, bool]:
+    def get_maintenance_recommendations(self, idle_time_seconds: float, field_energy: float = 0.0) -> Dict[str, bool]:
         """
         Get maintenance recommendations based on idle time and last maintenance.
         
         Args:
             idle_time_seconds: How long the brain has been idle (cognitive load < 0.3)
+            field_energy: Current field energy level for emergency maintenance checks
             
         Returns:
             Dictionary indicating which maintenance operations are recommended
@@ -151,6 +152,9 @@ class BrainMaintenanceInterface(ABC):
         time_since_heavy = current_time - self.last_heavy_maintenance
         time_since_deep = current_time - self.last_deep_consolidation
         
+        # Emergency energy check - force heavy maintenance immediately for runaway energy
+        emergency_heavy_maintenance = field_energy > 800.0 and time_since_heavy > 30.0
+        
         # Enhanced recommendations for continuous processing scenarios
         return {
             'light_maintenance': (
@@ -160,10 +164,12 @@ class BrainMaintenanceInterface(ABC):
                 time_since_light > 300.0     # Force light maintenance every 5 minutes
             ),
             'heavy_maintenance': (
+                # EMERGENCY: Runaway field energy 
+                emergency_heavy_maintenance or
                 # Cognitive idle periods (preferred) 
                 (idle_time_seconds > 30.0 and time_since_heavy > 60.0) or  
-                # Time-based fallback for continuous processing
-                time_since_heavy > 1200.0    # Force heavy maintenance every 20 minutes
+                # Time-based fallback for continuous processing (reduced from 20min to 5min)
+                time_since_heavy > 300.0     # Force heavy maintenance every 5 minutes instead of 20
             ),
             'deep_consolidation': (
                 # Cognitive idle periods (preferred)
@@ -226,7 +232,24 @@ class MaintenanceScheduler:
         
         self.last_maintenance_check = current_time
         idle_time = self.get_idle_time()
-        recommendations = self.brain.get_maintenance_recommendations(idle_time)
+        
+        # Get current field energy for emergency maintenance checks
+        field_energy = 0.0
+        try:
+            # Try to get field energy from brain stats
+            if hasattr(self.brain, 'get_brain_stats'):
+                brain_stats = self.brain.get_brain_stats()
+                if brain_stats and 'field_stats' in brain_stats:
+                    field_energy = brain_stats['field_stats'].get('total_activation', 0.0)
+            elif hasattr(self.brain, 'field_impl') and hasattr(self.brain.field_impl, 'get_field_statistics'):
+                # Direct access to field implementation
+                field_stats = self.brain.field_impl.get_field_statistics()
+                field_energy = field_stats.get('total_activation', 0.0)
+        except Exception:
+            # Fallback: no field energy available, use normal scheduling
+            field_energy = 0.0
+        
+        recommendations = self.brain.get_maintenance_recommendations(idle_time, field_energy)
         
         performed = {
             'light_maintenance': False,

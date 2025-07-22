@@ -14,8 +14,8 @@ import os
 import time
 from typing import List, Dict, Tuple, Optional, Any
 
-# Removed non-field brain imports - using field brain only
-from .brains.field.tcp_adapter import FieldBrainTCPAdapter, FieldBrainConfig
+# UNIFIED: Direct import of the only brain implementation
+from .brains.field.core_brain import UnifiedFieldBrain
 from .brains.brain_maintenance_interface import BrainMaintenanceInterface, MaintenanceScheduler
 from .utils.cognitive_autopilot import CognitiveAutopilot
 from .utils.brain_logger import BrainLogger
@@ -86,54 +86,24 @@ class BrainFactory:
         else:
             self.hardware_adaptation = get_hardware_adaptation(self.config)
         
-        # Create field brain implementation (only option now)
-        if self.brain_type == "field":
-            # Create field brain configuration
-            field_config = FieldBrainConfig(
-                sensory_dimensions=self.sensory_dim,
-                motor_dimensions=self.motor_dim,
-                spatial_resolution=brain_config.get('field_spatial_resolution', 20),
-                temporal_window=brain_config.get('field_temporal_window', 10.0),
-                field_evolution_rate=brain_config.get('field_evolution_rate', 0.2),  # INCREASED: Faster learning for 30% goal
-                constraint_discovery_rate=brain_config.get('constraint_discovery_rate', 0.15),
-                performance_mode=brain_config.get('performance_mode', 'balanced'),
-                enable_enhanced_dynamics=brain_config.get('enable_enhanced_dynamics', True),
-                enable_attention_guidance=brain_config.get('enable_attention_guidance', True),
-                enable_hierarchical_processing=brain_config.get('enable_hierarchical_processing', True),
-                enable_attention_super_resolution=brain_config.get('enable_attention_super_resolution', False),
-                attention_base_resolution=brain_config.get('attention_base_resolution', 50),
-                attention_focus_resolution=brain_config.get('attention_focus_resolution', 100),
-                hierarchical_max_time_ms=brain_config.get('hierarchical_max_time_ms', 40.0),
-                target_cycle_time_ms=brain_config.get('target_cycle_time_ms', 150.0),
-                quiet_mode=quiet_mode
-            )
-            
-            self.field_brain_adapter = FieldBrainTCPAdapter(field_config)
-        else:
-            # Force field brain if invalid type specified
-            if not quiet_mode:
-                print(f"⚠️ Unknown brain_type '{self.brain_type}', using field brain")
-            self.brain_type = "field"
-            field_config = FieldBrainConfig(
-                sensory_dimensions=self.sensory_dim,
-                motor_dimensions=self.motor_dim,
-                quiet_mode=quiet_mode
-            )
-            self.field_brain_adapter = FieldBrainTCPAdapter(field_config)
+        # UNIFIED: Create the one true brain implementation - UnifiedFieldBrain
+        # All brain_type configurations now map to the same advanced field brain
+        if not quiet_mode:
+            print(f"🧠 Using UnifiedFieldBrain (36D physics-organized field intelligence)")
         
-        # Connect parallel coordinator to brain implementation after initialization
-        if self.parallel_coordinator:
-            self.parallel_coordinator.set_field_brain_adapter(self.field_brain_adapter)
+        self.unified_brain = UnifiedFieldBrain(
+            spatial_resolution=brain_config.get('field_spatial_resolution', 20),
+            temporal_window=brain_config.get('field_temporal_window', 10.0),
+            field_evolution_rate=brain_config.get('field_evolution_rate', 0.2),
+            constraint_discovery_rate=brain_config.get('constraint_discovery_rate', 0.15),
+            quiet_mode=quiet_mode
+        )
         
         # Initialize cognitive autopilot for adaptive intensity control
         self.cognitive_autopilot = CognitiveAutopilot()
         
-        # Initialize maintenance scheduler if brain supports maintenance interface
+        # UNIFIED: No maintenance scheduler needed - UnifiedFieldBrain handles its own maintenance
         self.maintenance_scheduler = None
-        if isinstance(self.field_brain_adapter, BrainMaintenanceInterface):
-            self.maintenance_scheduler = MaintenanceScheduler(self.field_brain_adapter)
-            if not quiet_mode:
-                print(f"🔧 Maintenance interface enabled for {self.brain_type} brain")
         
         # Factory state tracking
         self.total_cycles = 0
@@ -241,13 +211,8 @@ class BrainFactory:
         else:
             processed_input = sensory_input
         
-        # Process through vector stream brain (with optional parallel coordination)
-        if self.parallel_coordinator and self.parallel_coordinator.parallel_mode_enabled:
-            # Use parallel processing with biological coordination
-            predicted_action, field_brain_state = self.parallel_coordinator.process_with_parallel_coordination(processed_input)
-        else:
-            # Use traditional sequential processing
-            predicted_action, field_brain_state = self.field_brain_adapter.process_sensory_input(processed_input)
+        # UNIFIED: Process through UnifiedFieldBrain directly
+        predicted_action, field_brain_state = self.unified_brain.process_robot_cycle(processed_input)
         
         # Adjust action dimensions if requested
         if action_dimensions and action_dimensions != len(predicted_action):
@@ -259,7 +224,7 @@ class BrainFactory:
                 predicted_action = predicted_action + [0.0] * (action_dimensions - len(predicted_action))
         
         # Use cognitive autopilot state for maintenance scheduling
-        confidence = field_brain_state['prediction_confidence']
+        confidence = field_brain_state.get('last_action_confidence', 0.0)
         
         # Update cognitive autopilot with vector stream confidence
         prediction_error = 1.0 - confidence
@@ -312,29 +277,25 @@ class BrainFactory:
                 predicted_action, sensory_input, confidence, 0  # Vector streams don't use "similar experiences"
             )
             
-            # Feature-flagged pattern storage logging for scientific analysis
+            # UNIFIED: Field topology discovery logging for scientific analysis
             if self.config.get('logging', {}).get('log_pattern_storage', False):
-                # Log pattern storage events when streams update
-                if hasattr(self.field_brain_adapter, 'last_pattern_storage_event'):
-                    storage_event = self.field_brain_adapter.last_pattern_storage_event
-                    if storage_event:
+                # Log topology region discoveries (field-native equivalent of pattern storage)
+                if self.unified_brain.topology_discoveries > 0:
+                    for region_key, region_info in self.unified_brain.topology_regions.items():
                         self.logger.log_similarity_evolution(
-                            storage_event.get('pattern_id', 'unknown'),
-                            storage_event.get('similarity_score', 0.0),
-                            storage_event.get('storage_decision', 'unknown')
+                            region_key,
+                            region_info.get('stability', 0.0),
+                            'topology_discovery'
                         )
                         
-                        # Log as adaptation event if significant
-                        if storage_event.get('similarity_score', 0.0) < 0.8:  # Novel pattern
+                        # Log as adaptation event for significant topology discoveries
+                        if region_info.get('activation', 0.0) > 0.1:
                             self.logger.log_adaptation_event(
-                                'pattern_storage',
-                                storage_event.get('pattern_id', 'unknown'),
-                                storage_event.get('before_state', {}),
-                                storage_event.get('after_state', {})
+                                'topology_discovery',
+                                region_key,
+                                {'field_energy': 0.0},
+                                {'field_energy': region_info.get('activation', 0.0)}
                             )
-                        
-                        # Clear the event after logging
-                        self.field_brain_adapter.last_pattern_storage_event = None
         
         # Performance monitoring
         cycle_time = time.time() - process_start_time
@@ -428,24 +389,19 @@ class BrainFactory:
                         confidence_change  # significance parameter
                     )
                 
-                # Track meaningful field brain learning metrics (for field brains only)
-                if self.brain_type == "field" and hasattr(self.field_brain_adapter, 'field_brain'):
-                    field_brain = self.field_brain_adapter.field_brain
-                    
-                    # Log significant field evolution events
-                    if hasattr(field_brain, 'field_evolution_cycles'):
-                        current_evolution_cycles = field_brain.field_evolution_cycles
-                        last_evolution_cycles = getattr(self, '_last_evolution_cycles', 0)
+                # UNIFIED: Track field brain learning metrics directly
+                current_evolution_cycles = self.unified_brain.field_evolution_cycles
+                last_evolution_cycles = getattr(self, '_last_evolution_cycles', 0)
+                
+                # Report every 100 field evolution cycles (reduce spam on fast CUDA machines)
+                if current_evolution_cycles > 0 and current_evolution_cycles % 100 == 0 and current_evolution_cycles != last_evolution_cycles:
+                    try:
+                        field_energy = self.unified_brain.unified_field.sum().item()
+                    except:
+                        field_energy = 0.0
                         
-                        # Report every 100 field evolution cycles (reduce spam on fast CUDA machines)
-                        if current_evolution_cycles > 0 and current_evolution_cycles % 100 == 0 and current_evolution_cycles != last_evolution_cycles:
-                            try:
-                                field_energy = field_brain.unified_field.sum().item()
-                            except:
-                                field_energy = 0.0
-                                
-                            print(f"🧠 Field Learning: {current_evolution_cycles} evolution cycles, field energy: {field_energy:.1f}")
-                            self._last_evolution_cycles = current_evolution_cycles
+                    print(f"🧠 Field Learning: {current_evolution_cycles} evolution cycles, field energy: {field_energy:.1f}")
+                    self._last_evolution_cycles = current_evolution_cycles
             
             # Store current state for next cycle comparison
             self.last_brain_state = brain_state.copy()
@@ -505,7 +461,8 @@ class BrainFactory:
     
     def get_brain_stats(self) -> Dict[str, Any]:
         """Get comprehensive brain performance statistics."""
-        field_adapter_stats = self.field_brain_adapter.get_brain_statistics()
+        # UNIFIED: Get brain statistics directly from UnifiedFieldBrain
+        unified_brain_stats = self.unified_brain._get_field_brain_state(0)
         
         return {
             'brain_summary': {
@@ -515,21 +472,22 @@ class BrainFactory:
                 'uptime_seconds': time.time() - self.brain_start_time,
                 'cycles_per_minute': self.total_cycles / max(1, (time.time() - self.brain_start_time) / 60),
                 'experiences_per_minute': self.total_experiences / max(1, (time.time() - self.brain_start_time) / 60),
-                'architecture': field_adapter_stats.get('architecture', 'field_dynamics'),
-                'prediction_confidence': field_adapter_stats.get('prediction_confidence', 0.0)
+                'architecture': 'unified_field_36D',
+                'prediction_confidence': unified_brain_stats.get('last_action_confidence', 0.0)
             },
-            'field_brain_adapter': field_adapter_stats
+            'unified_field_brain': unified_brain_stats
         }
     
     def reset_brain(self):
         """Reset the brain to initial state (for testing)."""
-        # Reset field brain
-        field_config = FieldBrainConfig(
-            sensory_dimensions=self.sensory_dim,
-            motor_dimensions=self.motor_dim,
+        # UNIFIED: Reset UnifiedFieldBrain to initial state
+        self.unified_brain = UnifiedFieldBrain(
+            spatial_resolution=20,
+            temporal_window=10.0,
+            field_evolution_rate=0.2,
+            constraint_discovery_rate=0.15,
             quiet_mode=self.quiet_mode
         )
-        self.field_brain_adapter = FieldBrainTCPAdapter(field_config)
         
         self.total_cycles = 0
         self.brain_start_time = time.time()
@@ -569,10 +527,9 @@ class BrainFactory:
         This is used by the BrainLogger to track learning progress.
         For the vector stream brain, we use confidence as intrinsic reward.
         """
-        if hasattr(self.field_brain_adapter, 'emergent_confidence'):
-            return self.field_brain_adapter.emergent_confidence.current_confidence
-        elif hasattr(self.field_brain_adapter, '_estimate_prediction_confidence'):
-            return self.field_brain_adapter._estimate_prediction_confidence()
+        # UNIFIED: Get prediction confidence from UnifiedFieldBrain
+        if self.unified_brain.field_actions:
+            return self.unified_brain.field_actions[-1].action_confidence
         else:
             # Fallback: simple confidence based on cycle count
             return min(1.0, self.total_cycles / 1000.0)
@@ -587,10 +544,9 @@ class BrainFactory:
         # Get basic stats
         basic_stats = self.get_brain_stats()
         
-        # Get detailed stats from vector brain if available
-        if hasattr(self.field_brain_adapter, 'get_brain_statistics'):
-            detailed_stats = self.field_brain_adapter.get_brain_statistics()
-            basic_stats.update(detailed_stats)
+        # UNIFIED: Get detailed stats from UnifiedFieldBrain
+        field_memory_stats = self.unified_brain.get_field_memory_stats()
+        basic_stats.update(field_memory_stats)
         
         # Add parallel processing stats if available
         if self.parallel_coordinator:
@@ -617,19 +573,16 @@ class BrainFactory:
             return {'parallel_processing_available': False}
     
     def light_maintenance(self) -> None:
-        """Trigger light maintenance operations on the brain."""
-        if isinstance(self.field_brain_adapter, BrainMaintenanceInterface):
-            self.field_brain_adapter.safe_light_maintenance()
+        """UNIFIED: UnifiedFieldBrain handles its own maintenance internally."""
+        pass
     
     def heavy_maintenance(self) -> None:
-        """Trigger heavy maintenance operations on the brain."""
-        if isinstance(self.field_brain_adapter, BrainMaintenanceInterface):
-            self.field_brain_adapter.safe_heavy_maintenance()
+        """UNIFIED: UnifiedFieldBrain handles its own maintenance internally."""
+        pass
     
     def deep_consolidation(self) -> None:
-        """Trigger deep consolidation operations on the brain."""
-        if isinstance(self.field_brain_adapter, BrainMaintenanceInterface):
-            self.field_brain_adapter.safe_deep_consolidation()
+        """UNIFIED: Field consolidation available via consolidate_field() method."""
+        self.unified_brain.consolidate_field(consolidation_strength=0.1)
     
     def run_recommended_maintenance(self) -> Dict[str, bool]:
         """Run maintenance operations recommended for current idle time."""
@@ -643,11 +596,14 @@ class BrainFactory:
             }
     
     def get_maintenance_status(self) -> Dict[str, Any]:
-        """Get maintenance metrics and timing information."""
-        if isinstance(self.field_brain_adapter, BrainMaintenanceInterface):
-            return self.field_brain_adapter.get_maintenance_status()
-        else:
-            return {'maintenance_available': False}
+        """UNIFIED: UnifiedFieldBrain maintains itself internally."""
+        return {
+            'maintenance_available': True,
+            'maintenance_type': 'field_native',
+            'field_consolidation_available': True,
+            'brain_cycles': self.unified_brain.brain_cycles,
+            'field_evolution_cycles': self.unified_brain.field_evolution_cycles
+        }
     
     def _apply_recovered_state(self, recovered_state):
         """Apply recovered brain state to the brain (biological wake-up process)."""

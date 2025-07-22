@@ -107,9 +107,10 @@ class BehavioralTestFramework:
     
     def test_prediction_learning(self, brain: BrainFactory, cycles: int = 100, divergent_test: bool = False) -> float:
         """Test how well the brain learns to predict patterns"""
-        # BEHAVIORAL TEST FIX: Force fresh learning mode to get clear learning curves
-        if hasattr(brain, 'field_brain_adapter') and hasattr(brain.field_brain_adapter, 'field_brain'):
-            brain.field_brain_adapter.field_brain._force_fresh_learning = True
+        # BEHAVIORAL TEST FIX: Reset confidence history for fresh learning curves
+        if hasattr(brain, 'unified_brain') and hasattr(brain.unified_brain, '_prediction_confidence_history'):
+            brain.unified_brain._prediction_confidence_history = []
+            brain.unified_brain._improvement_rate_history = []
         
         if divergent_test:
             # Extremely different pattern to test paradigm shifting
@@ -125,8 +126,10 @@ class BehavioralTestFramework:
             # Present pattern and get brain prediction
             action, brain_state = brain.process_sensory_input(pattern)
             
-            # Measure prediction quality (higher confidence = better prediction)
-            prediction_confidence = brain_state.get('prediction_confidence', 0.0)
+            # Measure prediction quality (higher confidence = better prediction)  
+            # UNIFIED BRAIN FIX: Use the correct key from UnifiedFieldBrain state
+            prediction_confidence = brain_state.get('last_action_confidence', 
+                                    brain_state.get('prediction_confidence', 0.0))
             prediction_errors.append(1.0 - prediction_confidence)
             prediction_confidences.append(prediction_confidence)
         

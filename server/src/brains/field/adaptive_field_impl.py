@@ -357,8 +357,21 @@ class UnifiedFieldImplementation(FieldImplementation):
         if not input_stream:
             return
         
+        # SANITIZATION: Clamp all inputs to reasonable bounds [-3, 3] (less aggressive)
+        sanitized_input = [max(-3.0, min(3.0, float(x))) for x in input_stream]
+        
+        # LIGHT NORMALIZATION: Only normalize if values are extremely large
+        max_abs_value = max(abs(x) for x in sanitized_input)
+        if max_abs_value > 2.0:
+            # Scale down only when necessary, preserve more input variation
+            scale_factor = 2.0 / max_abs_value
+            normalized_input = [x * scale_factor for x in sanitized_input]
+        else:
+            # Keep original values to preserve input differentiation
+            normalized_input = sanitized_input
+        
         # Convert input to tensor
-        input_tensor = torch.tensor(input_stream, dtype=torch.float32, device=self.field_device)
+        input_tensor = torch.tensor(normalized_input, dtype=torch.float32, device=self.field_device)
         input_intensity = torch.mean(torch.abs(input_tensor)).item()
         
         # Don't inject if input is too weak
@@ -369,7 +382,11 @@ class UnifiedFieldImplementation(FieldImplementation):
         # Use a spatial grid approach for the unified field
         max_positions = min(self.spatial_resolution, 8)  # Limit for performance
         
-        for i, input_value in enumerate(input_stream):
+        # BALANCED INJECTION: Control variance while maintaining adequate field strength
+        # Target: Field energy 50-200 range for good gradient generation
+        base_injection_strength = 0.05 * dt  # Reduced from 0.1 but not as much as before
+        
+        for i, input_value in enumerate(normalized_input):
             if abs(input_value) < 0.01:
                 continue
                 
@@ -378,10 +395,10 @@ class UnifiedFieldImplementation(FieldImplementation):
             y_pos = (i * 11) % max_positions 
             z_pos = (i * 13) % max_positions
             
-            # Add spatial spread around the position
-            for dx in range(-1, 2):
-                for dy in range(-1, 2):
-                    for dz in range(-1, 2):
+            # Limited spatial spread: 2×2×2 around center (compromise between control and coverage)
+            for dx in range(-1, 1):  # 2 positions instead of 3
+                for dy in range(-1, 1):  # 2 positions instead of 3
+                    for dz in range(0, 1):   # 1 position instead of 3 (reduce Z spread)
                         x = (x_pos + dx) % max_positions
                         y = (y_pos + dy) % max_positions
                         z = (z_pos + dz) % max_positions
@@ -390,11 +407,11 @@ class UnifiedFieldImplementation(FieldImplementation):
                         dist = abs(dx) + abs(dy) + abs(dz)
                         weight = 1.0 / (1.0 + dist)
                         
-                        # Inject into unified field with proper strength
-                        injection_strength = input_value * weight * dt * 0.1  # Same as multi-tensor version
+                        # Calculate injection strength (stronger but controlled)
+                        injection_strength = input_value * weight * base_injection_strength
                         
-                        # Inject across multiple dimensions of the unified field
-                        for dim_offset in range(min(self.unified_field.shape[3], 4)):
+                        # Inject into unified field (back to 3 dimensions for better coverage)
+                        for dim_offset in range(min(self.unified_field.shape[3], 3)):
                             self.unified_field[x, y, z, dim_offset] += injection_strength
     
     def compute_field_gradients(self) -> Dict[str, torch.Tensor]:
@@ -481,12 +498,19 @@ class UnifiedFieldImplementation(FieldImplementation):
         total_field_energy = torch.sum(self.unified_field).item()
         
         # Determine adaptive decay rate based on energy level
-        if total_field_energy > 200.0:
-            decay_rate = 0.95  # 5% decay for very high energy
+        if total_field_energy > 1000.0:
+            # Emergency: Very aggressive decay for runaway energy
+            decay_rate = 0.85  # 15% decay for extreme energy
+            energy_level = "extreme"
+        elif total_field_energy > 500.0:
+            decay_rate = 0.90  # 10% decay for very high energy
             energy_level = "very_high"
-        elif total_field_energy > 100.0:
-            decay_rate = 0.97  # 3% decay for high energy  
+        elif total_field_energy > 200.0:
+            decay_rate = 0.95  # 5% decay for high energy
             energy_level = "high"
+        elif total_field_energy > 100.0:
+            decay_rate = 0.97  # 3% decay for medium-high energy  
+            energy_level = "medium_high"
         elif total_field_energy > 50.0:
             decay_rate = 0.985  # 1.5% decay for medium energy
             energy_level = "medium"
@@ -500,8 +524,15 @@ class UnifiedFieldImplementation(FieldImplementation):
         # Apply decay to unified field
         self.unified_field *= decay_rate
         
-        # Calculate energy after decay
+        # Emergency clamp: Hard limit field energy to prevent chaos
         energy_after_decay = torch.sum(self.unified_field).item()
+        if energy_after_decay > 1000.0:
+            # Scale down entire field to 800.0 (safe margin below 1000)
+            scale_factor = 800.0 / energy_after_decay
+            self.unified_field *= scale_factor
+            energy_after_decay = torch.sum(self.unified_field).item()
+            print(f"🚨 EMERGENCY: Field energy clamped to {energy_after_decay:.1f} (was {total_field_energy:.1f})")
+        
         energy_removed = total_field_energy - energy_after_decay
         
         return {

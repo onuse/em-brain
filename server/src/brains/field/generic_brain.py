@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """
-Generic Field Brain: Platform-Agnostic Unified Field Intelligence
+DEPRECATED: Generic Field Brain - All functionality moved to UnifiedFieldBrain
+
+This file is deprecated. All prediction improvement addiction and field brain
+functionality has been integrated into UnifiedFieldBrain (core_brain.py).
+
+DO NOT USE THIS FILE - Use UnifiedFieldBrain directly.
 
 This is the cleaned-up field brain that works with any input/output streams
 and doesn't assume specific hardware platforms. The brain side should be

@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """
-Field Brain TCP Adapter
+DEPRECATED: Field Brain TCP Adapter - UnifiedFieldBrain is now used directly
+
+This adapter is no longer needed. The BrainFactory now creates UnifiedFieldBrain
+directly without any wrapper layers, providing a single unified pipeline.
 
 Adapter that makes the GenericFieldBrain compatible with the existing
 TCP server infrastructure. This allows the field brain to work with
