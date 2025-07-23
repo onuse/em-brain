@@ -71,9 +71,16 @@ class BrainFactory:
         else:
             self.logger = None
         
-        # Initialize persistence (temporarily disabled during cleanup)
-        # TODO: Re-enable simplified persistence after consolidation cleanup
-        self.persistence_manager = None
+        # Initialize persistence
+        if config.get('memory', {}).get('enable_persistence', True):
+            try:
+                from .persistence.persistence_manager import PersistenceManager
+            except ImportError:
+                from persistence.persistence_manager import PersistenceManager
+            memory_path = config.get('memory', {}).get('persistent_memory_path', './server/robot_memory')
+            self.persistence_manager = PersistenceManager(memory_path=memory_path)
+        else:
+            self.persistence_manager = None
         
         # Performance tracking
         self.total_cycles = 0
@@ -103,7 +110,7 @@ class BrainFactory:
         # Save state if persistence enabled
         if self.persistence_manager and self.total_cycles % 100 == 0:
             try:
-                self.persistence_manager.save_brain_state(self)
+                self.persistence_manager.save_brain_state_incremental(self)
             except Exception as e:
                 if not self.quiet_mode:
                     print(f"⚠️ Persistence save failed: {e}")
@@ -210,11 +217,18 @@ class BrainFactory:
         try:
             # Save final state if persistence enabled
             if self.persistence_manager:
-                self.persistence_manager.save_brain_state(self)
+                self.persistence_manager.save_brain_state_blocking(self)
                 
             # Close logger
             if self.logger:
                 self.logger.close()
+                
+            # Shutdown brain
+            self.brain.shutdown()
+            
+            # Shutdown persistence
+            if self.persistence_manager:
+                self.persistence_manager.shutdown()
                 
             if not self.quiet_mode:
                 print(f"🔌 BrainFactory shutdown complete")

@@ -54,6 +54,7 @@ class HardwareProfile:
     batch_processing_threshold: int
     cognitive_energy_budget: int
     max_experiences_per_cycle: int
+    recommended_spatial_resolution: int = 4  # Default to 4³
     
     # Performance tracking
     adaptation_count: int = 0
@@ -192,15 +193,20 @@ class HardwareAdaptation:
         cpu_multiplier = cpu_cores  # Use all available cores
         
         # Performance-based scaling (cycle time performance)
-        if cycle_time_ms <= 30.0:
+        # Also determine optimal spatial resolution for field brain
+        # Be ambitious on good hardware - better behaviors are worth it!
+        if cycle_time_ms <= 20.0:
             performance_tier = "high"
             perf_multiplier = 2.0
-        elif cycle_time_ms <= 60.0:
+            recommended_resolution = 5  # Fast hardware can handle 5³ with best behaviors
+        elif cycle_time_ms <= 40.0:
             performance_tier = "medium"
             perf_multiplier = 1.0
+            recommended_resolution = 4  # Good balance of speed and behavior
         else:
             performance_tier = "low"
             perf_multiplier = 0.7
+            recommended_resolution = 3  # Must use 3³ for acceptable performance
         
         # GPU acceleration (more aggressive when available)
         if gpu_available:
@@ -246,13 +252,15 @@ class HardwareAdaptation:
         print(f"🧠 Dynamic cognitive limits: WM={working_memory_limit}, Search={similarity_search_limit}")
         print(f"   Energy: {energy_budget} (CPU: {cpu_energy}, GPU bonus: {gpu_energy_bonus})")
         print(f"   Memory capacity: {max_experiences_by_memory:,} experiences ({memory_gb:.1f}GB RAM)")
+        print(f"🎲 Recommended spatial resolution: {recommended_resolution}³")
         
         return {
             'working_memory_limit': working_memory_limit,
             'similarity_search_limit': similarity_search_limit,
             'batch_processing_threshold': batch_threshold,
             'cognitive_energy_budget': energy_budget,
-            'max_experiences_per_cycle': max_experiences_per_cycle
+            'max_experiences_per_cycle': max_experiences_per_cycle,
+            'recommended_spatial_resolution': recommended_resolution
         }
     
     def record_cycle_performance(self, cycle_time_ms: float, memory_usage_mb: float = 0.0):

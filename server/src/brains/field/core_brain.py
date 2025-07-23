@@ -26,14 +26,20 @@ from dataclasses import dataclass, field
 from enum import Enum
 import math
 from collections import deque, defaultdict
+import threading
+import queue
 
 # Import our field dynamics foundation
 try:
-    from .dynamics.constraint_field_dynamics import ConstraintField4D, FieldConstraint, FieldConstraintType
+    from .dynamics.constraint_field_nd import ConstraintFieldND, FieldConstraintND
+    from .dynamics.constraint_field_dynamics import FieldConstraintType
     from .dynamics.temporal_field_dynamics import TemporalExperience, TemporalImprint
+    from .optimized_gradients import create_optimized_gradient_calculator
 except ImportError:
-    from brains.field.dynamics.constraint_field_dynamics import ConstraintField4D, FieldConstraint, FieldConstraintType
+    from brains.field.dynamics.constraint_field_nd import ConstraintFieldND, FieldConstraintND
+    from brains.field.dynamics.constraint_field_dynamics import FieldConstraintType
     from brains.field.dynamics.temporal_field_dynamics import TemporalExperience, TemporalImprint
+    from brains.field.optimized_gradients import create_optimized_gradient_calculator
 
 
 class FieldDynamicsFamily(Enum):
@@ -95,13 +101,14 @@ class UnifiedFieldBrain:
     """
     
     def __init__(self, 
-                 spatial_resolution: int = 20,
+                 spatial_resolution: Optional[int] = None,
                  temporal_window: float = 10.0,
                  field_evolution_rate: float = 0.1,
                  constraint_discovery_rate: float = 0.15,
                  quiet_mode: bool = False):
         
-        self.spatial_resolution = spatial_resolution
+        # If resolution not specified, we'll use hardware-adapted value
+        self._requested_resolution = spatial_resolution
         self.temporal_window = temporal_window
         self.field_evolution_rate = field_evolution_rate
         self.constraint_discovery_rate = constraint_discovery_rate
@@ -126,6 +133,34 @@ class UnifiedFieldBrain:
         field_dimensions = self._initialize_field_dimensions()
         total_dimensions = len(field_dimensions)
         
+        # Get hardware profile for adaptive field sizing
+        hw_profile = None
+        self.hw_profile = None
+        try:
+            # Try relative import first
+            from ...utils.hardware_adaptation import get_hardware_adaptation
+            hw_adapter = get_hardware_adaptation({})
+            hw_profile = hw_adapter.hardware_profile
+            self.hw_profile = hw_profile
+        except:
+            try:
+                # Fallback to direct import
+                from utils.hardware_adaptation import get_hardware_adaptation
+                hw_adapter = get_hardware_adaptation({})
+                hw_profile = hw_adapter.hardware_profile
+                self.hw_profile = hw_profile
+            except Exception as e:
+                if not quiet_mode:
+                    print(f"⚠️  Hardware adaptation not available: {e}")
+        
+        # Use hardware-recommended resolution if not explicitly set
+        if self._requested_resolution is None and hw_profile is not None:
+            self.spatial_resolution = hw_profile.recommended_spatial_resolution
+            if not quiet_mode:
+                print(f"📐 Using hardware-adapted resolution: {self.spatial_resolution}³")
+        else:
+            self.spatial_resolution = self._requested_resolution or 4  # Default to 4³
+            
         # Handle MPS tensor dimension limitation  
         if hardware_device == 'mps' and total_dimensions > 16:
             self.device = torch.device('cpu')
@@ -140,27 +175,40 @@ class UnifiedFieldBrain:
         self.field_dimensions = field_dimensions
         self.total_dimensions = total_dimensions
         
-        # Create unified multi-dimensional field
-        # Dimensions: [spatial_x, spatial_y, spatial_z, scale, time, ...dynamics_families]
-        field_shape = [spatial_resolution] * 3 + [10] + [15] + [1] * (self.total_dimensions - 5)
+        # Create unified multi-dimensional field - ADAPTIVE based on hardware
+        field_shape = self._calculate_adaptive_field_shape(
+            self.spatial_resolution, hw_profile, quiet_mode
+        )
         
         # Core unified field - this replaces ALL discrete structures
         # PERFORMANCE FIX: Explicit device specification for optimal performance
         self.unified_field = torch.zeros(field_shape, dtype=torch.float32, device=self.device)
+        # Initialize with baseline activation
+        self.unified_field.fill_(0.01)
         
-        # Field dynamics systems
-        self.constraint_field = ConstraintField4D(
-            width=spatial_resolution, height=spatial_resolution, 
-            scale_depth=10, temporal_depth=15, temporal_window=temporal_window,
+        # Field dynamics systems - now using N-dimensional constraints
+        self.constraint_field = ConstraintFieldND(
+            field_shape=field_shape,
+            dimension_names=[dim.name for dim in self.field_dimensions],
             constraint_discovery_rate=constraint_discovery_rate,
+            constraint_enforcement_strength=0.3,
+            max_constraints=50,
+            device=self.device,
             quiet_mode=quiet_mode
+        )
+        
+        # Optimized gradient calculator
+        self.gradient_calculator = create_optimized_gradient_calculator(
+            activation_threshold=0.01,
+            cache_enabled=True,
+            sparse_computation=True
         )
         
         # Field evolution parameters - FIXED: Improved for stronger gradients
         self.field_decay_rate = 0.999        # Much slower decay (was 0.995 - too aggressive)
         self.field_diffusion_rate = 0.05     # More diffusion for gradient propagation (was 0.02)
-        self.gradient_following_strength = 1.0  # Maximum gradient strength (was 0.3 - too weak)
-        self.topology_stability_threshold = 0.1
+        self.gradient_following_strength = 15.0  # BALANCED: Strong enough for responses, avoids saturation
+        self.topology_stability_threshold = 0.05  # Lower threshold to work with baseline system
         
         # Field state tracking
         self.field_experiences: List[UnifiedFieldExperience] = []
@@ -178,10 +226,21 @@ class UnifiedFieldBrain:
         self.topology_discoveries = 0
         self.gradient_actions = 0
         
+        # Maintenance tracking
+        self.last_maintenance_cycle = 0
+        self.maintenance_interval = 100  # Run maintenance every 100 cycles
+        self.field_energy_dissipation_rate = 0.98  # Dampen field energy by 2% during maintenance
+        
         # PREDICTION IMPROVEMENT ADDICTION: Track confidence for intrinsic reward
         self._prediction_confidence_history = []
         self._improvement_rate_history = []
         self._current_prediction_confidence = 0.5
+        
+        # Maintenance thread setup
+        self._maintenance_queue = queue.Queue(maxsize=1)  # Only need latest signal
+        self._maintenance_thread = None
+        self._shutdown_maintenance = threading.Event()
+        self._start_maintenance_thread()
         
         if not quiet_mode:
             print(f"🌊 UnifiedFieldBrain initialized")
@@ -190,6 +249,137 @@ class UnifiedFieldBrain:
             print(f"   Temporal window: {temporal_window}s")
             print(f"   Field families: {len(FieldDynamicsFamily)} dynamics types")
             self._print_dimension_summary()
+    
+    def _calculate_adaptive_field_shape(self, spatial_resolution: int, 
+                                      hw_profile: Optional[Any], 
+                                      quiet_mode: bool) -> List[int]:
+        """
+        Calculate field dimensions adapted to hardware capabilities.
+        
+        Strategy:
+        - Low-end hardware: Minimal dimensions for basic intelligence
+        - Mid-range: Balanced dimensions  
+        - High-end: Rich dimensions for complex intelligence
+        """
+        # Default balanced shape
+        default_shape = [
+            spatial_resolution,      # X position
+            spatial_resolution,      # Y position  
+            spatial_resolution,      # Z position
+            10,                     # Scale levels
+            15,                     # Time steps
+            3,                      # Oscillatory (6D → 3)
+            3,                      # Flow (8D → 3)
+            2,                      # Topology (6D → 2)
+            2,                      # Energy (4D → 2)
+            2,                      # Coupling (5D → 2)
+            2,                      # Emergence (3D → 2)
+        ]
+        
+        if hw_profile is None:
+            if not quiet_mode:
+                print("🔧 No hardware profile, using balanced field dimensions")
+            return default_shape
+            
+        # Determine hardware tier based on capabilities
+        cpu_cores = hw_profile.cpu_cores
+        memory_gb = hw_profile.total_memory_gb
+        gpu_available = hw_profile.gpu_available
+        gpu_memory_gb = hw_profile.gpu_memory_gb or 0
+        
+        # Calculate performance score
+        cpu_score = min(cpu_cores / 8.0, 2.0)  # Normalize to 8 cores = 1.0
+        memory_score = min(memory_gb / 16.0, 2.0)  # Normalize to 16GB = 1.0
+        gpu_score = 2.0 if gpu_available else 1.0
+        
+        if gpu_memory_gb > 8:
+            gpu_score = 3.0  # High-end GPU
+        elif gpu_memory_gb > 4:
+            gpu_score = 2.5  # Mid-range GPU
+            
+        total_score = cpu_score * memory_score * gpu_score
+        
+        # Define dimension configurations based on hardware tier
+        if total_score >= 4.0:  # High-end hardware
+            field_shape = [
+                spatial_resolution,      # X position
+                spatial_resolution,      # Y position  
+                spatial_resolution,      # Z position
+                10,                     # Scale levels
+                15,                     # Time steps
+                6,                      # Oscillatory (rich)
+                6,                      # Flow (rich)
+                4,                      # Topology (good)
+                3,                      # Energy (good)
+                4,                      # Coupling (rich)
+                3,                      # Emergence (good)
+            ]
+            tier = "high-end"
+        elif total_score >= 1.5:  # Mid-range hardware
+            field_shape = [
+                spatial_resolution,      # X position
+                spatial_resolution,      # Y position  
+                spatial_resolution,      # Z position
+                10,                     # Scale levels
+                15,                     # Time steps
+                4,                      # Oscillatory (balanced)
+                4,                      # Flow (balanced)
+                3,                      # Topology (adequate)
+                2,                      # Energy (basic)
+                3,                      # Coupling (adequate)
+                2,                      # Emergence (basic)
+            ]
+            tier = "mid-range"
+        else:  # Low-end hardware
+            field_shape = [
+                min(spatial_resolution, 12),  # Smaller spatial
+                min(spatial_resolution, 12),
+                min(spatial_resolution, 12),
+                8,                      # Fewer scale levels
+                10,                     # Fewer time steps
+                2,                      # Oscillatory (minimal)
+                2,                      # Flow (minimal)
+                2,                      # Topology (minimal)
+                1,                      # Energy (binary)
+                2,                      # Coupling (minimal)
+                1,                      # Emergence (binary)
+            ]
+            tier = "low-end"
+            
+        # Calculate memory usage
+        total_elements = 1
+        for dim in field_shape:
+            total_elements *= dim
+        memory_mb = (total_elements * 4) / (1024 * 1024)
+        
+        if not quiet_mode:
+            print(f"🔧 Hardware tier: {tier} (score: {total_score:.1f})")
+            print(f"   CPU: {cpu_cores} cores, RAM: {memory_gb:.1f}GB")
+            if gpu_available:
+                print(f"   GPU: {hw_profile.gpu_memory_gb:.1f}GB")
+            print(f"   Field dimensions: {field_shape}")
+            print(f"   Field memory: {memory_mb:.1f}MB ({total_elements:,} elements)")
+            
+        # Safety check - ensure memory usage is reasonable
+        max_allowed_mb = memory_gb * 1024 * 0.1  # Use max 10% of system RAM
+        if memory_mb > max_allowed_mb:
+            if not quiet_mode:
+                print(f"⚠️  Field too large ({memory_mb:.1f}MB), reducing dimensions...")
+            # Reduce non-spatial dimensions
+            for i in range(5, len(field_shape)):
+                field_shape[i] = max(1, field_shape[i] - 1)
+            
+            # Recalculate memory usage
+            new_total_elements = 1
+            for dim in field_shape:
+                new_total_elements *= dim
+            new_memory_mb = (new_total_elements * 4) / (1024 * 1024)
+            
+            if not quiet_mode:
+                print(f"   Reduced to: {field_shape}")
+                print(f"   New memory: {new_memory_mb:.1f}MB")
+            
+        return field_shape
     
     def _initialize_field_dimensions(self) -> List[FieldDimension]:
         """Initialize the unified field dimension architecture."""
@@ -332,7 +522,11 @@ class UnifiedFieldBrain:
         except ImportError:
             pass  # Hardware adaptation not available
         
-        # 6. Extract brain state info
+        # 7. Trigger maintenance operations periodically (async, not on hot path)
+        if self.brain_cycles % self.maintenance_interval == 0:
+            self._trigger_maintenance()
+        
+        # 8. Extract brain state info
         brain_state = self._get_field_brain_state(cycle_time)
         
         if not self.quiet_mode and self.brain_cycles % 100 == 0:
@@ -359,166 +553,290 @@ class UnifiedFieldBrain:
         
         raw_input = torch.tensor(sensory_input, dtype=torch.float32, device=self.device)
         
-        # Map robot sensors to field dimensions by dynamics families
+        # Map robot sensors to field dimensions - ENHANCED to use all dimensions
         field_coords = torch.zeros(self.total_dimensions, device=self.device)
         
-        # This is where the magic happens - mapping sensors by field dynamics rather than modality
-        sensor_idx = 0
+        # Convert to tensor for easier manipulation
+        sensor_tensor = torch.tensor(sensory_input, device=self.device)
         
-        # SPATIAL MAPPING (position, orientation from robot sensors)
-        if sensor_idx < len(sensory_input):
-            field_coords[0] = sensory_input[sensor_idx] * 2 - 1  # spatial_x: [-1, 1]
-            sensor_idx += 1
-        if sensor_idx < len(sensory_input):
-            field_coords[1] = sensory_input[sensor_idx] * 2 - 1  # spatial_y: [-1, 1]
-            sensor_idx += 1
-        if sensor_idx < len(sensory_input):
-            field_coords[2] = sensory_input[sensor_idx] * 2 - 1  # spatial_z: [-1, 1]
-            sensor_idx += 1
+        # SPATIAL MAPPING (0-2) - TUNED: Enhanced obstacle detection
+        # Nonlinear response for better obstacle avoidance
+        for i in range(3):
+            raw = sensory_input[i]
+            if raw > 0.7:  # Close obstacle
+                field_coords[i] = (raw - 0.5) * 4  # Strong response
+            elif raw > 0.5:  # Medium distance
+                field_coords[i] = (raw - 0.5) * 2  # Moderate response
+            else:
+                field_coords[i] = (raw - 0.5) * 2  # Normal scaling
         
-        # OSCILLATORY MAPPING (frequencies, colors, sounds)
-        oscillatory_start = 5
-        for i in range(6):  # 6 oscillatory dimensions
+        # SCALE MAPPING (3) - derive from sensor variance
+        sensor_variance = torch.var(sensor_tensor[:6])
+        field_coords[3] = torch.tanh(sensor_variance * 2)
+        
+        # TIME MAPPING (4) - temporal dynamics
+        field_coords[4] = torch.sin(sensor_tensor[0] * math.pi)
+        
+        # OSCILLATORY MAPPING (5-10) - frequencies, rhythms
+        for i in range(6):
+            sensor_idx = 3 + i  # Start from 4th sensor
             if sensor_idx < len(sensory_input):
-                # Map sensor values to oscillatory patterns
-                field_coords[oscillatory_start + i] = math.sin(sensory_input[sensor_idx] * 2 * math.pi)
-                sensor_idx += 1
+                # Create rich oscillatory patterns
+                freq = (i + 1) * 0.5
+                phase = sensory_input[sensor_idx] * 2 * math.pi
+                field_coords[5 + i] = math.sin(phase + freq * self.brain_cycles * 0.01)
+            else:
+                # Generate from available sensors
+                field_coords[5 + i] = math.cos(sensor_tensor[i % len(sensory_input)] * math.pi * (i + 1))
         
-        # FLOW MAPPING (gradients, motion, attention)
-        flow_start = 11
-        for i in range(8):  # 8 flow dimensions
-            if sensor_idx < len(sensory_input):
-                # Calculate gradients from adjacent sensor readings
-                if sensor_idx > 0:
-                    gradient = sensory_input[sensor_idx] - sensory_input[sensor_idx - 1]
-                    field_coords[flow_start + i] = gradient
-                else:
-                    field_coords[flow_start + i] = sensory_input[sensor_idx] * 2 - 1
-                sensor_idx += 1
+        # FLOW MAPPING (11-18) - gradients, motion
+        for i in range(8):
+            sensor_idx = 9 + i
+            if sensor_idx < len(sensory_input) and sensor_idx > 0:
+                # Rich gradient calculation
+                gradient = sensory_input[sensor_idx] - sensory_input[sensor_idx - 1]
+                field_coords[11 + i] = gradient * 5 + 0.1 * math.sin(self.brain_cycles * 0.1 + i)
+            else:
+                # Derive from spatial changes
+                field_coords[11 + i] = (sensor_tensor[(i + 1) % len(sensory_input)] - 
+                                       sensor_tensor[i % len(sensory_input)])
         
-        # TOPOLOGY MAPPING (stability, boundaries, objects)
-        topology_start = 19
-        for i in range(6):  # 6 topology dimensions
+        # TOPOLOGY MAPPING (19-24) - stable patterns
+        for i in range(6):
+            sensor_idx = 17 + i
             if sensor_idx < len(sensory_input):
-                # Map to topology stability measures
-                field_coords[topology_start + i] = abs(sensory_input[sensor_idx])
-                sensor_idx += 1
+                # Threshold-based topology with hysteresis
+                threshold = 0.5 + 0.1 * math.sin(i)
+                field_coords[19 + i] = 1.0 if sensory_input[sensor_idx] > threshold else -1.0
+            else:
+                # Pattern from sensor combinations
+                field_coords[19 + i] = torch.sign(sensor_tensor[i % len(sensory_input)] - 0.5)
         
-        # ENERGY MAPPING (intensity, activation, resources)
-        energy_start = 25
-        for i in range(4):  # 4 energy dimensions
-            if sensor_idx < len(sensory_input):
-                field_coords[energy_start + i] = sensory_input[sensor_idx]
-                sensor_idx += 1
+        # ENERGY MAPPING (25-28) - intensity levels
+        for i in range(4):
+            if i < len(sensory_input):
+                # Energy as transformed magnitude
+                energy = abs(sensory_input[i] - 0.5) * 2
+                field_coords[25 + i] = energy * (1 + 0.2 * math.sin(self.brain_cycles * 0.05))
+            else:
+                # Derive from sensor statistics
+                std_val = torch.std(sensor_tensor).item()
+                # Handle single value or constant array (std returns nan)
+                if torch.isnan(torch.tensor(std_val)) or sensor_tensor.numel() <= 1:
+                    std_val = 0.1  # Default variance
+                field_coords[25 + i] = std_val * (i + 1)
         
-        # COUPLING MAPPING (correlations, associations)
-        coupling_start = 29
-        for i in range(5):  # 5 coupling dimensions
-            if sensor_idx < len(sensory_input):
-                # Calculate correlations between sensors
-                if sensor_idx > 1:
-                    correlation = sensory_input[sensor_idx] * sensory_input[sensor_idx - 2]
-                    field_coords[coupling_start + i] = correlation
-                else:
-                    field_coords[coupling_start + i] = sensory_input[sensor_idx] * 2 - 1
-                sensor_idx += 1
+        # COUPLING MAPPING (29-33) - correlations
+        for i in range(5):
+            if i + 1 < len(sensory_input):
+                # Richer correlations
+                corr = sensory_input[i] * sensory_input[i + 1]
+                field_coords[29 + i] = torch.tanh(torch.tensor(corr * 2 - 1.0))
+            else:
+                # Cross-sensor coupling
+                idx1, idx2 = i % len(sensory_input), (i + 3) % len(sensory_input)
+                field_coords[29 + i] = sensor_tensor[idx1] * sensor_tensor[idx2] * 2 - 1
         
-        # EMERGENCE MAPPING (novelty, creativity)
-        emergence_start = 34
-        for i in range(2):  # 2 emergence dimensions (save 1 for calculated novelty)
-            if sensor_idx < len(sensory_input):
-                field_coords[emergence_start + i] = sensory_input[sensor_idx]
-                sensor_idx += 1
+        # EMERGENCE MAPPING (34-36) - creative combinations
+        # Nonlinear combinations of sensors
+        field_coords[34] = torch.tanh(torch.sum(sensor_tensor[:3]) - 1.5)
+        field_coords[35] = torch.tanh(torch.prod(sensor_tensor[:3]) * 10)
+        field_coords[36] = torch.tanh(torch.max(sensor_tensor) - torch.min(sensor_tensor))
         
         # Calculate novelty from field distance to previous experiences
         novelty = self._calculate_experience_novelty(field_coords)
-        field_coords[emergence_start + 2] = novelty  # problem_solving_phase
+        # Novelty modulates the last emergence dimension
+        field_coords[36] = field_coords[36] * 0.7 + novelty * 0.3
         
         return UnifiedFieldExperience(
             timestamp=time.time(),
             raw_sensory_input=raw_input,
             field_coordinates=field_coords,
-            field_intensity=torch.norm(field_coords).item() / math.sqrt(self.total_dimensions),
+            # Stronger field intensity to ensure values exceed baseline
+            field_intensity=0.3 + 0.2 * torch.norm(field_coords).item() / math.sqrt(self.total_dimensions),
             experience_id=f"experience_{self.brain_cycles}"
         )
     
     def _apply_field_experience(self, experience: UnifiedFieldExperience):
         """
-        Apply experience to unified field - this replaces ALL discrete pattern processing.
+        Apply experience to unified field - UPDATED for new 11D structure.
         """
-        # Calculate field position from experience coordinates
-        spatial_coords = experience.field_coordinates[:3]  # x, y, z
-        scale_coord = experience.field_coordinates[3]
-        time_coord = experience.field_coordinates[4]
+        # Normalize pattern for memory encoding
+        # This ensures loud voices don't create stronger memories than whispers
+        normalized_coords = self._normalize_pattern_for_memory(experience.field_coordinates)
         
-        # Map to field indices
-        x_idx = int((spatial_coords[0] + 1) * 0.5 * (self.spatial_resolution - 1))
-        y_idx = int((spatial_coords[1] + 1) * 0.5 * (self.spatial_resolution - 1))
-        z_idx = int((spatial_coords[2] + 1) * 0.5 * (self.spatial_resolution - 1))
-        scale_idx = int((scale_coord + 1) * 0.5 * 9)  # 10 scale levels
-        time_idx = int((time_coord + 1) * 0.5 * 14)   # 15 time levels
+        # Create normalized experience for memory operations
+        memory_experience = UnifiedFieldExperience(
+            timestamp=experience.timestamp,
+            raw_sensory_input=experience.raw_sensory_input,
+            field_coordinates=normalized_coords,
+            field_intensity=experience.field_intensity,
+            experience_id=experience.experience_id
+        )
         
-        # Clamp to valid ranges
-        x_idx = max(0, min(self.spatial_resolution - 1, x_idx))
-        y_idx = max(0, min(self.spatial_resolution - 1, y_idx))
-        z_idx = max(0, min(self.spatial_resolution - 1, z_idx))
-        scale_idx = max(0, min(9, scale_idx))
-        time_idx = max(0, min(14, time_idx))
+        # First, check for resonance with existing topology regions
+        self._activate_resonant_memories(memory_experience)
         
-        # Apply experience as field imprint (Gaussian blob across all dimensions)
-        self._apply_multidimensional_imprint(
-            (x_idx, y_idx, z_idx, scale_idx, time_idx),
-            experience.field_coordinates[5:],  # All non-spatial dimensions
+        # Map all 37 field coordinates to 11D field indices
+        coords = experience.field_coordinates
+        
+        # Map continuous coordinates to discrete field indices
+        indices = []
+        
+        # Spatial dimensions (0-2)
+        for i in range(3):
+            coord = torch.clamp(coords[i], -2.0, 2.0)  # Handle amplified range
+            idx = int((coord + 2.0) * 0.25 * (self.spatial_resolution - 1))
+            indices.append(max(0, min(self.spatial_resolution - 1, idx)))
+        
+        # Map remaining dimensions based on actual field shape
+        # Scale dimension (3)
+        scale_size = self.unified_field.shape[3]
+        scale_idx = int((torch.clamp(coords[3], -1.0, 1.0) + 1) * 0.5 * (scale_size - 1))
+        indices.append(max(0, min(scale_size - 1, scale_idx)))
+        
+        # Time dimension (4)
+        time_size = self.unified_field.shape[4]
+        time_idx = int((torch.clamp(coords[4], -1.0, 1.0) + 1) * 0.5 * (time_size - 1))
+        indices.append(max(0, min(time_size - 1, time_idx)))
+        
+        # Oscillatory dimensions (5-10) mapped to field dimension 5
+        oscillatory_size = self.unified_field.shape[5]
+        oscillatory_idx = 0
+        for i in range(5, 11):
+            oscillatory_idx += coords[i].item() * (2 ** (i - 5))
+        oscillatory_idx = int((oscillatory_idx + 32) * (1.0 / 64.0) * oscillatory_size) % oscillatory_size
+        indices.append(oscillatory_idx)
+        
+        # Flow dimensions (11-18) mapped to field dimension 6
+        flow_size = self.unified_field.shape[6]
+        flow_idx = 0
+        for i in range(11, 19):
+            flow_idx += coords[i].item() * (2 ** (i - 11))
+        flow_idx = int((flow_idx + 128) * (1.0 / 256.0) * flow_size) % flow_size
+        indices.append(flow_idx)
+        
+        # Topology dimensions (19-24) mapped to field dimension 7
+        topology_size = self.unified_field.shape[7]
+        topology_idx = int(torch.sum(coords[19:25]).item() + 3) % topology_size
+        indices.append(topology_idx)
+        
+        # Energy dimensions (25-28) mapped to field dimension 8
+        energy_size = self.unified_field.shape[8]
+        energy_idx = int(torch.sum(torch.abs(coords[25:29])).item() * 2) % energy_size
+        indices.append(energy_idx)
+        
+        # Coupling dimensions (29-33) mapped to field dimension 9
+        coupling_size = self.unified_field.shape[9]
+        coupling_idx = int(torch.sum(coords[29:34]).item() + 2.5) % coupling_size
+        indices.append(coupling_idx)
+        
+        # Emergence dimensions (34-36) mapped to field dimension 10
+        emergence_size = self.unified_field.shape[10]
+        emergence_idx = int(torch.sum(coords[34:37]).item() + 1.5) % emergence_size
+        indices.append(emergence_idx)
+        
+        # Apply experience as field imprint
+        self._last_imprint_indices = indices  # Store for topology discovery
+        
+        if not self.quiet_mode:
+            print(f"   🎯 Imprinting at spatial indices: {indices[:3]}, full indices: {indices}")
+            
+        self._apply_multidimensional_imprint_new(
+            tuple(indices),
             experience.field_intensity
         )
         
         # Store experience
         self.field_experiences.append(experience)
         
-        # Discover topology regions and constraints
-        self._discover_field_topology(experience)
+        # Discover topology regions and constraints using normalized pattern
+        self._discover_field_topology(memory_experience)
+    
+    def _apply_multidimensional_imprint_new(self, indices: Tuple[int, ...], intensity: float):
+        """Apply field imprint for new 11D structure."""
+        # Simply add intensity at the specified location
+        # The 11D structure allows for much richer patterns
+        try:
+            old_val = self.unified_field[indices].item()
+            self.unified_field[indices] += intensity
+            new_val = self.unified_field[indices].item()
+            
+            if not self.quiet_mode:
+                print(f"   🎯 Imprint result: {old_val:.4f} -> {new_val:.4f} at {indices[:3]}")
+            
+            # Apply small Gaussian blur around the point
+            for dim in range(len(indices)):
+                for offset in [-1, 1]:
+                    neighbor_indices = list(indices)
+                    neighbor_indices[dim] = indices[dim] + offset
+                    
+                    # Check bounds
+                    if 0 <= neighbor_indices[dim] < self.unified_field.shape[dim]:
+                        neighbor_tuple = tuple(neighbor_indices)
+                        self.unified_field[neighbor_tuple] += intensity * 0.5
+        except IndexError as e:
+            if not self.quiet_mode:
+                print(f"⚠️  IndexError in imprint: {e}, indices: {indices}, shape: {self.unified_field.shape}")
     
     def _apply_multidimensional_imprint(self, spatial_indices: Tuple[int, int, int, int, int], 
                                        dynamics_values: torch.Tensor, intensity: float):
-        """Apply Gaussian imprint across all field dimensions."""
+        """Apply Gaussian imprint across all field dimensions - ENHANCED for better differentiation."""
         x_idx, y_idx, z_idx, scale_idx, time_idx = spatial_indices
         
         # Create 5D Gaussian in spatial+scale+time dimensions
-        spatial_spread = 2.0
+        spatial_spread = 1.5  # Tighter spread for more distinct patterns
+        
+        # Use vectorized operations for efficiency
         for dx in range(-2, 3):
             for dy in range(-2, 3):
                 for dz in range(-1, 2):
-                    for ds in range(-1, 2):
-                        for dt in range(-1, 2):
-                            x_pos = x_idx + dx
-                            y_pos = y_idx + dy
-                            z_pos = z_idx + dz
-                            s_pos = scale_idx + ds
-                            t_pos = time_idx + dt
-                            
-                            # Check bounds
-                            if (0 <= x_pos < self.spatial_resolution and
-                                0 <= y_pos < self.spatial_resolution and
-                                0 <= z_pos < self.spatial_resolution and
-                                0 <= s_pos < 10 and
-                                0 <= t_pos < 15):
-                                
-                                # Calculate Gaussian weight
-                                distance = math.sqrt(dx**2 + dy**2 + dz**2 + ds**2 + dt**2)
-                                weight = intensity * math.exp(-(distance**2) / (2 * spatial_spread**2))
-                                
-                                # Apply to unified field (this modifies all remaining dimensions)
-                                try:
-                                    self.unified_field[x_pos, y_pos, z_pos, s_pos, t_pos] += weight
-                                except IndexError:
-                                    pass  # Skip invalid indices
+                    x_pos = x_idx + dx
+                    y_pos = y_idx + dy
+                    z_pos = z_idx + dz
+                    
+                    # Check spatial bounds
+                    if (0 <= x_pos < self.spatial_resolution and
+                        0 <= y_pos < self.spatial_resolution and
+                        0 <= z_pos < self.spatial_resolution):
+                        
+                        # Calculate spatial distance
+                        spatial_distance = math.sqrt(dx**2 + dy**2 + dz**2)
+                        spatial_weight = math.exp(-(spatial_distance**2) / (2 * spatial_spread**2))
+                        
+                        # Apply across scale and time with modulated intensity
+                        # Include dynamics values to create unique patterns
+                        for s_offset in range(-1, 2):
+                            s_pos = scale_idx + s_offset
+                            if 0 <= s_pos < 10:
+                                for t_offset in range(-1, 2):
+                                    t_pos = time_idx + t_offset
+                                    if 0 <= t_pos < 15:
+                                        # Combine spatial weight with scale/time distance
+                                        scale_time_distance = math.sqrt(s_offset**2 + t_offset**2)
+                                        total_weight = spatial_weight * math.exp(-(scale_time_distance**2) / 4.0)
+                                        
+                                        # Modulate by dynamics values for unique patterns
+                                        if dynamics_values.numel() > 0:
+                                            # Use first few dynamics values to modulate the imprint
+                                            modulation = 1.0 + 0.2 * torch.mean(dynamics_values[:5]).item()
+                                            total_weight *= modulation
+                                        
+                                        # Apply weighted intensity
+                                        self.unified_field[x_pos, y_pos, z_pos, s_pos, t_pos] += intensity * total_weight
     
     def _evolve_unified_field(self):
         """
         Evolve the unified field - this replaces ALL discrete learning and adaptation.
+        Uses homeostatic non-uniform decay for natural memory consolidation.
         """
-        # Apply field decay
+        # Apply field decay (back to simple uniform decay for now)
         self.unified_field *= self.field_decay_rate
+        
+        # Add small baseline to prevent complete decay, but only where field is very weak
+        baseline = 0.01
+        weak_mask = self.unified_field < baseline
+        self.unified_field[weak_mask] = baseline
         
         # Apply field diffusion (simple 3D spatial diffusion)
         self._apply_spatial_diffusion()
@@ -526,8 +844,9 @@ class UnifiedFieldBrain:
         # Apply constraint-guided evolution
         self._apply_constraint_guided_evolution()
         
-        # Update topology regions
-        self._update_topology_regions()
+        # Update topology regions (only if they exist)
+        if self.topology_regions:
+            self._update_topology_regions()
         
         # Calculate gradient flows for action generation
         self._calculate_gradient_flows()
@@ -564,100 +883,264 @@ class UnifiedFieldBrain:
                 )
     
     def _apply_constraint_guided_evolution(self):
-        """Apply constraint-guided field evolution (simplified)."""
-        # This would integrate with our constraint field dynamics
-        # For now, apply simple constraint satisfaction
+        """Apply constraint-guided field evolution using N-dimensional constraints."""
+        # Testing constraint system fix
+        pass  # Continue with normal execution
         
-        # OPTIMIZED: Vectorized gradient smoothness constraint (replaces O(N^5) loops)
-        # Apply gradient penalty only occasionally to avoid performance bottleneck
-        if self.field_evolution_cycles % 10 == 0:  # Every 10th evolution cycle
+        # Discover new constraints from current field state
+        if self.field_evolution_cycles % 5 == 0:  # Discover constraints periodically
+            new_constraints = self.constraint_field.discover_constraints(
+                self.unified_field, 
+                self.gradient_flows
+            )
+            
+            if len(new_constraints) > 0 and not self.quiet_mode:
+                print(f"🔗 Discovered {len(new_constraints)} new constraints")
+        
+        # Apply existing constraints to guide field evolution
+        constraint_forces = self.constraint_field.enforce_constraints(self.unified_field)
+        
+        # Apply constraint forces with appropriate scaling
+        if torch.any(constraint_forces != 0):
+            # Scale down to prevent instability
+            self.unified_field += constraint_forces * self.field_evolution_rate * 0.1
+            
+        # Apply gradient smoothness constraint periodically for stability
+        if self.field_evolution_cycles % 10 == 0:
             gradient_penalty = 0.01
             
-            # Vectorized gradient calculation (much faster than nested loops)
-            # Only compute gradients for interior points to avoid boundary issues
-            interior = self.unified_field[1:-1, 1:-1, 1:-1, 1:9, 1:14]
-            
-            # Calculate gradients using tensor slicing (vectorized)
-            grad_x = self.unified_field[2:, 1:-1, 1:-1, 1:9, 1:14] - self.unified_field[:-2, 1:-1, 1:-1, 1:9, 1:14]
-            grad_y = self.unified_field[1:-1, 2:, 1:-1, 1:9, 1:14] - self.unified_field[1:-1, :-2, 1:-1, 1:9, 1:14]  
-            grad_z = self.unified_field[1:-1, 1:-1, 2:, 1:9, 1:14] - self.unified_field[1:-1, 1:-1, :-2, 1:9, 1:14]
-            
-            # Compute gradient magnitude (vectorized)
-            gradient_magnitude = torch.sqrt(grad_x**2 + grad_y**2 + grad_z**2)
-            
-            # Apply penalty where gradients are too steep (vectorized)
-            steep_mask = gradient_magnitude > 0.5
-            self.unified_field[1:-1, 1:-1, 1:-1, 1:9, 1:14][steep_mask] *= (1 - gradient_penalty)
+            # Simple Laplacian smoothing on spatial dimensions
+            for dim in range(min(3, len(self.unified_field.shape))):
+                if self.unified_field.shape[dim] > 2:
+                    # Create slices for computing differences
+                    slices_center = [slice(1, -1) if i == dim else slice(None) for i in range(len(self.unified_field.shape))]
+                    slices_left = [slice(None, -2) if i == dim else slice(None) for i in range(len(self.unified_field.shape))]
+                    slices_right = [slice(2, None) if i == dim else slice(None) for i in range(len(self.unified_field.shape))]
+                    
+                    # Laplacian approximation
+                    laplacian = (self.unified_field[slices_left] + self.unified_field[slices_right] - 
+                                2 * self.unified_field[slices_center])
+                    
+                    # Apply smoothing
+                    self.unified_field[slices_center] += gradient_penalty * laplacian
     
     def _discover_field_topology(self, experience: UnifiedFieldExperience):
         """Discover stable topology regions - this replaces discrete pattern storage."""
         # Look for stable field regions (high activation, low gradient)
-        field_position = experience.field_coordinates[:5]  # spatial + scale + time
+        field_position = experience.field_coordinates  # Use full 37D coordinates
         
-        # Check if this creates a new stable topology region
-        region_key = f"region_{len(self.topology_regions)}"
+        # Check if we already have a region near this position
+        existing_region = None
+        spatial_threshold = 0.5  # Distance threshold for considering regions "same"
+        
+        for region_key, region_info in self.topology_regions.items():
+            # Check spatial distance (first 3 dimensions)
+            spatial_distance = torch.norm(field_position[:3] - region_info['center'][:3]).item()
+            if spatial_distance < spatial_threshold:
+                existing_region = region_key
+                break
+        
+        # Use existing region key or create new one
+        if existing_region:
+            region_key = existing_region
+        else:
+            region_key = f"region_{len(self.topology_regions)}"
+            
         stability_threshold = self.topology_stability_threshold
         
         # Calculate local field stability
-        x_idx = int((field_position[0] + 1) * 0.5 * (self.spatial_resolution - 1))
-        y_idx = int((field_position[1] + 1) * 0.5 * (self.spatial_resolution - 1))
-        z_idx = int((field_position[2] + 1) * 0.5 * (self.spatial_resolution - 1))
+        # field_position is in [-2, 2] range after amplification
+        x_idx = int((torch.clamp(field_position[0], -2.0, 2.0) + 2.0) * 0.25 * (self.spatial_resolution - 1))
+        y_idx = int((torch.clamp(field_position[1], -2.0, 2.0) + 2.0) * 0.25 * (self.spatial_resolution - 1))
+        z_idx = int((torch.clamp(field_position[2], -2.0, 2.0) + 2.0) * 0.25 * (self.spatial_resolution - 1))
+        
+        if not self.quiet_mode:
+            print(f"   📍 Field position: [{field_position[0]:.2f}, {field_position[1]:.2f}, {field_position[2]:.2f}] -> indices: [{x_idx}, {y_idx}, {z_idx}]")
         
         if (0 <= x_idx < self.spatial_resolution and 
             0 <= y_idx < self.spatial_resolution and
             0 <= z_idx < self.spatial_resolution):
             
-            # Sample local field values
-            local_region = self.unified_field[
-                max(0, x_idx-1):min(self.spatial_resolution, x_idx+2),
-                max(0, y_idx-1):min(self.spatial_resolution, y_idx+2),
-                max(0, z_idx-1):min(self.spatial_resolution, z_idx+2),
-                :, :
-            ]
-            
-            region_mean = torch.mean(local_region).item()
-            region_std = torch.std(local_region.float()).item()
-            
-            # High activation + low variance = stable topology
-            if region_mean > stability_threshold and region_std < 0.1:
-                self.topology_regions[region_key] = {
-                    'center': field_position.clone(),
-                    'activation': region_mean,
-                    'stability': 1.0 / (region_std + 1e-6),
-                    'discovery_time': time.time(),
-                    'experience_count': 1
-                }
-                self.topology_discoveries += 1
+            # Sample local SPATIAL field values only
+            # We care about spatial stability, not averaging across all dimensions
+            if hasattr(self, '_last_imprint_indices'):
+                # Sample the 3x3x3 spatial region at the specific dimension indices
+                local_spatial_region = self.unified_field[
+                    max(0, x_idx-1):min(self.spatial_resolution, x_idx+2),
+                    max(0, y_idx-1):min(self.spatial_resolution, y_idx+2),
+                    max(0, z_idx-1):min(self.spatial_resolution, z_idx+2),
+                    self._last_imprint_indices[3],  # scale
+                    self._last_imprint_indices[4],  # time
+                    self._last_imprint_indices[5],  # oscillatory
+                    self._last_imprint_indices[6],  # flow
+                    self._last_imprint_indices[7],  # topology
+                    self._last_imprint_indices[8],  # energy
+                    self._last_imprint_indices[9],  # coupling
+                    self._last_imprint_indices[10]  # emergence
+                ]
+                
+                # Use max for detection (more robust to sparse activations)
+                region_max = torch.max(local_spatial_region).item()
+                region_mean = torch.mean(local_spatial_region).item()
+                region_std = torch.std(local_spatial_region.float()).item()
+                
+                # NaN protection for statistics
+                if torch.isnan(torch.tensor(region_std)) or local_spatial_region.numel() <= 1:
+                    region_std = 0.1  # Default small variance
                 
                 if not self.quiet_mode:
-                    print(f"   🏔️ Topology region discovered: {region_key} "
-                          f"(activation={region_mean:.3f}, stability={1.0/(region_std+1e-6):.1f})")
+                    print(f"   🔍 Topology check: region max={region_max:.4f}, mean={region_mean:.4f}, std={region_std:.4f}, threshold={stability_threshold}")
+            else:
+                # Fallback to checking just center point
+                region_max = 0.0
+                region_mean = 0.0
+                region_std = 1.0
+                if not self.quiet_mode:
+                    print("   ⚠️  No imprint indices available for topology check")
+            
+            # High activation + low variance = stable topology
+            # Use max instead of mean for robustness to sparse activations
+            if region_max > stability_threshold and region_std < 0.5:  # More lenient std threshold
+                if existing_region:
+                    # Update existing region
+                    region = self.topology_regions[region_key]
+                    region['activation'] = 0.9 * region['activation'] + 0.1 * region_mean  # Smooth update
+                    region['stability'] = 1.0 / (region_std + 1e-6)
+                    region['last_activation'] = time.time()
+                    region['activation_count'] += 1
+                    region['importance'] = min(region['importance'] * 1.1, 10.0)  # Increase importance
+                    # Update field indices to latest imprint location
+                    region['field_indices'] = self._last_imprint_indices.copy()
+                    
+                    if not self.quiet_mode:
+                        print(f"   🏔️ Topology region reinforced: {region_key} "
+                              f"(activation={region['activation']:.3f}, count={region['activation_count']})")
+                else:
+                    # Create new region
+                    self.topology_regions[region_key] = {
+                        'center': field_position.clone(),  # Full 37D coordinates
+                        'field_indices': self._last_imprint_indices.copy(),  # Store field indices
+                        'activation': region_mean,
+                        'stability': 1.0 / (region_std + 1e-6),
+                        'discovery_time': time.time(),
+                        'discovery_cycle': self.brain_cycles,
+                        'last_activation': time.time(),
+                        'activation_count': 1,
+                        'importance': 1.0,  # Initial importance
+                        'decay_rate': self.field_decay_rate,  # Can be adjusted per region
+                        'consolidation_level': 0,  # Increases with maintenance cycles
+                        'associated_regions': []  # Links to related memories
+                    }
+                    self.topology_discoveries += 1
+                    
+                    if not self.quiet_mode:
+                        print(f"   🏔️ Topology region discovered: {region_key} "
+                              f"(activation={region_mean:.3f}, stability={1.0/(region_std+1e-6):.1f})")
+    
+    def _activate_resonant_memories(self, experience: UnifiedFieldExperience):
+        """Activate topology regions that resonate with current experience."""
+        resonance_threshold = 0.7  # Similarity threshold for activation
+        
+        for region_key, region_info in self.topology_regions.items():
+            # Compute similarity between experience and stored region
+            similarity = torch.nn.functional.cosine_similarity(
+                experience.field_coordinates.unsqueeze(0),
+                region_info['center'].unsqueeze(0)
+            ).item()
+            
+            if similarity > resonance_threshold:
+                # Reactivate this memory region
+                region_info['last_activation'] = time.time()
+                region_info['activation_count'] += 1
+                region_info['importance'] *= 1.1  # Boost importance
+                
+                # Strengthen the field at this region's spatial location
+                if len(region_info['center']) >= 3:
+                    x_idx = int((region_info['center'][0] + 1) * 0.5 * (self.spatial_resolution - 1))
+                    y_idx = int((region_info['center'][1] + 1) * 0.5 * (self.spatial_resolution - 1))
+                    z_idx = int((region_info['center'][2] + 1) * 0.5 * (self.spatial_resolution - 1))
+                    
+                    if (0 <= x_idx < self.spatial_resolution and 
+                        0 <= y_idx < self.spatial_resolution and
+                        0 <= z_idx < self.spatial_resolution):
+                        # Reinforce this memory in the field
+                        self.unified_field[x_idx, y_idx, z_idx] *= (1 + similarity * 0.1)
     
     def _update_topology_regions(self):
-        """Update existing topology regions based on field evolution."""
+        """Update existing topology regions based on field evolution and importance."""
         regions_to_remove = []
+        current_time = time.time()
         
         for region_key, region_info in self.topology_regions.items():
             center = region_info['center']
             
-            # PERFORMANCE FIX: Compute indices efficiently and clamp in one operation
-            # Convert center coordinates to indices
+            # Apply forgetting curve based on time since last activation
+            time_since_activation = current_time - region_info['last_activation']
+            memory_half_life = 3600.0  # 1 hour half-life
+            retention = math.exp(-time_since_activation / memory_half_life)
+            region_info['importance'] *= retention
+            
+            # Convert center coordinates to indices using actual field shape
             x_idx = max(0, min(self.spatial_resolution - 1, int((center[0] + 1) * 0.5 * (self.spatial_resolution - 1))))
             y_idx = max(0, min(self.spatial_resolution - 1, int((center[1] + 1) * 0.5 * (self.spatial_resolution - 1))))
             z_idx = max(0, min(self.spatial_resolution - 1, int((center[2] + 1) * 0.5 * (self.spatial_resolution - 1))))
-            scale_idx = max(0, min(9, int((center[3] + 1) * 0.5 * 9)))
-            time_idx = max(0, min(14, int((center[4] + 1) * 0.5 * 14)))
+            
+            # Use actual field dimensions
+            scale_idx = max(0, min(self.unified_field.shape[3] - 1, int((center[3] + 1) * 0.5 * (self.unified_field.shape[3] - 1))))
+            time_idx = max(0, min(self.unified_field.shape[4] - 1, int((center[4] + 1) * 0.5 * (self.unified_field.shape[4] - 1))))
+            
+            # For higher dimensions, we need the stored indices
+            if 'field_indices' in region_info:
+                # Use stored indices for dimensions 5-10
+                indices = [x_idx, y_idx, z_idx, scale_idx, time_idx] + region_info['field_indices'][5:]
+            else:
+                # Fallback: just check the spatial center
+                indices = [x_idx, y_idx, z_idx, scale_idx, time_idx, 0, 0, 0, 0, 0, 0]
             
             try:
-                # Direct tensor indexing
-                current_activation = self.unified_field[x_idx, y_idx, z_idx, scale_idx, time_idx]
+                # Check the same 3x3x3 spatial region used during discovery
+                if 'field_indices' in region_info:
+                    if not self.quiet_mode:
+                        print(f"   🔍 Checking region with indices: {region_info['field_indices'][:3]}, stored: {region_info['field_indices'][3:]}")
+                    
+                    local_spatial_region = self.unified_field[
+                        max(0, x_idx-1):min(self.spatial_resolution, x_idx+2),
+                        max(0, y_idx-1):min(self.spatial_resolution, y_idx+2),
+                        max(0, z_idx-1):min(self.spatial_resolution, z_idx+2),
+                        region_info['field_indices'][3],  # scale
+                        region_info['field_indices'][4],  # time
+                        region_info['field_indices'][5],  # oscillatory
+                        region_info['field_indices'][6],  # flow
+                        region_info['field_indices'][7],  # topology
+                        region_info['field_indices'][8],  # energy
+                        region_info['field_indices'][9],  # coupling
+                        region_info['field_indices'][10]  # emergence
+                    ]
+                    # Use max activation in the region instead of mean
+                    # This is more robust to sparse activations
+                    current_activation = torch.max(local_spatial_region).item()
+                    
+                    # Also check the exact point and mean
+                    exact_point = self.unified_field[tuple(region_info['field_indices'][:11])].item()
+                    region_mean = torch.mean(local_spatial_region).item()
+                    if not self.quiet_mode:
+                        print(f"   🔍 Region check: exact={exact_point:.4f}, max={current_activation:.4f}, mean={region_mean:.4f}")
+                        print(f"   🔍 Spatial region shape: {local_spatial_region.shape}, values > 0.02: {(local_spatial_region > 0.02).sum().item()}")
+                else:
+                    # Fallback to single point
+                    current_activation = self.unified_field[tuple(indices[:11])].item()
                 
-                # Update region activation (convert to Python scalar only when storing)
-                region_info['activation'] = current_activation.item()
+                # Update region activation
+                region_info['activation'] = float(current_activation)
+                
+                if not self.quiet_mode:
+                    print(f"   🔍 Updating {region_key}: activation={current_activation:.4f}, threshold={self.topology_stability_threshold * 0.5:.4f}")
                 
                 # Remove regions that have become too weak
                 if current_activation < self.topology_stability_threshold * 0.5:
                     regions_to_remove.append(region_key)
+                    if not self.quiet_mode:
+                        print(f"   ❌ Marking {region_key} for removal (too weak)")
             except IndexError:
                 regions_to_remove.append(region_key)
         
@@ -666,65 +1149,125 @@ class UnifiedFieldBrain:
             del self.topology_regions[region_key]
     
     def _calculate_gradient_flows(self):
-        """Calculate gradient flows for action generation - OPTIMIZED without full-field tensors."""
+        """Calculate gradient flows for action generation - OPTIMIZED with local computation."""
+        # Use optimized gradient calculator with local region only
+        # This provides massive speedup while preserving functionality
+        computed_gradients = self.gradient_calculator.calculate_gradients(
+            self.unified_field,
+            dimensions_to_compute=[0, 1, 2, 3, 4],  # Spatial + scale + time
+            local_region_only=True,  # Only compute in 3x3x3 region
+            region_center=None,  # Use field center (robot position)
+            region_size=3  # 3x3x3 local region
+        )
+        
+        # Map to legacy gradient names for compatibility
+        gradient_mapping = {
+            'gradient_dim_0': 'gradient_x',
+            'gradient_dim_1': 'gradient_y',
+            'gradient_dim_2': 'gradient_z',
+            'gradient_dim_3': 'gradient_scale',
+            'gradient_dim_4': 'gradient_time'
+        }
+        
         self.gradient_flows.clear()
+        for new_name, old_name in gradient_mapping.items():
+            if new_name in computed_gradients:
+                self.gradient_flows[old_name] = computed_gradients[new_name]
         
-        # PERFORMANCE FIX: Use torch.gradient for efficient finite differences
-        # Calculate gradients in each spatial dimension
-        grad_x = torch.gradient(self.unified_field, dim=0)[0]  # Gradient along x-axis
-        grad_y = torch.gradient(self.unified_field, dim=1)[0]  # Gradient along y-axis  
-        grad_z = torch.gradient(self.unified_field, dim=2)[0]  # Gradient along z-axis
-        
-        # Store gradients (same interface as before)
-        self.gradient_flows['gradient_x'] = grad_x
-        self.gradient_flows['gradient_y'] = grad_y
-        self.gradient_flows['gradient_z'] = grad_z
+        # Log cache performance occasionally
+        if not self.quiet_mode and self.field_evolution_cycles % 100 == 0:
+            cache_stats = self.gradient_calculator.get_cache_stats()
+            if cache_stats['cache_hits'] + cache_stats['cache_misses'] > 0:
+                print(f"⚡ Gradient cache hit rate: {cache_stats['hit_rate']:.1%}")
     
     def _field_gradients_to_robot_action(self) -> FieldNativeAction:
         """
-        Generate robot action from field gradients - this replaces discrete action generation.
+        Generate robot action from field gradients - FIXED with proper multi-dimensional aggregation.
         """
         # Calculate dominant gradients for motor action
         motor_gradients = torch.zeros(4, device=self.device)  # 4D motor space
         
         if self.gradient_flows:
-            # Sample gradients at current robot position (center of field)
+            # Get center position and define local region
             center_idx = self.spatial_resolution // 2
+            window_size = 3  # Local region size
+            half_window = window_size // 2
             
-            # Extract gradients at field center - FIX: Only use meaningful dimensions
+            # Define local region bounds
+            x_slice = slice(max(0, center_idx - half_window), min(self.spatial_resolution, center_idx + half_window + 1))
+            y_slice = slice(max(0, center_idx - half_window), min(self.spatial_resolution, center_idx + half_window + 1))
+            z_slice = slice(max(0, center_idx - half_window), min(self.spatial_resolution, center_idx + half_window + 1))
+            
+            # Extract and aggregate gradients from local region
             if 'gradient_x' in self.gradient_flows:
-                grad_x = self.gradient_flows['gradient_x'][center_idx, center_idx, center_idx, :, :, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-                # Use max magnitude for stronger gradients (115x improvement over mean)
-                if torch.max(grad_x).item() >= torch.abs(torch.min(grad_x)).item():
-                    motor_gradients[0] = torch.max(grad_x).item()
+                # Get local region of X gradient
+                grad_x_local = self.gradient_flows['gradient_x'][x_slice, y_slice, z_slice]
+                # Aggregate across spatial dimensions, preserving others
+                grad_x_aggregated = torch.mean(grad_x_local, dim=(0, 1, 2))
+                # Weight by magnitude and take weighted average across remaining dimensions
+                if grad_x_aggregated.numel() > 1:
+                    weights = torch.abs(grad_x_aggregated) + 1e-8
+                    weights = weights / torch.sum(weights)
+                    motor_gradients[0] = torch.sum(grad_x_aggregated * weights).item()
                 else:
-                    motor_gradients[0] = torch.min(grad_x).item()
+                    motor_gradients[0] = grad_x_aggregated.item() if grad_x_aggregated.numel() == 1 else 0.0
             
             if 'gradient_y' in self.gradient_flows:
-                grad_y = self.gradient_flows['gradient_y'][center_idx, center_idx, center_idx, :, :, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-                # Use max magnitude for stronger gradients
-                if torch.max(grad_y).item() >= torch.abs(torch.min(grad_y)).item():
-                    motor_gradients[1] = torch.max(grad_y).item()
+                # Get local region of Y gradient
+                grad_y_local = self.gradient_flows['gradient_y'][x_slice, y_slice, z_slice]
+                grad_y_aggregated = torch.mean(grad_y_local, dim=(0, 1, 2))
+                if grad_y_aggregated.numel() > 1:
+                    weights = torch.abs(grad_y_aggregated) + 1e-8
+                    weights = weights / torch.sum(weights)
+                    motor_gradients[1] = torch.sum(grad_y_aggregated * weights).item()
                 else:
-                    motor_gradients[1] = torch.min(grad_y).item()
+                    motor_gradients[1] = grad_y_aggregated.item() if grad_y_aggregated.numel() == 1 else 0.0
             
             if 'gradient_z' in self.gradient_flows:
-                grad_z = self.gradient_flows['gradient_z'][center_idx, center_idx, center_idx, :, :, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-                # Use max magnitude for stronger gradients
-                if torch.max(grad_z).item() >= torch.abs(torch.min(grad_z)).item():
-                    motor_gradients[2] = torch.max(grad_z).item()
+                # Get local region of Z gradient
+                grad_z_local = self.gradient_flows['gradient_z'][x_slice, y_slice, z_slice]
+                grad_z_aggregated = torch.mean(grad_z_local, dim=(0, 1, 2))
+                if grad_z_aggregated.numel() > 1:
+                    weights = torch.abs(grad_z_aggregated) + 1e-8
+                    weights = weights / torch.sum(weights)
+                    motor_gradients[2] = torch.sum(grad_z_aggregated * weights).item()
                 else:
-                    motor_gradients[2] = torch.min(grad_z).item()
+                    motor_gradients[2] = grad_z_aggregated.item() if grad_z_aggregated.numel() == 1 else 0.0
             
-            # Fourth motor dimension from overall field momentum
-            field_momentum = torch.mean(self.unified_field).item()
-            motor_gradients[3] = field_momentum
+            # Fourth motor dimension from scale and time gradients
+            fourth_component = 0.0
+            if 'gradient_scale' in self.gradient_flows:
+                grad_scale_local = self.gradient_flows['gradient_scale'][x_slice, y_slice, z_slice]
+                grad_scale_aggregated = torch.mean(grad_scale_local, dim=(0, 1, 2))
+                if grad_scale_aggregated.numel() > 1:
+                    weights = torch.abs(grad_scale_aggregated) + 1e-8
+                    weights = weights / torch.sum(weights)
+                    fourth_component += torch.sum(grad_scale_aggregated * weights).item()
+                else:
+                    fourth_component += grad_scale_aggregated.item() if grad_scale_aggregated.numel() == 1 else 0.0
+            
+            if 'gradient_time' in self.gradient_flows:
+                grad_time_local = self.gradient_flows['gradient_time'][x_slice, y_slice, z_slice]
+                grad_time_aggregated = torch.mean(grad_time_local, dim=(0, 1, 2))
+                if grad_time_aggregated.numel() > 1:
+                    weights = torch.abs(grad_time_aggregated) + 1e-8
+                    weights = weights / torch.sum(weights)
+                    fourth_component += torch.sum(grad_time_aggregated * weights).item()
+                else:
+                    fourth_component += grad_time_aggregated.item() if grad_time_aggregated.numel() == 1 else 0.0
+            
+            motor_gradients[3] = fourth_component
         
         # Apply gradient following strength
         motor_commands = motor_gradients * self.gradient_following_strength
         
+        # NaN/Inf protection
+        motor_commands = torch.nan_to_num(motor_commands, nan=0.0, posinf=1.0, neginf=-1.0)
+        
         # Calculate gradient strength before clamping
         gradient_strength = torch.norm(motor_gradients).item()
+        if torch.isnan(torch.tensor(gradient_strength)) or torch.isinf(torch.tensor(gradient_strength)):
+            gradient_strength = 0.0
         
         # PREDICTION IMPROVEMENT ADDICTION: Apply learning-based action modulation
         prediction_modifier = self._get_prediction_improvement_addiction_modifier()
@@ -736,28 +1279,29 @@ class UnifiedFieldBrain:
         # Check for tanh normalization issue (values too small → zero after tanh)
         motor_magnitude_after_clamp = torch.norm(motor_commands).item()
         
-        # FALLBACK: If gradients are extremely weak OR clamping made them zero, apply exploration
-        if gradient_strength < 1e-6 or motor_magnitude_after_clamp < 1e-8:
+        # FALLBACK: If gradients are extremely weak, apply exploration
+        if gradient_strength < 1e-5 or motor_magnitude_after_clamp < 1e-6:
             if not self.quiet_mode and self.brain_cycles % 50 == 0:
-                print(f"   ⚠️  Weak gradients (strength={gradient_strength:.8f}, "
-                      f"magnitude={motor_magnitude_after_clamp:.8f}), applying exploration fallback")
+                print(f"   ⚠️  Weak gradients (strength={gradient_strength:.8f}), applying exploration")
             
             # Generate small random exploration action
             import random
             motor_commands = torch.tensor([
-                0.1 * (random.random() - 0.5),  # Small random movement
+                0.2 * (random.random() - 0.5),  # Increased exploration strength
+                0.2 * (random.random() - 0.5),
                 0.1 * (random.random() - 0.5),
-                0.05 * (random.random() - 0.5),
-                0.05 * (random.random() - 0.5)
-            ], dtype=torch.float32)
+                0.1 * (random.random() - 0.5)
+            ], dtype=torch.float32, device=self.device)
             action_confidence = 0.1  # Low confidence for exploration
         else:
-            action_confidence = min(1.0, gradient_strength)
+            # Scale confidence based on gradient strength
+            action_confidence = min(1.0, gradient_strength * 10)  # Scale up weak gradients
             
             # Debug output for successful gradient following
             if not self.quiet_mode and self.brain_cycles % 100 == 0:
-                print(f"   ✅ Strong gradients: strength={gradient_strength:.6f}, "
-                      f"motor_range=[{torch.min(motor_commands).item():.4f}, {torch.max(motor_commands).item():.4f}]")
+                print(f"   ✅ Gradient following: strength={gradient_strength:.6f}, "
+                      f"confidence={action_confidence:.3f}, "
+                      f"motor=[{motor_commands[0]:.3f}, {motor_commands[1]:.3f}, {motor_commands[2]:.3f}, {motor_commands[3]:.3f}]")
         
         action = FieldNativeAction(
             timestamp=time.time(),
@@ -827,6 +1371,49 @@ class UnifiedFieldBrain:
             modifier = 1.1  # Mild encouragement
         
         return modifier
+    
+    def _normalize_pattern_for_memory(self, field_coords: torch.Tensor) -> torch.Tensor:
+        """
+        Normalize field coordinates for pattern-based memory encoding.
+        This ensures memories are based on patterns, not raw magnitudes.
+        A whisper should be as memorable as a shout if the pattern is distinctive.
+        """
+        coords = field_coords.clone()
+        
+        # Group coordinates by dimension families for family-wise normalization
+        families = [
+            (0, 5),    # Spatial (preserve relative positions)
+            (5, 11),   # Oscillatory (normalize frequencies)
+            (11, 19),  # Flow (normalize gradients)
+            (19, 25),  # Topology (preserve binary nature)
+            (25, 29),  # Energy (normalize intensities)
+            (29, 34),  # Coupling (normalize correlations)
+            (34, 37)   # Emergence (normalize combinations)
+        ]
+        
+        for start, end in families:
+            family_coords = coords[start:end]
+            
+            # Different normalization strategies per family
+            if start == 0:  # Spatial - preserve relative positions
+                # Center around origin but keep relative distances
+                family_coords = family_coords - torch.mean(family_coords)
+            elif start == 19:  # Topology - already binary-like
+                # Just ensure [-1, 1] range
+                family_coords = torch.clamp(family_coords, -1.0, 1.0)
+            else:
+                # Other families - normalize by pattern
+                magnitude = torch.norm(family_coords)
+                if magnitude > 1e-6:
+                    # Normalize to unit sphere to capture pattern
+                    family_coords = family_coords / magnitude
+                else:
+                    # Very weak signal - use small random pattern
+                    family_coords = torch.randn_like(family_coords) * 0.1
+            
+            coords[start:end] = family_coords
+        
+        return coords
     
     def _calculate_experience_novelty(self, field_coordinates: torch.Tensor) -> float:
         """Calculate novelty of experience in field space."""
@@ -909,6 +1496,77 @@ class UnifiedFieldBrain:
                 pass
         
         return total_activity / max(1, count)
+    
+    def _perform_field_maintenance(self):
+        """
+        Run periodic maintenance operations on the field.
+        This is called off the hot path to prevent energy accumulation.
+        """
+        maintenance_start = time.perf_counter()
+        
+        # Apply energy dissipation to prevent unbounded accumulation
+        self.unified_field *= self.field_energy_dissipation_rate
+        
+        # Clean up near-zero values to maintain sparsity
+        threshold = 1e-6
+        self.unified_field[torch.abs(self.unified_field) < threshold] = 0.0
+        
+        # Clean up stale topology regions and consolidate important ones
+        regions_removed = 0
+        regions_consolidated = 0
+        regions_to_remove = []
+        
+        for region_key, region_info in self.topology_regions.items():
+            # Consolidate important regions (make them more persistent)
+            if region_info['importance'] > 2.0:  # Important memory
+                region_info['consolidation_level'] += 1
+                region_info['decay_rate'] *= 0.99  # Decay even slower
+                regions_consolidated += 1
+                
+                # Strengthen this region in the field
+                if len(region_info['center']) >= 3:
+                    x_idx = int((region_info['center'][0] + 1) * 0.5 * (self.spatial_resolution - 1))
+                    y_idx = int((region_info['center'][1] + 1) * 0.5 * (self.spatial_resolution - 1))
+                    z_idx = int((region_info['center'][2] + 1) * 0.5 * (self.spatial_resolution - 1))
+                    
+                    if (0 <= x_idx < self.spatial_resolution and 
+                        0 <= y_idx < self.spatial_resolution and
+                        0 <= z_idx < self.spatial_resolution):
+                        # Apply slower decay to important regions
+                        self.unified_field[x_idx, y_idx, z_idx] /= region_info['decay_rate']
+            
+            # Remove unimportant regions that have faded
+            elif region_info['importance'] < 0.1:
+                regions_to_remove.append(region_key)
+        
+        # Remove stale regions
+        for region_key in regions_to_remove:
+            del self.topology_regions[region_key]
+            regions_removed += 1
+        
+        # Clear old gradient flows to prevent memory buildup
+        if len(self.gradient_flows) > 10:
+            # Keep only the most recent gradient calculations
+            keys_to_keep = ['gradient_x', 'gradient_y', 'gradient_z']
+            self.gradient_flows = {k: v for k, v in self.gradient_flows.items() if k in keys_to_keep}
+        
+        # Clear gradient cache to ensure fresh calculations after maintenance
+        self.gradient_calculator.clear_cache()
+        
+        # Trim experience history if too long
+        max_experiences = 1000
+        if len(self.field_experiences) > max_experiences:
+            self.field_experiences = self.field_experiences[-max_experiences:]
+        
+        if len(self.field_actions) > max_experiences:
+            self.field_actions = self.field_actions[-max_experiences:]
+        
+        maintenance_time = (time.perf_counter() - maintenance_start) * 1000
+        
+        if not self.quiet_mode:
+            field_energy = torch.sum(self.unified_field).item()
+            print(f"🔧 Field maintenance completed: {maintenance_time:.2f}ms, "
+                  f"energy={field_energy:.3f}, consolidated={regions_consolidated}, removed={regions_removed}")
     
     def save_field_state(self, filepath: str, compress: bool = True) -> bool:
         """
@@ -1196,6 +1854,54 @@ class UnifiedFieldBrain:
                 print(f"❌ Field consolidation failed: {e}")
             return 0
     
+    def _start_maintenance_thread(self):
+        """Start the background maintenance thread."""
+        self._maintenance_thread = threading.Thread(
+            target=self._maintenance_worker,
+            daemon=True,
+            name="BrainMaintenance"
+        )
+        self._maintenance_thread.start()
+    
+    def _maintenance_worker(self):
+        """Background worker that performs field maintenance when signaled."""
+        while not self._shutdown_maintenance.is_set():
+            try:
+                # Wait for maintenance signal (timeout prevents hanging on shutdown)
+                signal = self._maintenance_queue.get(timeout=1.0)
+                
+                if signal == "SHUTDOWN":
+                    break
+                    
+                # Perform maintenance
+                with torch.no_grad():
+                    self._perform_field_maintenance()
+                    
+            except queue.Empty:
+                # No maintenance needed, continue waiting
+                continue
+            except Exception as e:
+                if not self.quiet_mode:
+                    print(f"❌ Maintenance thread error: {e}")
+    
+    def _trigger_maintenance(self):
+        """Signal the maintenance thread to run."""
+        try:
+            # Non-blocking put - if queue is full, skip (maintenance already pending)
+            self._maintenance_queue.put_nowait("MAINTAIN")
+        except queue.Full:
+            pass  # Maintenance already queued
+    
+    def shutdown(self):
+        """Cleanly shutdown the brain and maintenance thread."""
+        self._shutdown_maintenance.set()
+        if self._maintenance_thread:
+            try:
+                self._maintenance_queue.put_nowait("SHUTDOWN")
+            except:
+                pass
+            self._maintenance_thread.join(timeout=2.0)
+    
     def compute_intrinsic_reward(self) -> float:
         """
         Compute intrinsic reward based on prediction improvement rate.
@@ -1266,6 +1972,31 @@ class UnifiedFieldBrain:
             'field_evolution_cycles': self.field_evolution_cycles,
             'topology_discoveries': self.topology_discoveries,
         }
+    
+    def run_recommended_maintenance(self) -> Dict[str, bool]:
+        """
+        Run recommended maintenance tasks based on brain state.
+        Called by brain_loop during idle cycles.
+        
+        Returns dict of maintenance tasks performed.
+        """
+        performed = {
+            'energy_dissipation': False,
+            'topology_cleanup': False,
+            'memory_trim': False
+        }
+        
+        # Check if we need energy dissipation
+        cycles_since_maintenance = self.brain_cycles - self.last_maintenance_cycle
+        if cycles_since_maintenance >= self.maintenance_interval:
+            # Run maintenance
+            self._run_field_maintenance()
+            self.last_maintenance_cycle = self.brain_cycles
+            performed['energy_dissipation'] = True
+            performed['topology_cleanup'] = True
+            performed['memory_trim'] = True
+        
+        return performed
 
 
 # Factory function for easy creation

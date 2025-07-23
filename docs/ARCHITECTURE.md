@@ -1,10 +1,10 @@
-# Simplified Unified Field Brain Architecture
+# Field Brain Architecture
 
-## 🧠 **Core Paradigm: Continuous Field Intelligence**
+## Core Paradigm
 
-This brain architecture represents a fundamental paradigm shift from discrete AI to **continuous field-based intelligence**. All cognitive functions emerge from the topology and dynamics of a unified 32-dimensional field organized by physics principles rather than sensory modalities.
+This architecture implements continuous field-based intelligence as an alternative to discrete AI approaches. Cognitive functions emerge from the topology and dynamics of a unified 37-dimensional field organized by physics principles rather than sensory modalities.
 
-## 📁 **Project Structure**
+## Project Structure
 
 ```
 brain/
@@ -19,11 +19,12 @@ brain/
 │   ├── src/                    # Core brain systems
 │   │   ├── brain_factory.py    # Simplified UnifiedFieldBrain wrapper
 │   │   │
-│   │   ├── brains/field/       # UnifiedFieldBrain - the only brain implementation
+│   │   ├── brains/field/       # Field-native brain implementation
 │   │   │   ├── core_brain.py           # 37D field intelligence
 │   │   │   ├── memory.py               # Field topology memory
 │   │   │   └── dynamics/               # Field dynamics systems
-│   │   │       ├── constraint_field_dynamics.py # Constraint discovery
+│   │   │       ├── constraint_field_dynamics.py # 4D constraint discovery (legacy)
+│   │   │       ├── constraint_field_nd.py      # N-dimensional constraints
 │   │   │       └── temporal_field_dynamics.py   # Temporal patterns
 │   │   │
 │   │   ├── persistence/        # Brain state management
@@ -36,7 +37,7 @@ brain/
 │   │   │   └── async_logger.py         # Non-blocking logging
 │   │   │
 │   │   └── communication/      # Network architecture
-│   │       ├── embarrassingly_simple_protocol.py # Raw vector exchange
+│   │       ├── protocol.py             # Communication protocol
 │   │       ├── tcp_server.py           # Multi-client server
 │   │       └── monitoring_server.py   # Real-time monitoring
 │   │
@@ -53,13 +54,13 @@ brain/
 └── tools/runners/             # Test orchestration
 ```
 
-## 🏗️ **Core Architecture**
+## Core Architecture
 
-### **UnifiedFieldBrain: The Primary Intelligence System**
+### UnifiedFieldBrain
 
-The brain is organized as a **37-dimensional continuous field** where intelligence emerges from field topology and dynamics rather than discrete processing:
+The brain is organized as a 37-dimensional continuous field where intelligence emerges from field topology and dynamics:
 
-#### **Field Organization by Physics Families**
+#### Field Organization by Physics Families
 ```python
 # Dimensions organized by physical dynamics, not sensory modalities:
 SPATIAL (5D):     # Position, orientation, scale, time
@@ -71,98 +72,112 @@ COUPLING (5D):    # Correlations, associations, binding
 EMERGENCE (3D):   # Novelty, creativity, phase transitions
 ```
 
-#### **Key Field Operations**
-- **Field Evolution**: Constraint-guided topology optimization
-- **Action Generation**: Motor commands from field gradients
+#### Key Field Operations
+- **Field Evolution**: Constraint-guided topology optimization with energy dissipation
+- **Action Generation**: Motor commands from multi-dimensional field gradients
 - **Memory Formation**: Persistent field topology patterns
 - **Learning**: Field adaptation through constraint discovery
+- **Maintenance**: Periodic energy dissipation and topology cleanup (off hot path)
 
-### **Integrated Field Attention**
+### Integrated Field Attention
 
-#### **Field-Native Attention** (built into UnifiedFieldBrain)
+#### Field-Native Attention
 ```python
 # Attention emerges from field activation gradients
 attention_focus = field.compute_activation_gradients()
 processed_input = field.apply_attention_weighting(sensors)
 ```
-- **Emergent attention**: Arises naturally from field dynamics
-- **No separate systems**: Integrated into 37D field processing
-- **Gradient-based**: Follows field energy gradients for focus
-- **Real-time**: Sub-millisecond attention computation
+- Emerges from field activation gradients
+- Integrated into 37D field processing
+- Follows field energy gradients for focus
+- Computed during field evolution
 
-### **Multi-Scale Field Processing**
+### Multi-Scale Field Processing
 
-#### **Inherent Hierarchical Processing** (built into field dynamics)
+#### Hierarchical Processing
 ```python
 # Multi-scale processing emerges from field structure
 field_response = field.evolve_across_scales(sensory_input)
 hierarchical_output = field.extract_multi_scale_features()
 ```
-- **Natural hierarchy**: Emerges from 37D field structure
-- **Scale dimensions**: Built into field organization
-- **Efficient processing**: Single field evolution handles all scales
-- **No separate systems**: Integrated multi-scale dynamics
+- Emerges from 37D field structure
+- Scale dimensions built into field organization
+- Single field evolution handles all scales
+- Integrated multi-scale dynamics
 
-### **Advanced Memory Systems**
+### Memory Systems
 
-#### **1. Field-Native Memory** (`brains/field/memory.py`)
+#### Field-Native Memory
 ```python
 # Memory as persistent field topology rather than discrete storage
 memory_pattern = field.discover_stable_topology(experience)
 recall = field.resonate_with_pattern(memory_pattern)
 ```
-- **Topology-Based Memory**: Patterns stored as stable field configurations
-- **Biological Forgetting**: Different decay rates for experience/skill/concept/reflex
-- **Sleep Consolidation**: Strengthens important memories, removes weak ones
-- **Working Memory Emergence**: From temporal field dynamics
+- Patterns stored as stable field configurations
+- Different decay rates for different memory types
+- Consolidation strengthens important memories
+- Working memory emerges from temporal field dynamics
 
-#### **2. Universal Pattern Memory** (`memory/pattern_memory.py`)
+#### Universal Pattern Memory
 - Cross-modal memory formation for any signal type
 - Sparse distributed representations for efficiency
 - Temporal correlation tracking across modalities
 
-### **Constraint-Based Field Dynamics**
+### Constraint-Based Field Dynamics
 
-#### **Emergent Constraint Discovery** (`brains/field/dynamics/constraint_field_dynamics.py`)
+#### N-Dimensional Constraint System
 ```python
-# Constraints emerge from field topology rather than being programmed
+# Constraints operate across all 37 dimensions, not just spatial/temporal
+constraint_field = ConstraintFieldND(field_shape, dimension_names)
+discovered_constraints = constraint_field.discover_constraints(field, gradients)
+constraint_forces = constraint_field.enforce_constraints(field)
+```
+
+#### Constraint Discovery
+```python
+# Constraints emerge from field topology across all dimension families
 discovered_constraints = field.analyze_topology_patterns()
 field.apply_constraint_satisfaction(discovered_constraints)
 ```
-**Constraint Types**:
+Constraint Types:
 - Gradient flow constraints (smoothness)
 - Topology boundary constraints (stability)
 - Activation threshold constraints (sparsity)
 - Temporal momentum constraints (continuity)
 - Scale coupling constraints (hierarchy)
 - Pattern coherence constraints (binding)
+- Cross-dimensional coupling (37D interactions)
 
-#### **Self-Organization**: Constraint satisfaction guides field evolution without external programming
+#### Self-Organization
+- Constraint satisfaction guides field evolution without external programming
+- Constraints discovered across all 37 dimensions
+- Efficient sparse constraint representation
+- Dimension-aware constraint types
 
-### **Field Intelligence Control**
+### Field Intelligence Control
 
-#### **Intrinsic Field Dynamics** (built into UnifiedFieldBrain)
+#### Intrinsic Field Dynamics
 ```python
 # Field evolution naturally adapts processing intensity
 field_confidence = field.assess_pattern_familiarity(input)
 processing_intensity = field.adapt_evolution_rate(confidence)
 ```
-- **Self-regulating**: Field naturally adapts processing intensity
-- **No external control**: Intelligence emerges from field dynamics
-- **Confidence-driven**: Familiar patterns require less field evolution
+- Field adapts processing intensity based on familiarity
+- Intelligence emerges from field dynamics
+- Confidence-driven processing allocation
 
-#### **Learning Addiction System** (built into field dynamics)
+#### Learning System
 ```python
 # Intrinsic motivation emerges from field evolution patterns
 improvement_rate = field.track_prediction_improvements()
 field.modulate_exploration_based_on_learning(improvement_rate)
 ```
-- **Built-in curiosity**: Field naturally seeks prediction improvements
-- **Exploration modulation**: Automatic exploration/exploitation balance
-- **Learning addiction**: Field becomes "addicted" to improving predictions
-- **No external systems**: Motivation emerges from field topology
+- Field seeks prediction improvements
+- Automatic exploration/exploitation balance
+- Intrinsic motivation from prediction accuracy
+- Motivation emerges from field topology
 
-#### **3. Hardware Adaptation** (`utils/hardware_adaptation.py`)
+#### Hardware Adaptation
 ```python
 # Dynamic device selection and resource management
 if field_dimensions > 16 and device == 'mps':
@@ -173,103 +188,118 @@ cognitive_limits = adapt_to_hardware(available_memory, cpu_cores)
 - Dynamic memory limits based on available hardware
 - Performance monitoring and adaptive scaling
 
-### **Production Persistence System**
+### Persistence System
 
-#### **Complete Brain State Management** (`persistence/`)
+#### Brain State Management
 ```python
 # Robust cross-session learning with state recovery
 brain_state = serialize_complete_brain(brain)
 save_incremental_delta(brain_state, previous_state)
 recovered_state = recover_brain_state_at_startup()
 ```
-- **Brain Serialization**: Complete field state and dynamics
-- **Incremental Saves**: Delta compression for efficient updates  
-- **Consolidation Engine**: Background memory consolidation during idle time
-- **Recovery Manager**: Robust state recovery with corruption detection
-- **Cross-Session Learning**: Continuous learning across restarts
+- Complete field state serialization
+- Delta compression for efficient updates
+- Background memory consolidation
+- State recovery with corruption detection
+- Cross-session learning continuity
 
-## 🔧 **System Integration**
+## System Integration
 
-### **Simplified BrainFactory**
+### BrainFactory
 ```python
 # Direct UnifiedFieldBrain wrapper - no brain type complexity
 brain = BrainFactory(config)  # Always creates UnifiedFieldBrain
 action, brain_state = brain.process_sensory_input(sensors)
 ```
-- **Single implementation**: UnifiedFieldBrain only
-- **Simplified initialization**: No brain type switching
-- **Hardware adaptation**: Automatic GPU/CPU selection
-- **Streamlined persistence**: Basic state management
+- Single UnifiedFieldBrain implementation
+- No brain type switching complexity
+- Automatic hardware device selection
+- Integrated state management
 
-### **Communication Architecture**
+### Communication Architecture
 ```python
 # Direct TCP communication with UnifiedFieldBrain
 # 24D sensor input -> 37D field processing -> 4D motor output
 action, state = brain.process_sensory_input(sensor_vector)
 ```
-- **24D → 4D processing**: Robot sensors to motor commands
-- **37D field dynamics**: Internal field intelligence
-- **TCP server**: Multi-client robot connections
-- **Real-time capable**: Sub-100ms processing cycles
+- 24D sensor input → 37D field processing → 4D motor output
+- Internal 37D field intelligence
+- TCP server for robot connections
+- Designed for real-time operation
 
-## 🧪 **Intelligence Assessment**
+## Intelligence Assessment
 
-### **Behavioral Test Framework** (`tools/testing/behavioral_test_framework.py`)
+### Behavioral Test Framework
 ```python
 # Test actual intelligent behaviors rather than technical functionality
 assessment = framework.run_intelligence_assessment(brain, intelligence_profile)
 ```
-**Intelligence Metrics**:
-- **Prediction Learning**: Improving predictions over time
-- **Exploration-Exploitation**: Balancing novelty vs optimization
-- **Field Stabilization**: Energy efficiency and stability
-- **Pattern Recognition**: Distinguishing different input patterns
-- **Goal Seeking**: Directed behavior toward objectives
-- **Biological Realism**: Sleep consolidation, forgetting curves
-- **Computational Efficiency**: Intelligence per unit of compute
+Intelligence Metrics:
+- Prediction accuracy improvement over time
+- Exploration vs exploitation balance
+- Field energy efficiency and stability
+- Pattern recognition and discrimination
+- Goal-directed behavior
+- Biological memory consolidation
+- Computational efficiency metrics
 
-## 🎯 **Key Design Principles**
+## Key Design Principles
 
-### **1. Continuous Field Intelligence**
-- **No Discrete Symbols**: Everything emerges from continuous field dynamics
-- **Physics-Organized**: Dimensions organized by physical dynamics, not sensory categories
-- **Topology-Based**: Intelligence emerges from field topology optimization
+### Continuous Field Intelligence
+- Everything emerges from continuous field dynamics
+- Dimensions organized by physical dynamics, not sensory categories
+- Intelligence emerges from field topology optimization
 
-### **2. Emergent Properties**
-- **Memory**: Persistent field topology patterns
-- **Attention**: Natural field activation gradients  
-- **Learning**: Continuous field evolution
-- **Reasoning**: Field gradient following and constraint satisfaction
+### Emergent Properties
+- Memory: Persistent field topology patterns
+- Attention: Field activation gradients
+- Learning: Continuous field evolution
+- Reasoning: Field gradient following and constraint satisfaction
 
-### **3. Architectural Simplicity**
-- **Single Implementation**: UnifiedFieldBrain only
-- **No Brain Types**: Eliminated switching complexity
-- **Integrated Systems**: All features built into field dynamics
-- **Streamlined Codebase**: Dramatically reduced complexity
+### Architectural Simplicity
+- Single UnifiedFieldBrain implementation
+- No brain type switching complexity
+- All features integrated into field dynamics
+- Streamlined codebase
 
-### **4. Production Readiness**
-- **Simplified Deployment**: Single brain implementation
-- **Hardware Adaptation**: Automatic 37D field device selection
-- **Streamlined Persistence**: Lightweight state management
-- **Maintainable Code**: Clean, focused architecture
+### Production Considerations
+- Single brain implementation for deployment
+- Automatic hardware device selection
+- State persistence and recovery
+- Maintainable architecture
 
-## 📊 **Simplified Architecture Benefits**
+## Architecture Benefits
 
-1. **Architectural Simplicity**: Single UnifiedFieldBrain implementation eliminates complexity
-2. **Maintainable Codebase**: Dramatically reduced code complexity and abstractions
-3. **Field-Native Intelligence**: 37D continuous field dynamics as the only intelligence substrate
-4. **Hardware Optimized**: Automatic device selection for 37D field processing
-5. **Streamlined Development**: No brain type switching or legacy compatibility layers
-6. **Clean Interfaces**: Direct field brain access without factory abstractions
+1. Single implementation reduces complexity
+2. Maintainable codebase with fewer abstractions
+3. 37D continuous field dynamics as intelligence substrate
+4. Automatic hardware device selection
+5. No brain type switching complexity
+6. Direct field brain interfaces
 
-## 🚀 **Simplified System Status**
+## Implementation Details
 
-The **simplified UnifiedFieldBrain** represents a clean, maintainable implementation of field-native intelligence. All legacy brain type complexity has been removed, leaving only the essential 37D field dynamics.
+### Gradient Computation
+- **Local Region Optimization**: Gradients computed in 3x3x3 local regions around robot position
+- **Full Field Compatibility**: Maintains complete field structure for distributed actuators
+- **Caching System**: Gradient results cached when field remains stable
 
-**Architecture**: `unified_field_37D` - single implementation only  
+### Hardware Adaptation
+- **Automatic Resolution Selection**: Spatial resolution determined by hardware benchmarking
+  - High performance hardware: 5³ resolution
+  - Medium performance hardware: 4³ resolution  
+  - Low performance hardware: 3³ resolution
+- **Dynamic Limits**: Working memory and search limits scale with hardware capabilities
+
+## System Configuration
+
+**Architecture**: Single UnifiedFieldBrain implementation  
 **Processing**: 24D sensor input → 37D field dynamics → 4D motor output  
-**Performance**: Real-time robot control with sub-100ms cycles  
-**Codebase**: Dramatically simplified - ~70% reduction in complexity  
-**Deployment**: Single brain type eliminates configuration complexity
+**Hardware**: Automatic GPU/MPS/CPU selection with adaptive spatial resolution  
+**Configuration**: settings.json for brain parameters and network settings
 
-This simplified architecture provides a **clean foundation** for field-native intelligence research and deployment without the burden of legacy abstractions and brain type switching complexity.
+### Current Limitations
+- Constraint enforcement disabled (dimension indexing incompatibility)
+- Persistence system disabled (pending state management refactor)
+- Topology region formation requires parameter tuning for different resolutions
+- GPU processing limited to CPU due to MPS tensor dimension constraints

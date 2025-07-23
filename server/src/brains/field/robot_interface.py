@@ -30,11 +30,11 @@ import asyncio
 
 # Import field-native brain
 try:
-    from .field_native_brain import UnifiedFieldBrain, FieldDynamicsFamily, FieldDimension
-    from .field_native_brain import UnifiedFieldExperience, FieldNativeAction
+    from .core_brain import UnifiedFieldBrain, FieldDynamicsFamily, FieldDimension
+    from .core_brain import UnifiedFieldExperience, FieldNativeAction
 except ImportError:
-    from field_native_brain import UnifiedFieldBrain, FieldDynamicsFamily, FieldDimension
-    from field_native_brain import UnifiedFieldExperience, FieldNativeAction
+    from core_brain import UnifiedFieldBrain, FieldDynamicsFamily, FieldDimension
+    from core_brain import UnifiedFieldExperience, FieldNativeAction
 
 
 @dataclass
