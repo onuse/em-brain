@@ -208,7 +208,7 @@ class UnifiedFieldBrain:
         self.field_decay_rate = 0.999        # Much slower decay (was 0.995 - too aggressive)
         self.field_diffusion_rate = 0.05     # More diffusion for gradient propagation (was 0.02)
         self.gradient_following_strength = 15.0  # BALANCED: Strong enough for responses, avoids saturation
-        self.topology_stability_threshold = 0.05  # Lower threshold to work with baseline system
+        self.topology_stability_threshold = 0.02  # Lower threshold for better memory formation
         
         # Field state tracking
         self.field_experiences: List[UnifiedFieldExperience] = []
@@ -217,7 +217,7 @@ class UnifiedFieldBrain:
         self.gradient_flows: Dict[str, torch.Tensor] = {}
         
         # Robot interface
-        self.expected_sensory_dim = 24  # From robot sensors
+        self.expected_sensory_dim = 25  # From robot sensors (24 + reward)
         self.expected_motor_dim = 4     # To robot actuators
         
         # Performance tracking
@@ -499,14 +499,37 @@ class UnifiedFieldBrain:
         # 2. Apply experience to unified field (this replaces ALL discrete processing)
         self._apply_field_experience(field_experience)
         
-        # 3. Evolve unified field dynamics
+        # 3. PREDICTION: Compare predicted field evolution with actual field after sensory update
+        if hasattr(self, '_predicted_field'):
+            # Focus on local spatial region around robot position for prediction accuracy
+            center = self.spatial_resolution // 2
+            region_slice = slice(center-1, center+2)  # 3x3x3 region
+            
+            # Extract local regions from predicted vs actual (after sensory input)
+            predicted_region = self._predicted_field[region_slice, region_slice, region_slice]
+            actual_region = self.unified_field[region_slice, region_slice, region_slice]
+            
+            # Calculate prediction error
+            prediction_error = torch.mean(torch.abs(predicted_region - actual_region)).item()
+            
+            # Convert error to confidence (lower error = higher confidence)
+            # Scale factor adjusted for meaningful confidence values
+            # Much higher sensitivity for realistic confidence range
+            self._current_prediction_confidence = 1.0 / (1.0 + prediction_error * 5000.0)
+        
+        # 4. Save current field state for prediction
+        pre_evolution_field = self.unified_field.clone()
+        
+        # 5. Evolve unified field dynamics (this creates our prediction of next state)
         self._evolve_unified_field()
         
-        # 4. Generate robot action from field gradients
+        # 6. Store predicted field state (what we think next sensory input will create)
+        self._predicted_field = self.unified_field.clone()
+        
+        # 6. Generate robot action from field gradients
         field_action = self._field_gradients_to_robot_action()
         
-        # 5. Update prediction confidence tracking for addiction system
-        self._current_prediction_confidence = field_action.action_confidence
+        # 7. Update prediction confidence tracking for addiction system
         self._prediction_confidence_history.append(self._current_prediction_confidence)
         if len(self._prediction_confidence_history) > 20:
             self._prediction_confidence_history = self._prediction_confidence_history[-20:]
@@ -648,12 +671,34 @@ class UnifiedFieldBrain:
         # Novelty modulates the last emergence dimension
         field_coords[36] = field_coords[36] * 0.7 + novelty * 0.3
         
+        # REWARD INTEGRATION - Process 25th dimension as reward signal
+        field_intensity = 0.3 + 0.2 * torch.norm(field_coords).item() / math.sqrt(self.total_dimensions)  # Default
+        
+        if len(sensory_input) >= 25:
+            reward = sensory_input[24]  # 25th dimension (0-indexed)
+            if reward != 0:
+                # Map reward to multiple field dimensions for value learning
+                # 1. Strengthen energy dimension (emotional_intensity index 28)
+                field_coords[28] = torch.clamp(field_coords[28] + reward * 0.5, -2.0, 2.0)
+                # 2. Modulate coupling for reward-state binding (index 30)
+                field_coords[30] = torch.clamp(field_coords[30] + reward * 0.3, -2.0, 2.0)
+                # 3. Increase field intensity for stronger memory formation
+                if reward > 0:
+                    field_intensity = 0.5 + abs(reward) * 0.5  # Positive rewards create stronger memories
+                else:
+                    field_intensity = 0.3  # Negative rewards create aversive memories
+                # Store reward-modified intensity
+                self._last_reward = reward
+            else:
+                self._last_reward = 0.0
+        else:
+            self._last_reward = 0.0
+        
         return UnifiedFieldExperience(
             timestamp=time.time(),
             raw_sensory_input=raw_input,
             field_coordinates=field_coords,
-            # Stronger field intensity to ensure values exceed baseline
-            field_intensity=0.3 + 0.2 * torch.norm(field_coords).item() / math.sqrt(self.total_dimensions),
+            field_intensity=field_intensity,
             experience_id=f"experience_{self.brain_cycles}"
         )
     
@@ -833,10 +878,10 @@ class UnifiedFieldBrain:
         # Apply field decay (back to simple uniform decay for now)
         self.unified_field *= self.field_decay_rate
         
-        # Add small baseline to prevent complete decay, but only where field is very weak
-        baseline = 0.01
-        weak_mask = self.unified_field < baseline
-        self.unified_field[weak_mask] = baseline
+        # Add very small baseline to prevent complete zeros, but preserve actual activations
+        baseline = 0.0001  # Much smaller to not interfere with real values
+        zero_mask = self.unified_field == 0.0
+        self.unified_field[zero_mask] = baseline
         
         # Apply field diffusion (simple 3D spatial diffusion)
         self._apply_spatial_diffusion()
@@ -1123,6 +1168,8 @@ class UnifiedFieldBrain:
                     # Also check the exact point and mean
                     exact_point = self.unified_field[tuple(region_info['field_indices'][:11])].item()
                     region_mean = torch.mean(local_spatial_region).item()
+                    # Use the best of exact point or max for robustness
+                    current_activation = max(current_activation, exact_point)
                     if not self.quiet_mode:
                         print(f"   🔍 Region check: exact={exact_point:.4f}, max={current_activation:.4f}, mean={region_mean:.4f}")
                         print(f"   🔍 Spatial region shape: {local_spatial_region.shape}, values > 0.02: {(local_spatial_region > 0.02).sum().item()}")
@@ -1137,10 +1184,12 @@ class UnifiedFieldBrain:
                     print(f"   🔍 Updating {region_key}: activation={current_activation:.4f}, threshold={self.topology_stability_threshold * 0.5:.4f}")
                 
                 # Remove regions that have become too weak
-                if current_activation < self.topology_stability_threshold * 0.5:
+                # More lenient removal - only remove if truly dead
+                removal_threshold = 0.001  # Much lower than discovery threshold
+                if current_activation < removal_threshold:
                     regions_to_remove.append(region_key)
                     if not self.quiet_mode:
-                        print(f"   ❌ Marking {region_key} for removal (too weak)")
+                        print(f"   ❌ Marking {region_key} for removal (activation={current_activation:.6f} < {removal_threshold})")
             except IndexError:
                 regions_to_remove.append(region_key)
         
@@ -1294,13 +1343,13 @@ class UnifiedFieldBrain:
             ], dtype=torch.float32, device=self.device)
             action_confidence = 0.1  # Low confidence for exploration
         else:
-            # Scale confidence based on gradient strength
-            action_confidence = min(1.0, gradient_strength * 10)  # Scale up weak gradients
+            # Action confidence now comes from prediction accuracy, not gradient strength
+            action_confidence = self._current_prediction_confidence
             
             # Debug output for successful gradient following
             if not self.quiet_mode and self.brain_cycles % 100 == 0:
                 print(f"   ✅ Gradient following: strength={gradient_strength:.6f}, "
-                      f"confidence={action_confidence:.3f}, "
+                      f"prediction_confidence={action_confidence:.3f}, "
                       f"motor=[{motor_commands[0]:.3f}, {motor_commands[1]:.3f}, {motor_commands[2]:.3f}, {motor_commands[3]:.3f}]")
         
         action = FieldNativeAction(
@@ -1467,6 +1516,7 @@ class UnifiedFieldBrain:
             'emergence_activity': self._get_family_activity(FieldDynamicsFamily.EMERGENCE),
             
             # PREDICTION IMPROVEMENT ADDICTION: Learning metrics
+            'prediction_confidence': self._current_prediction_confidence,
             'prediction_efficiency': self.calculate_prediction_efficiency(),
             'intrinsic_reward': self.compute_intrinsic_reward(),
             'improvement_rate': self._improvement_rate_history[-1] if self._improvement_rate_history else 0.0,

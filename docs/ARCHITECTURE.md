@@ -177,6 +177,31 @@ field.modulate_exploration_based_on_learning(improvement_rate)
 - Intrinsic motivation from prediction accuracy
 - Motivation emerges from field topology
 
+#### Prediction-Based Confidence
+```python
+# Field evolution serves as prediction mechanism
+predicted_field = field.evolve()
+actual_field = field.after_sensory_input()
+prediction_error = compare(predicted, actual)
+confidence = 1.0 / (1.0 + prediction_error * 5000)
+```
+- Field evolution naturally predicts next state
+- Prediction errors drive learning
+- Confidence based on actual prediction accuracy
+- Creates genuine curiosity and surprise detection
+
+#### Value Learning System
+```python
+# 25th sensory dimension carries reward signal
+reward = sensory_input[24]  # -1.0 to +1.0
+field.map_reward_to_energy_dimensions(reward)
+field.strengthen_memories_by_importance(reward)
+```
+- External rewards shape field dynamics
+- Positive rewards create stronger memories
+- Negative rewards create aversive patterns
+- Value gradients emerge in field topology
+
 #### Hardware Adaptation
 ```python
 # Dynamic device selection and resource management
@@ -219,10 +244,12 @@ action, brain_state = brain.process_sensory_input(sensors)
 ### Communication Architecture
 ```python
 # Direct TCP communication with UnifiedFieldBrain
-# 24D sensor input -> 37D field processing -> 4D motor output
+# 25D sensor input -> 37D field processing -> 4D motor output
+# Input: 24D sensors + 1D reward signal
 action, state = brain.process_sensory_input(sensor_vector)
 ```
-- 24D sensor input → 37D field processing → 4D motor output
+- 25D sensor input → 37D field processing → 4D motor output
+- Input includes 24D sensors + 1D reward signal
 - Internal 37D field intelligence
 - TCP server for robot connections
 - Designed for real-time operation
@@ -255,6 +282,9 @@ Intelligence Metrics:
 - Attention: Field activation gradients
 - Learning: Continuous field evolution
 - Reasoning: Field gradient following and constraint satisfaction
+- Prediction: Field evolution as future state anticipation
+- Value: Reward-modulated field topology
+- Curiosity: Seeking prediction errors for learning
 
 ### Architectural Simplicity
 - Single UnifiedFieldBrain implementation
@@ -291,10 +321,16 @@ Intelligence Metrics:
   - Low performance hardware: 3³ resolution
 - **Dynamic Limits**: Working memory and search limits scale with hardware capabilities
 
+### Memory Formation
+- **Topology Region Discovery**: Activation > 0.02, variance < 0.5
+- **Region Persistence**: Removal only when activation < 0.001
+- **Baseline Field Value**: 0.0001 (prevents zero without interfering)
+- **Reward Modulation**: Positive rewards increase field intensity 0.5-1.0
+
 ## System Configuration
 
 **Architecture**: Single UnifiedFieldBrain implementation  
-**Processing**: 24D sensor input → 37D field dynamics → 4D motor output  
+**Processing**: 25D sensor input → 37D field dynamics → 4D motor output  
 **Hardware**: Automatic GPU/MPS/CPU selection with adaptive spatial resolution  
 **Configuration**: settings.json for brain parameters and network settings
 
