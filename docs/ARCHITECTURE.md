@@ -2,7 +2,7 @@
 
 ## Core Paradigm
 
-This architecture implements continuous field-based intelligence as an alternative to discrete AI approaches. Cognitive functions emerge from the topology and dynamics of a unified 37-dimensional field organized by physics principles rather than sensory modalities.
+This architecture implements continuous field-based intelligence as an alternative to discrete AI approaches. Cognitive functions emerge from the topology and dynamics of a dynamically-sized continuous field organized by physics principles rather than sensory modalities. The field dimensions adapt to each robot's capabilities.
 
 ## Project Structure
 
@@ -13,14 +13,18 @@ brain/
 ├── demo.py                     # Interactive demo launcher
 │
 ├── server/                     # Complete brain implementation
-│   ├── brain_server.py         # Main server entry point
+│   ├── brain.py                # Main server entry point
 │   ├── settings.json           # Brain configuration
 │   │
 │   ├── src/                    # Core brain systems
-│   │   ├── brain_factory.py    # Simplified UnifiedFieldBrain wrapper
+│   │   ├── core/               # Dynamic architecture components
+│   │   │   ├── dynamic_brain_factory.py # Creates brains on-demand
+│   │   │   ├── brain_service.py        # Session management
+│   │   │   ├── adapters.py             # Robot-brain translation
+│   │   │   └── robot_registry.py       # Robot capability profiles
 │   │   │
 │   │   ├── brains/field/       # Field-native brain implementation
-│   │   │   ├── core_brain.py           # 37D field intelligence
+│   │   │   ├── unified_field_brain.py  # Adaptive field intelligence
 │   │   │   ├── memory.py               # Field topology memory
 │   │   │   └── dynamics/               # Field dynamics systems
 │   │   │       ├── constraint_field_dynamics.py # 4D constraint discovery (legacy)
@@ -56,20 +60,28 @@ brain/
 
 ## Core Architecture
 
-### UnifiedFieldBrain
+### Dynamic Brain Architecture
 
-The brain is organized as a 37-dimensional continuous field where intelligence emerges from field topology and dynamics:
+The brain creates adaptive continuous fields on-demand based on robot capabilities:
+
+1. **Robot connects** with sensor/actuator specifications
+2. **System calculates** optimal field dimensions using logarithmic scaling
+3. **Brain is created** with dimensions matching robot complexity
+4. **Adapters translate** between robot and brain coordinate spaces
 
 #### Field Organization by Physics Families
 ```python
-# Dimensions organized by physical dynamics, not sensory modalities:
-SPATIAL (5D):     # Position, orientation, scale, time
-OSCILLATORY (6D): # Frequencies, rhythms, neural gamma/theta  
-FLOW (8D):        # Gradients, motion, attention flows
-TOPOLOGY (6D):    # Stable configurations, boundaries
-ENERGY (4D):      # Motor, cognitive, sensory, emotional
-COUPLING (5D):    # Correlations, associations, binding
-EMERGENCE (3D):   # Novelty, creativity, phase transitions
+# Dimensions organized by physical dynamics, not sensory modalities
+# Actual dimensions scale with robot complexity:
+SPATIAL:     # Position, orientation, scale, time
+OSCILLATORY: # Frequencies, rhythms, neural patterns  
+FLOW:        # Gradients, motion, attention flows
+TOPOLOGY:    # Stable configurations, boundaries
+ENERGY:      # Motor, cognitive, sensory, emotional
+COUPLING:    # Correlations, associations, binding
+EMERGENCE:   # Novelty, creativity, phase transitions
+
+# Field size = log2(sensory_dims) × complexity_factor × physics_families
 ```
 
 #### Key Field Operations
@@ -88,9 +100,10 @@ attention_focus = field.compute_activation_gradients()
 processed_input = field.apply_attention_weighting(sensors)
 ```
 - Emerges from field activation gradients
-- Integrated into 37D field processing
+- Integrated into N-dimensional field processing
 - Follows field energy gradients for focus
 - Computed during field evolution
+- Scales with field dimensions
 
 ### Multi-Scale Field Processing
 
@@ -100,7 +113,7 @@ processed_input = field.apply_attention_weighting(sensors)
 field_response = field.evolve_across_scales(sensory_input)
 hierarchical_output = field.extract_multi_scale_features()
 ```
-- Emerges from 37D field structure
+- Emerges from N-dimensional field structure
 - Scale dimensions built into field organization
 - Single field evolution handles all scales
 - Integrated multi-scale dynamics
@@ -146,7 +159,7 @@ Constraint Types:
 - Temporal momentum constraints (continuity)
 - Scale coupling constraints (hierarchy)
 - Pattern coherence constraints (binding)
-- Cross-dimensional coupling (37D interactions)
+- Cross-dimensional coupling (full field interactions)
 
 #### Self-Organization
 - Constraint satisfaction guides field evolution without external programming
@@ -244,13 +257,13 @@ action, brain_state = brain.process_sensory_input(sensors)
 ### Communication Architecture
 ```python
 # Direct TCP communication with UnifiedFieldBrain
-# 25D sensor input -> 37D field processing -> 4D motor output
+# Sensor input -> N-dimensional field processing -> Motor output
 # Input: 24D sensors + 1D reward signal
 action, state = brain.process_sensory_input(sensor_vector)
 ```
-- 25D sensor input → 37D field processing → 4D motor output
+- Sensor input → adaptive field processing → motor output
 - Input includes 24D sensors + 1D reward signal
-- Internal 37D field intelligence
+- Internal adaptive field intelligence
 - TCP server for robot connections
 - Designed for real-time operation
 
@@ -302,7 +315,7 @@ Intelligence Metrics:
 
 1. Single implementation reduces complexity
 2. Maintainable codebase with fewer abstractions
-3. 37D continuous field dynamics as intelligence substrate
+3. Adaptive continuous field dynamics as intelligence substrate
 4. Automatic hardware device selection
 5. No brain type switching complexity
 6. Direct field brain interfaces
@@ -330,7 +343,7 @@ Intelligence Metrics:
 ## System Configuration
 
 **Architecture**: Single UnifiedFieldBrain implementation  
-**Processing**: 25D sensor input → 37D field dynamics → 4D motor output  
+**Processing**: Sensor input → adaptive field dynamics → motor output  
 **Hardware**: Automatic GPU/MPS/CPU selection with adaptive spatial resolution  
 **Configuration**: settings.json for brain parameters and network settings
 

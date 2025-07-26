@@ -29,21 +29,26 @@ python3 demo.py  # Interactive launcher
 
 This project explores continuous field dynamics as an alternative to discrete pattern-based AI. Instead of storing patterns in discrete memory structures, intelligence emerges from the topology and evolution of a continuous multi-dimensional field.
 
-### Field Organization
-- **37D Unified Field** organized by physics families rather than sensory modalities
-- **Spatial Dimensions** (5D): Position, orientation, scale, time
-- **Oscillatory Dimensions** (6D): Frequencies, rhythms, periods
-- **Flow Dimensions** (8D): Gradients, momentum, direction
-- **Topology Dimensions** (6D): Stable configurations, boundaries
-- **Energy Dimensions** (4D): Intensity, activation, depletion
-- **Coupling Dimensions** (5D): Relationships, correlations, binding
-- **Emergence Dimensions** (3D): Novelty, creativity, phase transitions
+### Dynamic Field Architecture
+- **Adaptive Dimensionality**: Field dimensions are dynamically created based on robot capabilities
+- **On-Demand Brain Creation**: Brains are created when robots connect, not at server startup
+- **Logarithmic Scaling**: Field complexity scales logarithmically with robot complexity
+- **Physics-Based Organization**: Dimensions organized by physics families:
+  - **Spatial Dimensions**: Position, orientation, scale, time
+  - **Oscillatory Dimensions**: Frequencies, rhythms, periods
+  - **Flow Dimensions**: Gradients, momentum, direction
+  - **Topology Dimensions**: Stable configurations, boundaries
+  - **Energy Dimensions**: Intensity, activation, depletion
+  - **Coupling Dimensions**: Relationships, correlations, binding
+  - **Emergence Dimensions**: Novelty, creativity, phase transitions
 
 ### Implementation Status
-- Field-native brain implementation with constraint discovery
-- TCP server for robot communication
+- Dynamic brain architecture with on-demand creation
+- Adaptive field dimensions based on robot capabilities
+- TCP server with capability negotiation protocol
 - Hardware adaptation for GPU/MPS/CPU
 - State persistence and recovery
+- Automatic maintenance and resource management
 
 ## Theoretical Background
 
@@ -58,27 +63,33 @@ The field approach draws from several research areas:
 ## Implementation Components
 
 ### Field Dynamics
-- Continuous 37D field evolution
+- Dynamic field dimensions (calculated per robot)
 - Constraint discovery from field topology
 - Temporal dynamics with working memory emergence
 - Cross-scale hierarchical processing
+- Adaptive complexity based on robot sensors/actuators
 
 ### Brain Architecture
-- UnifiedFieldBrain as primary implementation
+- Dynamic brain creation on robot connection
+- UnifiedFieldBrain with adaptive dimensions
 - Hardware adaptation (GPU/MPS/CPU)
-- TCP communication protocol
+- TCP protocol with capability negotiation
 - State persistence and recovery
+- Brain pooling for resource efficiency
 
 ### Current Capabilities
-- Robot sensor input → field coordinates mapping
+- Dynamic dimension calculation from robot profile
+- Robot sensor input → adaptive field mapping
 - Field evolution and constraint satisfaction
 - Field gradients → robot action generation
 - Cross-session learning and memory
+- Multi-robot support with different capabilities
 
 ## Architecture
 
 ### Field Processing
-- Robot sensors mapped to 37D field coordinates
+- Robot sensors mapped to dynamic field coordinates
+- Dimension calculation: log₂(sensors) × complexity_factor
 - Field evolution through constraint satisfaction
 - Gradient calculation for action generation
 - Topology analysis for memory and learning
@@ -97,13 +108,16 @@ brain/
 ├── demo.py                    # Interactive demos
 ├── tools/runners/             # Demo/test/validation runners
 ├── server/                    # Complete brain implementation
-│   ├── src/brain.py          # Main coordinator
-│   ├── src/brains/field/     # Revolutionary field-native intelligence
-│   │   ├── generic_brain.py  # Platform-agnostic 37D field brain
-│   │   ├── core_brain.py     # Robot-specific field brain
-│   │   └── dynamics/         # Field dynamics families
-│   ├── src/brains/sparse_goldilocks/  # Legacy discrete brain (constraint-based)
-│   └── settings.json         # Configuration (brain_type: "field" vs "discrete")
+│   ├── brain.py              # Main entry point
+│   ├── src/core/             # Dynamic architecture components
+│   │   ├── dynamic_brain_factory.py  # Creates brains on-demand
+│   │   ├── brain_service.py         # Session management
+│   │   ├── adapters.py              # Robot-brain translation
+│   │   └── robot_registry.py        # Robot profiles
+│   ├── src/brains/field/     # Field-native intelligence
+│   │   ├── unified_field_brain.py   # Adaptive field brain
+│   │   └── dynamics/                 # Field dynamics families
+│   └── settings.json         # Configuration
 ├── validation/               # Scientific experiments
 ├── tests/                    # Test suite
 ├── client_picarx/           # Robot client
@@ -112,20 +126,27 @@ brain/
 
 ## Communication Protocol
 
-Simple TCP protocol for robot communication:
+Dynamic TCP protocol with capability negotiation:
 ```
-Client → Server: [sensor_vector_length, sensor_data...]
-Server → Client: [action_vector_length, action_data...]
+# Handshake
+Client → Server: [robot_version, sensory_size, action_size, hardware_type, capabilities]
+Server → Client: [brain_version, accepted_sensory_size, accepted_action_size, gpu_available, brain_capabilities]
+
+# Runtime
+Client → Server: [sensor_data...] (using negotiated dimensions)
+Server → Client: [action_data...] (using negotiated dimensions)
 ```
 
 ## Current Status
 
 This is an active research project exploring field-based intelligence. The implementation includes:
 
-- 37D continuous field dynamics
+- Dynamic field dimensions adapted to each robot
+- On-demand brain creation and management
 - Constraint discovery and satisfaction
-- Robot communication interface
+- Robot communication with capability negotiation
 - Hardware adaptation and optimization
+- Resource pooling and automatic maintenance
 
 ## Research Goals
 
