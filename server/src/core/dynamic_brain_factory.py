@@ -9,6 +9,7 @@ import time
 from typing import Dict, Any, Optional
 
 from ..core.interfaces import IBrainFactory, IBrain
+from .dynamic_dimension_calculator import DynamicDimensionCalculator
 
 
 class DynamicBrainWrapper(IBrain):
@@ -111,6 +112,12 @@ class DynamicBrainFactory(IBrainFactory):
         self.config = config or {}
         self.quiet_mode = self.config.get('quiet_mode', False)
         self.use_simple_brain = self.config.get('use_simple_brain', False)
+        self.use_dynamic_brain = self.config.get('use_dynamic_brain', True)
+        
+        # Initialize dimension calculator
+        self.dimension_calculator = DynamicDimensionCalculator(
+            complexity_factor=self.config.get('complexity_factor', 6.0)
+        )
         
         if self.use_simple_brain:
             # Use our clean simple implementation
@@ -118,13 +125,61 @@ class DynamicBrainFactory(IBrainFactory):
             self.BrainClass = SimpleFieldBrain
         else:
             # Import here to avoid circular dependency
-            from ..brains.field.core_brain import UnifiedFieldBrain
-            self.UnifiedFieldBrain = UnifiedFieldBrain
+            if self.use_dynamic_brain:
+                # Check if we should use the full-featured version
+                if self.config.get('use_full_features', True):
+                    from ..brains.field.dynamic_unified_brain_full import DynamicUnifiedFieldBrain
+                else:
+                    from ..brains.field.dynamic_unified_brain import DynamicUnifiedFieldBrain
+                self.DynamicUnifiedFieldBrain = DynamicUnifiedFieldBrain
+            else:
+                from ..brains.field.core_brain import UnifiedFieldBrain
+                self.UnifiedFieldBrain = UnifiedFieldBrain
     
     def create(self, field_dimensions: int, spatial_resolution: int,
                sensory_dim: Optional[int] = None, motor_dim: Optional[int] = None) -> IBrain:
         """Create a new brain with specified dimensions."""
         
+        # Use dynamic brain if enabled
+        if self.use_dynamic_brain and sensory_dim and motor_dim:
+            # Calculate conceptual dimensions based on robot profile
+            conceptual_dims = self.dimension_calculator.calculate_dimensions(
+                sensory_dim, motor_dim
+            )
+            
+            # Select appropriate tensor configuration
+            tensor_shape = self.dimension_calculator.select_tensor_configuration(
+                len(conceptual_dims), spatial_resolution
+            )
+            
+            # Create dimension mapping
+            dimension_mapping = self.dimension_calculator.create_dimension_mapping(
+                conceptual_dims, tensor_shape
+            )
+            
+            print(f"🏗️  Creating dynamic brain: {len(conceptual_dims)}D conceptual → {len(tensor_shape)}D tensor")
+            print(f"   Robot interface: {sensory_dim}D sensors → {motor_dim}D motors")
+            
+            # Create dynamic brain
+            brain = self.DynamicUnifiedFieldBrain(
+                field_dimensions=conceptual_dims,
+                tensor_shape=tensor_shape,
+                dimension_mapping=dimension_mapping,
+                spatial_resolution=spatial_resolution,
+                temporal_window=self.config.get('temporal_window', 10.0),
+                field_evolution_rate=self.config.get('field_evolution_rate', 0.1),
+                constraint_discovery_rate=self.config.get('constraint_discovery_rate', 0.15),
+                quiet_mode=self.quiet_mode
+            )
+            
+            # Set robot interface dimensions
+            brain.expected_sensory_dim = sensory_dim
+            brain.expected_motor_dim = motor_dim
+            
+            print(f"✅ Created dynamic unified field brain")
+            return DynamicBrainWrapper(brain)
+        
+        # Otherwise use the compatibility mode
         print(f"🏗️  Creating {field_dimensions}D brain with {spatial_resolution}³ spatial resolution")
         if sensory_dim and motor_dim:
             print(f"   Robot interface: {sensory_dim}D sensors → {motor_dim}D motors")
