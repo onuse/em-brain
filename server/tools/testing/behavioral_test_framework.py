@@ -20,7 +20,7 @@ import json
 brain_server_path = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(brain_server_path))
 
-from src.brain_factory import BrainFactory
+from src.core.dynamic_brain_factory import DynamicBrainFactory
 
 class IntelligenceMetric(Enum):
     """Core intelligence metrics we want to achieve"""
@@ -74,46 +74,45 @@ class BehavioralTestFramework:
         self.quiet_mode = quiet_mode
         self.test_results_history = []
         
-    def create_brain(self, config: Dict[str, Any] = None) -> BrainFactory:
+    def create_brain(self, config: Dict[str, Any] = None) -> 'BrainWrapper':
         """Create a brain for testing with optional configuration"""
-        # Load default configuration from settings.json to ensure proper memory paths
-        import json
-        import os
-        
-        try:
-            # Try to load settings.json for proper configuration
-            settings_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '..', 'settings.json')
-            with open(settings_path, 'r') as f:
-                default_config = json.load(f)
-        except:
-            # Fallback minimal config if settings.json not available
-            default_config = {
-                'memory': {'persistent_memory_path': './server/robot_memory', 'enable_persistence': True},
-                'brain': {'type': 'field', 'sensory_dim': 16, 'motor_dim': 4}
-            }
+        # Default configuration for dynamic brain
+        default_config = {
+            'use_dynamic_brain': True,
+            'use_full_features': True,
+            'quiet_mode': self.quiet_mode,
+            'temporal_window': 10.0,
+            'field_evolution_rate': 0.1,
+            'constraint_discovery_rate': 0.15,
+            'complexity_factor': 6.0
+        }
         
         # Merge with provided config
-        if config is None:
-            config = {}
-        
-        # Ensure proper memory configuration is present
-        if 'memory' not in config:
-            config['memory'] = default_config.get('memory', {})
-        
-        # PERFORMANCE FIX: Disable persistence for testing
-        config['memory']['enable_persistence'] = False
-        
-        if 'brain_implementation' not in config:
-            config['brain_implementation'] = 'field'
+        if config:
+            default_config.update(config)
             
-        return BrainFactory(config=config, quiet_mode=self.quiet_mode, enable_logging=False)
+        # Create factory
+        factory = DynamicBrainFactory(default_config)
+        
+        # Create brain with default PiCar-X profile
+        brain_wrapper = factory.create(
+            field_dimensions=None,
+            spatial_resolution=4,
+            sensory_dim=24,
+            motor_dim=4
+        )
+        
+        return brain_wrapper
     
-    def test_prediction_learning(self, brain: BrainFactory, cycles: int = 100, divergent_test: bool = False) -> float:
+    def test_prediction_learning(self, brain_wrapper, cycles: int = 100, divergent_test: bool = False) -> float:
         """Test how well the brain learns to predict patterns"""
+        # Get the actual brain from wrapper
+        brain = brain_wrapper.brain
+        
         # BEHAVIORAL TEST FIX: Reset confidence history for fresh learning curves
-        if hasattr(brain, 'unified_brain') and hasattr(brain.unified_brain, '_prediction_confidence_history'):
-            brain.unified_brain._prediction_confidence_history = []
-            brain.unified_brain._improvement_rate_history = []
+        if hasattr(brain, '_prediction_confidence_history'):
+            brain._prediction_confidence_history = []
+            brain._improvement_rate_history = []
         
         if divergent_test:
             # Extremely different pattern to test paradigm shifting
@@ -127,12 +126,12 @@ class BehavioralTestFramework:
         
         for i in range(cycles):
             # Present pattern and get brain prediction
-            action, brain_state = brain.process_sensory_input(pattern)
+            motor_output, brain_state = brain.process_robot_cycle(pattern)
+            action = motor_output
             
             # Measure prediction quality (higher confidence = better prediction)  
             # UNIFIED BRAIN FIX: Use the correct key from UnifiedFieldBrain state
-            prediction_confidence = brain_state.get('last_action_confidence', 
-                                    brain_state.get('prediction_confidence', 0.0))
+            prediction_confidence = brain_state.get('prediction_confidence', 0.5)
             prediction_errors.append(1.0 - prediction_confidence)
             prediction_confidences.append(prediction_confidence)
         
@@ -160,16 +159,20 @@ class BehavioralTestFramework:
         improvement = max(0.0, (first_quarter - last_quarter) / first_quarter)
         return min(1.0, improvement)
     
-    def test_exploration_exploitation_balance(self, brain: BrainFactory, cycles: int = 200) -> float:
+    def test_exploration_exploitation_balance(self, brain_wrapper, cycles: int = 200) -> float:
         """Test proper balance between exploration and exploitation"""
         try:
-            consistent_input = [0.5] * 16  # Consistent environment
+            brain = brain_wrapper.brain
             
             early_actions = []
             late_actions = []
             
             for i in range(cycles):
-                action, _ = brain.process_sensory_input(consistent_input)
+                # Varied sensory input to create gradients
+                sensory_input = [0.5 + 0.1 * np.sin(i * 0.05 + j * 0.2) for j in range(24)]
+                
+                motor_output, _ = brain.process_robot_cycle(sensory_input)
+                action = motor_output  # Use motor output directly
                 
                 if i < 50:  # Early phase - should explore
                     early_actions.append(action)
@@ -204,14 +207,15 @@ class BehavioralTestFramework:
             print(f"❌ Exception in exploration_exploitation test: {e}")
             return 0.0
     
-    def test_field_stabilization(self, brain: BrainFactory, cycles: int = 100) -> float:
+    def test_field_stabilization(self, brain_wrapper, cycles: int = 100) -> float:
         """Test if field energy stabilizes with learning (biological realism)"""
-        pattern = [0.7, 0.3, 0.6, 0.4] * 4  # Repeating pattern
+        brain = brain_wrapper.brain
+        pattern = [0.7, 0.3, 0.6, 0.4] * 4 + [0.5] * 8  # 24D pattern
         
         field_energies = []
         
         for i in range(cycles):
-            _, brain_state = brain.process_sensory_input(pattern)
+            _, brain_state = brain.process_robot_cycle(pattern)
             field_energy = brain_state.get('field_energy', 0.0)
             field_energies.append(field_energy)
         
@@ -229,20 +233,21 @@ class BehavioralTestFramework:
         
         return (energy_decrease_score + stability_score) / 2.0
     
-    def test_pattern_recognition(self, brain: BrainFactory, cycles: int = 150) -> float:
+    def test_pattern_recognition(self, brain_wrapper, cycles: int = 150) -> float:
         """Test ability to recognize and respond differently to different patterns"""
-        pattern_a = [0.8, 0.2, 0.6, 0.4] * 4
-        pattern_b = [0.2, 0.8, 0.4, 0.6] * 4
+        brain = brain_wrapper.brain
+        pattern_a = [0.8, 0.2, 0.6, 0.4] * 4 + [0.5] * 8
+        pattern_b = [0.2, 0.8, 0.4, 0.6] * 4 + [0.5] * 8
         
         actions_a = []
         actions_b = []
         
         for i in range(cycles):
             if i % 2 == 0:
-                action, _ = brain.process_sensory_input(pattern_a)
+                action, _ = brain.process_robot_cycle(pattern_a)
                 actions_a.append(action)
             else:
-                action, _ = brain.process_sensory_input(pattern_b)
+                action, _ = brain.process_robot_cycle(pattern_b)
                 actions_b.append(action)
         
         if len(actions_a) < 10 or len(actions_b) < 10:
@@ -258,16 +263,17 @@ class BehavioralTestFramework:
         
         return recognition_score
     
-    def test_goal_seeking(self, brain: BrainFactory, cycles: int = 100) -> float:
+    def test_goal_seeking(self, brain_wrapper, cycles: int = 100) -> float:
         """Test goal-directed behavior (simplified light-seeking)"""
+        brain = brain_wrapper.brain
         goal_seeking_scores = []
         
         for i in range(cycles):
             # Simulate distance to light source (closer = higher values in first channels)
             distance_to_light = np.random.uniform(0.1, 1.0)
-            light_gradient = [distance_to_light, distance_to_light * 0.8] + [0.1] * 14
+            light_gradient = [distance_to_light, distance_to_light * 0.8] + [0.1] * 22
             
-            action, _ = brain.process_sensory_input(light_gradient)
+            action, _ = brain.process_robot_cycle(light_gradient)
             
             # Good goal-seeking: stronger actions when closer to goal
             action_strength = np.linalg.norm(action)
@@ -280,15 +286,16 @@ class BehavioralTestFramework:
         # Score based on average goal-directed response
         return min(1.0, np.mean(goal_seeking_scores))
     
-    def test_biological_realism(self, brain: BrainFactory, cycles: int = 100) -> float:
+    def test_biological_realism(self, brain_wrapper, cycles: int = 100) -> float:
         """Test biological realism markers"""
-        pattern = [0.6, 0.4, 0.7, 0.3] * 4
+        brain = brain_wrapper.brain
+        pattern = [0.6, 0.4, 0.7, 0.3] * 4 + [0.5] * 8
         
         evolution_cycles_history = []
         prediction_efficiency_history = []
         
         for i in range(cycles):
-            _, brain_state = brain.process_sensory_input(pattern)
+            _, brain_state = brain.process_robot_cycle(pattern)
             
             evolution_cycles = brain_state.get('field_evolution_cycles', 0)
             prediction_efficiency = brain_state.get('prediction_efficiency', 0.0)
@@ -309,18 +316,19 @@ class BehavioralTestFramework:
         
         return biological_score
     
-    def test_computational_efficiency(self, brain: BrainFactory, cycles: int = 50) -> float:
+    def test_computational_efficiency(self, brain_wrapper, cycles: int = 50) -> float:
         """Test intelligence per compute - measures intelligence achievement relative to computational cost"""
-        test_input = [0.5] * 16
+        brain = brain_wrapper.brain
+        test_input = [0.5] * 24
         
         # Warm-up to get stable performance
         for i in range(5):
-            brain.process_sensory_input(test_input)
+            brain.process_robot_cycle(test_input)
         
         start_time = time.time()
         
         for i in range(cycles):
-            brain.process_sensory_input(test_input)
+            brain.process_robot_cycle(test_input)
         
         elapsed_time = time.time() - start_time
         avg_cycle_time = elapsed_time / cycles
@@ -328,8 +336,8 @@ class BehavioralTestFramework:
         
         # Calculate current intelligence achievement from prediction learning and exploration-exploitation
         # (simplified version of full assessment for efficiency measurement)
-        quick_prediction_score = self._quick_prediction_assessment(brain, 20)
-        quick_exploration_score = self._quick_exploration_assessment(brain, 50) 
+        quick_prediction_score = self._quick_prediction_assessment(brain_wrapper, 20)
+        quick_exploration_score = self._quick_exploration_assessment(brain_wrapper, 50) 
         intelligence_level = (quick_prediction_score + quick_exploration_score) / 2.0
         
         # Intelligence per compute: intelligence achievement per unit of computational cost
@@ -357,14 +365,15 @@ class BehavioralTestFramework:
         
         return min(1.0, max(0.0, intelligence_per_compute))
     
-    def _quick_prediction_assessment(self, brain: BrainFactory, cycles: int) -> float:
+    def _quick_prediction_assessment(self, brain_wrapper, cycles: int) -> float:
         """Quick prediction learning assessment for efficiency calculation"""
-        pattern = [0.5, 0.3, 0.8, 0.2, 0.6, 0.1, 0.9, 0.4] * 2
+        brain = brain_wrapper.brain
+        pattern = [0.5, 0.3, 0.8, 0.2, 0.6, 0.1, 0.9, 0.4] * 2 + [0.5] * 8
         prediction_errors = []
         
         for i in range(cycles):
-            _, brain_state = brain.process_sensory_input(pattern)
-            prediction_confidence = brain_state.get('prediction_confidence', 0.0)
+            _, brain_state = brain.process_robot_cycle(pattern)
+            prediction_confidence = brain_state.get('prediction_confidence', 0.5)
             prediction_errors.append(1.0 - prediction_confidence)
         
         if len(prediction_errors) < 10:
@@ -379,14 +388,15 @@ class BehavioralTestFramework:
         improvement = max(0.0, (early_error - late_error) / early_error)
         return min(1.0, improvement)
     
-    def _quick_exploration_assessment(self, brain: BrainFactory, cycles: int) -> float:
+    def _quick_exploration_assessment(self, brain_wrapper, cycles: int) -> float:
         """Quick exploration-exploitation assessment for efficiency calculation"""
-        consistent_input = [0.5] * 16
+        brain = brain_wrapper.brain
         early_actions = []
         late_actions = []
         
         for i in range(cycles):
-            action, _ = brain.process_sensory_input(consistent_input)
+            sensory_input = [0.5 + 0.05 * np.sin(i * 0.1 + j * 0.3) for j in range(24)]
+            action, _ = brain.process_robot_cycle(sensory_input)
             
             if i < 15:  # Early phase
                 early_actions.append(action)
@@ -404,7 +414,7 @@ class BehavioralTestFramework:
         
         return (exploration_score + convergence_score) / 2.0
     
-    def run_intelligence_assessment(self, brain: BrainFactory, 
+    def run_intelligence_assessment(self, brain_wrapper, 
                                   profile: IntelligenceProfile) -> Dict[str, Any]:
         """Run complete intelligence assessment against a profile"""
         print(f"\n🧠 Running Intelligence Assessment: {profile.name}")
@@ -418,19 +428,19 @@ class BehavioralTestFramework:
             
             # Run the appropriate test
             if target.metric == IntelligenceMetric.PREDICTION_LEARNING:
-                score = self.test_prediction_learning(brain, target.test_duration_cycles)
+                score = self.test_prediction_learning(brain_wrapper, target.test_duration_cycles)
             elif target.metric == IntelligenceMetric.EXPLORATION_EXPLOITATION:
-                score = self.test_exploration_exploitation_balance(brain, target.test_duration_cycles)
+                score = self.test_exploration_exploitation_balance(brain_wrapper, target.test_duration_cycles)
             elif target.metric == IntelligenceMetric.FIELD_STABILIZATION:
-                score = self.test_field_stabilization(brain, target.test_duration_cycles)
+                score = self.test_field_stabilization(brain_wrapper, target.test_duration_cycles)
             elif target.metric == IntelligenceMetric.PATTERN_RECOGNITION:
-                score = self.test_pattern_recognition(brain, target.test_duration_cycles)
+                score = self.test_pattern_recognition(brain_wrapper, target.test_duration_cycles)
             elif target.metric == IntelligenceMetric.GOAL_SEEKING:
-                score = self.test_goal_seeking(brain, target.test_duration_cycles)
+                score = self.test_goal_seeking(brain_wrapper, target.test_duration_cycles)
             elif target.metric == IntelligenceMetric.BIOLOGICAL_REALISM:
-                score = self.test_biological_realism(brain, target.test_duration_cycles)
+                score = self.test_biological_realism(brain_wrapper, target.test_duration_cycles)
             elif target.metric == IntelligenceMetric.COMPUTATIONAL_EFFICIENCY:
-                score = self.test_computational_efficiency(brain, target.test_duration_cycles)
+                score = self.test_computational_efficiency(brain_wrapper, target.test_duration_cycles)
             else:
                 score = 0.0
             

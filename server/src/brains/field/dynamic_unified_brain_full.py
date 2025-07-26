@@ -96,9 +96,9 @@ class DynamicUnifiedFieldBrain:
         )
         
         # Field evolution parameters (from original brain)
-        self.field_decay_rate = 0.999
+        self.field_decay_rate = 0.95  # Increased decay to allow more persistent activation
         self.field_diffusion_rate = 0.05
-        self.gradient_following_strength = 0.5
+        self.gradient_following_strength = 2.0  # Increased for stronger motor output
         self.topology_stability_threshold = 0.02
         self.field_energy_dissipation_rate = 0.90
         
@@ -247,8 +247,8 @@ class DynamicUnifiedFieldBrain:
         # Create field coordinates tensor
         field_coords = torch.zeros(self.total_dimensions, device=self.device)
         
-        # Extract reward if present (25th sensor)
-        reward = sensory_input[24] if len(sensory_input) > 24 else 0.0
+        # Extract reward if present (last sensor by convention)
+        reward = sensory_input[-1] if len(sensory_input) > 0 else 0.0
         field_intensity = 0.5 + reward * 0.5  # Map [-1,1] to [0,1]
         
         # Map sensors to conceptual dimensions
@@ -256,10 +256,17 @@ class DynamicUnifiedFieldBrain:
         
         # 1. Map position-related sensors to spatial dimensions
         spatial_dims = [d for d in self.field_dimensions if d.family == FieldDynamicsFamily.SPATIAL]
-        for i, dim in enumerate(spatial_dims[:3]):  # X, Y, Z
+        
+        # Map first 3 sensors to first 3 spatial dimensions
+        for i in range(min(3, len(spatial_dims), len(sensory_input))):
+            dim_idx = self.field_dimensions.index(spatial_dims[i])
+            field_coords[dim_idx] = sensory_input[i] * 2.0 - 1.0  # Map [0,1] to [-1,1]
+        
+        # Map remaining spatial dimensions from other sensors
+        for i in range(3, len(spatial_dims)):
             if i < len(sensory_input):
-                dim_idx = self.field_dimensions.index(dim)
-                field_coords[dim_idx] = sensory_input[i] * 2.0 - 1.0  # Map [0,1] to [-1,1]
+                dim_idx = self.field_dimensions.index(spatial_dims[i])
+                field_coords[dim_idx] = sensory_input[i] * 2.0 - 1.0
         
         # 2. Map other sensors across remaining dimensions
         sensor_idx = 3
@@ -299,7 +306,7 @@ class DynamicUnifiedFieldBrain:
                 region_slices.append(idx)
         
         # Imprint with intensity based on reward
-        imprint_strength = 0.1 * experience.field_intensity
+        imprint_strength = 0.5 * experience.field_intensity  # Increased from 0.1 to 0.5
         self.unified_field[tuple(region_slices)] += imprint_strength
         
         # Store position for tracking
@@ -456,9 +463,10 @@ class DynamicUnifiedFieldBrain:
         gradient_strength = 0.0
         
         for dim in spatial_dims:
-            if dim in all_gradients and dim < len(tensor_indices):
+            grad_key = f'gradient_dim_{dim}'
+            if grad_key in all_gradients and dim < len(tensor_indices):
                 # Get gradient tensor for this dimension
-                grad_tensor = all_gradients[dim]
+                grad_tensor = all_gradients[grad_key]
                 
                 # Extract gradient value at current position
                 # Build index tuple matching the gradient tensor shape
