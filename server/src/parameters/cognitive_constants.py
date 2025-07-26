@@ -22,10 +22,10 @@ Last Updated: January 2025 (following Evolution Phase 2 + Hardware Adaptation In
 from typing import Dict, Any
 import time
 
-# Hardware adaptation integration
+# Adaptive configuration integration
 try:
-    from ..utils.hardware_adaptation import get_adaptive_cognitive_limits
-    HARDWARE_ADAPTATION_AVAILABLE = True
+    from ..adaptive_configuration import get_configuration
+    ADAPTIVE_CONFIG_AVAILABLE = True
 except ImportError:
     try:
         # Try absolute import for standalone scripts
@@ -35,13 +35,16 @@ except ImportError:
         brain_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         if brain_root not in sys.path:
             sys.path.insert(0, brain_root)
-        from server.src.utils.hardware_adaptation import get_adaptive_cognitive_limits
-        HARDWARE_ADAPTATION_AVAILABLE = True
+        from server.src.adaptive_configuration import get_configuration
+        ADAPTIVE_CONFIG_AVAILABLE = True
     except ImportError:
-        HARDWARE_ADAPTATION_AVAILABLE = False
-        def get_adaptive_cognitive_limits():
-            return {}
-        print("⚠️  Hardware adaptation not available, using static constants")
+        ADAPTIVE_CONFIG_AVAILABLE = False
+        def get_configuration():
+            class MockConfig:
+                working_memory_limit = 100
+                similarity_search_limit = 1000
+            return MockConfig()
+        print("⚠️  Adaptive configuration not available, using static constants")
 
 # =============================================================================
 # CORE IDENTITY: What Kind of Mind This Is
@@ -101,25 +104,25 @@ class CognitiveCapacityConstants:
     @classmethod
     def get_working_memory_limit(cls) -> int:
         """Get current hardware-adaptive working memory limit."""
-        if HARDWARE_ADAPTATION_AVAILABLE:
-            limits = get_adaptive_cognitive_limits()
-            return limits.get('working_memory_limit', cls.DEFAULT_WORKING_MEMORY_TARGET)
+        if ADAPTIVE_CONFIG_AVAILABLE:
+            config = get_configuration()
+            return config.working_memory_limit
         return cls.DEFAULT_WORKING_MEMORY_TARGET
     
     @classmethod
     def get_similarity_search_limit(cls) -> int:
         """Get current hardware-adaptive similarity search limit."""
-        if HARDWARE_ADAPTATION_AVAILABLE:
-            limits = get_adaptive_cognitive_limits()
-            return limits.get('similarity_search_limit', cls.MAX_SIMILARITY_SEARCH_SIZE)
+        if ADAPTIVE_CONFIG_AVAILABLE:
+            config = get_configuration()
+            return config.similarity_search_limit
         return cls.MAX_SIMILARITY_SEARCH_SIZE
     
     @classmethod
     def get_batch_processing_threshold(cls) -> int:
         """Get current hardware-adaptive batch processing threshold."""
-        if HARDWARE_ADAPTATION_AVAILABLE:
-            limits = get_adaptive_cognitive_limits()
-            return limits.get('batch_processing_threshold', cls.SIMILARITY_COMPUTATION_BATCH_SIZE)
+        if ADAPTIVE_CONFIG_AVAILABLE:
+            config = get_configuration()
+            return getattr(config, 'batch_processing_threshold', cls.SIMILARITY_COMPUTATION_BATCH_SIZE)
         return cls.SIMILARITY_COMPUTATION_BATCH_SIZE
     
     # Pattern Recognition Granularity (Balances generalization vs specificity)
@@ -230,9 +233,9 @@ class CognitiveEnergyConstants:
     @classmethod
     def get_cognitive_energy_budget(cls) -> int:
         """Get current hardware-adaptive cognitive energy budget."""
-        if HARDWARE_ADAPTATION_AVAILABLE:
-            limits = get_adaptive_cognitive_limits()
-            return limits.get('cognitive_energy_budget', cls.BASE_COGNITIVE_ENERGY_BUDGET)
+        if ADAPTIVE_CONFIG_AVAILABLE:
+            config = get_configuration()
+            return getattr(config, 'cognitive_energy_budget', cls.BASE_COGNITIVE_ENERGY_BUDGET)
         return cls.BASE_COGNITIVE_ENERGY_BUDGET
     
     # Energy Adaptation (Performance pressure affects available energy)
@@ -485,11 +488,11 @@ if __name__ == "__main__":
     print(f"📊 Version: {profile['version']}")
     
     # Show current hardware-adaptive limits if available
-    if HARDWARE_ADAPTATION_AVAILABLE:
-        adaptive_limits = get_adaptive_cognitive_limits()
+    if ADAPTIVE_CONFIG_AVAILABLE:
+        config = get_configuration()
         print(f"🔧 Hardware-adaptive limits:")
-        print(f"   Working memory: {adaptive_limits.get('working_memory_limit', 'N/A')}")
-        print(f"   Similarity search: {adaptive_limits.get('similarity_search_limit', 'N/A')}")
-        print(f"   Cognitive energy: {adaptive_limits.get('cognitive_energy_budget', 'N/A')}")
+        print(f"   Working memory: {config.working_memory_limit}")
+        print(f"   Similarity search: {config.similarity_search_limit}")
+        print(f"   Cognitive energy: {getattr(config, 'cognitive_energy_budget', 'N/A')}")
     else:
-        print(f"⚙️  Using static limits (hardware adaptation not available)")
+        print(f"⚙️  Using static limits (adaptive configuration not available)")

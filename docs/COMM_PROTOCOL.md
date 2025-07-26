@@ -51,10 +51,11 @@ Robot establishes TCP connection to brain server on port 9999
 #### Step 2: Robot Sends Handshake
 ```
 Message Type: HANDSHAKE (2)
-Vector: [robot_version, sensory_size, action_size, hardware_type]
+Vector: [robot_version, sensory_size, action_size, hardware_type, capabilities_mask]
 
 Example:
-[1.0, 16.0, 4.0, 1.0]
+[1.0, 24.0, 4.0, 1.0, 3.0]
+ │    │     │    │    └─ Capabilities mask (bit flags: 1=visual, 2=audio, 4=manipulation)
  │    │     │    └─ Hardware type (1.0 = PiCar-X)
  │    │     └─ Expected action vector size
  │    └─ Sensory vector size robot will send
@@ -64,15 +65,22 @@ Example:
 #### Step 3: Brain Responds with Handshake
 ```
 Message Type: HANDSHAKE (2)
-Vector: [brain_version, expected_sensory_size, action_size, gpu_available]
+Vector: [brain_version, accepted_sensory_size, accepted_action_size, gpu_available, brain_capabilities]
 
 Example:
-[4.0, 16.0, 4.0, 1.0]
+[4.0, 24.0, 4.0, 1.0, 15.0]
+ │    │     │    │    └─ Brain capabilities (bit flags: 1=visual, 2=audio, 4=manipulation, 8=multi-agent)
  │    │     │    └─ GPU acceleration available
  │    │     └─ Action vector size brain will send
- │    └─ Expected sensory vector size
+ │    └─ Accepted sensory vector size (may differ from requested)
  └─ Brain software version
 ```
+
+**Dynamic Dimension Negotiation:**
+- Robot announces its sensory/action dimensions in handshake
+- Brain accepts or negotiates compatible dimensions
+- If dimensions don't match exactly, brain adapts internally
+- Both sides proceed with negotiated dimensions
 
 ### 2. Runtime Communication Loop
 
@@ -241,33 +249,70 @@ public:
 
 ## Vector Specifications
 
-### Sensory Input Vector (Robot → Brain)
-The sensory input should be a **consistent size vector** (recommended 16 floats):
+### Dynamic Vector Dimensions
+The protocol supports dynamic sensory and action vector sizes, negotiated during handshake. The brain adapts to different robot configurations automatically.
 
+### Example: PiCar-X Sensory Input Vector (16 dimensions)
 ```
 Index | Description | Range | Units
 ------|-------------|-------|-------
-0     | Position X  | 0-10  | meters
-1     | Position Y  | 0-10  | meters  
-2     | Heading     | 0-360 | degrees
-3     | Speed       | 0-2   | m/s
-4     | Ultrasonic  | 0-3   | meters
-5-12  | Camera data | 0-1   | normalized
-13    | Battery     | 0-15  | volts
-14    | Temperature | 0-100 | celsius
-15    | Reserved    | 0     | future use
+0     | Ultrasonic distance | 0-4 | meters (HC-SR04)
+1     | Grayscale right | 0-1 | normalized (A0 pin)
+2     | Grayscale center | 0-1 | normalized (A1 pin)
+3     | Grayscale left | 0-1 | normalized (A2 pin)
+4     | Left motor speed | -1 to 1 | normalized current speed
+5     | Right motor speed | -1 to 1 | normalized current speed
+6     | Camera pan angle | -90 to 90 | degrees
+7     | Camera tilt angle | -35 to 65 | degrees
+8     | Steering angle | -30 to 30 | degrees
+9     | Battery voltage | 0-8.4 | volts (2x 18650)
+10    | Line detected | 0-1 | binary status
+11    | Cliff detected | 0-1 | binary status
+12    | CPU temperature | 0-100 | celsius
+13    | Memory usage | 0-1 | normalized
+14    | Timestamp | 0-1000000 | milliseconds
+15    | Reserved | 0-1 | future use
 ```
 
-### Action Output Vector (Brain → Robot)
-The action output is **4 floats** representing motor commands:
-
+### Example: PiCar-X Action Output Vector (5 dimensions)
 ```
 Index | Description    | Range    | Units
 ------|----------------|----------|--------
-0     | Left motor     | -1 to 1  | speed ratio
-1     | Right motor    | -1 to 1  | speed ratio
-2     | Steering angle | -30 to 30| degrees
-3     | Camera pan     | -90 to 90| degrees
+0     | Left motor     | -100 to 100 | percent speed
+1     | Right motor    | -100 to 100 | percent speed
+2     | Steering servo | -30 to 30 | degrees
+3     | Camera pan     | -90 to 90 | degrees
+4     | Camera tilt    | -35 to 65 | degrees
+```
+
+### Robot Profile Configuration
+Robots can define their sensory/action mappings in a profile JSON file:
+
+```json
+{
+  "robot_type": "picarx",
+  "version": "1.0",
+  "sensory_mapping": {
+    "dimensions": 24,
+    "channels": [
+      {"index": 0, "name": "position_x", "range": [0, 10], "unit": "meters"},
+      {"index": 1, "name": "position_y", "range": [0, 10], "unit": "meters"},
+      // ... full mapping
+    ]
+  },
+  "action_mapping": {
+    "dimensions": 4,
+    "channels": [
+      {"index": 0, "name": "left_motor", "range": [-1, 1], "unit": "speed_ratio"},
+      // ... full mapping
+    ]
+  },
+  "capabilities": {
+    "visual_processing": true,
+    "audio_processing": false,
+    "manipulation": false
+  }
+}
 ```
 
 ## Performance Characteristics

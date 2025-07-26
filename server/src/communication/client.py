@@ -71,9 +71,10 @@ class MinimalBrainClient:
             if robot_capabilities is None:
                 robot_capabilities = [
                     1.0,  # Robot version
-                    24.0, # Sensory vector size (matches UnifiedFieldBrain expectation)
+                    24.0, # Sensory vector size (default for simulated robot)
                     4.0,  # Action vector size
-                    1.0   # Hardware type (1.0 = PiCar-X)
+                    1.0,  # Hardware type (1.0 = PiCar-X)
+                    1.0   # Capabilities mask (1 = visual processing)
                 ]
             
             # Send handshake
@@ -104,13 +105,13 @@ class MinimalBrainClient:
             self._cleanup_connection()
             return False
     
-    def get_action(self, sensory_vector: List[float], timeout: float = 1.0) -> Optional[List[float]]:
+    def get_action(self, sensory_vector: List[float], timeout: float = 10.0) -> Optional[List[float]]:
         """
         Send sensory input to brain and get action response.
         
         Args:
             sensory_vector: Current robot sensor readings
-            timeout: Request timeout in seconds
+            timeout: Request timeout in seconds (default 10s for slow hardware)
             
         Returns:
             Action vector from brain, or None if failed
@@ -189,7 +190,7 @@ class MinimalBrainClient:
         
         # Send empty sensory vector as ping
         ping_vector = [0.0]
-        response = self.get_action(ping_vector, timeout=2.0)
+        response = self.get_action(ping_vector, timeout=5.0)
         
         if response is not None:
             return time.time() - ping_start

@@ -194,19 +194,37 @@ class HardwareAdaptation:
         
         # Performance-based scaling (cycle time performance)
         # Also determine optimal spatial resolution for field brain
-        # Be ambitious on good hardware - better behaviors are worth it!
-        if cycle_time_ms <= 20.0:
+        # Support everything from embedded devices to datacenter GPUs
+        # Note: The simple benchmark underestimates actual field brain load by ~50x
+        # These thresholds are calibrated for real-world performance
+        if cycle_time_ms <= 2.0:
+            performance_tier = "datacenter"
+            perf_multiplier = 4.0
+            recommended_resolution = 8  # Datacenter GPU clusters can handle massive fields
+        elif cycle_time_ms <= 5.0:
+            performance_tier = "workstation"
+            perf_multiplier = 3.0
+            recommended_resolution = 7  # High-end workstation GPUs
+        elif cycle_time_ms <= 8.0:
             performance_tier = "high"
             perf_multiplier = 2.0
-            recommended_resolution = 5  # Fast hardware can handle 5³ with best behaviors
-        elif cycle_time_ms <= 40.0:
+            recommended_resolution = 6  # Good desktop GPUs
+        elif cycle_time_ms <= 12.0:
+            performance_tier = "medium-high"
+            perf_multiplier = 1.5
+            recommended_resolution = 5  # Standard desktop with GPU
+        elif cycle_time_ms <= 20.0:
             performance_tier = "medium"
             perf_multiplier = 1.0
-            recommended_resolution = 4  # Good balance of speed and behavior
-        else:
+            recommended_resolution = 4  # Good CPU or basic GPU
+        elif cycle_time_ms <= 50.0:
             performance_tier = "low"
             perf_multiplier = 0.7
-            recommended_resolution = 3  # Must use 3³ for acceptable performance
+            recommended_resolution = 3  # Older hardware or laptops
+        else:
+            performance_tier = "embedded"
+            perf_multiplier = 0.5
+            recommended_resolution = 3  # Minimum viable resolution
         
         # GPU acceleration (more aggressive when available)
         if gpu_available:

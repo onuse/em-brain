@@ -100,10 +100,13 @@ class BehavioralTestFramework:
         if 'memory' not in config:
             config['memory'] = default_config.get('memory', {})
         
+        # PERFORMANCE FIX: Disable persistence for testing
+        config['memory']['enable_persistence'] = False
+        
         if 'brain_implementation' not in config:
             config['brain_implementation'] = 'field'
             
-        return BrainFactory(config=config, quiet_mode=self.quiet_mode)
+        return BrainFactory(config=config, quiet_mode=self.quiet_mode, enable_logging=False)
     
     def test_prediction_learning(self, brain: BrainFactory, cycles: int = 100, divergent_test: bool = False) -> float:
         """Test how well the brain learns to predict patterns"""

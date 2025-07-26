@@ -52,7 +52,7 @@ class BrainFactory:
             print(f"🧠 Creating UnifiedFieldBrain (37D physics-organized field intelligence)")
         
         self.brain = UnifiedFieldBrain(
-            spatial_resolution=brain_config.get('field_spatial_resolution', 20),
+            spatial_resolution=brain_config.get('field_spatial_resolution', None),  # Let hardware adaptation decide
             temporal_window=brain_config.get('field_temporal_window', 10.0),
             field_evolution_rate=brain_config.get('field_evolution_rate', 0.1),
             constraint_discovery_rate=brain_config.get('constraint_discovery_rate', 0.15),
@@ -221,7 +221,7 @@ class BrainFactory:
                 
             # Close logger
             if self.logger:
-                self.logger.close()
+                self.logger.close_session()
                 
             # Shutdown brain
             self.brain.shutdown()

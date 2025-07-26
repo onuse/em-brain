@@ -138,6 +138,11 @@ class AdaptiveConfigManager:
             memory_multiplier = 0.5  # CPU fallback
             
         adaptive_resolution = int(base_resolution * device_multiplier * memory_multiplier)
+        
+        # Apply testing override if specified
+        if self.dev_overrides.get("testing_overrides", {}).get("force_spatial_resolution"):
+            adaptive_resolution = self.dev_overrides["testing_overrides"]["force_spatial_resolution"]
+            
         brain_config["field_spatial_resolution"] = adaptive_resolution
         
         # Hardware-scaled cycle time

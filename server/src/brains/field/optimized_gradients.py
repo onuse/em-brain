@@ -108,21 +108,27 @@ class OptimizedGradientCalculator:
                     full_grad[tuple(grad_index)] = local_grad
                     
                     gradients[f'gradient_dim_{dim_idx}'] = full_grad
-                elif dim_idx >= 3:
-                    # For non-spatial dimensions, compute gradient at center only
-                    # This allows for future distributed actuators
-                    center_slices = [slice(x_start, x_end), slice(y_start, y_end), slice(z_start, z_end)]
-                    center_slices.extend([slice(None)] * (field.ndim - 3))
-                    
-                    # Extract relevant slice and compute gradient
-                    field_slice = field[tuple(center_slices)]
-                    grad = self._compute_dense_gradient(field_slice, dim_idx)
-                    
-                    # Create full gradient tensor
-                    full_grad = torch.zeros_like(field)
-                    full_grad[tuple(center_slices)] = grad
-                    
-                    gradients[f'gradient_dim_{dim_idx}'] = full_grad
+                elif dim_idx in [3, 4]:
+                    # For scale and time dimensions, compute gradient on the local field
+                    # but only along the dimension of interest
+                    if dim_idx < local_field.ndim and local_field.shape[dim_idx] > 1:
+                        # Compute gradient efficiently using slicing
+                        local_grad = self._compute_dense_gradient(local_field, dim_idx)
+                        
+                        # Create full-size gradient tensor with zeros
+                        full_grad = torch.zeros_like(field)
+                        
+                        # Place local gradient in correct position
+                        grad_index = [slice(x_start, x_end), slice(y_start, y_end), slice(z_start, z_end)]
+                        grad_index.extend([slice(None)] * (field.ndim - 3))
+                        full_grad[tuple(grad_index)] = local_grad
+                        
+                        gradients[f'gradient_dim_{dim_idx}'] = full_grad
+                    else:
+                        gradients[f'gradient_dim_{dim_idx}'] = torch.zeros_like(field)
+                elif dim_idx >= 5:
+                    # Skip higher dimensions - they're not used in action generation
+                    gradients[f'gradient_dim_{dim_idx}'] = torch.zeros_like(field)
             
             return gradients
         

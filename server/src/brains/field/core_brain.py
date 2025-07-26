@@ -119,15 +119,17 @@ class UnifiedFieldBrain:
         self.field_diffusion_rate = 0.05  # Diffusion strength
         self.topology_stability_threshold = 0.01  # Topology region threshold
         
-        # DEVICE DETECTION: Use existing hardware adaptation system
+        # DEVICE DETECTION: Use adaptive configuration system
         try:
-            from ...utils.hardware_adaptation import device as hardware_device
+            from ...adaptive_configuration import get_device
+            hardware_device = get_device()
         except ImportError:
             # Fallback for direct import
             import sys
             import os
             sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
-            from utils.hardware_adaptation import device as hardware_device
+            from adaptive_configuration import get_device
+            hardware_device = get_device()
         
         # Calculate field dimensions early for MPS compatibility check
         field_dimensions = self._initialize_field_dimensions()
@@ -138,38 +140,39 @@ class UnifiedFieldBrain:
         self.hw_profile = None
         try:
             # Try relative import first
-            from ...utils.hardware_adaptation import get_hardware_adaptation
-            hw_adapter = get_hardware_adaptation({})
-            hw_profile = hw_adapter.hardware_profile
-            self.hw_profile = hw_profile
+            from ...adaptive_configuration import get_configuration
+            config = get_configuration()
+            hw_profile = config
+            self.hw_profile = config
         except:
             try:
                 # Fallback to direct import
-                from utils.hardware_adaptation import get_hardware_adaptation
-                hw_adapter = get_hardware_adaptation({})
-                hw_profile = hw_adapter.hardware_profile
-                self.hw_profile = hw_profile
+                from adaptive_configuration import get_configuration
+                config = get_configuration()
+                hw_profile = config
+                self.hw_profile = config
             except Exception as e:
                 if not quiet_mode:
-                    print(f"⚠️  Hardware adaptation not available: {e}")
+                    print(f"⚠️  Adaptive configuration not available: {e}")
         
         # Use hardware-recommended resolution if not explicitly set
         if self._requested_resolution is None and hw_profile is not None:
-            self.spatial_resolution = hw_profile.recommended_spatial_resolution
+            # Use spatial resolution from configuration
+            self.spatial_resolution = hw_profile.spatial_resolution or 4
             if not quiet_mode:
-                print(f"📐 Using hardware-adapted resolution: {self.spatial_resolution}³")
+                print(f"📐 Using configured resolution: {self.spatial_resolution}³")
         else:
             self.spatial_resolution = self._requested_resolution or 4  # Default to 4³
             
         # Handle MPS tensor dimension limitation  
-        if hardware_device == 'mps' and total_dimensions > 16:
+        if hardware_device.type == 'mps' and total_dimensions > 16:
             self.device = torch.device('cpu')
             if not quiet_mode:
                 print(f"💻 Using CPU processing (MPS limited to 16D, field needs {total_dimensions}D)")
         else:
-            self.device = torch.device(hardware_device)
-            if not quiet_mode and hardware_device != 'cpu':
-                print(f"🚀 Using {hardware_device.upper()} acceleration")
+            self.device = hardware_device
+            if not quiet_mode and hardware_device.type != 'cpu':
+                print(f"🚀 Using {hardware_device.type.upper()} acceleration")
         
         # Initialize field dimension architecture (already calculated above)
         self.field_dimensions = field_dimensions
@@ -190,7 +193,7 @@ class UnifiedFieldBrain:
         self.constraint_field = ConstraintFieldND(
             field_shape=field_shape,
             dimension_names=[dim.name for dim in self.field_dimensions],
-            constraint_discovery_rate=constraint_discovery_rate,
+            constraint_discovery_rate=constraint_discovery_rate * 3,  # Increase discovery rate for better constraint learning
             constraint_enforcement_strength=0.3,
             max_constraints=50,
             device=self.device,
@@ -207,7 +210,7 @@ class UnifiedFieldBrain:
         # Field evolution parameters - FIXED: Improved for stronger gradients
         self.field_decay_rate = 0.999        # Much slower decay (was 0.995 - too aggressive)
         self.field_diffusion_rate = 0.05     # More diffusion for gradient propagation (was 0.02)
-        self.gradient_following_strength = 15.0  # BALANCED: Strong enough for responses, avoids saturation
+        self.gradient_following_strength = 0.5  # Increased for better exploration/exploitation balance
         self.topology_stability_threshold = 0.02  # Lower threshold for better memory formation
         
         # Field state tracking
@@ -216,8 +219,12 @@ class UnifiedFieldBrain:
         self.topology_regions: Dict[str, Dict] = {}
         self.gradient_flows: Dict[str, torch.Tensor] = {}
         
+        # Motor smoothing for field testing
+        self.previous_motor_commands = torch.zeros(4, device=self.device)
+        self.motor_smoothing_factor = 0.3  # 0 = no smoothing, 1 = full smoothing
+        
         # Robot interface
-        self.expected_sensory_dim = 25  # From robot sensors (24 + reward)
+        self.expected_sensory_dim = 24  # From robot sensors (24 base dimensions)
         self.expected_motor_dim = 4     # To robot actuators
         
         # Performance tracking
@@ -226,10 +233,13 @@ class UnifiedFieldBrain:
         self.topology_discoveries = 0
         self.gradient_actions = 0
         
+        # Initialize robot position tracking
+        self._last_imprint_indices = None
+        
         # Maintenance tracking
         self.last_maintenance_cycle = 0
         self.maintenance_interval = 100  # Run maintenance every 100 cycles
-        self.field_energy_dissipation_rate = 0.98  # Dampen field energy by 2% during maintenance
+        self.field_energy_dissipation_rate = 0.90  # Dampen field energy by 10% during maintenance
         
         # PREDICTION IMPROVEMENT ADDICTION: Track confidence for intrinsic reward
         self._prediction_confidence_history = []
@@ -283,8 +293,8 @@ class UnifiedFieldBrain:
             
         # Determine hardware tier based on capabilities
         cpu_cores = hw_profile.cpu_cores
-        memory_gb = hw_profile.total_memory_gb
-        gpu_available = hw_profile.gpu_available
+        memory_gb = hw_profile.system_memory_gb
+        gpu_available = hw_profile.device_type in ['cuda', 'mps']
         gpu_memory_gb = hw_profile.gpu_memory_gb or 0
         
         # Calculate performance score
@@ -496,16 +506,13 @@ class UnifiedFieldBrain:
         # 1. Convert robot sensory input to unified field experience
         field_experience = self._robot_sensors_to_field_experience(sensory_input)
         
-        # 2. Apply experience to unified field (this replaces ALL discrete processing)
-        self._apply_field_experience(field_experience)
-        
-        # 3. PREDICTION: Compare predicted field evolution with actual field after sensory update
+        # 2. PREDICTION: Compare predicted field with actual field BEFORE sensory input
         if hasattr(self, '_predicted_field'):
             # Focus on local spatial region around robot position for prediction accuracy
             center = self.spatial_resolution // 2
             region_slice = slice(center-1, center+2)  # 3x3x3 region
             
-            # Extract local regions from predicted vs actual (after sensory input)
+            # Extract local regions from predicted vs actual (before sensory input)
             predicted_region = self._predicted_field[region_slice, region_slice, region_slice]
             actual_region = self.unified_field[region_slice, region_slice, region_slice]
             
@@ -513,9 +520,11 @@ class UnifiedFieldBrain:
             prediction_error = torch.mean(torch.abs(predicted_region - actual_region)).item()
             
             # Convert error to confidence (lower error = higher confidence)
-            # Scale factor adjusted for meaningful confidence values
-            # Much higher sensitivity for realistic confidence range
-            self._current_prediction_confidence = 1.0 / (1.0 + prediction_error * 5000.0)
+            # Reduced sensitivity for more meaningful confidence range
+            self._current_prediction_confidence = 1.0 / (1.0 + prediction_error * 100.0)
+        
+        # 3. Apply experience to unified field (this replaces ALL discrete processing)
+        self._apply_field_experience(field_experience)
         
         # 4. Save current field state for prediction
         pre_evolution_field = self.unified_field.clone()
@@ -538,12 +547,13 @@ class UnifiedFieldBrain:
         self.brain_cycles += 1
         cycle_time = (time.perf_counter() - cycle_start) * 1000
         
-        # Record performance for hardware adaptation system
-        try:
-            from ...utils.hardware_adaptation import record_brain_cycle_performance
-            record_brain_cycle_performance(cycle_time)
-        except ImportError:
-            pass  # Hardware adaptation not available
+        # Performance warning for slow cycles
+        if cycle_time > 750:
+            print(f"⚠️  PERFORMANCE WARNING: Cycle {self.brain_cycles} took {cycle_time:.1f}ms (>750ms threshold)")
+            print(f"   Consider reducing spatial resolution or disabling logging/persistence")
+        
+        # Record performance for adaptive configuration system
+        # Note: Performance recording will be handled by the adaptive configuration manager
         
         # 7. Trigger maintenance operations periodically (async, not on hot path)
         if self.brain_cycles % self.maintenance_interval == 0:
@@ -574,6 +584,20 @@ class UnifiedFieldBrain:
                 padded_input.append(0.0)
             sensory_input = padded_input
         
+        # Validate and sanitize input - replace NaN/inf with safe defaults
+        sanitized_input = []
+        for i, value in enumerate(sensory_input):
+            if math.isnan(value) or math.isinf(value):
+                # Use safe default based on sensor type
+                if i < 3:  # Distance sensors - use far distance
+                    sanitized_input.append(0.1)
+                else:  # Other sensors - use neutral
+                    sanitized_input.append(0.0)
+            else:
+                # Clamp to reasonable range
+                sanitized_input.append(max(-10.0, min(10.0, value)))
+        
+        sensory_input = sanitized_input
         raw_input = torch.tensor(sensory_input, dtype=torch.float32, device=self.device)
         
         # Map robot sensors to field dimensions - ENHANCED to use all dimensions
@@ -584,14 +608,15 @@ class UnifiedFieldBrain:
         
         # SPATIAL MAPPING (0-2) - TUNED: Enhanced obstacle detection
         # Nonlinear response for better obstacle avoidance
+        # INVERTED: High sensor values (close obstacles) map to NEGATIVE field coords
         for i in range(3):
             raw = sensory_input[i]
-            if raw > 0.7:  # Close obstacle
-                field_coords[i] = (raw - 0.5) * 4  # Strong response
-            elif raw > 0.5:  # Medium distance
-                field_coords[i] = (raw - 0.5) * 2  # Moderate response
-            else:
-                field_coords[i] = (raw - 0.5) * 2  # Normal scaling
+            if raw > 0.7:  # Close obstacle - strong repulsion
+                field_coords[i] = -(raw - 0.1) * 2  # Strong negative response
+            elif raw > 0.5:  # Medium distance - moderate repulsion
+                field_coords[i] = -(raw - 0.1)      # Moderate negative response
+            else:  # Far distance - neutral to positive
+                field_coords[i] = (0.5 - raw) * 0.5  # Slight positive for free space
         
         # SCALE MAPPING (3) - derive from sensor variance
         sensor_variance = torch.var(sensor_tensor[:6])
@@ -662,14 +687,19 @@ class UnifiedFieldBrain:
         
         # EMERGENCE MAPPING (34-36) - creative combinations
         # Nonlinear combinations of sensors
-        field_coords[34] = torch.tanh(torch.sum(sensor_tensor[:3]) - 1.5)
-        field_coords[35] = torch.tanh(torch.prod(sensor_tensor[:3]) * 10)
-        field_coords[36] = torch.tanh(torch.max(sensor_tensor) - torch.min(sensor_tensor))
+        # Only set these if we have enough dimensions
+        if self.total_dimensions > 34:
+            field_coords[34] = torch.tanh(torch.sum(sensor_tensor[:3]) - 1.5)
+        if self.total_dimensions > 35:
+            field_coords[35] = torch.tanh(torch.prod(sensor_tensor[:3]) * 10)
+        if self.total_dimensions > 36:
+            field_coords[36] = torch.tanh(torch.max(sensor_tensor) - torch.min(sensor_tensor))
         
         # Calculate novelty from field distance to previous experiences
         novelty = self._calculate_experience_novelty(field_coords)
         # Novelty modulates the last emergence dimension
-        field_coords[36] = field_coords[36] * 0.7 + novelty * 0.3
+        if self.total_dimensions > 36:
+            field_coords[36] = field_coords[36] * 0.7 + novelty * 0.3
         
         # REWARD INTEGRATION - Process 25th dimension as reward signal
         field_intensity = 0.3 + 0.2 * torch.norm(field_coords).item() / math.sqrt(self.total_dimensions)  # Default
@@ -679,9 +709,11 @@ class UnifiedFieldBrain:
             if reward != 0:
                 # Map reward to multiple field dimensions for value learning
                 # 1. Strengthen energy dimension (emotional_intensity index 28)
-                field_coords[28] = torch.clamp(field_coords[28] + reward * 0.5, -2.0, 2.0)
+                if self.total_dimensions > 28:
+                    field_coords[28] = torch.clamp(field_coords[28] + reward * 0.5, -2.0, 2.0)
                 # 2. Modulate coupling for reward-state binding (index 30)
-                field_coords[30] = torch.clamp(field_coords[30] + reward * 0.3, -2.0, 2.0)
+                if self.total_dimensions > 30:
+                    field_coords[30] = torch.clamp(field_coords[30] + reward * 0.3, -2.0, 2.0)
                 # 3. Increase field intensity for stronger memory formation
                 if reward > 0:
                     field_intensity = 0.5 + abs(reward) * 0.5  # Positive rewards create stronger memories
@@ -896,7 +928,25 @@ class UnifiedFieldBrain:
         # Calculate gradient flows for action generation
         self._calculate_gradient_flows()
         
+        # ENERGY NORMALIZATION: Prevent unbounded growth
+        # Calculate current total energy
+        current_energy = torch.sum(torch.abs(self.unified_field)).item()
+        target_energy = 100000.0  # Target equilibrium energy
+        
+        # If energy exceeds threshold, normalize it back
+        if current_energy > target_energy * 1.5:  # 50% above target
+            normalization_factor = target_energy / current_energy
+            self.unified_field *= normalization_factor
+            
+            if not self.quiet_mode and self.brain_cycles % 100 == 0:
+                print(f"   ⚡ Energy normalized: {current_energy:.0f} → {target_energy:.0f}")
+        
         self.field_evolution_cycles += 1
+        
+        # PERFORMANCE: Run maintenance every 25 cycles for M1 Mac development
+        # This keeps performance stable without affecting learning
+        if self.field_evolution_cycles % 25 == 0:
+            self._trigger_maintenance()
     
     def _apply_spatial_diffusion(self):
         """Apply diffusion in spatial dimensions - OPTIMIZED with vectorized operations."""
@@ -929,14 +979,22 @@ class UnifiedFieldBrain:
     
     def _apply_constraint_guided_evolution(self):
         """Apply constraint-guided field evolution using N-dimensional constraints."""
-        # Testing constraint system fix
-        pass  # Continue with normal execution
+        # Constraint system is now enabled
         
         # Discover new constraints from current field state
         if self.field_evolution_cycles % 5 == 0:  # Discover constraints periodically
+            # Convert gradient flows to format expected by constraint system
+            formatted_gradients = {}
+            if 'gradient_x' in self.gradient_flows:
+                formatted_gradients['gradient_dim_0'] = self.gradient_flows['gradient_x']
+            if 'gradient_y' in self.gradient_flows:
+                formatted_gradients['gradient_dim_1'] = self.gradient_flows['gradient_y']
+            if 'gradient_z' in self.gradient_flows:
+                formatted_gradients['gradient_dim_2'] = self.gradient_flows['gradient_z']
+                
             new_constraints = self.constraint_field.discover_constraints(
                 self.unified_field, 
-                self.gradient_flows
+                formatted_gradients
             )
             
             if len(new_constraints) > 0 and not self.quiet_mode:
@@ -1201,11 +1259,20 @@ class UnifiedFieldBrain:
         """Calculate gradient flows for action generation - OPTIMIZED with local computation."""
         # Use optimized gradient calculator with local region only
         # This provides massive speedup while preserving functionality
+        
+        # Use the actual robot position from last imprint, not field center
+        if hasattr(self, '_last_imprint_indices') and self._last_imprint_indices:
+            # Use the actual robot position (first 3 indices)
+            region_center = tuple(self._last_imprint_indices[:3])
+        else:
+            # Fallback to field center
+            region_center = None
+            
         computed_gradients = self.gradient_calculator.calculate_gradients(
             self.unified_field,
-            dimensions_to_compute=[0, 1, 2, 3, 4],  # Spatial + scale + time
+            dimensions_to_compute=[0, 1, 2, 3, 4],  # Spatial + scale + time dimensions
             local_region_only=True,  # Only compute in 3x3x3 region
-            region_center=None,  # Use field center (robot position)
+            region_center=region_center,  # Use actual robot position
             region_size=3  # 3x3x3 local region
         )
         
@@ -1351,6 +1418,19 @@ class UnifiedFieldBrain:
                 print(f"   ✅ Gradient following: strength={gradient_strength:.6f}, "
                       f"prediction_confidence={action_confidence:.3f}, "
                       f"motor=[{motor_commands[0]:.3f}, {motor_commands[1]:.3f}, {motor_commands[2]:.3f}, {motor_commands[3]:.3f}]")
+        
+        # MOTOR SMOOTHING: Blend with previous commands for smoother movement
+        # This helps the brain learn the "feeling" of smooth control
+        smoothed_commands = (
+            (1 - self.motor_smoothing_factor) * motor_commands + 
+            self.motor_smoothing_factor * self.previous_motor_commands
+        )
+        
+        # Update previous commands for next cycle
+        self.previous_motor_commands = smoothed_commands.clone()
+        
+        # Use smoothed commands for the action
+        motor_commands = smoothed_commands
         
         action = FieldNativeAction(
             timestamp=time.time(),

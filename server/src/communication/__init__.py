@@ -8,8 +8,9 @@ Simple TCP server for minimal brain:
 - No client logic (clients are separate projects)
 """
 
-from .tcp_server import MinimalTCPServer
+# Old tcp_server moved to archive, use clean_tcp_server instead
+from .clean_tcp_server import CleanTCPServer
 from .protocol import MessageProtocol
 from .client import MinimalBrainClient
 
-__all__ = ["MinimalTCPServer", "MessageProtocol", "MinimalBrainClient"]
+__all__ = ["CleanTCPServer", "MessageProtocol", "MinimalBrainClient"]

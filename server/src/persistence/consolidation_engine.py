@@ -318,7 +318,7 @@ class ConsolidationEngine:
             )
             
             # Convert to dictionary
-            brain_dict = self.brain_serializer.to_dict(consolidated_state)
+            brain_dict = self.brain_serializer.serialize_to_dict(consolidated_state)
             
             # Add consolidation metadata
             consolidation_metadata = {

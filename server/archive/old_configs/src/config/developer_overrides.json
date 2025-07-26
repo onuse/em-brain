@@ -23,6 +23,7 @@
     "mock_gpu_memory_gb": null,
     "mock_cpu_cores": null,
     "force_cycle_time_ms": null,
-    "disable_persistence": false
+    "disable_persistence": false,
+    "force_spatial_resolution": 4
   }
 }

@@ -46,45 +46,19 @@ class MinimalBrainServer:
         self.running = False
     
     def _load_settings(self) -> Dict[str, Any]:
-        """Load settings using adaptive configuration system."""
+        """Load settings using the ONE configuration system."""
         try:
-            # Try new adaptive configuration system first
-            from src.config.adaptive_config import create_adaptive_config
+            # Use THE ONE AND ONLY configuration system
+            from src.adaptive_configuration import load_adaptive_configuration
             
-            # Check if simplified config exists, otherwise use legacy
-            server_dir = Path(__file__).parent
-            simple_config = server_dir / "settings_simple.json"
-            legacy_config = server_dir / "settings.json"
-            
-            if simple_config.exists():
-                print(f"🔧 Using adaptive configuration from {simple_config}")
-                return create_adaptive_config("settings_simple.json")
-            elif legacy_config.exists():
-                print(f"⚠️  Using legacy configuration from {legacy_config}")
-                with open(legacy_config, 'r') as f:
-                    return json.load(f)
-            else:
-                print(f"🔧 No config found, using hardware-adaptive defaults")
-                return create_adaptive_config("nonexistent.json")  # Will use built-in defaults
+            # Load configuration
+            print(f"📋 Loading configuration using adaptive system")
+            return load_adaptive_configuration("settings.json")
                 
         except Exception as e:
-            print(f"❌ Configuration system error: {e}")
-            print(f"🔄 Falling back to legacy settings.json")
-            
-            # Fallback to legacy approach
-            server_dir = Path(__file__).parent
-            settings_file = server_dir / "settings.json"
-            
-            if settings_file.exists():
-                try:
-                    with open(settings_file, 'r') as f:
-                        return json.load(f)
-                except Exception as e2:
-                    print(f"⚠️ Warning: Could not load settings.json: {e2}")
-                    return {}
-            else:
-                print(f"⚠️ Warning: settings.json not found at {settings_file}")
-                return {}
+            print(f"❌ Configuration error: {e}")
+            # No fallback - fail fast
+            raise
     
     def _setup_paths(self):
         """Setup absolute paths for logs and robot_memory."""

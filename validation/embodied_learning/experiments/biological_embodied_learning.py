@@ -155,14 +155,30 @@ class BiologicalEmbodiedLearningExperiment:
         print(f"   Robot socket (port 9999): Sensor/motor communication")
         print(f"   Monitoring socket (port 9998): Brain statistics and validation metrics")
         
-        # Connect robot client (acts like real robot)
-        if not self.robot_client.connect():
+        # Connect robot client with proper handshake according to new protocol
+        # Handshake format: [robot_version, sensory_size, action_size, hardware_type, capabilities_mask]
+        robot_capabilities = [
+            1.0,   # Robot version
+            24.0,  # Sensory vector size (24D from environment)
+            4.0,   # Action vector size (4 actions)
+            2.0,   # Hardware type (2.0 = Simulated robot)
+            7.0    # Capabilities mask (1=visual + 2=audio + 4=manipulation = 7)
+        ]
+        
+        if not self.robot_client.connect(robot_capabilities):
             raise ConnectionError("Failed to connect robot client to brain server")
         
         # Connect monitoring client (gets brain statistics)
-        self.monitoring_client = create_monitoring_client()
-        if not self.monitoring_client:
-            raise ConnectionError("Failed to connect monitoring client to brain server")
+        try:
+            self.monitoring_client = create_monitoring_client()
+            if self.monitoring_client:
+                print(f"   ✅ Connected to monitoring server")
+            else:
+                print(f"   ⚠️  Monitoring server not available (continuing without brain metrics)")
+                self.monitoring_client = None
+        except Exception as e:
+            print(f"   ⚠️  Monitoring connection failed: {e} (continuing without brain metrics)")
+            self.monitoring_client = None
         
         try:
             self.experiment_start_time = time.time()
@@ -266,7 +282,8 @@ class BiologicalEmbodiedLearningExperiment:
                 start_time = time.time()
                 
                 # Get brain prediction via robot socket (acts like real robot)
-                prediction = self.robot_client.get_action(sensory_input, timeout=3.0)
+                # Use 10s timeout for slow hardware (some cycles may take >1s)
+                prediction = self.robot_client.get_action(sensory_input, timeout=10.0)
                 
                 if prediction is None:
                     print("   ⚠️ No response from brain")
@@ -436,8 +453,9 @@ class BiologicalEmbodiedLearningExperiment:
             # Send keepalive pings to both sockets
             if (time.time() - start_time) < duration_seconds:
                 try:
-                    # Robot socket keepalive
-                    self.robot_client.get_action([0.0, 0.0, 0.0, 0.0], timeout=5.0)
+                    # Robot socket keepalive (send 24D zero vector matching sensory dimensions)
+                    keepalive_sensory = [0.0] * 24  # 24-dimensional zero vector
+                    self.robot_client.get_action(keepalive_sensory, timeout=10.0)
                 except Exception:
                     pass  # Ignore robot keepalive failures
                 

@@ -167,21 +167,36 @@ class ConstraintFieldND:
                             if constraint:
                                 new_constraints.append(constraint)
         
-        # 2. Activation threshold constraints
-        # Find dimensions with consistent activation patterns
-        for dim_idx in range(min(self.n_dimensions, 10)):  # Limit to first 10 dims for efficiency
-            dim_mean = torch.mean(field, dim=tuple(i for i in range(self.n_dimensions) if i != dim_idx))
-            if torch.std(dim_mean) > 0.1:  # Significant variation
-                constraint = self._create_threshold_constraint(field, dim_idx, dim_mean)
-                if constraint:
+        # 2. Activation threshold constraints - OPTIMIZED
+        # Only check spatial dimensions (first 3) for efficiency
+        if self.n_dimensions >= 3:
+            for dim_idx in range(min(3, self.n_dimensions)):
+                # Sample a subset of the field for efficiency
+                sample_size = min(1000, field.numel() // 10)
+                flat_field = field.flatten()
+                sample_indices = torch.randperm(flat_field.size(0))[:sample_size]
+                field_sample = flat_field[sample_indices]
+                
+                # Check if there's significant variation in the sample
+                if torch.std(field_sample) > 0.1:
+                    # Use sampled mean as threshold
+                    threshold = torch.median(field_sample).item()
+                    constraint = FieldConstraintND(
+                        constraint_type=FieldConstraintType.ACTIVATION_THRESHOLD,
+                        dimensions=[dim_idx],
+                        region_centers=torch.zeros(1, 1),
+                        region_radii=torch.ones(1, 1) * float('inf'),
+                        strength=0.3,
+                        threshold_value=threshold,
+                        discovery_timestamp=time.time()
+                    )
                     new_constraints.append(constraint)
+                    break  # Only create one threshold constraint per discovery
         
         # 3. Cross-dimensional coupling constraints
-        if self.n_dimensions >= 6:
-            # Look for correlated dimensions
-            constraint = self._discover_coupling_constraints(field)
-            if constraint:
-                new_constraints.append(constraint)
+        # Disabled for performance - the corrcoef calculation is expensive
+        # and the current 11D field doesn't meet the requirements anyway
+        pass
         
         # Add to active constraints (with limit)
         for constraint in new_constraints:
@@ -198,7 +213,7 @@ class ConstraintFieldND:
         Apply active constraints to the field.
         
         Args:
-            field: The current field state
+            field: The current field state (11D tensor)
             
         Returns:
             Constraint forces to be applied to the field
@@ -214,17 +229,41 @@ class ConstraintFieldND:
         
         # Apply each active constraint
         for constraint in self.active_constraints:
-            # Sample points from the field to check constraint application
-            # For efficiency, we don't check every point
-            sample_indices = self._get_constraint_sample_indices(field.shape)
-            
-            for idx in sample_indices:
-                # Convert index tuple to coordinate tensor
-                coord = torch.tensor(idx, dtype=torch.float32)
-                force = constraint.compute_constraint_force(coord)
-                if torch.any(force != 0):
-                    constraint_forces[idx] += force * self.constraint_enforcement_strength
+            # For gradient flow constraints, apply forces globally
+            if constraint.constraint_type == FieldConstraintType.GRADIENT_FLOW:
+                if constraint.gradient_direction is not None:
+                    # Apply gradient force uniformly across the field
+                    # This creates a general flow in the specified direction
+                    force_magnitude = float(constraint.gradient_direction[0]) * constraint.strength * self.constraint_enforcement_strength
+                    constraint_forces += force_magnitude * 0.1  # Scale down for stability
                     self.constraints_enforced += 1
+                            
+            elif constraint.constraint_type == FieldConstraintType.ACTIVATION_THRESHOLD:
+                if constraint.threshold_value is not None:
+                    # Apply threshold constraint - push field values toward threshold
+                    below_threshold = field < constraint.threshold_value
+                    above_threshold = field >= constraint.threshold_value
+                    
+                    # Push below-threshold values up, above-threshold values down
+                    constraint_forces[below_threshold] += constraint.strength * self.constraint_enforcement_strength
+                    constraint_forces[above_threshold] -= constraint.strength * self.constraint_enforcement_strength
+                    self.constraints_enforced += 1
+                    
+            elif constraint.constraint_type == FieldConstraintType.SCALE_COUPLING:
+                # Apply coupling between different dimension families
+                # This helps coordinate activity across the field
+                if len(constraint.dimensions) >= 2:
+                    # Simple coupling: average activity should be similar
+                    dim1, dim2 = constraint.dimensions[0], constraint.dimensions[1]
+                    if dim1 < len(field.shape) and dim2 < len(field.shape):
+                        # Calculate mean activation in each dimension
+                        mean1 = torch.mean(field.select(dim1, 0))
+                        mean2 = torch.mean(field.select(dim2, 0))
+                        
+                        # Apply force to reduce difference
+                        diff = mean1 - mean2
+                        constraint_forces += diff * constraint.strength * self.constraint_enforcement_strength * 0.01
+                        self.constraints_enforced += 1
         
         return constraint_forces
     

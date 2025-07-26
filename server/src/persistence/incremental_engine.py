@@ -195,7 +195,7 @@ class IncrementalEngine:
             }
             
             # Convert to dictionary for storage
-            brain_dict = self.brain_serializer.to_dict(brain_state)
+            brain_dict = self.brain_serializer.serialize_to_dict(brain_state)
             brain_dict['incremental_metadata'] = incremental_metadata
             
             # Save to incremental file
@@ -212,7 +212,7 @@ class IncrementalEngine:
             save_time_ms = (time.perf_counter() - start_time) * 1000
             self._update_save_stats(brain_state, save_time_ms, save_size_mb)
             
-            print(f"💾 Incremental save: {save_request.request_id} ({len(brain_state.patterns)} patterns, {save_size_mb:.1f}MB, {save_time_ms:.1f}ms)")
+            print(f"💾 Incremental save: {save_request.request_id} ({save_size_mb:.1f}MB, {save_time_ms:.1f}ms)")
             
             return True
             
@@ -226,7 +226,8 @@ class IncrementalEngine:
         stats = self.stats
         stats['total_incremental_saves'] += 1
         stats['successful_saves'] += 1
-        stats['total_patterns_saved'] += len(brain_state.patterns)
+        # UnifiedFieldBrain doesn't have patterns - track cycles instead
+        stats['total_patterns_saved'] = brain_state.brain_cycles
         stats['total_save_size_mb'] += save_size_mb
         
         # Update averages

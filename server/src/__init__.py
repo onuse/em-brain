@@ -14,27 +14,9 @@ Everything emerges from hardware constraints and biological principles.
 __version__ = "0.3.0"
 __author__ = "Robot Brain Project"
 
-# Core brain systems
-from .brain_factory import BrainFactory
-
-# Modular systems
-from .attention import UniversalAttentionSystem, CrossModalAttentionSystem
-from .memory import UniversalMemorySystem, MemoryPattern
-from .parameters import EmergentParameterSystem, ConstraintType
+# The new dynamic architecture uses imports from src.core
+# Old imports have been moved to archive
 
 __all__ = [
-    # Core brain systems
-    "BrainFactory",
-    
-    # Attention systems
-    "UniversalAttentionSystem",
-    "CrossModalAttentionSystem",
-    
-    # Memory systems
-    "UniversalMemorySystem",
-    "MemoryPattern",
-    
-    # Parameter systems
-    "EmergentParameterSystem",
-    "ConstraintType"
+    # See src/core/ for the new dynamic architecture components
 ]
