@@ -5,9 +5,11 @@
 The brain now has blended reality - seamlessly mixing spontaneous dynamics (fantasy) with sensory input (reality) based on prediction confidence! Ready for hardware testing.
 
 ### Immediate Next Steps
+- [ ] **CRITICAL**: Restore persistence system for cross-session learning
+- [ ] **CRITICAL**: Update picarx_brainstem.py for hardware deployment  
 - [ ] Test blended reality with actual robot behavior patterns
-- [ ] Tune confidence thresholds for real sensor data
-- [ ] Optimize dream mode detection for hardware idle states
+- [ ] Evaluate attention system for enhanced sensor processing
+- [ ] Clean up 44 orphaned files (55% of codebase)
 - [ ] Deploy brain server with actual PiCar-X hardware
 - [ ] Test and calibrate sensor normalization ranges
 - [ ] Validate motor command scaling on real motors
@@ -32,6 +34,13 @@ The brain now has blended reality - seamlessly mixing spontaneous dynamics (fant
 - [ ] Implement predictive maintenance alerts
 
 ### Completed Recently
+- [x] **Code inventory analysis** - identified critical gaps!
+  - [x] Analyzed all 80 files in server/src
+  - [x] Found only 17.5% actively used (14 files)
+  - [x] Discovered 55% orphaned (44 files)
+  - [x] Identified lost persistence system (no learning survives restart!)
+  - [x] Found missing hardware integration (can't deploy to robot!)
+  - [x] Created detailed inventory and recovery plan
 - [x] **Implemented Blended Reality System** - fantasy and reality seamlessly mix!
   - [x] Confidence-based blending: high confidence → more fantasy
   - [x] Variable sensory imprint strength (weak when confident)
