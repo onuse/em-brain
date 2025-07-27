@@ -10,9 +10,11 @@ This is Step 1 toward a fully predictive brain architecture.
 
 import time
 import threading
+import numpy as np
+import torch
 from typing import Dict, List, Optional, Any
 
-from .brain_factory import MinimalBrain
+from .core.interfaces import IBrain
 from .communication.sensor_buffer import get_sensor_buffer
 
 
@@ -27,7 +29,7 @@ class DecoupledBrainLoop:
     - Generates predictions proactively
     """
     
-    def __init__(self, brain: MinimalBrain, cycle_time_ms: float = 50.0):
+    def __init__(self, brain: IBrain, cycle_time_ms: float = 50.0):
         """
         Initialize decoupled brain loop.
         
@@ -48,6 +50,12 @@ class DecoupledBrainLoop:
         self.total_cycles = 0
         self.active_cycles = 0
         self.idle_cycles = 0
+        self.sensor_skip_cycles = 0
+        
+        # Confidence tracking for sensor decisions
+        self.last_prediction_confidence = 0.5
+        self.confidence_history = []
+        self.sensor_check_probability = 1.0
         
         # Performance tracking
         self.cycle_times = []
@@ -94,7 +102,16 @@ class DecoupledBrainLoop:
     
     def _track_cognitive_mode(self):
         """Track cognitive mode changes for monitoring."""
-        if hasattr(self.brain, 'cognitive_autopilot') and self.brain.cognitive_autopilot:
+        # Check if we have a brain wrapper with the actual brain
+        if hasattr(self.brain, 'brain') and hasattr(self.brain.brain, 'cognitive_autopilot'):
+            autopilot = self.brain.brain.cognitive_autopilot
+            mode = autopilot.current_mode.value
+            
+            # Track mode changes
+            if mode != self.current_cognitive_mode:
+                self.current_cognitive_mode = mode
+                self.cognitive_mode_changes += 1
+        elif hasattr(self.brain, 'cognitive_autopilot') and self.brain.cognitive_autopilot:
             autopilot = self.brain.cognitive_autopilot
             mode = autopilot.current_mode.value
             
@@ -102,6 +119,87 @@ class DecoupledBrainLoop:
             if mode != self.current_cognitive_mode:
                 self.current_cognitive_mode = mode
                 self.cognitive_mode_changes += 1
+    
+    def _should_check_sensors(self) -> bool:
+        """Decide whether to check sensor buffer based on cognitive state."""
+        # Always check if we don't have cognitive autopilot
+        has_autopilot = False
+        if hasattr(self.brain, 'brain') and hasattr(self.brain.brain, 'cognitive_autopilot'):
+            has_autopilot = True
+        elif hasattr(self.brain, 'cognitive_autopilot'):
+            has_autopilot = True
+            
+        if not has_autopilot:
+            return True
+        
+        # Get current confidence from brain if available
+        if hasattr(self.brain, 'brain') and hasattr(self.brain.brain, '_current_prediction_confidence'):
+            self.last_prediction_confidence = self.brain.brain._current_prediction_confidence
+            self.confidence_history.append(self.last_prediction_confidence)
+            if len(self.confidence_history) > 100:
+                self.confidence_history.pop(0)
+        elif hasattr(self.brain, '_current_prediction_confidence'):
+            self.last_prediction_confidence = self.brain._current_prediction_confidence
+            self.confidence_history.append(self.last_prediction_confidence)
+            if len(self.confidence_history) > 100:
+                self.confidence_history.pop(0)
+        
+        # Decision based on cognitive mode and confidence
+        mode = self.current_cognitive_mode
+        confidence = self.last_prediction_confidence
+        
+        if mode == 'autopilot' and confidence > 0.9:
+            # High confidence autopilot - check sensors rarely
+            self.sensor_check_probability = 0.2
+        elif mode == 'focused' and confidence > 0.7:
+            # Focused mode - check sensors moderately
+            self.sensor_check_probability = 0.5
+        else:
+            # Deep think or low confidence - check sensors frequently
+            self.sensor_check_probability = 0.9
+        
+        # Stochastic decision with smooth transitions
+        check_sensors = np.random.random() < self.sensor_check_probability
+        
+        if not check_sensors:
+            self.sensor_skip_cycles += 1
+            if self.total_cycles % 100 == 0:
+                print(f"🧠 BRAIN_LOOP: Skipping sensors (confidence: {confidence:.2f}, mode: {mode})")
+        
+        return check_sensors
+    
+    def _process_internal_only(self):
+        """Process one cycle without sensor input - pure internal dynamics."""
+        try:
+            # Run brain with neutral/zero input to let spontaneous dynamics dominate
+            expected_dim = None
+            if hasattr(self.brain, 'brain') and hasattr(self.brain.brain, 'expected_sensory_dim'):
+                expected_dim = self.brain.brain.expected_sensory_dim
+            elif hasattr(self.brain, 'expected_sensory_dim'):
+                expected_dim = self.brain.expected_sensory_dim
+                
+            if expected_dim:
+                neutral_input = [0.5] * (expected_dim - 1) + [0.0]  # No reward
+            else:
+                neutral_input = [0.5] * 16 + [0.0]  # Default neutral input
+            
+            # Process with neutral input
+            # Check if we have a brain wrapper with the actual brain
+            if hasattr(self.brain, 'brain') and hasattr(self.brain.brain, 'process_robot_cycle'):
+                action_vector, brain_state = self.brain.brain.process_robot_cycle(neutral_input)
+            else:
+                # Fallback to field dynamics interface
+                field_input = torch.tensor(neutral_input, dtype=torch.float32)
+                field_output = self.brain.process_field_dynamics(field_input)
+                action_vector = field_output.tolist()[:4]  # Extract motor commands
+                brain_state = self.brain.get_state()
+            
+            # Log occasionally
+            if self.total_cycles % 50 == 0:
+                print(f"🌀 BRAIN_LOOP: Internal processing - energy: {brain_state.get('field_energy', 0):.4f}")
+        
+        except Exception as e:
+            print(f"⚠️ Error in internal processing: {e}")
     
     def _brain_loop(self):
         """Main brain loop running on independent schedule."""
@@ -114,19 +212,27 @@ class DecoupledBrainLoop:
                 # Track cognitive mode changes
                 self._track_cognitive_mode()
                 
-                # Get latest sensor data from all clients
-                sensor_data = self.sensor_buffer.get_all_latest_data()
+                # Decide whether to check sensors based on cognitive state
+                should_check_sensors = self._should_check_sensors()
                 
-                if sensor_data:
-                    # Process each client's sensor input
-                    # The cognitive load itself will determine cycle time
-                    for client_id, data in sensor_data.items():
-                        self._process_client_sensors(client_id, data)
+                if should_check_sensors:
+                    # Get latest sensor data from all clients
+                    sensor_data = self.sensor_buffer.get_all_latest_data()
                     
-                    self.active_cycles += 1
+                    if sensor_data:
+                        # Process each client's sensor input
+                        # The cognitive load itself will determine cycle time
+                        for client_id, data in sensor_data.items():
+                            self._process_client_sensors(client_id, data)
+                        
+                        self.active_cycles += 1
+                    else:
+                        # No sensor data - perform maintenance tasks
+                        self._perform_maintenance_tasks()
+                        self.idle_cycles += 1
                 else:
-                    # No sensor data - perform maintenance tasks
-                    self._perform_maintenance_tasks()
+                    # Brain chose to skip sensors - pure internal processing
+                    self._process_internal_only()
                     self.idle_cycles += 1
                 
                 self.total_cycles += 1
@@ -164,7 +270,15 @@ class DecoupledBrainLoop:
             if time_since_processing >= min_processing_interval:
                 if hasattr(sensor_data, 'vector') and sensor_data.vector:
                     # Process through brain
-                    action_vector, brain_state = self.brain.process_sensory_input(sensor_data.vector)
+                    # Check if we have a brain wrapper with the actual brain
+                    if hasattr(self.brain, 'brain') and hasattr(self.brain.brain, 'process_robot_cycle'):
+                        action_vector, brain_state = self.brain.brain.process_robot_cycle(sensor_data.vector)
+                    else:
+                        # Fallback to field dynamics interface
+                        field_input = torch.tensor(sensor_data.vector, dtype=torch.float32)
+                        field_output = self.brain.process_field_dynamics(field_input)
+                        action_vector = field_output.tolist()[:4]  # Extract motor commands
+                        brain_state = self.brain.get_state()
                     
                     # Mark data as consumed
                     self.sensor_buffer.clear_client_data(client_id)
@@ -254,7 +368,10 @@ class DecoupledBrainLoop:
             'total_cycles': self.total_cycles,
             'active_cycles': self.active_cycles,
             'idle_cycles': self.idle_cycles,
+            'sensor_skip_cycles': self.sensor_skip_cycles,
             'utilization': utilization,
+            'sensor_check_probability': self.sensor_check_probability,
+            'avg_confidence': np.mean(self.confidence_history) if self.confidence_history else 0.5,
             'maintenance_tasks_performed': self.maintenance_tasks_performed,
             'sensor_buffer_stats': self.sensor_buffer.get_statistics()
         }
@@ -277,6 +394,9 @@ class DecoupledBrainLoop:
         print(f"🔢 Total cycles: {stats['total_cycles']:,}")
         print(f"🎯 Active cycles: {stats['active_cycles']:,} ({stats['utilization']:.1%})")
         print(f"💤 Idle cycles: {stats['idle_cycles']:,}")
+        print(f"🌀 Sensor skip cycles: {stats['sensor_skip_cycles']:,}")
+        print(f"📊 Avg confidence: {stats['avg_confidence']:.2f}")
+        print(f"🎲 Sensor check probability: {stats['sensor_check_probability']:.1%}")
         print(f"🔧 Maintenance tasks: {stats['maintenance_tasks_performed']:,}")
         
         buffer_stats = stats['sensor_buffer_stats']

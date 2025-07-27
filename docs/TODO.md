@@ -1,10 +1,13 @@
 # TODO: Field-Native Intelligence System
 
-## Current Focus: Hardware Deployment
+## Current Focus: Real-World Testing
 
-The dynamic brain is now generating motor outputs successfully! Motor generation issue (exploration score 0.00) has been fixed. The system is ready for real robot testing.
+The brain now has blended reality - seamlessly mixing spontaneous dynamics (fantasy) with sensory input (reality) based on prediction confidence! Ready for hardware testing.
 
 ### Immediate Next Steps
+- [ ] Test blended reality with actual robot behavior patterns
+- [ ] Tune confidence thresholds for real sensor data
+- [ ] Optimize dream mode detection for hardware idle states
 - [ ] Deploy brain server with actual PiCar-X hardware
 - [ ] Test and calibrate sensor normalization ranges
 - [ ] Validate motor command scaling on real motors
@@ -29,6 +32,28 @@ The dynamic brain is now generating motor outputs successfully! Motor generation
 - [ ] Implement predictive maintenance alerts
 
 ### Completed Recently
+- [x] **Implemented Blended Reality System** - fantasy and reality seamlessly mix!
+  - [x] Confidence-based blending: high confidence → more fantasy
+  - [x] Variable sensory imprint strength (weak when confident)
+  - [x] Weighted spontaneous activity (not just gated)
+  - [x] Smooth confidence transitions (temporal smoothing)
+  - [x] Dream mode after 100 cycles idle (95% fantasy)
+  - [x] Fixed inverted confidence (novel=low, known=high)
+  - [x] Fixed dream detection (variance from neutral, not magnitude)
+- [x] **Implemented spontaneous field dynamics** - the brain thinks without input!
+  - [x] Traveling waves create coherent internal patterns
+  - [x] Local recurrence maintains activity
+  - [x] Homeostatic drive balances field energy
+  - [x] Critical dynamics at edge of chaos
+  - [x] Generates motor commands autonomously
+  - [x] Develops preferences through experience
+- [x] **Confidence-based sensory processing** - brain decides when to check sensors!
+  - [x] Integrated CognitiveAutopilot with spontaneous dynamics
+  - [x] Stochastic sensor checking based on prediction confidence
+  - [x] AUTOPILOT mode: 20% sensor attention
+  - [x] FOCUSED mode: 50% sensor attention  
+  - [x] DEEP_THINK mode: 90% sensor attention
+  - [x] Sensors suppressed, never ignored (max 80% suppression)
 - [x] Fixed motor generation (gradient key mismatch bug)
 - [x] Fixed field activation strength (was too weak)
 - [x] Fixed sensory-to-field coordinate mapping

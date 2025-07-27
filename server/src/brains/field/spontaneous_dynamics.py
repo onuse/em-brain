@@ -106,21 +106,24 @@ class SpontaneousDynamics:
     
     def _generate_traveling_waves(self, shape: Tuple[int, ...]) -> torch.Tensor:
         """Generate coherent traveling wave patterns."""
-        waves = torch.zeros(shape, device=self.device)
+        # Start with zeros for first 3 dimensions only
+        wave_shape = shape[:3] if len(shape) >= 3 else shape
+        waves = torch.zeros(wave_shape, device=self.device)
         
         # Create coordinate grids for first 3 dimensions
         coords = []
-        for i in range(min(3, len(shape))):
-            coord = torch.arange(shape[i], device=self.device, dtype=torch.float32)
-            coord = coord.view([-1 if j == i else 1 for j in range(len(shape))])
+        for i in range(len(wave_shape)):
+            coord = torch.arange(wave_shape[i], device=self.device, dtype=torch.float32)
+            coord = coord.view([-1 if j == i else 1 for j in range(len(wave_shape))])
             coords.append(coord)
         
         # Generate each traveling wave
         for wave_vec in self.wave_vectors:
             # Calculate phase at each position
             phase = self.phase_offset
-            for i, (coord, k) in enumerate(zip(coords, wave_vec)):
-                phase = phase + k * coord / self.coherence_scale
+            for i in range(len(coords)):
+                if i < len(wave_vec):
+                    phase = phase + wave_vec[i] * coords[i] / self.coherence_scale
             
             # Add wave contribution
             wave_amplitude = self.spontaneous_rate * 5.0
@@ -129,12 +132,18 @@ class SpontaneousDynamics:
         # Slowly advance phase
         self.phase_offset += 0.1
         
-        # Apply to full field shape
-        if len(shape) > 3:
-            # Broadcast to higher dimensions with decay
-            for dim in range(3, len(shape)):
-                decay = 0.5 ** (dim - 2)
-                waves = waves.unsqueeze(-1).expand(shape) * decay
+        # Expand to full field shape if needed
+        if len(shape) > len(wave_shape):
+            # Add singleton dimensions for remaining dims
+            for _ in range(len(shape) - len(wave_shape)):
+                waves = waves.unsqueeze(-1)
+            
+            # Expand to full shape
+            waves = waves.expand(shape).clone()  # Clone to avoid memory aliasing
+            
+            # Apply decay for higher dimensions
+            decay_factor = 0.1  # Reduce influence in higher dims
+            waves *= decay_factor
         
         return waves
     

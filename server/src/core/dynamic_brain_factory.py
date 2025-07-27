@@ -176,6 +176,13 @@ class DynamicBrainFactory(IBrainFactory):
             brain.expected_sensory_dim = sensory_dim
             brain.expected_motor_dim = motor_dim
             
+            # Apply blended reality if enabled
+            if hasattr(brain, 'blended_reality_enabled') and brain.blended_reality_enabled:
+                from ..brains.field.blended_reality import integrate_blended_reality
+                brain = integrate_blended_reality(brain)
+                if not self.quiet_mode:
+                    print(f"   Blended reality: Integrated")
+            
             print(f"✅ Created dynamic unified field brain")
             return DynamicBrainWrapper(brain)
         

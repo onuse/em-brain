@@ -23,6 +23,9 @@ from .dynamics.constraint_field_nd import ConstraintFieldND
 from .dynamics.temporal_field_dynamics import TemporalExperience
 from .optimized_gradients import create_optimized_gradient_calculator
 from ...core.dynamic_dimension_calculator import DynamicDimensionCalculator
+from .spontaneous_dynamics import SpontaneousDynamics
+from ...utils.cognitive_autopilot import CognitiveAutopilot
+from .blended_reality import integrate_blended_reality
 
 
 class DynamicUnifiedFieldBrain:
@@ -146,12 +149,36 @@ class DynamicUnifiedFieldBrain:
         self._shutdown_maintenance = threading.Event()
         self._start_maintenance_thread()
         
+        # Spontaneous dynamics system
+        self.spontaneous_enabled = True
+        self.spontaneous = SpontaneousDynamics(
+            field_shape=self.unified_field.shape,
+            resting_potential=0.01,
+            spontaneous_rate=0.001,
+            coherence_scale=3.0,
+            device=self.device
+        )
+        self._last_imprint_strength = 0.0
+        self._last_prediction_error = 0.0
+        
+        # Cognitive autopilot for adaptive processing
+        self.cognitive_autopilot = CognitiveAutopilot(
+            autopilot_confidence_threshold=0.90,
+            focused_confidence_threshold=0.70,
+            stability_window=10
+        )
+        
+        # Enable blended reality (confidence-based blending)
+        self.blended_reality_enabled = True
+        
         if not quiet_mode:
             print(f"🧠 Dynamic Unified Field Brain initialized (Full Features)")
             print(f"   Conceptual dimensions: {len(field_dimensions)}D")
             print(f"   Tensor shape: {tensor_shape} ({len(tensor_shape)}D)")
             print(f"   Memory usage: {self._calculate_memory_usage():.1f}MB")
             print(f"   Device: {self.device}")
+            print(f"   Spontaneous dynamics: ENABLED")
+            print(f"   Blended reality: ENABLED")
             self._print_dimension_summary()
     
     def _calculate_memory_usage(self) -> float:
@@ -185,6 +212,17 @@ class DynamicUnifiedFieldBrain:
         # 2. Prediction and confidence tracking
         if self._predicted_field is not None:
             self._update_prediction_confidence(field_experience)
+        
+        # Update cognitive autopilot state
+        prediction_error = 0.0
+        if hasattr(self, '_last_prediction_error'):
+            prediction_error = self._last_prediction_error
+        
+        autopilot_state = self.cognitive_autopilot.update_cognitive_state(
+            prediction_confidence=self._current_prediction_confidence,
+            prediction_error=prediction_error,
+            brain_state={'field_energy': float(torch.mean(torch.abs(self.unified_field)))}
+        )
         
         # 3. Imprint experience in unified field
         self._imprint_unified_experience(field_experience)
@@ -235,7 +273,10 @@ class DynamicUnifiedFieldBrain:
             'prediction_confidence': self._current_prediction_confidence,
             'working_memory_size': len(self.working_memory),
             'conceptual_dims': self.total_dimensions,
-            'tensor_dims': len(self.tensor_shape)
+            'tensor_dims': len(self.tensor_shape),
+            'spontaneous_enabled': self.spontaneous_enabled,
+            'cognitive_mode': self.cognitive_autopilot.current_mode.value,
+            'cognitive_recommendations': self.cognitive_autopilot._generate_system_recommendations({})
         }
         
         return action.motor_commands.tolist(), brain_state
@@ -311,6 +352,8 @@ class DynamicUnifiedFieldBrain:
         
         # Store position for tracking
         self._last_imprint_indices = tensor_indices
+        # Track imprint strength for spontaneous gating
+        self._last_imprint_strength = imprint_strength
     
     def _conceptual_to_tensor_indices(self, field_coords: torch.Tensor) -> List[int]:
         """
@@ -368,7 +411,37 @@ class DynamicUnifiedFieldBrain:
                 diffusion = (shifted_forward + shifted_backward - 2 * self.unified_field) / 2
                 self.unified_field += self.field_diffusion_rate * diffusion
         
-        # 3. Ensure minimum baseline (prevents complete decay)
+        # 3. Spontaneous dynamics
+        if self.spontaneous_enabled:
+            if hasattr(self, 'blended_reality'):
+                # Use blended reality system for weighting
+                spontaneous_weight = self.blended_reality.calculate_spontaneous_weight()
+                
+                # sensory_gating: 0 = pure spontaneous, 1 = suppress spontaneous
+                # So we invert our spontaneous weight
+                sensory_gating = 1.0 - spontaneous_weight
+            else:
+                # Original implementation
+                # Use prediction confidence for sensory gating
+                # High confidence = less sensory attention (more spontaneous)
+                # Low confidence = more sensory attention (less spontaneous)
+                # Never completely ignore sensors - max suppression is 80%
+                confidence_gating = self._current_prediction_confidence * 0.8
+                
+                # Also consider recent sensory strength (but weighted less)
+                recency_gating = min(1.0, self._last_imprint_strength * 2.0) * 0.2
+                
+                # Combined gating: mostly confidence-based, slightly recency-based
+                sensory_gating = confidence_gating + recency_gating
+            
+            # Add spontaneous activity
+            spontaneous_activity = self.spontaneous.generate_spontaneous_activity(
+                self.unified_field,
+                sensory_gating=sensory_gating
+            )
+            self.unified_field += spontaneous_activity
+        
+        # 4. Ensure minimum baseline (prevents complete decay)
         self.unified_field = torch.maximum(self.unified_field, 
                                          torch.tensor(0.0001, device=self.device))
         
@@ -557,9 +630,24 @@ class DynamicUnifiedFieldBrain:
         # Calculate error
         prediction_error = torch.mean(torch.abs(predicted_region - actual_region))
         
-        # Update confidence (inverse of error)
-        self._current_prediction_confidence = float(1.0 / (1.0 + prediction_error * 5.0))
+        # Also consider the magnitude of activation
+        # Low activation with low error shouldn't mean high confidence
+        activation_magnitude = torch.mean(torch.abs(actual_region))
+        
+        # Confidence should be high when:
+        # 1. Prediction error is low AND
+        # 2. We're actually predicting something meaningful (not just baseline)
+        if activation_magnitude < 0.01:
+            # Near baseline - low confidence regardless of error
+            self._current_prediction_confidence = 0.2
+        else:
+            # Normal confidence calculation based on error
+            # Scale error by activation magnitude for better normalization
+            normalized_error = prediction_error / (activation_magnitude + 0.1)
+            self._current_prediction_confidence = float(1.0 / (1.0 + normalized_error * 2.0))
+        
         self._prediction_confidence_history.append(self._current_prediction_confidence)
+        self._last_prediction_error = float(prediction_error)
         
         # Track improvement rate
         if len(self._prediction_confidence_history) > 10:

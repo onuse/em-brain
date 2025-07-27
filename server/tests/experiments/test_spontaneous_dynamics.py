@@ -129,12 +129,22 @@ def test_brain_without_input():
     for i in range(200):
         motors, state = brain2.process_robot_cycle(zero_input)
         
-        # Sample field at a few points
-        sample_points = [
-            brain2.unified_field[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            brain2.unified_field[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            brain2.unified_field[2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
-        ]
+        # Sample field at a few points (adjust indices for actual tensor shape)
+        shape = brain2.unified_field.shape
+        sample_points = []
+        
+        # Sample at different positions within bounds
+        for sample_idx in range(3):
+            indices = []
+            for dim_idx, dim_size in enumerate(shape):
+                # Use middle, quarter, and three-quarter positions
+                if sample_idx == 0:
+                    indices.append(dim_size // 2)
+                elif sample_idx == 1:
+                    indices.append(min(dim_size // 4, dim_size - 1))
+                else:
+                    indices.append(min(3 * dim_size // 4, dim_size - 1))
+            sample_points.append(float(brain2.unified_field[tuple(indices)]))
         brain2_patterns.append([float(p) for p in sample_points])
         
         if i % 50 == 0:
