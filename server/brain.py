@@ -20,7 +20,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 from src.core.interfaces import *
 from src.core.robot_registry import RobotRegistry
 from src.core.brain_pool import BrainPool
-from src.core.brain_service import BrainService
+from src.core.brain_service_with_persistence import BrainServiceWithPersistence
 from src.core.adapters import AdapterFactory
 from src.core.connection_handler import ConnectionHandler
 from src.core.dynamic_brain_factory import DynamicBrainFactory
@@ -80,12 +80,18 @@ class DynamicBrainServer:
         self.adapter_factory = AdapterFactory()
         print("   ✓ Adapter Factory")
         
-        # 5. Brain Service - manages sessions
-        self.brain_service = BrainService(
+        # 5. Brain Service - manages sessions with persistence
+        persistence_config = self.config.get('persistence', {})
+        self.brain_service = BrainServiceWithPersistence(
             brain_pool=self.brain_pool,
-            adapter_factory=self.adapter_factory
+            adapter_factory=self.adapter_factory,
+            enable_persistence=persistence_config.get('enabled', True),
+            memory_path=persistence_config.get('memory_path', './brain_memory'),
+            save_interval_cycles=persistence_config.get('save_interval', 1000),
+            auto_save=persistence_config.get('auto_save', True),
+            enable_logging=self.config.get('logging', {}).get('enabled', True)
         )
-        print("   ✓ Brain Service")
+        print("   ✓ Brain Service (with persistence)")
         
         # 6. Connection Handler - orchestrates everything
         self.connection_handler = ConnectionHandler(

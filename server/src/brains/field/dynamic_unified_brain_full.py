@@ -26,6 +26,7 @@ from ...core.dynamic_dimension_calculator import DynamicDimensionCalculator
 from .spontaneous_dynamics import SpontaneousDynamics
 from ...utils.cognitive_autopilot import CognitiveAutopilot
 from .blended_reality import integrate_blended_reality
+from ...parameters.cognitive_config import get_cognitive_config
 
 
 class DynamicUnifiedFieldBrain:
@@ -42,20 +43,26 @@ class DynamicUnifiedFieldBrain:
                  dimension_mapping: Dict[str, Any],
                  spatial_resolution: int = 4,
                  temporal_window: float = 10.0,
-                 field_evolution_rate: float = 0.1,
-                 constraint_discovery_rate: float = 0.15,
+                 field_evolution_rate: Optional[float] = None,
+                 constraint_discovery_rate: Optional[float] = None,
                  device: Optional[torch.device] = None,
                  quiet_mode: bool = False):
         """
         Initialize brain with dynamic dimensions and full feature set.
         """
+        # Load cognitive configuration
+        self.cognitive_config = get_cognitive_config()
+        brain_config = self.cognitive_config.brain_config
+        
         self.field_dimensions = field_dimensions
         self.tensor_shape = tensor_shape
         self.dimension_mapping = dimension_mapping
         self.spatial_resolution = spatial_resolution
         self.temporal_window = temporal_window
-        self.field_evolution_rate = field_evolution_rate
-        self.constraint_discovery_rate = constraint_discovery_rate
+        
+        # Use cognitive constants with optional overrides
+        self.field_evolution_rate = field_evolution_rate or brain_config.field_evolution_rate
+        self.constraint_discovery_rate = constraint_discovery_rate or brain_config.constraint_discovery_rate
         self.quiet_mode = quiet_mode
         
         # Total conceptual dimensions
@@ -78,32 +85,32 @@ class DynamicUnifiedFieldBrain:
             
         # Create unified field with dynamic tensor shape
         self.unified_field = torch.zeros(tensor_shape, dtype=torch.float32, device=self.device)
-        self.unified_field.fill_(0.0001)  # Baseline activation (prevents zero without interfering)
+        self.unified_field.fill_(brain_config.activation_threshold)  # Baseline activation from cognitive constants
         
-        # Initialize constraint dynamics
+        # Initialize constraint dynamics with cognitive constants
         self.constraint_field = ConstraintFieldND(
             field_shape=tensor_shape,
             dimension_names=[dim.name for dim in field_dimensions],
-            constraint_discovery_rate=constraint_discovery_rate * 3,
-            constraint_enforcement_strength=0.3,
+            constraint_discovery_rate=self.constraint_discovery_rate,
+            constraint_enforcement_strength=brain_config.constraint_enforcement_strength,
             max_constraints=50,
             device=self.device,
             quiet_mode=quiet_mode
         )
         
-        # Initialize optimized gradient calculator
+        # Initialize optimized gradient calculator with cognitive constants
         self.gradient_calculator = create_optimized_gradient_calculator(
-            activation_threshold=0.01,
+            activation_threshold=brain_config.activation_threshold,
             cache_enabled=True,
             sparse_computation=True
         )
         
-        # Field evolution parameters (from original brain)
-        self.field_decay_rate = 0.95  # Increased decay to allow more persistent activation
-        self.field_diffusion_rate = 0.05
-        self.gradient_following_strength = 2.0  # Increased for stronger motor output
-        self.topology_stability_threshold = 0.02
-        self.field_energy_dissipation_rate = 0.90
+        # Field evolution parameters from cognitive constants
+        self.field_decay_rate = brain_config.field_decay_rate
+        self.field_diffusion_rate = brain_config.field_diffusion_rate
+        self.gradient_following_strength = 2.0  # TODO: Add to cognitive constants
+        self.topology_stability_threshold = brain_config.topology_stability_threshold
+        self.field_energy_dissipation_rate = brain_config.field_energy_dissipation_rate
         
         # Field state tracking
         self.field_experiences: deque = deque(maxlen=1000)
@@ -111,14 +118,14 @@ class DynamicUnifiedFieldBrain:
         self.topology_regions: Dict[str, Dict] = {}
         self.gradient_flows: Dict[str, torch.Tensor] = {}
         
-        # Temporal dynamics
+        # Temporal dynamics with cognitive capacity limits
         self.temporal_experiences: deque = deque(maxlen=int(temporal_window * 10))
         self.temporal_imprints: List[Any] = []
-        self.working_memory: deque = deque(maxlen=50)
+        self.working_memory: deque = deque(maxlen=brain_config.working_memory_limit)
         
         # Motor smoothing
         self.previous_motor_commands = None
-        self.motor_smoothing_factor = 0.3
+        self.motor_smoothing_factor = brain_config.optimal_prediction_error  # 0.3 = smoothing matches optimal error
         
         # Robot interface dimensions
         self.expected_sensory_dim = None
@@ -140,7 +147,7 @@ class DynamicUnifiedFieldBrain:
         # Prediction system
         self._prediction_confidence_history = deque(maxlen=100)
         self._improvement_rate_history = deque(maxlen=50)
-        self._current_prediction_confidence = 0.5
+        self._current_prediction_confidence = brain_config.default_prediction_confidence
         self._predicted_field = None
         
         # Maintenance thread
@@ -149,22 +156,22 @@ class DynamicUnifiedFieldBrain:
         self._shutdown_maintenance = threading.Event()
         self._start_maintenance_thread()
         
-        # Spontaneous dynamics system
+        # Spontaneous dynamics system with cognitive constants
         self.spontaneous_enabled = True
         self.spontaneous = SpontaneousDynamics(
             field_shape=self.unified_field.shape,
-            resting_potential=0.01,
-            spontaneous_rate=0.001,
+            resting_potential=brain_config.resting_potential,
+            spontaneous_rate=brain_config.spontaneous_rate,
             coherence_scale=3.0,
             device=self.device
         )
         self._last_imprint_strength = 0.0
-        self._last_prediction_error = 0.0
+        self._last_prediction_error = brain_config.optimal_prediction_error  # Start at optimal
         
-        # Cognitive autopilot for adaptive processing
+        # Cognitive autopilot with cognitive constants
         self.cognitive_autopilot = CognitiveAutopilot(
-            autopilot_confidence_threshold=0.90,
-            focused_confidence_threshold=0.70,
+            autopilot_confidence_threshold=brain_config.autopilot_confidence_threshold,
+            focused_confidence_threshold=brain_config.focused_confidence_threshold,
             stability_window=10
         )
         
@@ -241,7 +248,7 @@ class DynamicUnifiedFieldBrain:
         # 7. Apply constraint forces
         constraint_forces = self.constraint_field.enforce_constraints(self.unified_field)
         if constraint_forces is not None:
-            self.unified_field += constraint_forces * 0.1
+            self.unified_field += constraint_forces * brain_config.prediction_error_tolerance * 2  # 0.1
         
         # 8. Update topology regions (memory formation)
         if self.brain_cycles % 10 == 0:
@@ -290,7 +297,7 @@ class DynamicUnifiedFieldBrain:
         
         # Extract reward if present (last sensor by convention)
         reward = sensory_input[-1] if len(sensory_input) > 0 else 0.0
-        field_intensity = 0.5 + reward * 0.5  # Map [-1,1] to [0,1]
+        field_intensity = brain_config.default_prediction_confidence + reward * brain_config.default_prediction_confidence  # Map [-1,1] to [0,1]
         
         # Map sensors to conceptual dimensions
         # This is a simplified mapping - in production, use more sophisticated mapping
@@ -347,7 +354,9 @@ class DynamicUnifiedFieldBrain:
                 region_slices.append(idx)
         
         # Imprint with intensity based on reward
-        imprint_strength = 0.5 * experience.field_intensity  # Increased from 0.1 to 0.5
+        # Use base imprint strength from blended reality config
+        blended_config = self.cognitive_config.blended_reality_config
+        imprint_strength = blended_config.base_imprint_strength * experience.field_intensity
         self.unified_field[tuple(region_slices)] += imprint_strength
         
         # Store position for tracking
@@ -424,12 +433,13 @@ class DynamicUnifiedFieldBrain:
                 # Original implementation
                 # Use prediction confidence for sensory gating
                 # High confidence = less sensory attention (more spontaneous)
-                # Low confidence = more sensory attention (less spontaneous)
-                # Never completely ignore sensors - max suppression is 80%
-                confidence_gating = self._current_prediction_confidence * 0.8
+                # Low confidence = more sensory attention (less spontaneous)  
+                # Never completely ignore sensors - max suppression from blended reality config
+                confidence_gating = self._current_prediction_confidence * blended_config.max_spontaneous_weight
                 
                 # Also consider recent sensory strength (but weighted less)
-                recency_gating = min(1.0, self._last_imprint_strength * 2.0) * 0.2
+                # Recency gating uses attention threshold
+                recency_gating = min(1.0, self._last_imprint_strength * 2.0) * brain_config.attention_threshold * 2
                 
                 # Combined gating: mostly confidence-based, slightly recency-based
                 sensory_gating = confidence_gating + recency_gating
@@ -443,7 +453,7 @@ class DynamicUnifiedFieldBrain:
         
         # 4. Ensure minimum baseline (prevents complete decay)
         self.unified_field = torch.maximum(self.unified_field, 
-                                         torch.tensor(0.0001, device=self.device))
+                                         torch.tensor(brain_config.activation_threshold, device=self.device))
         
         self.field_evolution_cycles += 1
     
@@ -479,11 +489,12 @@ class DynamicUnifiedFieldBrain:
         Update memory regions based on field topology.
         """
         # Find high-activation regions
-        high_activation = self.unified_field > 0.02
+        # Use topology stability threshold for high activation detection
+        high_activation = self.unified_field > brain_config.topology_stability_threshold
         
         # Find stable regions (low variance)
         field_std = torch.std(self.unified_field)
-        stable_regions = self.unified_field > (field_std * 0.5)
+        stable_regions = self.unified_field > (field_std * brain_config.default_prediction_confidence)
         
         # Combine criteria
         memory_regions = high_activation & stable_regions
@@ -581,7 +592,7 @@ class DynamicUnifiedFieldBrain:
                 energy_activation = torch.mean(
                     self.unified_field[tensor_indices[energy_dims[0]:energy_dims[1]]]
                 )
-                motor_commands[2] = (energy_activation - 0.5) * 0.5
+                motor_commands[2] = (energy_activation - brain_config.default_prediction_confidence) * brain_config.default_prediction_confidence
         
         # Apply motor smoothing
         if self.previous_motor_commands is not None:
@@ -637,13 +648,13 @@ class DynamicUnifiedFieldBrain:
         # Confidence should be high when:
         # 1. Prediction error is low AND
         # 2. We're actually predicting something meaningful (not just baseline)
-        if activation_magnitude < 0.01:
+        if activation_magnitude < brain_config.resting_potential:
             # Near baseline - low confidence regardless of error
-            self._current_prediction_confidence = 0.2
+            self._current_prediction_confidence = brain_config.attention_threshold * 2  # 0.2
         else:
             # Normal confidence calculation based on error
             # Scale error by activation magnitude for better normalization
-            normalized_error = prediction_error / (activation_magnitude + 0.1)
+            normalized_error = prediction_error / (activation_magnitude + brain_config.attention_threshold)
             self._current_prediction_confidence = float(1.0 / (1.0 + normalized_error * 2.0))
         
         self._prediction_confidence_history.append(self._current_prediction_confidence)
@@ -702,12 +713,12 @@ class DynamicUnifiedFieldBrain:
                         # Energy dissipation
                         self.unified_field *= self.field_energy_dissipation_rate
                         
-                        # Prune weak activations
-                        mask = torch.abs(self.unified_field) > 0.001
+                        # Prune weak activations using cognitive threshold
+                        mask = torch.abs(self.unified_field) > brain_config.activation_threshold
                         self.unified_field *= mask.float()
                         
                         # Reset to baseline where pruned
-                        self.unified_field[~mask] = 0.0001
+                        self.unified_field[~mask] = brain_config.activation_threshold
                     
                 except queue.Empty:
                     continue

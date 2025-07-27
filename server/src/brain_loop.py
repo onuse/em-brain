@@ -16,6 +16,7 @@ from typing import Dict, List, Optional, Any
 
 from .core.interfaces import IBrain
 from .communication.sensor_buffer import get_sensor_buffer
+from .parameters.cognitive_config import get_cognitive_config
 
 
 class DecoupledBrainLoop:
@@ -29,7 +30,7 @@ class DecoupledBrainLoop:
     - Generates predictions proactively
     """
     
-    def __init__(self, brain: IBrain, cycle_time_ms: float = 50.0):
+    def __init__(self, brain: IBrain, cycle_time_ms: Optional[float] = None):
         """
         Initialize decoupled brain loop.
         
@@ -38,6 +39,15 @@ class DecoupledBrainLoop:
             cycle_time_ms: Base brain cycle time in milliseconds (adaptive)
         """
         self.brain = brain
+        
+        # Load cognitive configuration
+        self.cognitive_config = get_cognitive_config()
+        self.sensor_config = self.cognitive_config.sensor_config
+        
+        # Use temporal constants for cycle time if not specified
+        if cycle_time_ms is None:
+            temporal_config = self.cognitive_config.get_temporal_config()
+            cycle_time_ms = temporal_config['control_cycle_target'] * 1000
         self.base_cycle_time_s = cycle_time_ms / 1000.0
         self.sensor_buffer = get_sensor_buffer()
         
@@ -53,7 +63,7 @@ class DecoupledBrainLoop:
         self.sensor_skip_cycles = 0
         
         # Confidence tracking for sensor decisions
-        self.last_prediction_confidence = 0.5
+        self.last_prediction_confidence = self.cognitive_config.brain_config.default_prediction_confidence
         self.confidence_history = []
         self.sensor_check_probability = 1.0
         
@@ -148,15 +158,15 @@ class DecoupledBrainLoop:
         mode = self.current_cognitive_mode
         confidence = self.last_prediction_confidence
         
-        if mode == 'autopilot' and confidence > 0.9:
+        if mode == 'autopilot' and confidence > self.sensor_config.autopilot_threshold:
             # High confidence autopilot - check sensors rarely
-            self.sensor_check_probability = 0.2
-        elif mode == 'focused' and confidence > 0.7:
+            self.sensor_check_probability = self.sensor_config.autopilot_sensor_probability
+        elif mode == 'focused' and confidence > self.sensor_config.focused_threshold:
             # Focused mode - check sensors moderately
-            self.sensor_check_probability = 0.5
+            self.sensor_check_probability = self.sensor_config.focused_sensor_probability
         else:
             # Deep think or low confidence - check sensors frequently
-            self.sensor_check_probability = 0.9
+            self.sensor_check_probability = self.sensor_config.deep_think_sensor_probability
         
         # Stochastic decision with smooth transitions
         check_sensors = np.random.random() < self.sensor_check_probability
@@ -179,9 +189,11 @@ class DecoupledBrainLoop:
                 expected_dim = self.brain.expected_sensory_dim
                 
             if expected_dim:
-                neutral_input = [0.5] * (expected_dim - 1) + [0.0]  # No reward
+                neutral_value = self.cognitive_config.brain_config.default_prediction_confidence
+                neutral_input = [neutral_value] * (expected_dim - 1) + [0.0]  # No reward
             else:
-                neutral_input = [0.5] * 16 + [0.0]  # Default neutral input
+                neutral_value = self.cognitive_config.brain_config.default_prediction_confidence
+                neutral_input = [neutral_value] * 16 + [0.0]  # Default neutral input
             
             # Process with neutral input
             # Check if we have a brain wrapper with the actual brain

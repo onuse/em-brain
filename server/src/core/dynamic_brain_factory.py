@@ -10,6 +10,7 @@ from typing import Dict, Any, Optional
 
 from ..core.interfaces import IBrainFactory, IBrain
 from .dynamic_dimension_calculator import DynamicDimensionCalculator
+from ..parameters.cognitive_config import get_cognitive_config
 
 
 class DynamicBrainWrapper(IBrain):
@@ -114,6 +115,10 @@ class DynamicBrainFactory(IBrainFactory):
         self.use_simple_brain = self.config.get('use_simple_brain', False)
         self.use_dynamic_brain = self.config.get('use_dynamic_brain', True)
         
+        # Load cognitive configuration
+        self.cognitive_config = get_cognitive_config()
+        self.brain_config = self.cognitive_config.brain_config
+        
         # Initialize dimension calculator
         self.dimension_calculator = DynamicDimensionCalculator(
             complexity_factor=self.config.get('complexity_factor', 6.0)
@@ -167,8 +172,8 @@ class DynamicBrainFactory(IBrainFactory):
                 dimension_mapping=dimension_mapping,
                 spatial_resolution=spatial_resolution,
                 temporal_window=self.config.get('temporal_window', 10.0),
-                field_evolution_rate=self.config.get('field_evolution_rate', 0.1),
-                constraint_discovery_rate=self.config.get('constraint_discovery_rate', 0.15),
+                field_evolution_rate=self.config.get('field_evolution_rate', self.brain_config.field_evolution_rate),
+                constraint_discovery_rate=self.config.get('constraint_discovery_rate', self.brain_config.constraint_discovery_rate),
                 quiet_mode=self.quiet_mode
             )
             
@@ -210,8 +215,8 @@ class DynamicBrainFactory(IBrainFactory):
         brain = self.UnifiedFieldBrain(
             spatial_resolution=spatial_resolution,
             temporal_window=self.config.get('temporal_window', 10.0),
-            field_evolution_rate=self.config.get('field_evolution_rate', 0.1),
-            constraint_discovery_rate=self.config.get('constraint_discovery_rate', 0.15),
+            field_evolution_rate=self.config.get('field_evolution_rate', self.brain_config.field_evolution_rate),
+            constraint_discovery_rate=self.config.get('constraint_discovery_rate', self.brain_config.constraint_discovery_rate),
             quiet_mode=self.quiet_mode
         )
         

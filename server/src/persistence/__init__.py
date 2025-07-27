@@ -1,27 +1,45 @@
 """
-Production-Grade Brain Persistence Subsystem
+Persistence System for Dynamic Brain Architecture
 
-A comprehensive system for maintaining brain state across sessions with:
-- Incremental saves containing full brain content
-- Automatic consolidation of incremental files
-- Robust recovery from consolidated + incremental state
-- Crash resistance and corruption handling
+This module provides cross-session learning continuity through:
+- Automatic state saves during operation
+- Recovery on startup
+- Crash resilience
+- Session tracking
 
-Main API:
-- PersistenceManager: Central coordinator
-- BrainSerializer: Extract/restore patterns from vector streams
-- RecoveryManager: Boot sequence and crash recovery
+Two implementations available:
+1. Legacy system (PersistenceManager) - for old BrainFactory architecture
+2. Integrated system (IntegratedPersistence) - for new dynamic brain architecture
 """
 
+# Legacy persistence (kept for compatibility)
 from .persistence_manager import PersistenceManager
 from .brain_serializer import BrainSerializer
 from .recovery_manager import RecoveryManager
 from .persistence_config import PersistenceConfig, ConsolidationPolicy
 
+# New integrated persistence for dynamic brains
+from .integrated_persistence import (
+    IntegratedPersistence,
+    initialize_persistence,
+    get_persistence
+)
+from .dynamic_persistence_adapter import (
+    DynamicPersistenceAdapter,
+    DynamicBrainState
+)
+
 __all__ = [
+    # Legacy
     'PersistenceManager',
     'BrainSerializer', 
     'RecoveryManager',
     'PersistenceConfig',
-    'ConsolidationPolicy'
+    'ConsolidationPolicy',
+    # New
+    'IntegratedPersistence',
+    'initialize_persistence', 
+    'get_persistence',
+    'DynamicPersistenceAdapter',
+    'DynamicBrainState'
 ]
