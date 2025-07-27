@@ -24,18 +24,21 @@ brain/
 │   │   │   └── robot_registry.py       # Robot capability profiles
 │   │   │
 │   │   ├── brains/field/       # Field-native brain implementation
-│   │   │   ├── unified_field_brain.py  # Adaptive field intelligence
-│   │   │   ├── dynamic_unified_brain_full.py # Full-featured dynamic brain
-│   │   │   ├── memory.py               # Field topology memory
+│   │   │   ├── dynamic_unified_brain_full.py # Primary brain implementation
+│   │   │   ├── pattern_based_motor.py  # Pattern-to-motor without coordinates
+│   │   │   ├── pattern_based_attention.py # Salience-based attention
+│   │   │   ├── emergent_spatial_dynamics.py # Coordinate-free navigation
+│   │   │   ├── emergent_robot_interface.py  # Pattern-based sensing
 │   │   │   ├── spontaneous_dynamics.py # Autonomous field activity
 │   │   │   ├── blended_reality.py     # Fantasy/reality blending
+│   │   │   ├── enhanced_field_dynamics.py # Phase transitions, attractors
 │   │   │   └── dynamics/               # Field dynamics systems
-│   │   │       ├── constraint_field_dynamics.py # 4D constraint discovery (legacy)
 │   │   │       ├── constraint_field_nd.py      # N-dimensional constraints
 │   │   │       └── temporal_field_dynamics.py   # Temporal patterns
 │   │   │
 │   │   ├── persistence/        # Brain state management
-│   │   │   └── brain_serializer.py     # Simplified state save/load
+│   │   │   ├── integrated_persistence.py    # Main persistence system
+│   │   │   └── dynamic_persistence_adapter.py # State serialization
 │   │   │
 │   │   ├── utils/              # Core utilities
 │   │   │   ├── cognitive_autopilot.py   # Adaptive processing intensity
@@ -96,9 +99,24 @@ EMERGENCE:   # Novelty, creativity, phase transitions
 
 ### Integrated Field Attention
 
-#### Field-Native Attention
+#### Pattern-Based Attention (Primary)
 ```python
-# Attention emerges from field activation gradients
+# Attention emerges from pattern salience, not coordinates
+pattern_attention = PatternBasedAttention(field_shape)
+attention_state = pattern_attention.process_field_patterns(
+    field, sensory_patterns
+)
+# Salience = novelty + surprise + importance
+```
+- Pattern salience detection (novelty, surprise, importance)
+- Limited attention capacity (5 slots) mimics biology
+- Cross-modal binding through temporal synchrony
+- No spatial coordinates or gradients
+- Prioritizes sensory patterns over field patterns
+
+#### Gradient-Based Attention (Legacy)
+```python
+# Alternative: Attention from field activation gradients
 attention_focus = field.compute_activation_gradients()
 processed_input = field.apply_attention_weighting(sensors)
 ```
@@ -143,7 +161,7 @@ recall = field.resonate_with_pattern(memory_pattern)
 
 #### N-Dimensional Constraint System
 ```python
-# Constraints operate across all 37 dimensions, not just spatial/temporal
+# Constraints operate across all dimensions, not just spatial/temporal
 constraint_field = ConstraintFieldND(field_shape, dimension_names)
 discovered_constraints = constraint_field.discover_constraints(field, gradients)
 constraint_forces = constraint_field.enforce_constraints(field)
@@ -166,7 +184,7 @@ Constraint Types:
 
 #### Self-Organization
 - Constraint satisfaction guides field evolution without external programming
-- Constraints discovered across all 37 dimensions
+- Constraints discovered across all field dimensions
 - Efficient sparse constraint representation
 - Dimension-aware constraint types
 
@@ -261,6 +279,58 @@ field.strengthen_memories_by_importance(reward)
 - Negative rewards create aversive patterns
 - Value gradients emerge in field topology
 
+### Emergent Spatial Navigation
+
+#### Coordinate-Free Navigation
+```python
+# Places emerge from stable field configurations
+place = spatial_dynamics.process_spatial_experience(
+    current_field, sensory_pattern, reward
+)
+# Navigation through field tension, not gradients
+spatial_dynamics.navigate_to_place(target_place_id)
+```
+- Places are stable field attractors, not coordinates
+- Recognition through field similarity (cosine similarity)
+- Navigation via field tension between current and target states
+- Transitions learned through experience
+
+#### Pattern-Based Sensing
+```python
+# Sensory patterns create field impressions directly
+experience = robot_interface.sensory_pattern_to_field_experience(
+    sensory_input  # No coordinate mapping!
+)
+```
+- Pattern features (symmetry, rhythm, gradient) activate field dimensions
+- Different features map to different dynamics families
+- No fixed spatial coordinates in sensory processing
+
+#### Motor Emergence from Field Evolution
+```python
+# Movement emerges from field dynamics patterns
+action = spatial_dynamics.compute_motor_emergence(
+    current_field, field_evolution
+)
+```
+- Oscillatory patterns → forward/backward motion
+- Flow patterns → turning behavior
+- Energy patterns → speed/urgency
+- Field tension drives goal-directed movement
+
+#### Pattern-Based Motor Generation
+```python
+# Motor commands from field evolution patterns, not gradients
+pattern_motor = PatternBasedMotorGenerator(field_shape, motor_dim)
+motor_action = pattern_motor.generate_motor_action(
+    field, field_evolution, attention_state
+)
+```
+- Extracts motor tendencies from field evolution patterns
+- Maps field dynamics to motor commands without coordinates
+- Integrates with pattern-based attention for focused action
+- No spatial gradients or coordinate systems
+
 #### Hardware Adaptation
 ```python
 # Dynamic device selection and resource management
@@ -338,15 +408,19 @@ Intelligence Metrics:
 
 ### Emergent Properties
 - Memory: Persistent field topology patterns
-- Attention: Field activation gradients
+- Attention: Pattern salience (novelty, surprise, importance)
+- Motor Control: Field evolution patterns → motor tendencies
 - Learning: Continuous field evolution
-- Reasoning: Field gradient following and constraint satisfaction
+- Reasoning: Field dynamics and constraint satisfaction
 - Prediction: Field evolution as future state anticipation
 - Value: Reward-modulated field topology
 - Curiosity: Seeking prediction errors for learning
 - Imagination: Spontaneous dynamics create internal simulations
 - Dreaming: Pure fantasy states during extended idle
 - Anticipation: High-confidence predictions drive pre-emptive actions
+- Navigation: Places emerge as stable field configurations
+- Spatial Understanding: Topological relationships, not coordinates
+- Cross-Modal Binding: Temporal synchrony creates unified percepts
 
 ### Architectural Simplicity
 - Single UnifiedFieldBrain implementation
@@ -396,8 +470,21 @@ Intelligence Metrics:
 **Hardware**: Automatic GPU/MPS/CPU selection with adaptive spatial resolution  
 **Configuration**: settings.json for brain parameters and network settings
 
-### Current Limitations
-- Constraint enforcement disabled (dimension indexing incompatibility)
-- Persistence system disabled (pending state management refactor)
+### Implementation Status
+
+#### Fully Integrated Features
+- Pattern-based motor generation (coordinate-free)
+- Pattern-based attention (salience-based, no gradients)
+- Emergent navigation with place discovery
+- Enhanced field dynamics (phase transitions, attractors)
+- Constraint enforcement system (self-organization)
+- Persistence system (cross-session learning)
+- Blended reality (fantasy/reality mixing)
+- Spontaneous dynamics (autonomous activity)
+- Cognitive autopilot (adaptive processing)
+
+#### Known Limitations
 - Topology region formation requires parameter tuning for different resolutions
 - GPU processing limited to CPU due to MPS tensor dimension constraints
+- Unified field persistence creates large files (100+ MB) without compression
+- Hardware deployment interface (picarx_brainstem.py) requires updating

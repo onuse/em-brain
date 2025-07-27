@@ -30,6 +30,7 @@ from src.communication.clean_tcp_server import CleanTCPServer
 
 # Configuration
 from src.adaptive_configuration import AdaptiveConfigurationManager
+from src.config.enhanced_gpu_memory_manager import configure_gpu_memory, print_gpu_memory_report
 
 
 class DynamicBrainServer:
@@ -47,6 +48,9 @@ class DynamicBrainServer:
         # Load configuration
         self.config_manager = AdaptiveConfigurationManager(config_file)
         self.config = self.config_manager.config.__dict__
+        
+        # Configure GPU memory management
+        configure_gpu_memory(self.config)
         
         # Display system information
         self._display_system_info()
@@ -141,20 +145,8 @@ class DynamicBrainServer:
         print(f"   Used: {mem.percent:.1f}%")
         
         # GPU info
-        print(f"\n🎮 GPU Information:")
-        if torch.cuda.is_available():
-            print(f"   CUDA Available: ✅")
-            print(f"   CUDA Version: {torch.version.cuda}")
-            print(f"   Device Count: {torch.cuda.device_count()}")
-            if torch.cuda.device_count() > 0:
-                props = torch.cuda.get_device_properties(0)
-                print(f"   GPU 0: {props.name}")
-                print(f"   GPU Memory: {props.total_memory / (1024**3):.1f} GB")
-        elif torch.backends.mps.is_available():
-            print(f"   MPS (Metal) Available: ✅")
-            print(f"   Device: Apple Silicon GPU")
-        else:
-            print(f"   No GPU acceleration available")
+        # Use GPU memory manager for device info
+        print_gpu_memory_report()
         
         # PyTorch info
         print(f"\n🔥 PyTorch Information:")

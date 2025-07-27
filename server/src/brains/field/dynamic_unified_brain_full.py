@@ -27,6 +27,14 @@ from .spontaneous_dynamics import SpontaneousDynamics
 from ...utils.cognitive_autopilot import CognitiveAutopilot
 from .blended_reality import integrate_blended_reality
 from ...parameters.cognitive_config import get_cognitive_config
+from ...config.enhanced_gpu_memory_manager import get_device_for_tensor
+from .integrated_attention import IntegratedAttentionSystem, AttentionIntegrationConfig
+from .enhanced_dynamics import EnhancedFieldDynamics, PhaseTransitionConfig, AttractorConfig
+from .brain_field_adapter import BrainFieldAdapter
+from .emergent_spatial_dynamics import EmergentSpatialDynamics, FieldMotorCoupling
+from .emergent_robot_interface import EmergentRobotInterface
+from .pattern_based_motor import PatternBasedMotorGenerator
+from .pattern_based_attention import PatternBasedAttention
 
 
 class DynamicUnifiedFieldBrain:
@@ -46,7 +54,11 @@ class DynamicUnifiedFieldBrain:
                  field_evolution_rate: Optional[float] = None,
                  constraint_discovery_rate: Optional[float] = None,
                  device: Optional[torch.device] = None,
-                 quiet_mode: bool = False):
+                 quiet_mode: bool = False,
+                 enable_attention: Optional[bool] = None,
+                 enable_emergent_navigation: Optional[bool] = None,
+                 pattern_motor: Optional[bool] = None,
+                 pattern_attention: Optional[bool] = None):
         """
         Initialize brain with dynamic dimensions and full feature set.
         """
@@ -55,6 +67,7 @@ class DynamicUnifiedFieldBrain:
         brain_config = self.cognitive_config.brain_config
         
         self.field_dimensions = field_dimensions
+        self._dimension_definitions = field_dimensions  # Store for emergent interface
         self.tensor_shape = tensor_shape
         self.dimension_mapping = dimension_mapping
         self.spatial_resolution = spatial_resolution
@@ -68,18 +81,12 @@ class DynamicUnifiedFieldBrain:
         # Total conceptual dimensions
         self.total_dimensions = len(field_dimensions)
         
-        # Set device with MPS handling
+        # Set device using enhanced GPU memory manager
         if device is None:
-            if torch.cuda.is_available():
-                self.device = torch.device('cuda')
-            elif torch.backends.mps.is_available() and len(tensor_shape) <= 16:
-                # Avoid MPS for 11D tensors due to severe performance issues
-                if len(tensor_shape) > 10:
-                    self.device = torch.device('cpu')
-                else:
-                    self.device = torch.device('mps')
-            else:
-                self.device = torch.device('cpu')
+            # Use GPU memory manager for MPS-aware device selection
+            self.device = get_device_for_tensor(tensor_shape)
+            if not quiet_mode and self.device.type == 'cpu' and torch.backends.mps.is_available():
+                print(f"   Using CPU due to tensor dimensions ({len(tensor_shape)}D)")
         else:
             self.device = device
             
@@ -178,6 +185,124 @@ class DynamicUnifiedFieldBrain:
         # Enable blended reality (confidence-based blending)
         self.blended_reality_enabled = True
         
+        # Initialize integrated attention system
+        # Use parameter if provided, otherwise check config, default to True
+        if enable_attention is not None:
+            self.attention_enabled = enable_attention
+        else:
+            self.attention_enabled = self.cognitive_config.brain_config.__dict__.get('enable_attention', True)
+        
+        if self.attention_enabled:
+            attention_config = AttentionIntegrationConfig(
+                enable_sensory_attention=True,
+                enable_cross_modal_binding=True,
+                attention_influence_on_field=brain_config.novelty_boost,  # Use novelty boost as influence
+                attention_to_confidence_factor=0.2,
+                saliency_threshold=brain_config.attention_threshold
+            )
+            self.integrated_attention = IntegratedAttentionSystem(
+                field_shape=self.unified_field.shape,
+                sensory_dim=self.expected_sensory_dim or 16,
+                device=self.device,
+                config=attention_config,
+                quiet_mode=quiet_mode
+            )
+        
+        # Initialize pattern-based attention (optional alternative)
+        if pattern_attention is not None:
+            self.pattern_attention_enabled = pattern_attention
+        else:
+            self.pattern_attention_enabled = self.cognitive_config.brain_config.__dict__.get('pattern_attention', False)
+        
+        if self.pattern_attention_enabled:
+            self.pattern_attention = PatternBasedAttention(
+                field_shape=self.unified_field.shape,
+                attention_capacity=5,  # Limited attention slots
+                device=self.device,
+                quiet_mode=quiet_mode
+            )
+            if not quiet_mode:
+                print(f"   Pattern-based attention: ENABLED")
+        
+        # Initialize enhanced dynamics system
+        self.enhanced_dynamics_enabled = self.cognitive_config.brain_config.__dict__.get('enhanced_dynamics', True)
+        if self.enhanced_dynamics_enabled:
+            # Configure phase transitions
+            phase_config = PhaseTransitionConfig(
+                energy_threshold=0.7,
+                stability_threshold=0.3,
+                transition_strength=brain_config.novelty_boost,  # Use novelty boost for transitions
+                coherence_factor=0.6,
+                decay_rate=brain_config.field_decay_rate
+            )
+            
+            # Configure attractors
+            attractor_config = AttractorConfig(
+                attractor_strength=brain_config.constraint_enforcement_strength,
+                repulsor_strength=0.2,
+                spatial_spread=min(3.0, spatial_resolution / 2.0),
+                temporal_persistence=temporal_window / 2.0,
+                auto_discovery=True
+            )
+            
+            # Create adapter for enhanced dynamics
+            self.field_adapter = BrainFieldAdapter(self)
+            self.enhanced_dynamics = EnhancedFieldDynamics(
+                field_impl=self.field_adapter,
+                phase_config=phase_config,
+                attractor_config=attractor_config,
+                quiet_mode=quiet_mode
+            )
+        
+        # Initialize emergent navigation system
+        # Use parameter if provided, otherwise check config, default to False
+        if enable_emergent_navigation is not None:
+            self.emergent_navigation_enabled = enable_emergent_navigation
+        else:
+            self.emergent_navigation_enabled = self.cognitive_config.brain_config.__dict__.get('emergent_navigation', False)
+        
+        # Initialize pattern-based motor generation
+        # Use parameter if provided, otherwise check config, default to False
+        if pattern_motor is not None:
+            self.pattern_motor_enabled = pattern_motor
+        else:
+            self.pattern_motor_enabled = self.cognitive_config.brain_config.__dict__.get('pattern_motor', False)
+        if self.pattern_motor_enabled:
+            self.pattern_motor_generator = PatternBasedMotorGenerator(
+                field_shape=self.unified_field.shape,
+                motor_dim=self.expected_motor_dim or 4,
+                device=self.device,
+                quiet_mode=quiet_mode
+            )
+            if not quiet_mode:
+                print(f"   Pattern-based motor: ENABLED")
+        
+        if self.emergent_navigation_enabled:
+            # Initialize spatial dynamics
+            self.emergent_spatial = EmergentSpatialDynamics(
+                field_shape=self.unified_field.shape,
+                device=self.device,
+                quiet_mode=quiet_mode
+            )
+            
+            # Initialize robot interface for pattern-based sensing
+            self.emergent_interface = EmergentRobotInterface(
+                sensory_dim=self.expected_sensory_dim or 24,
+                motor_dim=self.expected_motor_dim or 4,
+                field_dimensions=self._dimension_definitions,  # Use actual field dimension objects
+                device=self.device,
+                quiet_mode=quiet_mode
+            )
+            
+            # Configure motor coupling
+            motor_coupling = FieldMotorCoupling(
+                oscillatory_to_forward=1.0,
+                flow_to_rotation=1.0,
+                energy_to_speed=brain_config.optimal_prediction_error,  # 0.3
+                tension_to_urgency=2.0
+            )
+            self.emergent_spatial.motor_coupling = motor_coupling
+        
         if not quiet_mode:
             print(f"🧠 Dynamic Unified Field Brain initialized (Full Features)")
             print(f"   Conceptual dimensions: {len(field_dimensions)}D")
@@ -186,6 +311,9 @@ class DynamicUnifiedFieldBrain:
             print(f"   Device: {self.device}")
             print(f"   Spontaneous dynamics: ENABLED")
             print(f"   Blended reality: ENABLED")
+            print(f"   Integrated attention: {'ENABLED' if self.attention_enabled else 'DISABLED'}")
+            print(f"   Enhanced dynamics: {'ENABLED' if self.enhanced_dynamics_enabled else 'DISABLED'}")
+            print(f"   Emergent navigation: {'ENABLED' if self.emergent_navigation_enabled else 'DISABLED'}")
             self._print_dimension_summary()
     
     def _calculate_memory_usage(self) -> float:
@@ -214,7 +342,12 @@ class DynamicUnifiedFieldBrain:
         cycle_start = time.perf_counter()
         
         # 1. Convert robot sensory input to unified field experience
-        field_experience = self._robot_sensors_to_field_experience(sensory_input)
+        if self.emergent_navigation_enabled and hasattr(self, 'emergent_interface'):
+            # Use emergent interface for pattern-based field mapping
+            field_experience = self.emergent_interface.sensory_pattern_to_field_experience(sensory_input)
+        else:
+            # Use standard coordinate-based mapping
+            field_experience = self._robot_sensors_to_field_experience(sensory_input)
         
         # 2. Prediction and confidence tracking
         if self._predicted_field is not None:
@@ -238,30 +371,87 @@ class DynamicUnifiedFieldBrain:
         self.temporal_experiences.append(field_experience)
         self.field_experiences.append(field_experience)
         
-        # 5. Evolve unified field with all dynamics
+        # 5. Process attention if enabled
+        attention_data = None
+        if self.pattern_attention_enabled and hasattr(self, 'pattern_attention'):
+            # Use pattern-based attention (coordinate-free)
+            sensory_patterns = {
+                'primary': torch.tensor(sensory_input[:-1], device=self.device) if len(sensory_input) > 1 else torch.tensor(sensory_input, device=self.device)
+            }
+            attention_data = self.pattern_attention.process_field_patterns(
+                field=self.unified_field,
+                sensory_patterns=sensory_patterns
+            )
+        elif self.attention_enabled and hasattr(self, 'integrated_attention'):
+            # Use standard gradient-based attention
+            attention_data = self.integrated_attention.process_sensory_attention(sensory_input)
+        
+        # 6. Process emergent navigation if enabled
+        navigation_state = None
+        if self.emergent_navigation_enabled and hasattr(self, 'emergent_spatial'):
+            # Process spatial experience
+            navigation_state = self.emergent_spatial.process_spatial_experience(
+                current_field=self.unified_field,
+                sensory_input=sensory_input,
+                reward=sensory_input[-1] if len(sensory_input) > 24 else 0.0
+            )
+        
+        # 7. Evolve unified field with all dynamics
         self._evolve_unified_field()
         
-        # 6. Discover constraints from field topology
+        # 8. Apply attention modulation to field
+        if attention_data:
+            if self.pattern_attention_enabled:
+                # Pattern-based attention modulation
+                self.unified_field = self.pattern_attention.modulate_field_with_attention(
+                    self.unified_field,
+                    attention_data
+                )
+            elif self.attention_enabled:
+                # Standard gradient-based attention modulation
+                self.unified_field = self.integrated_attention.modulate_field_with_attention(
+                    self.unified_field,
+                    attention_data
+                )
+        
+        # 9. Discover constraints from field topology
         if self.brain_cycles % 5 == 0:  # Discover constraints periodically
             self._discover_field_constraints()
         
-        # 7. Apply constraint forces
+        # 10. Apply constraint forces
         constraint_forces = self.constraint_field.enforce_constraints(self.unified_field)
         if constraint_forces is not None:
-            self.unified_field += constraint_forces * brain_config.prediction_error_tolerance * 2  # 0.1
+            self.unified_field += constraint_forces * self.cognitive_config.brain_config.prediction_error_tolerance * 2  # 0.1
         
-        # 8. Update topology regions (memory formation)
+        # 11. Update topology regions (memory formation)
         if self.brain_cycles % 10 == 0:
             self._update_topology_regions()
         
-        # 9. Generate motor commands from field gradients
-        action = self._unified_field_to_robot_action(field_experience)
+        # 12. Generate motor commands
+        if self.emergent_navigation_enabled and navigation_state:
+            # Use emergent navigation for motor generation
+            field_evolution = self.unified_field - self._predicted_field if self._predicted_field is not None else torch.zeros_like(self.unified_field)
+            action = self.emergent_spatial.compute_motor_emergence(
+                current_field=self.unified_field,
+                field_evolution=field_evolution
+            )
+        elif self.pattern_motor_enabled:
+            # Use pattern-based motor generation (coordinate-free)
+            action = self.pattern_motor_generator.generate_motor_action(
+                current_field=self.unified_field,
+                experience=field_experience
+            )
+            # Set timestamp
+            action.timestamp = time.time()
+        else:
+            # Use standard gradient-based motor generation
+            action = self._unified_field_to_robot_action(field_experience)
         self.field_actions.append(action)
         
-        # 10. Create prediction for next cycle
+        # 13. Create prediction for next cycle
         self._predicted_field = self._predict_next_field_state()
         
-        # 11. Trigger maintenance if needed
+        # 14. Trigger maintenance if needed
         if self.brain_cycles - self.last_maintenance_cycle > self.maintenance_interval:
             self._trigger_maintenance()
         
@@ -283,10 +473,42 @@ class DynamicUnifiedFieldBrain:
             'tensor_dims': len(self.tensor_shape),
             'spontaneous_enabled': self.spontaneous_enabled,
             'cognitive_mode': self.cognitive_autopilot.current_mode.value,
-            'cognitive_recommendations': self.cognitive_autopilot._generate_system_recommendations({})
+            'cognitive_recommendations': self.cognitive_autopilot._generate_system_recommendations({}),
+            'pattern_motor_enabled': self.pattern_motor_enabled,
+            'pattern_attention_enabled': self.pattern_attention_enabled
         }
         
-        return action.motor_commands.tolist(), brain_state
+        # Add attention state if enabled
+        if self.pattern_attention_enabled and hasattr(self, 'pattern_attention') and attention_data:
+            brain_state['attention'] = self.pattern_attention.get_attention_metrics()
+            brain_state['attention']['type'] = 'pattern-based'
+        elif self.attention_enabled and hasattr(self, 'integrated_attention') and attention_data:
+            brain_state['attention'] = self.integrated_attention.get_attention_state()
+            brain_state['attention']['type'] = 'gradient-based'
+        
+        # Add navigation state if enabled
+        if self.emergent_navigation_enabled and navigation_state:
+            brain_state['navigation'] = {
+                'current_place': navigation_state.get('current_place'),
+                'known_places': navigation_state.get('known_places', 0),
+                'navigation_active': navigation_state.get('navigation_active', False),
+                'field_stability': navigation_state.get('field_stability', 0.0)
+            }
+            if hasattr(self, 'emergent_spatial'):
+                # Add spatial statistics but don't overwrite known_places count
+                spatial_stats = self.emergent_spatial.get_statistics()
+                brain_state['navigation']['places_discovered'] = spatial_stats.get('places_discovered', 0)
+                brain_state['navigation']['navigation_success_rate'] = spatial_stats.get('navigation_success_rate', 0.0)
+        
+        # Handle different action types
+        if hasattr(action, 'output_stream'):
+            motor_output = action.output_stream.tolist()
+        elif hasattr(action, 'motor_commands'):
+            motor_output = action.motor_commands.tolist()
+        else:
+            motor_output = [0.0] * (self.expected_motor_dim or 4)
+        
+        return motor_output, brain_state
     
     def _robot_sensors_to_field_experience(self, sensory_input: List[float]) -> UnifiedFieldExperience:
         """
@@ -297,7 +519,7 @@ class DynamicUnifiedFieldBrain:
         
         # Extract reward if present (last sensor by convention)
         reward = sensory_input[-1] if len(sensory_input) > 0 else 0.0
-        field_intensity = brain_config.default_prediction_confidence + reward * brain_config.default_prediction_confidence  # Map [-1,1] to [0,1]
+        field_intensity = self.cognitive_config.brain_config.default_prediction_confidence + reward * self.cognitive_config.brain_config.default_prediction_confidence  # Map [-1,1] to [0,1]
         
         # Map sensors to conceptual dimensions
         # This is a simplified mapping - in production, use more sophisticated mapping
@@ -439,7 +661,7 @@ class DynamicUnifiedFieldBrain:
                 
                 # Also consider recent sensory strength (but weighted less)
                 # Recency gating uses attention threshold
-                recency_gating = min(1.0, self._last_imprint_strength * 2.0) * brain_config.attention_threshold * 2
+                recency_gating = min(1.0, self._last_imprint_strength * 2.0) * self.cognitive_config.brain_config.attention_threshold * 2
                 
                 # Combined gating: mostly confidence-based, slightly recency-based
                 sensory_gating = confidence_gating + recency_gating
@@ -451,9 +673,18 @@ class DynamicUnifiedFieldBrain:
             )
             self.unified_field += spontaneous_activity
         
-        # 4. Ensure minimum baseline (prevents complete decay)
+        # 4. Apply enhanced dynamics if enabled
+        if self.enhanced_dynamics_enabled and hasattr(self, 'enhanced_dynamics'):
+            # Enhanced dynamics handles phase transitions, attractors, and energy redistribution
+            # It will call back to our adapter which uses _imprint_unified_field
+            self.enhanced_dynamics.evolve_with_enhancements(
+                dt=0.1,  # Standard evolution timestep
+                current_input_stream=None  # Already handled by brain
+            )
+        
+        # 5. Ensure minimum baseline (prevents complete decay)
         self.unified_field = torch.maximum(self.unified_field, 
-                                         torch.tensor(brain_config.activation_threshold, device=self.device))
+                                         torch.tensor(self.cognitive_config.brain_config.activation_threshold, device=self.device))
         
         self.field_evolution_cycles += 1
     
@@ -470,11 +701,13 @@ class DynamicUnifiedFieldBrain:
         )
         
         # Calculate gradients in spatial dimensions
-        for dim in range(spatial_range[0], min(spatial_range[1], len(self.tensor_shape))):
-            # Central differences
-            grad = torch.zeros_like(self.unified_field)
-            grad[1:-1] = (self.unified_field[2:] - self.unified_field[:-2]) / 2.0
-            gradients[f'grad_dim_{dim}'] = grad
+        for dim_idx in range(spatial_range[0], min(spatial_range[1], len(self.tensor_shape))):
+            # Compute gradient along this dimension using torch.gradient
+            # This works correctly for multi-dimensional tensors
+            grad_list = torch.gradient(self.unified_field, dim=dim_idx)
+            # gradient returns a list, get the gradient for this dimension
+            grad = grad_list[0] if isinstance(grad_list, (list, tuple)) else grad_list
+            gradients[f'gradient_dim_{dim_idx}'] = grad
         
         # Discover constraints
         new_constraints = self.constraint_field.discover_constraints(
@@ -490,11 +723,11 @@ class DynamicUnifiedFieldBrain:
         """
         # Find high-activation regions
         # Use topology stability threshold for high activation detection
-        high_activation = self.unified_field > brain_config.topology_stability_threshold
+        high_activation = self.unified_field > self.cognitive_config.brain_config.topology_stability_threshold
         
         # Find stable regions (low variance)
         field_std = torch.std(self.unified_field)
-        stable_regions = self.unified_field > (field_std * brain_config.default_prediction_confidence)
+        stable_regions = self.unified_field > (field_std * self.cognitive_config.brain_config.default_prediction_confidence)
         
         # Combine criteria
         memory_regions = high_activation & stable_regions
@@ -592,7 +825,7 @@ class DynamicUnifiedFieldBrain:
                 energy_activation = torch.mean(
                     self.unified_field[tensor_indices[energy_dims[0]:energy_dims[1]]]
                 )
-                motor_commands[2] = (energy_activation - brain_config.default_prediction_confidence) * brain_config.default_prediction_confidence
+                motor_commands[2] = (energy_activation - self.cognitive_config.brain_config.default_prediction_confidence) * self.cognitive_config.brain_config.default_prediction_confidence
         
         # Apply motor smoothing
         if self.previous_motor_commands is not None:
@@ -648,13 +881,13 @@ class DynamicUnifiedFieldBrain:
         # Confidence should be high when:
         # 1. Prediction error is low AND
         # 2. We're actually predicting something meaningful (not just baseline)
-        if activation_magnitude < brain_config.resting_potential:
+        if activation_magnitude < self.cognitive_config.brain_config.resting_potential:
             # Near baseline - low confidence regardless of error
-            self._current_prediction_confidence = brain_config.attention_threshold * 2  # 0.2
+            self._current_prediction_confidence = self.cognitive_config.brain_config.attention_threshold * 2  # 0.2
         else:
             # Normal confidence calculation based on error
             # Scale error by activation magnitude for better normalization
-            normalized_error = prediction_error / (activation_magnitude + brain_config.attention_threshold)
+            normalized_error = prediction_error / (activation_magnitude + self.cognitive_config.brain_config.attention_threshold)
             self._current_prediction_confidence = float(1.0 / (1.0 + normalized_error * 2.0))
         
         self._prediction_confidence_history.append(self._current_prediction_confidence)
@@ -714,11 +947,11 @@ class DynamicUnifiedFieldBrain:
                         self.unified_field *= self.field_energy_dissipation_rate
                         
                         # Prune weak activations using cognitive threshold
-                        mask = torch.abs(self.unified_field) > brain_config.activation_threshold
+                        mask = torch.abs(self.unified_field) > self.cognitive_config.brain_config.activation_threshold
                         self.unified_field *= mask.float()
                         
                         # Reset to baseline where pruned
-                        self.unified_field[~mask] = brain_config.activation_threshold
+                        self.unified_field[~mask] = self.cognitive_config.brain_config.activation_threshold
                     
                 except queue.Empty:
                     continue

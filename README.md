@@ -4,8 +4,8 @@ Research implementation of continuous multi-dimensional field dynamics as an alt
 
 See docs/ folder for technical documentation:
 - **ARCHITECTURE.md** - System architecture and field organization
-- **COMM_PROTOCOL.md** - TCP communication protocol specification
-- **PROJECT_HISTORY.md** - Evolution from discrete to field-native intelligence
+- **TODO.md** - Pending tasks and implementation status
+- **CLAUDE.md** - Development instructions
 
 ## Quick Start
 
@@ -14,167 +14,130 @@ See docs/ folder for technical documentation:
 pip install numpy torch psutil  # Core dependencies
 python3 tests/integration/test_installation.py
 
-# Field brain demos
-python3 tools/runners/demo_runner.py spatial_learning
-python3 demos/blended_reality_demo.py  # See fantasy/reality blending
+# Run demos
 python3 demo.py  # Interactive launcher
-
-# Configure field vs discrete brain in server/settings.json:
-{"brain": {"type": "field"}}  # Field-native intelligence
-{"brain": {"type": "sparse_goldilocks"}}  # Legacy discrete
+python3 tools/runners/demo_runner.py spatial_learning
+python3 tools/runners/demo_runner.py blended_reality
 ```
 
-**Requirements:** Python 3.8+, 4GB+ RAM, GPU recommended
+**Requirements:** Python 3.8+, 4GB+ RAM, CPU/GPU
 
 ## Core Approach
 
-This project explores continuous field dynamics as an alternative to discrete pattern-based AI. Instead of storing patterns in discrete memory structures, intelligence emerges from the topology and evolution of a continuous multi-dimensional field.
+This project implements continuous field dynamics as an alternative to discrete AI. Intelligence emerges from the topology and evolution of a continuous multi-dimensional field organized by physics principles rather than sensory categories.
 
-### Dynamic Field Architecture
-- **Adaptive Dimensionality**: Field dimensions are dynamically created based on robot capabilities
-- **On-Demand Brain Creation**: Brains are created when robots connect, not at server startup
-- **Logarithmic Scaling**: Field complexity scales logarithmically with robot complexity
-- **Physics-Based Organization**: Dimensions organized by physics families:
-  - **Spatial Dimensions**: Position, orientation, scale, time
-  - **Oscillatory Dimensions**: Frequencies, rhythms, periods
-  - **Flow Dimensions**: Gradients, momentum, direction
-  - **Topology Dimensions**: Stable configurations, boundaries
-  - **Energy Dimensions**: Intensity, activation, depletion
-  - **Coupling Dimensions**: Relationships, correlations, binding
-  - **Emergence Dimensions**: Novelty, creativity, phase transitions
+### Field Organization
+- **Adaptive Dimensionality**: Field dimensions created dynamically based on robot capabilities
+- **Physics-Based Structure**: Dimensions organized by dynamics families:
+  - **Spatial**: Position, orientation, scale, time
+  - **Oscillatory**: Frequencies, rhythms, periods
+  - **Flow**: Gradients, momentum, direction
+  - **Topology**: Stable configurations, boundaries
+  - **Energy**: Intensity, activation, depletion
+  - **Coupling**: Relationships, correlations, binding
+  - **Emergence**: Novelty, creativity, phase transitions
 
-### Implementation Status
-- Dynamic brain architecture with on-demand creation
-- Adaptive field dimensions based on robot capabilities
-- **Spontaneous field dynamics** - brain thinks autonomously without input
-- **Blended reality system** - seamless mixing of internal simulation with sensory reality
-- **Confidence-based processing** - brain adapts attention based on prediction accuracy
-- TCP server with capability negotiation protocol
-- Hardware adaptation for GPU/MPS/CPU
-- State persistence and recovery
-- Automatic maintenance and resource management
+### Key Features
+- **Pattern-Based Processing**: All cognition through pattern recognition, no fixed coordinates
+- **Self-Organization**: Constraint discovery and enforcement guide field evolution
+- **Spontaneous Dynamics**: Autonomous field activity without sensory input
+- **Blended Reality**: Confidence-based mixing of internal simulation with sensory data
+- **Cross-Session Learning**: Persistence system maintains brain state across runs
 
-## Theoretical Background
+## Architecture Overview
 
-The field approach draws from several research areas:
+### Dynamic Brain Creation
+1. Robot connects with sensor/actuator specifications
+2. System calculates optimal field dimensions (logarithmic scaling)
+3. Brain created with dimensions matching robot complexity
+4. Adapters translate between robot and brain spaces
 
-- **Free Energy Principle** (Friston): Intelligence as prediction error minimization under constraints
-- **Embodied Cognition** (Varela): Physical constraints enable rather than limit intelligence
-- **Sparse Coding** (Olshausen): Resource constraints create efficient representations
-- **Complex Systems Theory**: Simple interactions create complex behaviors
-- **Constraint Satisfaction**: Intelligence as optimization under competing constraints
+### Cognitive Systems
 
-## Implementation Components
+#### Pattern-Based Intelligence
+- **Motor Generation**: Field evolution patterns → motor commands
+- **Attention**: Pattern salience (novelty, surprise, importance)
+- **Sensory Processing**: Pattern features → field impressions
+- No spatial coordinates or gradients used
 
-### Field Dynamics
-- Dynamic field dimensions (calculated per robot)
-- **Spontaneous activity** - traveling waves, local recurrence, homeostatic balance
-- **Reality blending** - confidence-based mixing of fantasy (83%) and reality (17%)
-- **Cognitive modes** - AUTOPILOT (high confidence), FOCUSED (medium), DEEP_THINK (low)
-- **Dream states** - pure fantasy mode after extended idle (95% spontaneous)
-- Constraint discovery from field topology
-- Temporal dynamics with working memory emergence
-- Cross-scale hierarchical processing
-- Adaptive complexity based on robot sensors/actuators
+#### Self-Organizing Dynamics
+- **Constraint System**: N-dimensional constraint discovery and enforcement
+- **Phase Transitions**: Stable → high energy → chaotic → low energy
+- **Attractors**: Stable field configurations as memory anchors
+- **Energy Management**: Redistribution for optimal dynamics
 
-### Brain Architecture
-- Dynamic brain creation on robot connection
-- UnifiedFieldBrain with adaptive dimensions
-- Hardware adaptation (GPU/MPS/CPU)
-- TCP protocol with capability negotiation
-- State persistence and recovery
-- Brain pooling for resource efficiency
+#### Autonomous Behavior
+- **Spontaneous Activity**: Traveling waves, local recurrence, homeostasis
+- **Cognitive Modes**: AUTOPILOT (>90% confidence), FOCUSED (70-90%), DEEP_THINK (<70%)
+- **Dream States**: Pure fantasy after extended idle
+- **Predictive Processing**: Field evolution as future state anticipation
 
-### Current Capabilities
-- Dynamic dimension calculation from robot profile
-- Robot sensor input → adaptive field mapping
-- **Autonomous thinking** - generates motor commands without sensory input
-- **Predictive behavior** - anticipates based on confidence levels
-- **Adaptive attention** - dynamically adjusts sensor processing (20-90%)
-- **Imagination modes** - internal simulation for creative problem solving
-- Field evolution and constraint satisfaction
-- Field gradients → robot action generation
-- Cross-session learning and memory
-- Multi-robot support with different capabilities
+#### Navigation and Memory
+- **Emergent Places**: Stable field configurations, not coordinates
+- **Field Tension**: Navigation through field state differences
+- **Topology Memory**: Persistent patterns in field structure
+- **Experience Integration**: Reward-modulated memory formation
 
-## Architecture
+## Implementation Status
 
-### Field Processing
-- Robot sensors mapped to dynamic field coordinates
-- Dimension calculation: log₂(sensors) × complexity_factor
-- Field evolution through constraint satisfaction
-- Gradient calculation for action generation
-- Topology analysis for memory and learning
+### Fully Integrated Features
+- Pattern-based motor and attention systems
+- Emergent spatial navigation
+- Enhanced field dynamics with phase transitions
+- Constraint enforcement for self-organization
+- Persistence for cross-session learning
+- Blended reality processing
+- Spontaneous dynamics
+- Cognitive autopilot
 
-### Technical Features
-- Hardware-adaptive device selection
-- Sparse field updates for performance
-- Biological optimizations (attention, hierarchy)
-- Persistent field state across sessions
+### Known Limitations
+- Large persistence files (100+ MB) without compression
+- GPU processing limited to CPU for high-dimensional fields
+- Hardware deployment interface requires updating
 
 ## Project Structure
 
 ```
 brain/
-├── README.md, CLAUDE.md       # Documentation
+├── README.md                  # This file
 ├── demo.py                    # Interactive demos
-├── tools/runners/             # Demo/test/validation runners
-├── server/                    # Complete brain implementation
+├── server/                    # Brain implementation
 │   ├── brain.py              # Main entry point
-│   ├── src/core/             # Dynamic architecture components
-│   │   ├── dynamic_brain_factory.py  # Creates brains on-demand
-│   │   ├── brain_service.py         # Session management
-│   │   ├── adapters.py              # Robot-brain translation
-│   │   └── robot_registry.py        # Robot profiles
-│   ├── src/brains/field/     # Field-native intelligence
-│   │   ├── unified_field_brain.py   # Adaptive field brain
-│   │   └── dynamics/                 # Field dynamics families
+│   ├── src/
+│   │   ├── core/             # Dynamic architecture
+│   │   ├── brains/field/     # Field intelligence
+│   │   └── persistence/      # State management
 │   └── settings.json         # Configuration
-├── validation/               # Scientific experiments
 ├── tests/                    # Test suite
-├── client_picarx/           # Robot client
-└── logs/                    # Runtime data
+├── tools/                    # Development tools
+└── docs/                     # Documentation
 ```
-
-### Key Brain Components
-- **spontaneous_dynamics.py** - Autonomous field activity without input
-- **blended_reality.py** - Confidence-based fantasy/reality blending  
-- **cognitive_autopilot.py** - Adaptive processing intensity
-- **dynamic_unified_brain_full.py** - Full-featured implementation
 
 ## Communication Protocol
 
-Dynamic TCP protocol with capability negotiation:
+TCP protocol with capability negotiation:
 ```
 # Handshake
-Client → Server: [robot_version, sensory_size, action_size, hardware_type, capabilities]
-Server → Client: [brain_version, accepted_sensory_size, accepted_action_size, gpu_available, brain_capabilities]
+Client → Server: [robot_version, sensory_size, action_size, hardware_type]
+Server → Client: [brain_version, accepted_sizes, capabilities]
 
 # Runtime
-Client → Server: [sensor_data...] (using negotiated dimensions)
-Server → Client: [action_data...] (using negotiated dimensions)
+Client → Server: [sensor_data...] 
+Server → Client: [action_data...]
 ```
 
-## Current Status
+## Research Foundation
 
-This is an active research project exploring field-based intelligence. The implementation includes:
+The field approach builds on:
+- **Free Energy Principle**: Intelligence as prediction error minimization
+- **Embodied Cognition**: Physical constraints enable intelligence
+- **Complex Systems**: Simple interactions create complex behaviors
+- **Constraint Satisfaction**: Intelligence as optimization under constraints
 
-- Dynamic field dimensions adapted to each robot
-- **Autonomous cognition** - brain maintains activity and generates behavior without input
-- **Blended reality processing** - seamless transition between internal simulation and sensory attention
-- **Adaptive confidence system** - prediction accuracy drives processing mode
-- On-demand brain creation and management
-- Constraint discovery and satisfaction
-- Robot communication with capability negotiation
-- Hardware adaptation and optimization
-- Resource pooling and automatic maintenance
+## Development
 
-### Recent Breakthrough
-The brain now exhibits spontaneous dynamics and blended reality processing. It continuously simulates internal models (fantasy) while variably attending to sensory input (reality) based on prediction confidence. This creates natural behaviors like exploration (reality-focused), autopilot (fantasy-dominated), and dreaming (pure fantasy).
-
-## Research Goals
-
-- Test field dynamics as alternative to discrete AI
-- Validate constraint-based intelligence emergence
-- Develop robot control through field gradients
-- Optimize performance for real-time operation
+See CLAUDE.md for development instructions. Key components:
+- `dynamic_unified_brain_full.py` - Primary brain implementation
+- `pattern_based_*.py` - Coordinate-free cognitive systems
+- `constraint_field_nd.py` - Self-organization dynamics
+- `integrated_persistence.py` - Cross-session learning

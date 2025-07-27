@@ -12,6 +12,9 @@ from datetime import datetime, timedelta
 import gc
 
 from .interfaces import IBrainPool, IBrainService
+from ..config.enhanced_gpu_memory_manager import (
+    check_gpu_memory_pressure, cleanup_gpu_memory, get_gpu_memory_stats
+)
 
 
 class MaintenanceScheduler:
@@ -99,15 +102,30 @@ class MaintenanceScheduler:
                 time.sleep(60)  # Back off on error
                 
     def _check_memory_pressure(self):
-        """Check system memory pressure and trigger cleanup if needed."""
+        """Check system and GPU memory pressure and trigger cleanup if needed."""
         try:
             import psutil
             
+            # Check system memory
             mem = psutil.virtual_memory()
             memory_usage = mem.percent / 100.0
             
+            # Check GPU memory pressure
+            gpu_pressure = check_gpu_memory_pressure()
+            gpu_stats = get_gpu_memory_stats()
+            
             if memory_usage > self.memory_pressure_threshold:
-                print(f"⚠️ High memory pressure detected: {memory_usage:.1%}")
+                print(f"⚠️ High system memory pressure: {memory_usage:.1%}")
+                self._trigger_memory_cleanup()
+            elif gpu_pressure:
+                device_type = gpu_stats.get('device', 'unknown')
+                if 'cuda_allocated_mb' in gpu_stats:
+                    allocated = gpu_stats['cuda_allocated_mb']
+                    total = gpu_stats['cuda_total_mb']
+                    usage_pct = (allocated / total) * 100
+                    print(f"⚠️ High GPU memory pressure: {usage_pct:.1f}% ({allocated:.0f}/{total:.0f}MB)")
+                else:
+                    print(f"⚠️ High GPU memory pressure on {device_type}")
                 self._trigger_memory_cleanup()
                 
         except ImportError:
@@ -134,7 +152,11 @@ class MaintenanceScheduler:
         
         # Force garbage collection
         gc.collect()
-        print("✅ Memory cleanup complete")
+        
+        # Clean up GPU memory
+        cleanup_gpu_memory()
+        
+        print("✅ Memory cleanup complete (system + GPU)")
         
     def _check_performance(self):
         """Check performance metrics and optimize if needed."""

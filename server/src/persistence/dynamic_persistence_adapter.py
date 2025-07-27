@@ -99,6 +99,7 @@ class DynamicPersistenceAdapter:
         # Field state (convert to numpy for serialization)
         state.unified_field = brain.unified_field.cpu().numpy()
         state.field_energy = float(torch.mean(torch.abs(brain.unified_field)))
+        print(f"💾 Saving unified field: shape {state.unified_field.shape}, mean energy {state.field_energy:.6f}")
         
         # Memory and topology
         if hasattr(brain, 'topology_regions'):
@@ -110,12 +111,13 @@ class DynamicPersistenceAdapter:
             # Serialize constraint info (not the full constraint objects)
             state.active_constraints = [
                 {
-                    'id': c.constraint_id,
+                    'id': f"constraint_{i}",  # Generate ID since constraints don't have one
                     'type': c.constraint_type.value if hasattr(c.constraint_type, 'value') else str(c.constraint_type),
-                    'strength': float(c.strength),
-                    'discovery_cycle': c.discovery_cycle
+                    'strength': float(c.strength) if hasattr(c, 'strength') else 0.5,
+                    'dimensions': c.dimensions if hasattr(c, 'dimensions') else [],
+                    'discovery_timestamp': float(c.discovery_timestamp) if hasattr(c, 'discovery_timestamp') else 0.0
                 }
-                for c in brain.constraint_field.active_constraints[:50]  # Limit to top 50
+                for i, c in enumerate(brain.constraint_field.active_constraints[:50])  # Limit to top 50
             ]
         
         # Working memory
@@ -172,9 +174,12 @@ class DynamicPersistenceAdapter:
                 # Verify shape matches
                 if field_tensor.shape == brain.unified_field.shape:
                     brain.unified_field = field_tensor.to(brain.device)
+                    print(f"✅ Restored unified field: shape {field_tensor.shape}, mean energy {torch.mean(torch.abs(field_tensor)).item():.6f}")
                 else:
                     print(f"⚠️ Field shape mismatch: saved {field_tensor.shape} vs current {brain.unified_field.shape}")
                     # Could implement shape adaptation here if needed
+            else:
+                print("⚠️ No unified field data in saved state")
             
             # Restore topology regions
             if hasattr(brain, 'topology_regions') and state.topology_regions:

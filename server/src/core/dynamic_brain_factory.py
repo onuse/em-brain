@@ -174,7 +174,11 @@ class DynamicBrainFactory(IBrainFactory):
                 temporal_window=self.config.get('temporal_window', 10.0),
                 field_evolution_rate=self.config.get('field_evolution_rate', self.brain_config.field_evolution_rate),
                 constraint_discovery_rate=self.config.get('constraint_discovery_rate', self.brain_config.constraint_discovery_rate),
-                quiet_mode=self.quiet_mode
+                quiet_mode=self.quiet_mode,
+                enable_attention=self.config.get('enable_attention', None),
+                enable_emergent_navigation=self.config.get('emergent_navigation', None),
+                pattern_motor=self.config.get('pattern_motor', None),
+                pattern_attention=self.config.get('pattern_attention', None)
             )
             
             # Set robot interface dimensions

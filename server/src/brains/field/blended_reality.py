@@ -185,10 +185,14 @@ def integrate_blended_reality(brain):
         # Check for meaningful input by looking at variance from neutral (0.5)
         # Neutral input has all sensors at 0.5, real input varies from this
         has_meaningful_input = False
-        if experience.raw_sensory_input is not None:
+        # Handle both field names for compatibility
+        raw_input = getattr(experience, 'raw_input_stream', None)
+        if raw_input is None:
+            raw_input = getattr(experience, 'raw_sensory_input', None)
+        if raw_input is not None:
             # Calculate variance from neutral baseline
             neutral_baseline = 0.5
-            variance_from_neutral = torch.mean(torch.abs(experience.raw_sensory_input[:-1] - neutral_baseline))
+            variance_from_neutral = torch.mean(torch.abs(raw_input[:-1] - neutral_baseline))
             # Consider it meaningful if variance > 0.05 (allowing for some noise)
             has_meaningful_input = variance_from_neutral > 0.05
         

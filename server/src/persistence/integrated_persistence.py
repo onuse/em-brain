@@ -45,8 +45,8 @@ class IntegratedPersistence:
         self.save_interval_cycles = save_interval_cycles
         self.auto_save = auto_save
         
-        # Create adapter
-        self.adapter = DynamicPersistenceAdapter()
+        # Create adapter with compression disabled until it's implemented
+        self.adapter = DynamicPersistenceAdapter(compression_enabled=False)
         
         # State tracking
         self.last_save_cycle = 0
