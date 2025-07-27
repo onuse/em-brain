@@ -25,7 +25,10 @@ brain/
 │   │   │
 │   │   ├── brains/field/       # Field-native brain implementation
 │   │   │   ├── unified_field_brain.py  # Adaptive field intelligence
+│   │   │   ├── dynamic_unified_brain_full.py # Full-featured dynamic brain
 │   │   │   ├── memory.py               # Field topology memory
+│   │   │   ├── spontaneous_dynamics.py # Autonomous field activity
+│   │   │   ├── blended_reality.py     # Fantasy/reality blending
 │   │   │   └── dynamics/               # Field dynamics systems
 │   │   │       ├── constraint_field_dynamics.py # 4D constraint discovery (legacy)
 │   │   │       ├── constraint_field_nd.py      # N-dimensional constraints
@@ -190,6 +193,49 @@ field.modulate_exploration_based_on_learning(improvement_rate)
 - Intrinsic motivation from prediction accuracy
 - Motivation emerges from field topology
 
+### Spontaneous Dynamics and Blended Reality
+
+#### Spontaneous Field Activity
+```python
+# Field maintains autonomous activity without sensory input
+spontaneous = SpontaneousDynamics(field_shape)
+spontaneous_activity = spontaneous.generate_spontaneous_activity(
+    field, sensory_gating=confidence
+)
+```
+- Traveling waves create coherent internal patterns
+- Local recurrence maintains persistent activity
+- Homeostatic drive balances field energy
+- Critical dynamics at edge of chaos
+- Generates motor commands autonomously
+
+#### Blended Reality System
+```python
+# Seamless blending of spontaneous dynamics (fantasy) with sensory input (reality)
+blended_reality = BlendedReality()
+spontaneous_weight = blended_reality.calculate_spontaneous_weight()
+imprint_strength = blended_reality.calculate_imprint_strength(
+    base_intensity, has_sensory_input
+)
+```
+- **High confidence** → More fantasy (83% spontaneous, 17% sensory)
+- **Low confidence** → More reality (26% spontaneous, 74% sensory)
+- **Dream mode** → Pure fantasy (95% spontaneous after 100 idle cycles)
+- Smooth transitions with temporal confidence smoothing
+- Variable sensory imprint strength based on confidence
+
+#### Cognitive Modes
+```python
+# Brain autonomously adjusts processing based on prediction confidence
+autopilot_state = cognitive_autopilot.update_cognitive_state(
+    prediction_confidence, prediction_error, brain_state
+)
+```
+- **AUTOPILOT** (>90% confidence): 20% sensor attention, fantasy-dominated
+- **FOCUSED** (70-90% confidence): 50% sensor attention, balanced blend
+- **DEEP_THINK** (<70% confidence): 90% sensor attention, reality-focused
+- Sensors suppressed but never ignored (max 80% suppression)
+
 #### Prediction-Based Confidence
 ```python
 # Field evolution serves as prediction mechanism
@@ -298,6 +344,9 @@ Intelligence Metrics:
 - Prediction: Field evolution as future state anticipation
 - Value: Reward-modulated field topology
 - Curiosity: Seeking prediction errors for learning
+- Imagination: Spontaneous dynamics create internal simulations
+- Dreaming: Pure fantasy states during extended idle
+- Anticipation: High-confidence predictions drive pre-emptive actions
 
 ### Architectural Simplicity
 - Single UnifiedFieldBrain implementation
