@@ -1,4 +1,5 @@
 *.gz
+*.png
 *_meta.json
 *cache*/
 *.py[cod]

@@ -25,7 +25,7 @@ from src.core.brain_service import BrainService
 from src.core.adapters import AdapterFactory
 from src.core.connection_handler import ConnectionHandler
 from src.core.dynamic_brain_factory import DynamicBrainFactory
-from src.core.telemetry_client import TelemetryClient
+from src.core.direct_telemetry import DirectTelemetry
 from src.core.monitoring_server import DynamicMonitoringServer
 
 
@@ -107,7 +107,11 @@ class RigorousBehavioralTestFramework:
         )
         self.monitoring_server.start()
         
-        self.telemetry_client = TelemetryClient()
+        # Use direct telemetry instead of socket-based
+        self.telemetry_client = DirectTelemetry(
+            brain_service=self.brain_service,
+            connection_handler=self.connection_handler
+        )
         
         self.client_id = "rigorous_test_robot"
         self.session_id = None
@@ -119,7 +123,7 @@ class RigorousBehavioralTestFramework:
         capabilities = [1.0, float(sensory_dim), float(motor_dim), 0.0, 0.0]
         response = self.connection_handler.handle_handshake(self.client_id, capabilities)
         
-        self.session_id = self.telemetry_client.wait_for_session(max_wait=2.0)
+        self.session_id = self.telemetry_client.wait_for_session(max_wait=2.0, client_id=self.client_id)
         
         print(f"🤖 Robot: {sensory_dim}D sensors, {motor_dim}D motors")
         return response
