@@ -26,6 +26,8 @@ from src.core.brain_service import BrainService
 from src.core.adapters import AdapterFactory
 from src.core.connection_handler import ConnectionHandler
 from src.core.dynamic_brain_factory import DynamicBrainFactory
+from src.core.telemetry_client import TelemetryClient
+from src.core.monitoring_server import DynamicMonitoringServer
 
 
 class IntelligenceMetric(Enum):
@@ -100,6 +102,18 @@ class DynamicBehavioralTestFramework:
         self.client_id = "test_behavioral_robot"
         self.session = None
         
+        # Start monitoring server for telemetry
+        self.monitoring_server = DynamicMonitoringServer(
+            brain_service=self.brain_service,
+            connection_handler=self.connection_handler,
+            host='localhost',
+            port=9998
+        )
+        self.monitoring_server.start()
+        
+        # Telemetry client for monitoring brain internals
+        self.telemetry_client = TelemetryClient()
+        
         print(f"✅ Framework initialized with {'simple' if use_simple_brain else 'unified'} brain")
     
     def setup_virtual_robot(self, sensory_dim: int = 16, motor_dim: int = 4):
@@ -124,8 +138,15 @@ class DynamicBehavioralTestFramework:
         return response
     
     def test_prediction_learning(self, cycles: int = 50) -> float:
-        """Test prediction learning capability"""
-        prediction_errors = []
+        """Test prediction learning capability using telemetry"""
+        
+        # Get session ID from telemetry
+        session_id = self.telemetry_client.wait_for_session(max_wait=2.0)
+        if not session_id:
+            print("⚠️  No session available for telemetry")
+            return 0.0
+        
+        confidence_values = []
         
         # Create predictable sine wave pattern
         for i in range(cycles):
@@ -143,24 +164,41 @@ class DynamicBehavioralTestFramework:
                 self.client_id, sensory_input
             )
             
-            # Simple heuristic: if motor output follows a pattern, prediction is working
-            if i > cycles // 2:
-                # Check if motor output is becoming more consistent
-                if i > 0 and len(prediction_errors) > 0:
-                    variation = np.std(motor_output)
-                    prediction_errors.append(variation)
+            # Get telemetry snapshot
+            telemetry = self.telemetry_client.get_session_telemetry(session_id)
+            if telemetry:
+                confidence_values.append(telemetry.confidence)
         
-        # Score based on decreasing variation (learning the pattern)
-        if len(prediction_errors) > 2:
-            early_error = np.mean(prediction_errors[:5])
-            late_error = np.mean(prediction_errors[-5:])
-            improvement = max(0, (early_error - late_error) / (early_error + 0.001))
-            return min(1.0, improvement * 2)  # Scale up
+        # Score based on prediction confidence improvement
+        if len(confidence_values) >= 10:
+            early_confidence = np.mean(confidence_values[:5])
+            late_confidence = np.mean(confidence_values[-5:])
+            
+            # Check for improvement
+            improvement = late_confidence - early_confidence
+            
+            # Also check absolute confidence level
+            final_confidence = confidence_values[-1]
+            
+            # Score combines improvement and final confidence
+            improvement_score = max(0, min(1.0, improvement * 5))  # Scale improvement
+            confidence_score = max(0, min(1.0, (final_confidence - 0.5) * 2))  # Above 0.5 is good
+            
+            return (improvement_score + confidence_score) / 2
+        
         return 0.0
     
     def test_exploration_exploitation(self, cycles: int = 50) -> float:
-        """Test exploration vs exploitation balance"""
+        """Test exploration vs exploitation balance using telemetry"""
+        
+        # Get session ID from telemetry
+        session_id = self.telemetry_client.wait_for_session(max_wait=2.0)
+        if not session_id:
+            return 0.0
+        
         motor_outputs = []
+        cognitive_modes = []
+        energy_levels = []
         
         # Present three different stimulus types
         for i in range(cycles):
@@ -175,21 +213,35 @@ class DynamicBehavioralTestFramework:
                 self.client_id, sensory_input
             )
             motor_outputs.append(motor_output[:3])  # First 3 motors
+            
+            # Get telemetry
+            telemetry = self.telemetry_client.get_session_telemetry(session_id)
+            if telemetry:
+                cognitive_modes.append(telemetry.mode)
+                energy_levels.append(telemetry.energy)
         
         # Measure behavioral diversity
         motor_outputs = np.array(motor_outputs)
-        diversity = np.mean(np.std(motor_outputs, axis=0))
+        motor_diversity = np.mean(np.std(motor_outputs, axis=0))
         
-        # Also check for switching behavior (not stuck)
-        switches = 0
-        for i in range(1, len(motor_outputs)):
-            if np.linalg.norm(motor_outputs[i] - motor_outputs[i-1]) > 0.1:
-                switches += 1
+        # Check cognitive mode switching (exploration indicator)
+        mode_switches = sum(1 for i in range(1, len(cognitive_modes)) 
+                           if cognitive_modes[i] != cognitive_modes[i-1])
+        mode_switch_rate = mode_switches / max(1, len(cognitive_modes) - 1)
         
-        switch_rate = switches / len(motor_outputs)
+        # Check energy variation (activity indicator)
+        energy_variation = np.std(energy_levels) if energy_levels else 0
         
-        # Combined score
-        return min(1.0, diversity * 5 + switch_rate)
+        # Combined score considers:
+        # 1. Motor diversity (behavioral variety)
+        # 2. Cognitive mode switching (mental exploration)
+        # 3. Energy variation (system activity)
+        
+        motor_score = min(1.0, motor_diversity * 10)
+        mode_score = min(1.0, mode_switch_rate * 3)
+        energy_score = min(1.0, energy_variation * 100)
+        
+        return (motor_score + mode_score + energy_score) / 3
     
     def test_computational_efficiency(self, cycles: int = 20) -> float:
         """Test computational efficiency"""
@@ -282,6 +334,10 @@ class DynamicBehavioralTestFramework:
         """Clean shutdown"""
         if self.connection_handler and self.client_id:
             self.connection_handler.handle_disconnect(self.client_id)
+        if self.telemetry_client:
+            self.telemetry_client.disconnect()
+        if self.monitoring_server:
+            self.monitoring_server.stop()
         print("\n✅ Test framework cleanup complete")
 
 

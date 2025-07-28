@@ -68,6 +68,18 @@ class DynamicBrainWrapper(IBrain):
         # Fall back to total_dimensions (the actual internal dimensions)
         return self.brain.total_dimensions
     
+    def get_brain_state(self) -> Dict[str, Any]:
+        """Get brain state - delegate to wrapped brain"""
+        if hasattr(self.brain, 'get_brain_state'):
+            return self.brain.get_brain_state()
+        return {}
+    
+    def get_field_statistics(self) -> Dict[str, Any]:
+        """Get field statistics - delegate to wrapped brain"""
+        if hasattr(self.brain, 'get_field_statistics'):
+            return self.brain.get_field_statistics()
+        return {}
+    
     def get_state(self) -> Dict[str, Any]:
         """Get brain state for persistence."""
         return {

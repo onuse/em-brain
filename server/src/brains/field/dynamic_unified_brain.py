@@ -437,6 +437,7 @@ class DynamicUnifiedFieldBrain:
         # Update tracking
         self.brain_cycles += 1
         cycle_time = time.perf_counter() - cycle_start
+        self._last_cycle_time = cycle_time
         
         # Create comprehensive brain state
         brain_state = {
@@ -897,6 +898,31 @@ class DynamicUnifiedFieldBrain:
                 ) / 2
         
         return predicted
+    
+    def get_brain_state(self) -> Dict[str, Any]:
+        """Get current brain state for telemetry"""
+        return {
+            'cycle': self.brain_cycles,
+            'cognitive_mode': self.cognitive_autopilot.current_mode.value if self.cognitive_autopilot else 'unknown',
+            'active_constraints': len(self.constraint_field.active_constraints) if self.constraint_field else 0,
+            'cycle_time_ms': getattr(self, '_last_cycle_time', 0) * 1000
+        }
+    
+    def get_field_statistics(self) -> Dict[str, Any]:
+        """Get field statistics for telemetry"""
+        field_energy = float(torch.mean(torch.abs(self.unified_field)))
+        max_activation = float(torch.max(torch.abs(self.unified_field)))
+        
+        # Calculate stability index
+        field_std = float(torch.std(self.unified_field))
+        stability_index = 1.0 / (1.0 + field_std) if field_std > 0 else 1.0
+        
+        return {
+            'field_energy': field_energy,
+            'max_activation': max_activation,
+            'stability_index': stability_index,
+            'total_activation': float(torch.sum(torch.abs(self.unified_field)))
+        }
     
     def _trigger_maintenance(self):
         """

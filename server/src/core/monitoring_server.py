@@ -146,7 +146,9 @@ class DynamicMonitoringServer:
                     'session_info',
                     'connection_stats',
                     'active_brains',
-                    'performance_metrics'
+                    'performance_metrics',
+                    'telemetry',
+                    'telemetry <session_id>'
                 ]
             }
             client_socket.send((json.dumps(welcome) + "\n").encode('utf-8'))
@@ -243,6 +245,34 @@ class DynamicMonitoringServer:
                     'data': stats
                 }
             
+            elif request_lower == "telemetry":
+                # Get telemetry for all sessions
+                telemetry = self.brain_service.get_all_telemetry()
+                return {
+                    'status': 'success',
+                    'request': request,
+                    'timestamp': time.time(),
+                    'data': telemetry
+                }
+            
+            elif request_lower.startswith("telemetry "):
+                # Get telemetry for specific session
+                session_id = request[10:].strip()
+                telemetry = self.brain_service.get_detailed_telemetry(session_id)
+                if telemetry:
+                    return {
+                        'status': 'success',
+                        'request': request,
+                        'timestamp': time.time(),
+                        'data': telemetry
+                    }
+                else:
+                    return {
+                        'status': 'error',
+                        'request': request,
+                        'message': f'Session {session_id} not found or has no telemetry'
+                    }
+            
             elif request_lower == "active_brains":
                 # Get active brain information
                 active_brains = self.brain_service.brain_pool.get_active_brains()
@@ -301,7 +331,9 @@ class DynamicMonitoringServer:
                         'session_info',
                         'connection_stats',
                         'active_brains',
-                        'performance_metrics'
+                        'performance_metrics',
+                        'telemetry',
+                        'telemetry <session_id>'
                     ]
                 }
         

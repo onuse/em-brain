@@ -17,6 +17,7 @@ from .interfaces import (
 from ..persistence.integrated_persistence import (
     IntegratedPersistence, initialize_persistence, get_persistence
 )
+from .brain_telemetry import BrainTelemetryAdapter, SessionTelemetryWrapper
 
 
 class BrainSession(IBrainSession):
@@ -49,6 +50,9 @@ class BrainSession(IBrainSession):
         # Load any existing state on session start
         if self.persistence:
             self.persistence.recover_brain_state(self.brain)
+        
+        # Create telemetry adapter
+        self.telemetry_adapter = BrainTelemetryAdapter(self.brain)
     
     def process_sensory_input(self, raw_sensory: List[float]) -> List[float]:
         """Process sensory input and return motor commands."""
@@ -309,3 +313,62 @@ class BrainService(IBrainService):
             'brain_pool_stats': brain_pool_stats,
             'persistence_stats': persistence_stats
         }
+    
+    def get_all_sessions(self) -> Dict[str, Dict[str, Any]]:
+        """Get statistics for all active sessions."""
+        sessions_stats = {}
+        
+        for session_id, session in self.sessions.items():
+            avg_cycle_time = (session.total_processing_time / session.cycles_processed 
+                             if session.cycles_processed > 0 else 0.0)
+            uptime = time.time() - session.created_at
+            
+            sessions_stats[session_id] = {
+                'robot_type': session.robot.robot_type,
+                'robot_id': session.robot.robot_id,
+                'brain_dimensions': session.brain.get_field_dimensions(),
+                'cycles_processed': session.cycles_processed,
+                'total_experiences': session.total_experiences,
+                'average_cycle_time_ms': avg_cycle_time * 1000,
+                'uptime_seconds': uptime,
+                'created_at': session.created_at
+            }
+        
+        return sessions_stats
+    
+    def get_session_telemetry(self, session_id: str) -> Optional[Dict[str, Any]]:
+        """Get telemetry for a specific session"""
+        session = self.sessions.get(session_id)
+        if session and hasattr(session, 'telemetry_adapter'):
+            return session.telemetry_adapter.get_telemetry_summary()
+        return None
+    
+    def get_all_telemetry(self) -> Dict[str, Dict[str, Any]]:
+        """Get telemetry for all active sessions"""
+        telemetry = {}
+        for session_id, session in self.sessions.items():
+            if hasattr(session, 'telemetry_adapter'):
+                telemetry[session_id] = session.telemetry_adapter.get_telemetry_summary()
+        return telemetry
+    
+    def get_detailed_telemetry(self, session_id: str) -> Optional[Dict[str, Any]]:
+        """Get detailed telemetry data for a session"""
+        session = self.sessions.get(session_id)
+        if session and hasattr(session, 'telemetry_adapter'):
+            telemetry = session.telemetry_adapter.get_telemetry()
+            return {
+                'brain_cycles': telemetry.brain_cycles,
+                'field_energy': telemetry.field_energy,
+                'prediction_confidence': telemetry.prediction_confidence,
+                'cognitive_mode': telemetry.cognitive_mode,
+                'memory_regions': telemetry.memory_regions,
+                'experiences': telemetry.experiences_stored,
+                'constraints': telemetry.active_constraints,
+                'phase': telemetry.phase_state,
+                'blend_ratio': telemetry.blended_reality_ratio,
+                'prediction_error': telemetry.prediction_error,
+                'prediction_history': telemetry.prediction_history,
+                'improvement_rate': telemetry.improvement_rate,
+                'timestamp': telemetry.timestamp
+            }
+        return None
