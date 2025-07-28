@@ -14,12 +14,12 @@ from typing import Dict, List, Tuple, Any
 from enum import Enum
 
 # Add server source to path
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'src'))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
 
 try:
-    from brain_factory import BrainFactory
+    from src.core.dynamic_brain_factory import DynamicBrainFactory
 except ImportError:
-    print("❌ Failed to import BrainFactory. Make sure you're running from the server directory.")
+    print("❌ Failed to import DynamicBrainFactory. Make sure you're running from the server directory.")
     sys.exit(1)
 
 
@@ -45,16 +45,24 @@ class SingleCycleBehavioralTest:
         self.test_cycles = 1    # Single test cycle
         
         # Initialize brain factory
-        print("🧠 Initializing Brain Factory...")
-        self.factory = BrainFactory(
-            config={'brain': self.brain_config},
-            enable_logging=False,
-            quiet_mode=False  # Show progress for debugging
-        )
+        print("🧠 Initializing Dynamic Brain Factory...")
+        factory_config = self.brain_config.copy()
+        factory_config['use_dynamic_brain'] = True
+        factory_config['quiet_mode'] = False  # Show progress for debugging
+        factory_config['pattern_attention'] = False  # Disable for performance testing
         
-        # Get initial brain stats
-        self.initial_stats = self.factory.get_brain_stats()
-        print(f"✅ Brain initialized with {self.initial_stats.get('field_brain', {}).get('field_dimensions', 0)}D field")
+        self.factory = DynamicBrainFactory(factory_config)
+        
+        # Create brain wrapper
+        self.brain_wrapper = self.factory.create(
+            field_dimensions=None,
+            spatial_resolution=brain_config.get('field_spatial_resolution', 4),
+            sensory_dim=16,  # PiCar-X standard (from profile)
+            motor_dim=5      # PiCar-X has 5 motor channels
+        )
+        self.brain = self.brain_wrapper.brain
+        
+        print(f"✅ Brain initialized with {len(self.brain.field_dimensions)}D field")
         
     def run_single_cycle_test(self) -> Dict[str, Any]:
         """Run a single cycle through the brain to verify basic functionality"""
@@ -65,8 +73,9 @@ class SingleCycleBehavioralTest:
         warmup_times = []
         for i in range(self.warmup_cycles):
             start_time = time.time()
+            # PiCar-X has 16 sensors
             sensory_input = [np.sin(i * 0.1), np.cos(i * 0.1), 0.0] + [0.1] * 13
-            action, state = self.factory.process_sensory_input(sensory_input)
+            action, state = self.brain.process_robot_cycle(sensory_input)
             cycle_time = (time.time() - start_time) * 1000
             warmup_times.append(cycle_time)
         
@@ -75,14 +84,14 @@ class SingleCycleBehavioralTest:
         
         # Single test cycle with detailed metrics
         print("\n🎯 Running test cycle...")
-        test_input = [1.0, 0.5, 0.0] + [0.2] * 13  # Strong sensory signal
+        test_input = [1.0, 0.5, 0.0] + [0.2] * 13  # Strong sensory signal (16 total for PiCar-X)
         
         start_time = time.time()
-        action, state = self.factory.process_sensory_input(test_input)
+        action, state = self.brain.process_robot_cycle(test_input)
         cycle_time = (time.time() - start_time) * 1000
         
-        # Get post-cycle stats
-        post_stats = self.factory.get_brain_stats()
+        # Get brain state from return value
+        post_stats = state
         
         # Analyze results
         results = {
@@ -90,10 +99,10 @@ class SingleCycleBehavioralTest:
             'action': action[:4],  # First 4 motor outputs
             'confidence': state.get('last_action_confidence', 0),
             'brain_cycles': state.get('brain_cycles', 0),
-            'topology_regions': post_stats.get('field_brain', {}).get('topology', {}).get('active_regions', 0),
-            'constraints_discovered': post_stats.get('field_brain', {}).get('constraints', {}).get('constraints_discovered', 0),
-            'gradient_cache_hits': post_stats.get('field_brain', {}).get('gradient_cache', {}).get('cache_hits', 0),
-            'field_evolution_cycles': post_stats.get('field_brain', {}).get('field_evolution_cycles', 0)
+            'topology_regions': state.get('topology_regions_count', 0),
+            'field_energy': state.get('field_energy', 0),
+            'prediction_confidence': state.get('prediction_confidence', 0),
+            'cognitive_mode': state.get('cognitive_mode', 'unknown')
         }
         
         # Print results
@@ -103,7 +112,9 @@ class SingleCycleBehavioralTest:
         print(f"   Confidence: {results['confidence']:.4f}")
         print(f"   Brain cycles: {results['brain_cycles']}")
         print(f"   Topology regions: {results['topology_regions']}")
-        print(f"   Constraints: {results['constraints_discovered']}")
+        print(f"   Field energy: {results['field_energy']:.6f}")
+        print(f"   Prediction confidence: {results['prediction_confidence']:.4f}")
+        print(f"   Cognitive mode: {results['cognitive_mode']}")
         
         # Determine pass/fail
         if cycle_time < 150:  # Biological constraint
@@ -123,12 +134,12 @@ class SingleCycleBehavioralTest:
         print("\n🎭 Quick Behavioral Check...")
         
         # Test with two very different stimuli
-        stimulus_a = [1.0, 0.0, 0.0] + [0.0] * 13  # Strong X signal
-        stimulus_b = [0.0, 1.0, 0.0] + [0.0] * 13  # Strong Y signal
+        stimulus_a = [1.0, 0.0, 0.0] + [0.0] * 13  # Strong X signal (16 total)
+        stimulus_b = [0.0, 1.0, 0.0] + [0.0] * 13  # Strong Y signal (16 total)
         
         # Get responses
-        action_a, state_a = self.factory.process_sensory_input(stimulus_a)
-        action_b, state_b = self.factory.process_sensory_input(stimulus_b)
+        action_a, state_a = self.brain.process_robot_cycle(stimulus_a)
+        action_b, state_b = self.brain.process_robot_cycle(stimulus_b)
         
         # Calculate difference
         action_diff = np.linalg.norm(np.array(action_a[:4]) - np.array(action_b[:4]))
@@ -152,10 +163,9 @@ class SingleCycleBehavioralTest:
         return results
     
     def cleanup(self):
-        """Clean shutdown of brain factory"""
-        print("\n🔌 Shutting down...")
-        self.factory.shutdown()
-        print("✅ Shutdown complete")
+        """Clean shutdown"""
+        print("\n🔌 Test complete")
+        print("✅ Cleanup complete")
 
 
 def main():

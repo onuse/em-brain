@@ -48,6 +48,7 @@ class BrainConfig:
         default_factory=lambda: StabilityConstants.MAX_ACTIVATION_VALUE
     )  # 10.0 = maximum activity
     
+    
     # Prediction and confidence
     default_prediction_confidence: float = field(
         default_factory=lambda: PredictionErrorConstants.DEFAULT_CONFIDENCE * 5
@@ -128,6 +129,9 @@ class BrainConfig:
     max_pattern_length: int = field(
         default_factory=lambda: CognitiveCapacityConstants.MAX_PATTERN_LENGTH
     )
+    
+    # Pattern-based systems (coordinate-free mainline)
+    pattern_attention: bool = True  # Use pattern-based attention
 
 
 @dataclass 

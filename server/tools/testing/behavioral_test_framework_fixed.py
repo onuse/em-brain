@@ -68,12 +68,12 @@ class BehavioralTestFramework:
         # Create factory
         factory = DynamicBrainFactory(default_config)
         
-        # Create brain with default PiCar-X profile
+        # Create brain with correct PiCar-X profile (from picarx_profile.json)
         brain_wrapper = factory.create(
             field_dimensions=None,
             spatial_resolution=4,
-            sensory_dim=24,
-            motor_dim=4
+            sensory_dim=16,
+            motor_dim=5
         )
         
         return brain_wrapper
@@ -127,17 +127,19 @@ class BehavioralTestFramework:
         
         for i in range(cycles):
             # Varied sensory input to create gradients
-            sensory_input = [0.5 + 0.1 * np.sin(i * 0.1 + j * 0.2) for j in range(25)]
+            # PiCar-X has 16 sensory channels
+            sensory_input = [0.5 + 0.1 * np.sin(i * 0.1 + j * 0.2) for j in range(16)]
             
             # Give rewards for certain motor patterns
             if i > 0 and len(motor_outputs) > 0:
                 last_motor = motor_outputs[-1]
                 # Reward movement in positive X direction
                 if last_motor[0] > 0.1:
-                    sensory_input[24] = 0.8  # High reward
+                    # Use one of the sensory channels as reward signal
+                    sensory_input[15] = 0.8  # High reward (use last channel)
                     rewards_given.append(1)
                 else:
-                    sensory_input[24] = 0.0  # No reward
+                    sensory_input[15] = 0.0  # No reward
                     rewards_given.append(0)
             
             # Process cycle
@@ -154,6 +156,16 @@ class BehavioralTestFramework:
             
             # Good balance: some exploration but also learns to get rewards
             score = min(1.0, motor_variance * 10) * 0.5 + reward_rate * 0.5
+            
+            # DEBUG: Print detailed stats
+            if True:  # Always show debug
+                print(f"\n[DEBUG] Exploration/Exploitation Details:")
+                print(f"  Motor outputs (first 10): {[m[0] for m in motor_outputs[:10]]}")
+                print(f"  Motor variance: {motor_variance:.6f}")
+                print(f"  Rewards given: {sum(rewards_given)}/{len(rewards_given)}")
+                print(f"  Reward rate: {reward_rate:.3f}")
+                print(f"  Exploration component: {min(1.0, motor_variance * 10):.3f}")
+                print(f"  Final score: {score:.3f}")
         else:
             score = 0.5
             

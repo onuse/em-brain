@@ -31,10 +31,12 @@ from ...config.enhanced_gpu_memory_manager import get_device_for_tensor
 # IntegratedAttention removed - using PatternBasedAttention only
 from .enhanced_dynamics import EnhancedFieldDynamics, PhaseTransitionConfig, AttractorConfig
 from .brain_field_adapter import BrainFieldAdapter
-from .emergent_spatial_dynamics import EmergentSpatialDynamics, FieldMotorCoupling
-from .emergent_robot_interface import EmergentRobotInterface
+# Emergent spatial removed - pattern-based motor provides coordinate-free movement
 from .pattern_based_motor import PatternBasedMotorGenerator
 from .pattern_based_attention import PatternBasedAttention
+from .pattern_based_attention_fast import FastPatternBasedAttention
+from .motor_cortex import MotorCortex
+from .field_constants import TOPOLOGY_REGIONS_MAX
 
 
 class DynamicUnifiedFieldBrain:
@@ -56,8 +58,6 @@ class DynamicUnifiedFieldBrain:
                  device: Optional[torch.device] = None,
                  quiet_mode: bool = False,
                  enable_attention: Optional[bool] = None,
-                 enable_emergent_navigation: Optional[bool] = None,
-                 pattern_motor: Optional[bool] = None,
                  pattern_attention: Optional[bool] = None):
         """
         Initialize brain with dynamic dimensions and full feature set.
@@ -91,8 +91,9 @@ class DynamicUnifiedFieldBrain:
             self.device = device
             
         # Create unified field with dynamic tensor shape
-        self.unified_field = torch.zeros(tensor_shape, dtype=torch.float32, device=self.device)
-        self.unified_field.fill_(brain_config.activation_threshold)  # Baseline activation from cognitive constants
+        # Initialize with moderate random values for pattern motor to work with
+        # Higher initial energy enables better pattern formation and motor generation
+        self.unified_field = torch.randn(tensor_shape, dtype=torch.float32, device=self.device) * 0.3 + 0.1
         
 
         
@@ -106,7 +107,6 @@ class DynamicUnifiedFieldBrain:
         # Field evolution parameters from cognitive constants
         self.field_decay_rate = brain_config.field_decay_rate
         self.field_diffusion_rate = brain_config.field_diffusion_rate
-        self.gradient_following_strength = 2.0  # TODO: Add to cognitive constants
         self.topology_stability_threshold = brain_config.topology_stability_threshold
         self.field_energy_dissipation_rate = brain_config.field_energy_dissipation_rate
         
@@ -134,6 +134,9 @@ class DynamicUnifiedFieldBrain:
         self.field_evolution_cycles = 0
         self.topology_discoveries = 0
         self.gradient_actions = 0
+        
+        # Developmental confidence (naive exploration)
+        self.enable_developmental_confidence = True
         
         # Position tracking
         self._last_imprint_indices = None
@@ -192,14 +195,14 @@ class DynamicUnifiedFieldBrain:
             self.pattern_attention_enabled = self.cognitive_config.brain_config.__dict__.get('pattern_attention', False)
         
         if self.pattern_attention_enabled:
-            self.pattern_attention = PatternBasedAttention(
+            self.pattern_attention = FastPatternBasedAttention(
                 field_shape=self.unified_field.shape,
                 attention_capacity=5,  # Limited attention slots
                 device=self.device,
                 quiet_mode=quiet_mode
             )
             if not quiet_mode:
-                print(f"   Pattern-based attention: ENABLED")
+                print(f"   Pattern-based attention: ENABLED (fast version)")
         
         # Initialize enhanced dynamics system
         self.enhanced_dynamics_enabled = self.cognitive_config.brain_config.__dict__.get('enhanced_dynamics', True)
@@ -231,54 +234,28 @@ class DynamicUnifiedFieldBrain:
                 quiet_mode=quiet_mode
             )
         
-        # Initialize emergent navigation system
-        # Use parameter if provided, otherwise check config, default to False
-        if enable_emergent_navigation is not None:
-            self.emergent_navigation_enabled = enable_emergent_navigation
-        else:
-            self.emergent_navigation_enabled = self.cognitive_config.brain_config.__dict__.get('emergent_navigation', False)
+        # Emergent navigation removed - pattern-based motor provides coordinate-free movement
+        self.emergent_navigation_enabled = False
         
         # Initialize pattern-based motor generation
-        # Use parameter if provided, otherwise check config, default to False
-        if pattern_motor is not None:
-            self.pattern_motor_enabled = pattern_motor
-        else:
-            self.pattern_motor_enabled = self.cognitive_config.brain_config.__dict__.get('pattern_motor', False)
-        if self.pattern_motor_enabled:
-            self.pattern_motor_generator = PatternBasedMotorGenerator(
-                field_shape=self.unified_field.shape,
-                motor_dim=self.expected_motor_dim or 4,
-                device=self.device,
-                quiet_mode=quiet_mode
-            )
-            if not quiet_mode:
-                print(f"   Pattern-based motor: ENABLED")
+        # Always use pattern-based motor (coordinate-free)
+        self.pattern_motor_generator = PatternBasedMotorGenerator(
+            field_shape=self.unified_field.shape,
+            motor_dim=self.expected_motor_dim or 4,
+            device=self.device,
+            quiet_mode=quiet_mode
+        )
+        if not quiet_mode:
+            print(f"   Pattern-based motor: ENABLED (coordinate-free)")
         
-        if self.emergent_navigation_enabled:
-            # Initialize spatial dynamics
-            self.emergent_spatial = EmergentSpatialDynamics(
-                field_shape=self.unified_field.shape,
-                device=self.device,
-                quiet_mode=quiet_mode
-            )
-            
-            # Initialize robot interface for pattern-based sensing
-            self.emergent_interface = EmergentRobotInterface(
-                sensory_dim=self.expected_sensory_dim or 24,
-                motor_dim=self.expected_motor_dim or 4,
-                field_dimensions=self._dimension_definitions,  # Use actual field dimension objects
-                device=self.device,
-                quiet_mode=quiet_mode
-            )
-            
-            # Configure motor coupling
-            motor_coupling = FieldMotorCoupling(
-                oscillatory_to_forward=1.0,
-                flow_to_rotation=1.0,
-                energy_to_speed=brain_config.optimal_prediction_error,  # 0.3
-                tension_to_urgency=2.0
-            )
-            self.emergent_spatial.motor_coupling = motor_coupling
+        # Motor cortex for intention-to-action translation
+        self.motor_cortex = MotorCortex(
+            motor_dim=self.expected_motor_dim or 4,
+            device=self.device,
+            quiet_mode=quiet_mode
+        )
+        
+        # Emergent navigation removed - using pattern-based motor instead
         
         if not quiet_mode:
             print(f"🧠 Dynamic Unified Field Brain initialized (Full Features)")
@@ -289,9 +266,57 @@ class DynamicUnifiedFieldBrain:
             print(f"   Spontaneous dynamics: ENABLED")
             print(f"   Blended reality: ENABLED")
             print(f"   Integrated attention: {'ENABLED' if self.attention_enabled else 'DISABLED'}")
-            print(f"   Enhanced dynamics: {'ENABLED' if self.enhanced_dynamics_enabled else 'DISABLED'}")
-            print(f"   Emergent navigation: {'ENABLED' if self.emergent_navigation_enabled else 'DISABLED'}")
+            print(f"   Enhanced dynamics: {'ENABLED' if self.enhanced_dynamics_enabled else 'DISABLED'}")            # Emergent navigation removed
             self._print_dimension_summary()
+    
+    def update_motor_dimensions(self, motor_dim: int):
+        """Update motor dimensions after initialization."""
+        # Always update to ensure motor generators match
+        self.expected_motor_dim = motor_dim
+        
+        # Recreate motor generators with correct dimensions
+        self.pattern_motor_generator = PatternBasedMotorGenerator(
+            field_shape=self.unified_field.shape,
+            motor_dim=motor_dim,
+            device=self.device,
+            quiet_mode=True
+        )
+        
+        self.motor_cortex = MotorCortex(
+            motor_dim=motor_dim,
+            device=self.device,
+            activation_threshold=0.1,
+            confidence_threshold=0.05,
+            max_amplification=3.0,
+            quiet_mode=True
+        )
+
+    @property
+    def developmental_confidence(self) -> float:
+        """
+        Calculate developmental confidence factor (0.0 to 1.0).
+        
+        This implements a biologically-inspired confidence boost for naive brains,
+        similar to how young animals exhibit fearless exploration before experience
+        teaches caution. This is NOT a hack but a principled approach to the
+        bootstrap problem: how does a brain with no experience begin learning?
+        
+        In nature, evolution provides innate behaviors and reflexes. Here, we
+        provide elevated baseline confidence that naturally diminishes as the
+        brain accumulates memories and learns from experience.
+        
+        Returns:
+            float: Confidence boost factor (1.0 = maximum naive confidence, 0.0 = experienced)
+        """
+        if not self.enable_developmental_confidence:
+            return 0.0
+            
+        # Memory saturation: how "full" is our long-term memory
+        memory_saturation = min(1.0, len(self.topology_regions) / TOPOLOGY_REGIONS_MAX)
+        
+        # Developmental confidence is inverse of memory saturation
+        # Empty brain = high confidence, Full brain = no boost
+        return 1.0 - memory_saturation
     
     def _calculate_memory_usage(self) -> float:
         """Calculate field memory usage in MB."""
@@ -319,24 +344,40 @@ class DynamicUnifiedFieldBrain:
         cycle_start = time.perf_counter()
         
         # 1. Convert robot sensory input to unified field experience
-        if self.emergent_navigation_enabled and hasattr(self, 'emergent_interface'):
-            # Use emergent interface for pattern-based field mapping
-            field_experience = self.emergent_interface.sensory_pattern_to_field_experience(sensory_input)
-        else:
-            # Use standard coordinate-based mapping
-            field_experience = self._robot_sensors_to_field_experience(sensory_input)
+        field_experience = self._robot_sensors_to_field_experience(sensory_input)
         
         # 2. Prediction and confidence tracking
         if self._predicted_field is not None:
             self._update_prediction_confidence(field_experience)
+            
+        # Apply developmental confidence boost
+        if self.enable_developmental_confidence:
+            dev_confidence = self.developmental_confidence
+            if dev_confidence > 0:
+                # Boost prediction confidence for naive brains
+                # Max boost of 0.3 when completely naive
+                confidence_boost = dev_confidence * 0.3
+                self._current_prediction_confidence = min(1.0, 
+                    self._current_prediction_confidence + confidence_boost)
         
         # Update cognitive autopilot state
         prediction_error = 0.0
         if hasattr(self, '_last_prediction_error'):
             prediction_error = self._last_prediction_error
         
+        # Adjust prediction confidence for cognitive autopilot
+        # Naive brains think they know more than they do
+        effective_prediction_confidence = self._current_prediction_confidence
+        if self.enable_developmental_confidence:
+            dev_confidence = self.developmental_confidence
+            # Inflate confidence for cognitive mode decision
+            # This makes naive brains more likely to use autopilot
+            confidence_inflation = dev_confidence * 0.2  # Max 20% inflation
+            effective_prediction_confidence = min(1.0, 
+                self._current_prediction_confidence + confidence_inflation)
+            
         autopilot_state = self.cognitive_autopilot.update_cognitive_state(
-            prediction_confidence=self._current_prediction_confidence,
+            prediction_confidence=effective_prediction_confidence,
             prediction_error=prediction_error,
             brain_state={'field_energy': float(torch.mean(torch.abs(self.unified_field)))}
         )
@@ -388,25 +429,34 @@ class DynamicUnifiedFieldBrain:
         if self.brain_cycles % 10 == 0:
             self._update_topology_regions()
         
-        # 10. Generate motor commands
-        if self.emergent_navigation_enabled and navigation_state:
-            # Use emergent navigation for motor generation
-            field_evolution = self.unified_field - self._predicted_field if self._predicted_field is not None else torch.zeros_like(self.unified_field)
-            action = self.emergent_spatial.compute_motor_emergence(
-                current_field=self.unified_field,
-                field_evolution=field_evolution
-            )
-        elif self.pattern_motor_enabled:
-            # Use pattern-based motor generation (coordinate-free)
-            action = self.pattern_motor_generator.generate_motor_action(
-                current_field=self.unified_field,
-                experience=field_experience
-            )
-            # Set timestamp
-            action.timestamp = time.time()
-        else:
-            # Use standard gradient-based motor generation
-            action = self._unified_field_to_robot_action(field_experience)
+        # 10. Generate motor commands (pattern-based, coordinate-free)
+        action = self.pattern_motor_generator.generate_motor_action(
+            current_field=self.unified_field,
+            experience=field_experience
+        )
+        # Set timestamp
+        action.timestamp = time.time()
+        
+        # Process through motor cortex for intention-to-action translation
+        pattern_stats = self.pattern_motor_generator.get_pattern_stats()
+        pattern_features = pattern_stats.get('pattern_features', {})
+        
+        # Apply developmental confidence to action confidence
+        effective_action_confidence = action.confidence
+        if self.enable_developmental_confidence:
+            dev_confidence = self.developmental_confidence
+            # Boost action confidence for naive brains
+            confidence_boost = dev_confidence * 0.4  # Stronger boost for actions
+            effective_action_confidence = min(1.0, action.confidence + confidence_boost)
+        
+        motor_commands, motor_feedback = self.motor_cortex.process_intentions(
+            intentions=action.output_stream,
+            confidence=effective_action_confidence,
+            pattern_features=pattern_features
+        )
+        
+        # Update action with motor cortex output
+        action.output_stream = motor_commands
         self.field_actions.append(action)
         
         # 11. Create prediction for next cycle
@@ -436,8 +486,10 @@ class DynamicUnifiedFieldBrain:
             'spontaneous_enabled': self.spontaneous_enabled,
             'cognitive_mode': self.cognitive_autopilot.current_mode.value,
             'cognitive_recommendations': self.cognitive_autopilot._generate_system_recommendations({}),
-            'pattern_motor_enabled': self.pattern_motor_enabled,
-            'pattern_attention_enabled': self.pattern_attention_enabled
+            'pattern_motor': True,  # Always pattern-based (coordinate-free)
+            'pattern_attention_enabled': self.pattern_attention_enabled,
+            'developmental_confidence': self.developmental_confidence,
+            'memory_saturation': len(self.topology_regions) / TOPOLOGY_REGIONS_MAX
         }
         
         # Add attention state if enabled
@@ -445,20 +497,10 @@ class DynamicUnifiedFieldBrain:
             brain_state['attention'] = self.pattern_attention.get_attention_metrics()
             brain_state['attention']['type'] = 'pattern-based'
         # IntegratedAttention state removed
+        # Emergent navigation removed
         
-        # Add navigation state if enabled
-        if self.emergent_navigation_enabled and navigation_state:
-            brain_state['navigation'] = {
-                'current_place': navigation_state.get('current_place'),
-                'known_places': navigation_state.get('known_places', 0),
-                'navigation_active': navigation_state.get('navigation_active', False),
-                'field_stability': navigation_state.get('field_stability', 0.0)
-            }
-            if hasattr(self, 'emergent_spatial'):
-                # Add spatial statistics but don't overwrite known_places count
-                spatial_stats = self.emergent_spatial.get_statistics()
-                brain_state['navigation']['places_discovered'] = spatial_stats.get('places_discovered', 0)
-                brain_state['navigation']['navigation_success_rate'] = spatial_stats.get('navigation_success_rate', 0.0)
+        # Add motor cortex statistics
+        brain_state['motor_cortex'] = self.motor_cortex.get_statistics()
         
         # Handle different action types
         if hasattr(action, 'output_stream'):
@@ -680,103 +722,13 @@ class DynamicUnifiedFieldBrain:
                 }
             
             # Prune old regions
-            if len(self.topology_regions) > 100:
+            if len(self.topology_regions) > TOPOLOGY_REGIONS_MAX:
                 # Remove oldest regions
                 sorted_regions = sorted(self.topology_regions.items(), 
                                       key=lambda x: x[1]['last_activation'])
                 for region_id, _ in sorted_regions[:20]:
                     del self.topology_regions[region_id]
     
-    def _unified_field_to_robot_action(self, experience: UnifiedFieldExperience) -> FieldNativeAction:
-        """
-        Generate robot actions from unified field gradients.
-        """
-        # Get current position in tensor space
-        tensor_indices = self._conceptual_to_tensor_indices(experience.field_coordinates)
-        
-        # Calculate gradients in spatial dimensions with local optimization
-        spatial_dims = list(range(min(3, len(self.tensor_shape))))
-        
-        # Use local region optimization for efficiency
-        region_center = tuple(tensor_indices[i] for i in range(min(3, len(tensor_indices))))
-        all_gradients = self.gradient_calculator.calculate_gradients(
-            field=self.unified_field,
-            dimensions_to_compute=spatial_dims,
-            local_region_only=True,
-            region_center=region_center,
-            region_size=3
-        )
-        
-        # Extract gradients at current position
-        gradients = []
-        gradient_strength = 0.0
-        
-        for dim in spatial_dims:
-            grad_key = f'gradient_dim_{dim}'
-            if grad_key in all_gradients and dim < len(tensor_indices):
-                # Get gradient tensor for this dimension
-                grad_tensor = all_gradients[grad_key]
-                
-                # Extract gradient value at current position
-                # Build index tuple matching the gradient tensor shape
-                idx_list = []
-                for i in range(len(grad_tensor.shape)):
-                    if i < len(tensor_indices):
-                        idx_list.append(min(tensor_indices[i], grad_tensor.shape[i] - 1))
-                    else:
-                        idx_list.append(0)
-                
-                try:
-                    grad_val = float(grad_tensor[tuple(idx_list)])
-                    gradients.append(grad_val)
-                    gradient_strength += abs(grad_val)
-                except:
-                    gradients.append(0.0)
-            else:
-                gradients.append(0.0)
-        
-        gradient_strength = gradient_strength / max(1, len(gradients))
-        
-        # Initialize motor commands
-        motor_dim = self.expected_motor_dim or 4
-        motor_commands = torch.zeros(motor_dim, device=self.device)
-        
-        # Map gradients to motor commands
-        # First 2 motors: X, Y movement
-        if len(gradients) >= 2:
-            motor_commands[0] = gradients[0] * self.gradient_following_strength
-            motor_commands[1] = gradients[1] * self.gradient_following_strength
-        
-        # Additional motors can be mapped from other field dynamics
-        if motor_dim > 2:
-            # Use field energy in different regions for additional motors
-            energy_dims = self.dimension_mapping['family_tensor_ranges'].get(
-                FieldDynamicsFamily.ENERGY, (0, 0)
-            )
-            if energy_dims[1] > energy_dims[0]:
-                energy_activation = torch.mean(
-                    self.unified_field[tensor_indices[energy_dims[0]:energy_dims[1]]]
-                )
-                motor_commands[2] = (energy_activation - self.cognitive_config.brain_config.default_prediction_confidence) * self.cognitive_config.brain_config.default_prediction_confidence
-        
-        # Apply motor smoothing
-        if self.previous_motor_commands is not None:
-            motor_commands = (self.motor_smoothing_factor * self.previous_motor_commands + 
-                            (1 - self.motor_smoothing_factor) * motor_commands)
-        self.previous_motor_commands = motor_commands.clone()
-        
-        # Create action
-        action = FieldNativeAction(
-            timestamp=time.time(),
-            output_stream=motor_commands,
-            field_gradients=torch.tensor(gradients, device=self.device),
-            confidence=self._current_prediction_confidence,
-            dynamics_family_contributions={}  # Empty for now
-        )
-        
-        self.gradient_actions += 1
-        
-        return action
     
     def _update_prediction_confidence(self, experience: UnifiedFieldExperience):
         """

@@ -79,6 +79,9 @@ class PatternBasedMotorGenerator:
         self.previous_motor = None
         self.smoothing_factor = 0.7
         
+        # Debug - store last pattern features
+        self._last_pattern_features = None
+        
         if not quiet_mode:
             print(f"🎮 Pattern-Based Motor Generator initialized")
             print(f"   Field shape: {field_shape}")
@@ -106,6 +109,7 @@ class PatternBasedMotorGenerator:
         
         # Analyze pattern characteristics
         pattern_features = self._analyze_pattern_features(evolution_patterns)
+        self._last_pattern_features = pattern_features  # Store for debugging
         
         # Map patterns to motor tendencies
         motor_tendencies = self._patterns_to_motor_tendencies(pattern_features)
@@ -345,7 +349,11 @@ class PatternBasedMotorGenerator:
             # Fourth motor: action/exploration
             commands[3] = np.clip(tendencies['urgency'] + tendencies['exploration'], 0.0, 1.0)
         
-        # Apply overall confidence scaling
+        if self.motor_dim >= 5:
+            # Fifth motor: camera pan (exploration-driven)
+            commands[4] = np.clip(tendencies['exploration'] * 2.0 - 1.0, -1.0, 1.0)
+        
+        # Apply confidence scaling (without artificial boost)
         commands = commands * (0.5 + 0.5 * tendencies['confidence'])
         
         return commands

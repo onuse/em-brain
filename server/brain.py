@@ -19,7 +19,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 # Import our new architecture components
 from src.core.interfaces import *
 from src.core.robot_registry import RobotRegistry
-from src.core.brain_pool import BrainPool
+from src.core.single_brain_pool import SingleBrainPool
 from src.core.brain_service import BrainService
 from src.core.adapters import AdapterFactory
 from src.core.connection_handler import ConnectionHandler
@@ -70,8 +70,8 @@ class DynamicBrainServer:
         # 2. Brain Factory - creates brains
         self.brain_factory = DynamicBrainFactory(config=self.config)
         
-        # 3. Brain Pool - manages brain instances
-        self.brain_pool = BrainPool(brain_factory=self.brain_factory)
+        # 3. Brain Pool - single brain locked to first brainstem dimensions
+        self.brain_pool = SingleBrainPool(brain_factory=self.brain_factory)
         
         # 4. Adapter Factory - creates sensory/motor adapters
         self.adapter_factory = AdapterFactory()

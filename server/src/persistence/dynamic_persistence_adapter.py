@@ -244,7 +244,7 @@ class DynamicPersistenceAdapter:
             if self.compression_enabled:
                 # Could implement compression here
                 result['unified_field_shape'] = state.unified_field.shape
-                result['unified_field_compressed'] = None  # TODO: Implement compression
+                result['unified_field_compressed'] = None  # Binary persistence handles compression
             else:
                 # Convert to nested lists for JSON
                 result['unified_field'] = state.unified_field.tolist()
@@ -270,7 +270,7 @@ class DynamicPersistenceAdapter:
         if 'unified_field' in data:
             state.unified_field = np.array(data['unified_field'])
         elif 'unified_field_compressed' in data:
-            # TODO: Implement decompression
+            # Binary persistence handles decompression
             pass
         
         return state

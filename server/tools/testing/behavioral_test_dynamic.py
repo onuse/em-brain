@@ -90,7 +90,8 @@ class DynamicBehavioralTestFramework:
         brain_config = {
             'quiet_mode': quiet_mode,
             'use_simple_brain': use_simple_brain,
-            'spatial_resolution': 4  # Keep low for fast tests
+            'spatial_resolution': 4,  # Keep low for fast tests
+            'pattern_attention': True  # Re-enable with fast implementation
         }
         self.brain_factory = DynamicBrainFactory(brain_config)
         self.brain_pool = BrainPool(self.brain_factory)

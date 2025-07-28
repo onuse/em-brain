@@ -168,14 +168,16 @@ class DynamicBrainFactory(IBrainFactory):
                 constraint_discovery_rate=self.config.get('constraint_discovery_rate', self.brain_config.constraint_discovery_rate),
                 quiet_mode=self.quiet_mode,
                 enable_attention=self.config.get('enable_attention', None),
-                enable_emergent_navigation=self.config.get('emergent_navigation', None),
-                pattern_motor=self.config.get('pattern_motor', None),
                 pattern_attention=self.config.get('pattern_attention', None)
             )
             
             # Set robot interface dimensions
             brain.expected_sensory_dim = sensory_dim
             brain.expected_motor_dim = motor_dim
+            
+            # Update motor generators with correct dimensions
+            if hasattr(brain, 'update_motor_dimensions'):
+                brain.update_motor_dimensions(motor_dim)
             
             # Apply blended reality if enabled
             if hasattr(brain, 'blended_reality_enabled') and brain.blended_reality_enabled:
