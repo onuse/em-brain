@@ -31,14 +31,10 @@ import queue
 
 # Import our field dynamics foundation
 try:
-    from .dynamics.constraint_field_nd import ConstraintFieldND, FieldConstraintND
-    from .dynamics.constraint_field_dynamics import FieldConstraintType
-    from .dynamics.temporal_field_dynamics import TemporalExperience, TemporalImprint
+    from .dynamics.constraint_field_nd import ConstraintFieldND, FieldConstraintND, FieldConstraintType
     from .optimized_gradients import create_optimized_gradient_calculator
 except ImportError:
-    from brains.field.dynamics.constraint_field_nd import ConstraintFieldND, FieldConstraintND
-    from brains.field.dynamics.constraint_field_dynamics import FieldConstraintType
-    from brains.field.dynamics.temporal_field_dynamics import TemporalExperience, TemporalImprint
+    from brains.field.dynamics.constraint_field_nd import ConstraintFieldND, FieldConstraintND, FieldConstraintType
     from brains.field.optimized_gradients import create_optimized_gradient_calculator
 
 

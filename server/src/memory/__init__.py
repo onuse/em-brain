@@ -1,13 +1,9 @@
 """
 Memory Systems - Unified Memory Architecture
 
-This package contains all memory-related systems:
-- Universal memory for any modality
+This package contains all memory-related systems.
+Note: pattern_memory.py was archived as it depended on the programmatic attention system.
+The brain uses emergent memory through field topology instead.
 """
 
-from .pattern_memory import UniversalMemorySystem, MemoryPattern
-
-__all__ = [
-    'UniversalMemorySystem',
-    'MemoryPattern'
-]
+__all__ = []

@@ -1,189 +1,66 @@
 #!/usr/bin/env python3
 """
-Standard 120-second behavioral test for meaningful assessment
+Standard behavioral test using dynamic brain architecture
+
+Full behavioral test with standard timing and cycles
 """
 
 import sys
 import os
 from pathlib import Path
-import time
-import numpy as np
 
 # Add brain server to path
 brain_server_path = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(brain_server_path))
 
-from src.brain_factory import BrainFactory
-from src.adaptive_configuration import load_adaptive_configuration
-
-def run_behavioral_test(brain: BrainFactory, duration: float = 120):
-    """Run comprehensive behavioral test"""
-    
-    # Test 1: Prediction Learning
-    print("\n📊 Test 1: Prediction Learning")
-    print("-" * 40)
-    
-    pattern = [0.5, 0.8, 0.3, 0.6] * 4
-    prediction_scores = []
-    
-    test_start = time.time()
-    test_cycles = 0
-    
-    # Sample every 5 seconds
-    sample_interval = 5.0
-    next_sample = sample_interval
-    
-    while time.time() - test_start < duration / 3:  # 40 seconds for prediction
-        action, brain_state = brain.process_sensory_input(pattern)
-        confidence = brain_state.get('prediction_confidence', 0.0)
-        test_cycles += 1
-        
-        # Sample periodically
-        elapsed = time.time() - test_start
-        if elapsed >= next_sample:
-            prediction_scores.append(confidence)
-            print(f"   {int(elapsed)}s: confidence = {confidence:.3f}")
-            next_sample += sample_interval
-    
-    # Calculate prediction score
-    if len(prediction_scores) >= 2:
-        early = np.mean(prediction_scores[:2])
-        late = np.mean(prediction_scores[-2:])
-        prediction_score = min(1.0, max(0.0, (late - early) * 2))
-    else:
-        prediction_score = 0.0
-    
-    print(f"   Final: {test_cycles} cycles, score = {prediction_score:.3f}")
-    
-    # Test 2: Pattern Recognition
-    print("\n📊 Test 2: Pattern Recognition")
-    print("-" * 40)
-    
-    pattern_a = [0.8, 0.2] * 8
-    pattern_b = [0.2, 0.8] * 8
-    
-    responses_a = []
-    responses_b = []
-    test_start = time.time()
-    test_cycles = 0
-    next_sample = sample_interval
-    
-    while time.time() - test_start < duration / 3:  # 40 seconds for patterns
-        if test_cycles % 2 == 0:
-            action, _ = brain.process_sensory_input(pattern_a)
-            responses_a.append(action[0])
-        else:
-            action, _ = brain.process_sensory_input(pattern_b)
-            responses_b.append(action[0])
-        
-        test_cycles += 1
-        
-        # Sample periodically
-        elapsed = time.time() - test_start
-        if elapsed >= next_sample and len(responses_a) > 10 and len(responses_b) > 10:
-            diff = abs(np.mean(responses_a[-10:]) - np.mean(responses_b[-10:]))
-            print(f"   {int(elapsed)}s: pattern difference = {diff:.3f}")
-            next_sample += sample_interval
-    
-    # Calculate pattern score
-    if len(responses_a) > 20 and len(responses_b) > 20:
-        final_diff = abs(np.mean(responses_a[-20:]) - np.mean(responses_b[-20:]))
-        pattern_score = min(1.0, final_diff * 5)
-    else:
-        pattern_score = 0.0
-    
-    print(f"   Final: {test_cycles} cycles, score = {pattern_score:.3f}")
-    
-    # Test 3: Field Stability
-    print("\n📊 Test 3: Field Stability")
-    print("-" * 40)
-    
-    stable_input = [0.5] * 16
-    field_energies = []
-    test_start = time.time()
-    test_cycles = 0
-    next_sample = sample_interval
-    
-    while time.time() - test_start < duration / 3:  # 40 seconds for stability
-        _, brain_state = brain.process_sensory_input(stable_input)
-        energy = brain_state.get('field_energy', 0.0)
-        field_energies.append(energy)
-        test_cycles += 1
-        
-        # Sample periodically
-        elapsed = time.time() - test_start
-        if elapsed >= next_sample:
-            recent_energy = np.mean(field_energies[-50:]) if len(field_energies) > 50 else energy
-            recent_var = np.var(field_energies[-50:]) if len(field_energies) > 50 else 0
-            print(f"   {int(elapsed)}s: energy = {recent_energy:.1f}, variance = {recent_var:.1f}")
-            next_sample += sample_interval
-    
-    # Calculate stability score
-    if len(field_energies) > 100:
-        early_var = np.var(field_energies[:50])
-        late_var = np.var(field_energies[-50:])
-        stability_improvement = max(0, (early_var - late_var) / max(early_var, 1))
-        stability_score = min(1.0, stability_improvement)
-    else:
-        stability_score = 0.0
-    
-    print(f"   Final: {test_cycles} cycles, score = {stability_score:.3f}")
-    
-    return {
-        'prediction': prediction_score,
-        'pattern': pattern_score,
-        'stability': stability_score,
-        'overall': np.mean([prediction_score, pattern_score, stability_score])
-    }
+# Use the dynamic test framework
+from behavioral_test_dynamic import (
+    DynamicBehavioralTestFramework,
+    BASIC_INTELLIGENCE_PROFILE
+)
 
 def main():
-    """Run standard behavioral test"""
+    """Run standard behavioral tests"""
     import argparse
     
     parser = argparse.ArgumentParser(description='Standard behavioral test')
-    parser.add_argument('--duration', type=int, default=120,
-                        help='Test duration in seconds (default: 120)')
+    parser.add_argument('--simple', action='store_true',
+                        help='Use simple brain implementation')
     parser.add_argument('--quiet', action='store_true',
                         help='Quiet mode')
     
     args = parser.parse_args()
     
-    print(f"🧠 Standard Behavioral Test")
-    print(f"⏱️  Duration: {args.duration} seconds")
+    print("🧠 Standard Behavioral Test")
     print("=" * 60)
     
-    # Load configuration and create brain
-    config = load_adaptive_configuration("settings.json")
+    # Create framework
+    framework = DynamicBehavioralTestFramework(
+        use_simple_brain=args.simple,
+        quiet_mode=args.quiet
+    )
     
-    print("\n🔧 Creating brain...")
-    brain = BrainFactory(config=config, enable_logging=False, quiet_mode=args.quiet)
-    
-    # Run tests
-    start_time = time.time()
-    scores = run_behavioral_test(brain, args.duration)
-    total_time = time.time() - start_time
-    
-    # Print results
-    print("\n" + "=" * 60)
-    print("📊 TEST RESULTS")
-    print("=" * 60)
-    print(f"Prediction Learning: {scores['prediction']:.3f} {'✅' if scores['prediction'] >= 0.3 else '❌'}")
-    print(f"Pattern Recognition: {scores['pattern']:.3f} {'✅' if scores['pattern'] >= 0.2 else '❌'}")
-    print(f"Field Stability:     {scores['stability']:.3f} {'✅' if scores['stability'] >= 0.1 else '⚠️'}")
-    print("-" * 60)
-    print(f"Overall Score:       {scores['overall']:.3f}")
-    print(f"\nTotal time: {total_time:.1f} seconds")
-    
-    # Interpretation
-    print("\n📋 Assessment:")
-    if scores['overall'] >= 0.5:
-        print("✅ Excellent - Brain shows strong learning capabilities")
-    elif scores['overall'] >= 0.3:
-        print("✅ Good - Brain is learning effectively")
-    elif scores['overall'] >= 0.2:
-        print("⚠️  Fair - Brain shows basic learning")
-    else:
-        print("❌ Poor - Brain may need configuration adjustments")
+    try:
+        # Run assessment with standard profile
+        results = framework.run_assessment(BASIC_INTELLIGENCE_PROFILE)
+        
+        # Detailed results
+        print(f"\n📊 Detailed Test Results")
+        print("=" * 60)
+        
+        for metric, details in results['detailed_results'].items():
+            print(f"\n{metric}:")
+            print(f"  Score: {details['score']:.3f}")
+            print(f"  Target: {details['target']:.3f}")
+            print(f"  Achieved: {'Yes' if details['achieved'] else 'No'}")
+            print(f"  Test time: {details['test_time_s']:.1f}s")
+        
+        print(f"\n🏆 Overall Achievement: {results['overall_achievement']:.1%}")
+        print(f"⏱️  Total test time: {results['total_test_time']:.1f}s")
+        
+    finally:
+        # Cleanup
+        framework.cleanup()
 
 if __name__ == "__main__":
     main()

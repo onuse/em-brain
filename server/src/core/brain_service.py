@@ -1,17 +1,21 @@
 """
-Brain Service implementation.
+Brain Service with Integrated Persistence
 
-Manages brain lifecycle and sessions, coordinating between brains,
-adapters, and robot configurations.
+Manages brain lifecycle and sessions with automatic persistence.
+This consolidates the old brain_service.py and brain_service_with_persistence.py
+into a single implementation that always includes persistence.
 """
 
 import time
 import uuid
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 from .interfaces import (
     IBrainService, IBrainSession, IBrainPool, IAdapterFactory,
     Robot, BrainSessionInfo
+)
+from ..persistence.integrated_persistence import (
+    IntegratedPersistence, initialize_persistence, get_persistence
 )
 
 
@@ -19,30 +23,32 @@ class BrainSession(IBrainSession):
     """
     Handles one robot's interaction with a brain.
     
-    This session encapsulates the brain instance and the adapters
-    needed to translate between robot and brain spaces.
+    This session encapsulates the brain instance, adapters, and persistence.
     """
     
     def __init__(self, session_id: str, robot: Robot, brain, sensory_adapter, motor_adapter, 
-                 persistence_manager=None, logger=None):
+                 persistence: Optional[IntegratedPersistence] = None, logger=None):
         self.session_id = session_id
         self.robot = robot
         self.brain = brain
         self.sensory_adapter = sensory_adapter
         self.motor_adapter = motor_adapter
-        self.persistence_manager = persistence_manager
+        self.persistence = persistence
         self.logger = logger
         self.created_at = time.time()
         
         # Session statistics
         self.cycles_processed = 0
         self.total_processing_time = 0.0
-        self.last_persistence_save = 0
         
         # Experience tracking
         self.last_sensory_input = None
         self.last_motor_output = None
         self.total_experiences = 0
+        
+        # Load any existing state on session start
+        if self.persistence:
+            self.persistence.recover_brain_state(self.brain)
     
     def process_sensory_input(self, raw_sensory: List[float]) -> List[float]:
         """Process sensory input and return motor commands."""
@@ -53,7 +59,7 @@ class BrainSession(IBrainSession):
             # Store experience if we have previous data
             if self.last_sensory_input is not None and self.last_motor_output is not None:
                 # The current sensory input is the outcome of the previous action
-                experience_id = self._store_experience(
+                self._store_experience(
                     sensory_input=self.last_sensory_input,
                     action_taken=self.last_motor_output,
                     outcome=raw_sensory
@@ -63,7 +69,7 @@ class BrainSession(IBrainSession):
             # Adapt sensory to field space
             field_input = self.sensory_adapter.to_field_space(raw_sensory)
             
-            # Process through brain (brain knows nothing about robots!)
+            # Process through brain
             field_output = self.brain.process_field_dynamics(field_input)
             
             # Adapt field to motor space
@@ -92,146 +98,128 @@ class BrainSession(IBrainSession):
                     cycle_num=self.cycles_processed
                 )
             
-            # Save brain state periodically if persistence is enabled
-            if self.persistence_manager and self.cycles_processed % 100 == 0:
-                try:
-                    # Create a brain wrapper that matches old BrainFactory interface
-                    # This allows the existing persistence system to work
-                    class BrainFactoryAdapter:
-                        def __init__(self, brain, session):
-                            self.brain = brain
-                            self.total_cycles = session.cycles_processed
-                            self.brain_cycles = session.cycles_processed
-                            
-                        def get_brain_state_for_persistence(self):
-                            return {
-                                'brain_type': 'unified_field',
-                                'field_dimensions': getattr(self.brain, 'field_dimensions', 36),
-                                'brain_cycles': self.brain_cycles,
-                                'total_factory_cycles': self.total_cycles,
-                                'field_parameters': {}
-                            }
-                    
-                    brain_adapter = BrainFactoryAdapter(self.brain, self)
-                    # Use incremental save with the adapter
-                    self.persistence_manager.save_brain_state_incremental(brain_adapter)
-                    self.last_persistence_save = self.cycles_processed
-                except Exception as e:
-                    print(f"⚠️ Persistence save failed for session {self.session_id}: {e}")
+            # Check for auto-save
+            if self.persistence:
+                self.persistence.check_auto_save(self.brain)
             
             return motor_commands
             
         except Exception as e:
-            print(f"❌ Error in brain session {self.session_id}: {e}")
-            print(f"   Error type: {type(e).__name__}")
-            print(f"   Sensory input type: {type(raw_sensory)}, length: {len(raw_sensory) if hasattr(raw_sensory, '__len__') else 'N/A'}")
-            import traceback
-            traceback.print_exc()
-            # Return safe motor commands (zeros)
+            print(f"❌ Session {self.session_id} processing error: {e}")
+            # Return safe motor commands on error
             return [0.0] * len(self.robot.motor_channels)
+    
+    def _store_experience(self, sensory_input: List[float], action_taken: List[float], 
+                         outcome: List[float]) -> str:
+        """
+        Store an experience in the brain's memory system.
+        
+        This captures:
+        - What the robot sensed
+        - What action it took
+        - What happened next (outcome)
+        """
+        # For now, just track the experience occurred
+        # The brain itself handles memory formation through field dynamics
+        return f"exp_{self.session_id}_{self.total_experiences}"
+    
+    def get_session_info(self) -> BrainSessionInfo:
+        """Get current session information."""
+        uptime = time.time() - self.created_at
+        avg_cycle_time = (self.total_processing_time / self.cycles_processed 
+                         if self.cycles_processed > 0 else 0.0)
+        
+        return BrainSessionInfo(
+            session_id=self.session_id,
+            robot_id=self.robot.robot_id,
+            brain_dimensions=self.brain.get_field_dimensions(),
+            created_at=self.created_at
+        )
     
     def get_handshake_response(self) -> List[float]:
         """Get handshake response for this session."""
-        
-        # Response format:
-        # [brain_version, accepted_sensory_dim, accepted_action_dim, gpu_available, brain_capabilities]
-        
-        brain_dims = self.brain.get_field_dimensions()
-        
-        response = [
-            4.0,  # Brain version
-            float(len(self.robot.sensory_channels)),  # Accepted sensory dimensions
-            float(len(self.robot.motor_channels)),   # Accepted motor dimensions
-            1.0,  # GPU available (could check actual availability)
-            15.0  # Brain capabilities mask (all capabilities)
+        # Return brain's field dimensions and version info
+        return [
+            1.0,  # Protocol version
+            float(self.brain.get_field_dimensions()),  # Field dimensions
+            float(len(self.robot.sensory_channels)),  # Expected sensory dims
+            float(len(self.robot.motor_channels)),     # Expected motor dims
+            1.0   # Session active
         ]
-        
-        return response
     
     def get_session_id(self) -> str:
         """Get unique session identifier."""
         return self.session_id
     
-    def get_stats(self) -> Dict:
-        """Get session statistics."""
-        avg_cycle_time = (self.total_processing_time / self.cycles_processed 
-                         if self.cycles_processed > 0 else 0.0)
-        
-        return {
-            'session_id': self.session_id,
-            'robot_id': self.robot.robot_id,
-            'robot_type': self.robot.robot_type,
-            'brain_dimensions': self.brain.get_field_dimensions(),
-            'cycles_processed': self.cycles_processed,
-            'average_cycle_time_ms': avg_cycle_time * 1000,
-            'uptime_seconds': time.time() - self.created_at,
-            'total_experiences': self.total_experiences
-        }
-    
-    def _store_experience(self, sensory_input: List[float], action_taken: List[float], 
-                         outcome: List[float]) -> str:
-        """Store an experience sequence for learning."""
-        # Generate experience ID
-        experience_id = f"exp_{self.session_id}_{self.total_experiences}_{int(time.time() * 1000) % 10000}"
-        
-        # In the field brain paradigm, experiences are encoded in the field dynamics
-        # The brain learns through field evolution, not explicit experience replay
-        # This method exists for compatibility and tracking
-        
-        # Could optionally log experiences for analysis
-        if self.cycles_processed < 5:  # Log first few
-            print(f"💾 {self.robot.robot_id}: Experience {experience_id} stored (total: {self.total_experiences + 1})")
-        
-        # Log experience if logger available
-        if self.logger and hasattr(self.logger, 'log_experience'):
-            self.logger.log_experience(
-                session_id=self.session_id,
-                experience_id=experience_id,
-                sensory_dim=len(sensory_input),
-                motor_dim=len(action_taken)
-            )
-        
-        return experience_id
+    def close(self):
+        """Close session with final save."""
+        # Perform shutdown save
+        if self.persistence:
+            self.persistence.shutdown_save(self.brain)
 
 
 class BrainService(IBrainService):
     """
-    Manages brain lifecycle and sessions.
+    Brain service with integrated persistence.
     
-    This service coordinates the creation of brain sessions, ensuring
-    each robot gets the appropriate brain and adapters.
+    This service manages brain instances and sessions with automatic:
+    - State recovery on startup
+    - Periodic auto-saves during operation
+    - Shutdown saves
+    - Cross-session learning continuity
     """
     
-    def __init__(self, brain_pool: IBrainPool, adapter_factory: IAdapterFactory, 
-                 enable_persistence: bool = True, memory_path: str = "./server/robot_memory",
-                 enable_logging: bool = True, log_dir: str = "logs"):
+    def __init__(self, brain_pool: IBrainPool, adapter_factory: IAdapterFactory,
+                 memory_path: str = "./brain_memory",
+                 save_interval_cycles: int = 1000,
+                 auto_save: bool = True,
+                 enable_logging: bool = True, 
+                 log_dir: str = "logs"):
+        """
+        Initialize brain service with persistence.
+        
+        Args:
+            brain_pool: Pool of brain instances
+            adapter_factory: Factory for robot-brain adapters
+            memory_path: Directory for brain state files
+            save_interval_cycles: Save every N brain cycles
+            auto_save: Enable automatic periodic saves
+            enable_logging: Enable logging system
+            log_dir: Directory for log files
+        """
         self.brain_pool = brain_pool
         self.adapter_factory = adapter_factory
-        self.active_sessions: Dict[str, BrainSession] = {}
         
-        # Initialize persistence if enabled
-        self.persistence_manager = None
-        if enable_persistence:
-            try:
-                from ..persistence.persistence_manager import PersistenceManager
-                self.persistence_manager = PersistenceManager(memory_path=memory_path)
-                print(f"💾 Persistence subsystem initialized at {memory_path}")
-            except Exception as e:
-                print(f"⚠️ Failed to initialize persistence: {e}")
-                self.persistence_manager = None
+        # Active sessions
+        self.sessions: Dict[str, IBrainSession] = {}
         
-        # Initialize logging if enabled
+        # Statistics
+        self.total_sessions_created = 0
+        self.start_time = time.time()
+        
+        # Initialize integrated persistence
+        self.integrated_persistence = None
+        try:
+            self.integrated_persistence = initialize_persistence(
+                memory_path=memory_path,
+                save_interval_cycles=save_interval_cycles,
+                auto_save=auto_save
+            )
+            print(f"✅ Integrated persistence initialized")
+            print(f"   Memory path: {memory_path}")
+            print(f"   Auto-save: every {save_interval_cycles} cycles")
+        except Exception as e:
+            print(f"❌ Failed to initialize integrated persistence: {e}")
+            print(f"   Brain will run without persistence")
+        
+        # Logging setup (if needed)
         self.logging_service = None
         if enable_logging:
-            try:
-                from .logging_service import LoggingService
-                self.logging_service = LoggingService(log_dir=log_dir, quiet_mode=True)
-            except Exception as e:
-                print(f"⚠️ Failed to initialize logging: {e}")
-                self.logging_service = None
+            # Could initialize a logging service here if needed
+            pass
     
     def create_session(self, robot: Robot) -> IBrainSession:
-        """Create a new brain session for a robot."""
+        """Create a new brain session with persistence support."""
         
         # Generate session ID
         session_id = f"session_{uuid.uuid4().hex[:8]}"
@@ -252,97 +240,72 @@ class BrainService(IBrainService):
         if self.logging_service:
             session_logger = self.logging_service.create_session_logger(session_id, robot.robot_type)
         
-        # Create session with persistence and logging support
+        # Create session with integrated persistence
         session = BrainSession(
             session_id=session_id,
             robot=robot,
             brain=brain,
             sensory_adapter=sensory_adapter,
             motor_adapter=motor_adapter,
-            persistence_manager=self.persistence_manager,
-            logger=self.logging_service
+            persistence=self.integrated_persistence,
+            logger=session_logger
         )
         
         # Track session
-        self.active_sessions[session_id] = session
-        
-        print(f"🤝 Created brain session {session_id} for {robot.robot_type} robot")
-        print(f"   Robot: {len(robot.sensory_channels)} sensors → {len(robot.motor_channels)} motors")
-        print(f"   Brain: {brain_dims}D unified field")
+        self.sessions[session_id] = session
+        self.total_sessions_created += 1
         
         return session
     
+    def get_session(self, session_id: str) -> Optional[IBrainSession]:
+        """Get existing session by ID."""
+        return self.sessions.get(session_id)
+    
     def get_session_info(self, session_id: str) -> Optional[BrainSessionInfo]:
         """Get information about a session."""
-        
-        session = self.active_sessions.get(session_id)
+        session = self.sessions.get(session_id)
+        if session:
+            return session.get_session_info()
+        return None
+    
+    def list_sessions(self) -> List[BrainSessionInfo]:
+        """List all active sessions."""
+        return [session.get_session_info() for session in self.sessions.values()]
+    
+    def close_session(self, session_id: str) -> bool:
+        """Close and cleanup a session."""
+        session = self.sessions.get(session_id)
         if not session:
-            return None
+            return False
         
-        return BrainSessionInfo(
-            session_id=session.session_id,
-            robot_id=session.robot.robot_id,
-            brain_dimensions=session.brain.get_field_dimensions(),
-            created_at=session.created_at
-        )
+        # Close the session (triggers save)
+        session.close()
+        
+        # Remove from active sessions
+        del self.sessions[session_id]
+        
+        return True
     
-    def close_session(self, session_id: str) -> None:
-        """Close a brain session."""
+    def get_statistics(self) -> Dict[str, Any]:
+        """Get service statistics."""
+        uptime = time.time() - self.start_time
         
-        if session_id in self.active_sessions:
-            session = self.active_sessions[session_id]
-            stats = session.get_stats()
-            
-            print(f"👋 Closing brain session {session_id}")
-            print(f"   Processed {stats['cycles_processed']} cycles")
-            print(f"   Average cycle time: {stats['average_cycle_time_ms']:.1f}ms")
-            
-            # Close session logger
-            if self.logging_service:
-                self.logging_service.close_session(session_id)
-            
-            del self.active_sessions[session_id]
-    
-    def get_all_sessions(self) -> Dict[str, Dict]:
-        """Get information about all active sessions."""
+        # Get persistence stats if available
+        persistence_stats = {}
+        if self.integrated_persistence:
+            persistence_stats = self.integrated_persistence.get_persistence_stats()
         
-        sessions_info = {}
-        for session_id, session in self.active_sessions.items():
-            sessions_info[session_id] = session.get_stats()
+        # Get active brains info
+        active_brains = self.brain_pool.get_active_brains()
+        brain_pool_stats = {
+            'active_brains': len(active_brains),
+            'brain_profiles': list(active_brains.keys())
+        }
         
-        return sessions_info
-    
-    def shutdown(self):
-        """Shutdown the brain service and persistence."""
-        # Save final state for all sessions
-        if self.persistence_manager:
-            for session_id, session in self.active_sessions.items():
-                try:
-                    # Create adapter for persistence
-                    class BrainFactoryAdapter:
-                        def __init__(self, brain, session):
-                            self.brain = brain
-                            self.total_cycles = session.cycles_processed
-                            self.brain_cycles = session.cycles_processed
-                            
-                        def get_brain_state_for_persistence(self):
-                            return {
-                                'brain_type': 'unified_field',
-                                'field_dimensions': getattr(self.brain, 'field_dimensions', 36),
-                                'brain_cycles': self.brain_cycles,
-                                'total_factory_cycles': self.total_cycles,
-                                'field_parameters': {}
-                            }
-                    
-                    brain_adapter = BrainFactoryAdapter(session.brain, session)
-                    self.persistence_manager.save_brain_state_blocking(brain_adapter)
-                except Exception as e:
-                    print(f"⚠️ Final save failed for session {session_id}: {e}")
-            
-            # Shutdown persistence
-            self.persistence_manager.shutdown()
-            print("💾 Persistence subsystem shutdown complete")
-        
-        # Shutdown logging
-        if self.logging_service:
-            self.logging_service.shutdown()
+        return {
+            'active_sessions': len(self.sessions),
+            'total_sessions_created': self.total_sessions_created,
+            'uptime_seconds': uptime,
+            'brain_pool_stats': brain_pool_stats,
+            'persistence_stats': persistence_stats
+        }

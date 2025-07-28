@@ -21,7 +21,15 @@ from dataclasses import dataclass
 from enum import Enum
 import math
 
-from .constraint_field_dynamics import FieldConstraintType
+# Define constraint types locally since constraint_field_dynamics.py was archived
+class FieldConstraintType(Enum):
+    """Types of constraints that emerge from field dynamics."""
+    GRADIENT_FLOW = "gradient_flow"         # Gradients should flow smoothly
+    TOPOLOGY_BOUNDARY = "topology_boundary" # Boundaries in field topology
+    ACTIVATION_THRESHOLD = "activation_threshold" # Activation level constraints
+    TEMPORAL_MOMENTUM = "temporal_momentum" # Temporal consistency
+    SCALE_COUPLING = "scale_coupling"       # Multi-scale relationships
+    PATTERN_COHERENCE = "pattern_coherence" # Pattern consistency
 
 
 @dataclass

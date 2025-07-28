@@ -16,7 +16,7 @@ Deploy and test the brain server with actual PiCar-X hardware to validate real-w
 - [ ] Test safety reflexes with real sensor data
 
 ### Code Maintenance
-- [ ] Clean up 44 orphaned files (55% of codebase)
+- [x] Archived orphaned files to server/archive/ (Phase A prototypes, temporary fixes, multi-stream infrastructure)
 - [ ] Document sensor-to-brain mapping algorithm
 - [ ] Add compression to persistence system (currently saves 100+ MB files)
 

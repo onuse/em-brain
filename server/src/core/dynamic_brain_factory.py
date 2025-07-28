@@ -15,10 +15,7 @@ from ..parameters.cognitive_config import get_cognitive_config
 
 class DynamicBrainWrapper(IBrain):
     """
-    Wrapper around UnifiedFieldBrain that implements the IBrain interface.
-    
-    This allows us to use the existing UnifiedFieldBrain implementation
-    while adapting it to the new dynamic architecture.
+    Wrapper around DynamicUnifiedFieldBrain that implements the IBrain interface.
     """
     
     def __init__(self, unified_field_brain):
@@ -28,11 +25,7 @@ class DynamicBrainWrapper(IBrain):
     
     def process_field_dynamics(self, field_input) -> Any:
         """Process field dynamics and return field output."""
-        # The UnifiedFieldBrain expects sensory input and returns (action, state)
-        # We need to adapt this to pure field dynamics
-        
-        # For now, we'll convert field input to sensory format
-        # This is a temporary adapter until UnifiedFieldBrain is refactored
+        # Convert field input to sensory format for the brain
         
         import torch
         
@@ -112,8 +105,8 @@ class DynamicBrainFactory(IBrainFactory):
     def __init__(self, config: Optional[Dict] = None):
         self.config = config or {}
         self.quiet_mode = self.config.get('quiet_mode', False)
-        self.use_simple_brain = self.config.get('use_simple_brain', False)
-        self.use_dynamic_brain = self.config.get('use_dynamic_brain', True)
+        # Simple brain option removed - using only dynamic unified brain
+        # Dynamic brain is now the only option
         
         # Load cognitive configuration
         self.cognitive_config = get_cognitive_config()
@@ -124,29 +117,16 @@ class DynamicBrainFactory(IBrainFactory):
             complexity_factor=self.config.get('complexity_factor', 6.0)
         )
         
-        if self.use_simple_brain:
-            # Use our clean simple implementation
-            from .simple_field_brain import SimpleFieldBrain
-            self.BrainClass = SimpleFieldBrain
-        else:
-            # Import here to avoid circular dependency
-            if self.use_dynamic_brain:
-                # Check if we should use the full-featured version
-                if self.config.get('use_full_features', True):
-                    from ..brains.field.dynamic_unified_brain_full import DynamicUnifiedFieldBrain
-                else:
-                    from ..brains.field.dynamic_unified_brain import DynamicUnifiedFieldBrain
-                self.DynamicUnifiedFieldBrain = DynamicUnifiedFieldBrain
-            else:
-                from ..brains.field.core_brain import UnifiedFieldBrain
-                self.UnifiedFieldBrain = UnifiedFieldBrain
+        # Always use the dynamic brain - non-dynamic brain archived
+        from ..brains.field.dynamic_unified_brain import DynamicUnifiedFieldBrain
+        self.DynamicUnifiedFieldBrain = DynamicUnifiedFieldBrain
     
     def create(self, field_dimensions: int, spatial_resolution: int,
                sensory_dim: Optional[int] = None, motor_dim: Optional[int] = None) -> IBrain:
         """Create a new brain with specified dimensions."""
         
-        # Use dynamic brain if enabled
-        if self.use_dynamic_brain and sensory_dim and motor_dim:
+        # Dynamic brain requires sensory and motor dimensions from robot
+        if sensory_dim and motor_dim:
             # Calculate conceptual dimensions based on robot profile
             conceptual_dims = self.dimension_calculator.calculate_dimensions(
                 sensory_dim, motor_dim
@@ -195,67 +175,8 @@ class DynamicBrainFactory(IBrainFactory):
             print(f"✅ Created dynamic unified field brain")
             return DynamicBrainWrapper(brain)
         
-        # Otherwise use the compatibility mode
-        print(f"🏗️  Creating {field_dimensions}D brain with {spatial_resolution}³ spatial resolution")
-        if sensory_dim and motor_dim:
-            print(f"   Robot interface: {sensory_dim}D sensors → {motor_dim}D motors")
-        
-        if self.use_simple_brain:
-            # Create simple brain that properly supports dynamic dimensions
-            brain = self.BrainClass(
-                field_dimensions=field_dimensions,
-                spatial_resolution=spatial_resolution,
-                sensory_dim=sensory_dim or field_dimensions,
-                motor_dim=motor_dim or max(2, field_dimensions // 8)
-            )
-            print(f"✅ Created {field_dimensions}D simple field brain")
-            return brain
-        
-        # Otherwise create UnifiedFieldBrain with workarounds
-        # For now, we create a UnifiedFieldBrain with its current interface
-        # In the future, this should be refactored to accept dynamic dimensions
-        
-        # Create brain with current interface
-        brain = self.UnifiedFieldBrain(
-            spatial_resolution=spatial_resolution,
-            temporal_window=self.config.get('temporal_window', 10.0),
-            field_evolution_rate=self.config.get('field_evolution_rate', self.brain_config.field_evolution_rate),
-            constraint_discovery_rate=self.config.get('constraint_discovery_rate', self.brain_config.constraint_discovery_rate),
-            quiet_mode=self.quiet_mode
+        # No fallback - dynamic brain requires robot to specify its capabilities
+        raise ValueError(
+            "Dynamic brain requires sensory_dim and motor_dim to be specified. "
+            "The robot must tell the brain about its capabilities."
         )
-        
-        # Override the hardcoded dimensions
-        # This is a temporary hack until UnifiedFieldBrain is refactored
-        brain.total_dimensions = field_dimensions
-        
-        # Use actual robot dimensions if provided, otherwise use heuristic
-        if sensory_dim and motor_dim:
-            brain.expected_sensory_dim = sensory_dim
-            brain.expected_motor_dim = motor_dim
-        else:
-            # Fallback heuristic: sensory = 60% of field dims, motor = 15% of field dims
-            brain.expected_sensory_dim = max(8, int(field_dimensions * 0.6))
-            brain.expected_motor_dim = max(2, int(field_dimensions * 0.15))
-        
-        # Don't recreate the unified field - let the brain keep its complex structure
-        # The brain already created its field with the proper multi-dimensional shape
-        # We just need to ensure the dimension mappings work
-        
-        # Store our target field dimensions as a separate attribute
-        # Don't overwrite brain.field_dimensions which is a list of FieldDimension objects
-        brain.target_field_dimensions = field_dimensions
-        
-        # The brain already has its field_dimensions list initialized properly
-        # We just need to ensure the total matches what we expect
-        if hasattr(brain, 'field_dimensions') and isinstance(brain.field_dimensions, list):
-            # Brain already has proper field dimension objects
-            pass
-        else:
-            # Initialize dimension families if the method exists
-            if hasattr(brain, '_initialize_dimension_families'):
-                brain._initialize_dimension_families()
-        
-        print(f"✅ Created {field_dimensions}D unified field brain")
-        
-        # Wrap in adapter
-        return DynamicBrainWrapper(brain)
