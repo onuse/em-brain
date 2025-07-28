@@ -156,18 +156,37 @@ class ConstraintFieldND:
         if np.random.random() > self.constraint_discovery_rate:
             return new_constraints
         
-        # 1. Gradient-based constraints
+        # Get existing constraint dimensions to avoid duplicates (including recent history)
+        existing_gradient_dims = set()
+        existing_threshold_dims = set()
+        current_time = time.time()
+        
+        # Check active constraints
+        for c in self.active_constraints:
+            if c.constraint_type == FieldConstraintType.GRADIENT_FLOW:
+                existing_gradient_dims.update(c.dimensions)
+            elif c.constraint_type == FieldConstraintType.ACTIVATION_THRESHOLD:
+                existing_threshold_dims.update(c.dimensions)
+        
+        # Check recent history to avoid immediate rediscovery
+        for c in self.constraint_history[-20:]:  # Last 20 constraints
+            if current_time - c.discovery_timestamp < self.min_constraint_lifetime * 2:  # Double lifetime
+                if c.constraint_type == FieldConstraintType.GRADIENT_FLOW:
+                    existing_gradient_dims.update(c.dimensions)
+                elif c.constraint_type == FieldConstraintType.ACTIVATION_THRESHOLD:
+                    existing_threshold_dims.update(c.dimensions)
+        
+        # 1. Gradient-based constraints (avoid duplicates)
         if field_gradients:
             for dim_name, gradient in field_gradients.items():
-                # Find regions with strong, consistent gradients
-                grad_magnitude = torch.abs(gradient)
-                high_grad_mask = grad_magnitude > self.gradient_threshold
-                
-                if torch.any(high_grad_mask):
-                    # Extract dimension index from gradient name
-                    if dim_name.startswith('gradient_dim_'):
-                        dim_idx = int(dim_name.split('_')[-1])
-                        if dim_idx < self.n_dimensions:
+                if dim_name.startswith('gradient_dim_'):
+                    dim_idx = int(dim_name.split('_')[-1])
+                    if dim_idx < self.n_dimensions and dim_idx not in existing_gradient_dims:
+                        # Find regions with strong, consistent gradients
+                        grad_magnitude = torch.abs(gradient)
+                        high_grad_mask = grad_magnitude > self.gradient_threshold
+                        
+                        if torch.any(high_grad_mask):
                             # Create gradient flow constraint
                             constraint = self._create_gradient_constraint(
                                 field, gradient, dim_idx, high_grad_mask
@@ -175,31 +194,31 @@ class ConstraintFieldND:
                             if constraint:
                                 new_constraints.append(constraint)
         
-        # 2. Activation threshold constraints - OPTIMIZED
-        # Only check spatial dimensions (first 3) for efficiency
-        if self.n_dimensions >= 3:
+        # 2. Activation threshold constraints (avoid duplicates)
+        if self.n_dimensions >= 3 and len(existing_threshold_dims) < 3:
             for dim_idx in range(min(3, self.n_dimensions)):
-                # Sample a subset of the field for efficiency
-                sample_size = min(1000, field.numel() // 10)
-                flat_field = field.flatten()
-                sample_indices = torch.randperm(flat_field.size(0))[:sample_size]
-                field_sample = flat_field[sample_indices]
-                
-                # Check if there's significant variation in the sample
-                if torch.std(field_sample) > 0.1:
-                    # Use sampled mean as threshold
-                    threshold = torch.median(field_sample).item()
-                    constraint = FieldConstraintND(
-                        constraint_type=FieldConstraintType.ACTIVATION_THRESHOLD,
-                        dimensions=[dim_idx],
-                        region_centers=torch.zeros(1, 1),
-                        region_radii=torch.ones(1, 1) * float('inf'),
-                        strength=0.3,
-                        threshold_value=threshold,
-                        discovery_timestamp=time.time()
-                    )
-                    new_constraints.append(constraint)
-                    break  # Only create one threshold constraint per discovery
+                if dim_idx not in existing_threshold_dims:
+                    # Sample a subset of the field for efficiency
+                    sample_size = min(1000, field.numel() // 10)
+                    flat_field = field.flatten()
+                    sample_indices = torch.randperm(flat_field.size(0))[:sample_size]
+                    field_sample = flat_field[sample_indices]
+                    
+                    # Check if there's significant variation in the sample
+                    if torch.std(field_sample) > 0.1:
+                        # Use sampled mean as threshold
+                        threshold = torch.median(field_sample).item()
+                        constraint = FieldConstraintND(
+                            constraint_type=FieldConstraintType.ACTIVATION_THRESHOLD,
+                            dimensions=[dim_idx],
+                            region_centers=torch.zeros(1, 1),
+                            region_radii=torch.ones(1, 1) * float('inf'),
+                            strength=0.3,
+                            threshold_value=threshold,
+                            discovery_timestamp=time.time()
+                        )
+                        new_constraints.append(constraint)
+                        break  # Only create one threshold constraint per discovery
         
         # 3. Cross-dimensional coupling constraints
         # Disabled for performance - the corrcoef calculation is expensive
@@ -209,10 +228,15 @@ class ConstraintFieldND:
         # Add to active constraints (with limit)
         for constraint in new_constraints:
             if len(self.active_constraints) >= self.max_constraints:
-                # Remove oldest constraint
-                self.active_constraints.pop(0)
+                # Move oldest to history before removing
+                old_constraint = self.active_constraints.pop(0)
+                self.constraint_history.append(old_constraint)
             self.active_constraints.append(constraint)
             self.constraints_discovered += 1
+        
+        # Limit history size
+        if len(self.constraint_history) > 100:
+            self.constraint_history = self.constraint_history[-50:]
         
         return new_constraints
     

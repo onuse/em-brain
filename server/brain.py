@@ -63,24 +63,18 @@ class DynamicBrainServer:
     def _initialize_components(self):
         """Initialize all components with proper dependency injection."""
         
-        print("📦 Initializing components...")
-        
         # 1. Robot Registry - manages robot profiles
         profiles_dir = Path(__file__).parent.parent / "client_picarx"
         self.robot_registry = RobotRegistry(profiles_dir=profiles_dir)
-        print("   ✓ Robot Registry")
         
         # 2. Brain Factory - creates brains
         self.brain_factory = DynamicBrainFactory(config=self.config)
-        print("   ✓ Dynamic Brain Factory")
         
         # 3. Brain Pool - manages brain instances
         self.brain_pool = BrainPool(brain_factory=self.brain_factory)
-        print("   ✓ Brain Pool")
         
         # 4. Adapter Factory - creates sensory/motor adapters
         self.adapter_factory = AdapterFactory()
-        print("   ✓ Adapter Factory")
         
         # 5. Brain Service - manages sessions with persistence
         persistence_config = self.config.get('persistence', {})
@@ -90,16 +84,15 @@ class DynamicBrainServer:
             memory_path=persistence_config.get('memory_path', './brain_memory'),
             save_interval_cycles=persistence_config.get('save_interval', 1000),
             auto_save=persistence_config.get('auto_save', True),
-            enable_logging=self.config.get('logging', {}).get('enabled', True)
+            enable_logging=self.config.get('logging', {}).get('enabled', True),
+            quiet=True  # Suppress duplicate persistence prints
         )
-        print("   ✓ Brain Service (with persistence)")
         
         # 6. Connection Handler - orchestrates everything
         self.connection_handler = ConnectionHandler(
             robot_registry=self.robot_registry,
             brain_service=self.brain_service
         )
-        print("   ✓ Connection Handler")
         
         # 7. Maintenance Scheduler - manages brain health
         self.maintenance_scheduler = MaintenanceScheduler(
@@ -111,9 +104,8 @@ class DynamicBrainServer:
                 'performance_check_interval': 120   # 2 minutes
             }
         )
-        print("   ✓ Maintenance Scheduler")
         
-        print("✅ All components initialized")
+        print("   ✓ All components initialized")
     
     def _display_system_info(self):
         """Display consolidated system information."""

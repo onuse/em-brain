@@ -264,12 +264,12 @@ class CognitiveConfigManager:
 _cognitive_config: Optional[CognitiveConfigManager] = None
 
 
-def get_cognitive_config() -> CognitiveConfigManager:
+def get_cognitive_config(quiet: bool = False) -> CognitiveConfigManager:
     """Get the global cognitive configuration instance."""
     global _cognitive_config
     if _cognitive_config is None:
         _cognitive_config = CognitiveConfigManager()
-        if _cognitive_config.validate_config():
+        if _cognitive_config.validate_config() and not quiet:
             print("✅ Cognitive configuration validated")
     return _cognitive_config
 

@@ -279,36 +279,37 @@ class AdaptiveConfigurationManager:
     
     def print_summary(self):
         """Print configuration summary."""
-        print("\n" + "="*60)
-        print("🔧 ADAPTIVE CONFIGURATION")
-        print("="*60)
-        
-        print(f"\n💻 Hardware:")
-        print(f"   Device: {self.config.device_type.upper()}")
-        print(f"   CPU cores: {self.config.cpu_cores}")
-        print(f"   RAM: {self.config.system_memory_gb:.1f}GB")
-        if self.config.gpu_memory_gb > 0:
-            print(f"   GPU memory: {self.config.gpu_memory_gb:.1f}GB")
-        
-        print(f"\n🧠 Brain Configuration:")
-        print(f"   Type: {self.config.brain_type}")
-        # Handle dynamic dimensions gracefully
-        if self.config.sensory_dim is not None and self.config.motor_dim is not None:
-            print(f"   Sensory/Motor: {self.config.sensory_dim}D → {self.config.motor_dim}D")
-        else:
-            print(f"   Sensory/Motor: Dynamic (determined by robot)")
-        print(f"   Spatial resolution: {self.config.spatial_resolution}³")
-        
-        if self.config.force_spatial_resolution is not None:
-            print(f"   ⚠️  Resolution forced to {self.config.force_spatial_resolution}³")
-        
-        print(f"\n✅ Features:")
-        if self.config.enhanced_dynamics: print("   - Enhanced Dynamics")
-        if self.config.attention_guidance: print("   - Attention Guidance")
-        if self.config.hierarchical_processing: print("   - Hierarchical Processing")
-        if self.config.attention_super_resolution: print("   - Super Resolution")
-        
-        print("="*60 + "\n")
+        if not self.suppress_output:
+            print("\n" + "="*60)
+            print("🔧 ADAPTIVE CONFIGURATION")
+            print("="*60)
+            
+            print(f"\n💻 Hardware:")
+            print(f"   Device: {self.config.device_type.upper()}")
+            print(f"   CPU cores: {self.config.cpu_cores}")
+            print(f"   RAM: {self.config.system_memory_gb:.1f}GB")
+            if self.config.gpu_memory_gb > 0:
+                print(f"   GPU memory: {self.config.gpu_memory_gb:.1f}GB")
+            
+            print(f"\n🧠 Brain Configuration:")
+            print(f"   Type: {self.config.brain_type}")
+            # Handle dynamic dimensions gracefully
+            if self.config.sensory_dim is not None and self.config.motor_dim is not None:
+                print(f"   Sensory/Motor: {self.config.sensory_dim}D → {self.config.motor_dim}D")
+            else:
+                print(f"   Sensory/Motor: Dynamic (determined by robot)")
+            print(f"   Spatial resolution: {self.config.spatial_resolution}³")
+            
+            if self.config.force_spatial_resolution is not None:
+                print(f"   ⚠️  Resolution forced to {self.config.force_spatial_resolution}³")
+            
+            print(f"\n✅ Features:")
+            if self.config.enhanced_dynamics: print("   - Enhanced Dynamics")
+            if self.config.attention_guidance: print("   - Attention Guidance")
+            if self.config.hierarchical_processing: print("   - Hierarchical Processing")
+            if self.config.attention_super_resolution: print("   - Super Resolution")
+            
+            print("="*60 + "\n")
 
 
 # The ONE global configuration instance

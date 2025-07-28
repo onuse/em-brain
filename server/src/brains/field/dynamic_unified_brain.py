@@ -19,7 +19,7 @@ from .field_types import (
     FieldDimension, FieldDynamicsFamily, UnifiedFieldExperience,
     FieldNativeAction
 )
-from .dynamics.constraint_field_nd import ConstraintFieldND
+
 # TemporalExperience import removed - temporal_field_dynamics.py was archived
 from .optimized_gradients import create_optimized_gradient_calculator
 from ...core.dynamic_dimension_calculator import DynamicDimensionCalculator
@@ -94,16 +94,7 @@ class DynamicUnifiedFieldBrain:
         self.unified_field = torch.zeros(tensor_shape, dtype=torch.float32, device=self.device)
         self.unified_field.fill_(brain_config.activation_threshold)  # Baseline activation from cognitive constants
         
-        # Initialize constraint dynamics with cognitive constants
-        self.constraint_field = ConstraintFieldND(
-            field_shape=tensor_shape,
-            dimension_names=[dim.name for dim in field_dimensions],
-            constraint_discovery_rate=self.constraint_discovery_rate,
-            constraint_enforcement_strength=brain_config.constraint_enforcement_strength,
-            max_constraints=50,
-            device=self.device,
-            quiet_mode=quiet_mode
-        )
+
         
         # Initialize optimized gradient calculator with cognitive constants
         self.gradient_calculator = create_optimized_gradient_calculator(
@@ -393,20 +384,11 @@ class DynamicUnifiedFieldBrain:
                 )
             # IntegratedAttention field modulation removed
         
-        # 9. Discover constraints from field topology
-        if self.brain_cycles % 5 == 0:  # Discover constraints periodically
-            self._discover_field_constraints()
-        
-        # 10. Apply constraint forces
-        constraint_forces = self.constraint_field.enforce_constraints(self.unified_field)
-        if constraint_forces is not None:
-            self.unified_field += constraint_forces * self.cognitive_config.brain_config.prediction_error_tolerance * 2  # 0.1
-        
-        # 11. Update topology regions (memory formation)
+        # 9. Update topology regions (memory formation)
         if self.brain_cycles % 10 == 0:
             self._update_topology_regions()
         
-        # 12. Generate motor commands
+        # 10. Generate motor commands
         if self.emergent_navigation_enabled and navigation_state:
             # Use emergent navigation for motor generation
             field_evolution = self.unified_field - self._predicted_field if self._predicted_field is not None else torch.zeros_like(self.unified_field)
@@ -427,10 +409,10 @@ class DynamicUnifiedFieldBrain:
             action = self._unified_field_to_robot_action(field_experience)
         self.field_actions.append(action)
         
-        # 13. Create prediction for next cycle
+        # 11. Create prediction for next cycle
         self._predicted_field = self._predict_next_field_state()
         
-        # 14. Trigger maintenance if needed
+        # 12. Trigger maintenance if needed
         if self.brain_cycles - self.last_maintenance_cycle > self.maintenance_interval:
             self._trigger_maintenance()
         
@@ -445,7 +427,7 @@ class DynamicUnifiedFieldBrain:
             'cycle_time_ms': cycle_time * 1000,
             'field_energy': float(torch.mean(torch.abs(self.unified_field))),
             'max_activation': float(torch.max(torch.abs(self.unified_field))),
-            'active_constraints': len(self.constraint_field.active_constraints),
+
             'topology_regions': len(self.topology_regions),
             'prediction_confidence': self._current_prediction_confidence,
             'working_memory_size': len(self.working_memory),
@@ -666,35 +648,7 @@ class DynamicUnifiedFieldBrain:
         
         self.field_evolution_cycles += 1
     
-    def _discover_field_constraints(self):
-        """
-        Discover constraints from current field topology.
-        """
-        # Calculate field gradients for constraint discovery
-        gradients = {}
-        
-        # Get spatial tensor dimensions
-        spatial_range = self.dimension_mapping['family_tensor_ranges'].get(
-            FieldDynamicsFamily.SPATIAL, (0, 3)
-        )
-        
-        # Calculate gradients in spatial dimensions
-        for dim_idx in range(spatial_range[0], min(spatial_range[1], len(self.tensor_shape))):
-            # Compute gradient along this dimension using torch.gradient
-            # This works correctly for multi-dimensional tensors
-            grad_list = torch.gradient(self.unified_field, dim=dim_idx)
-            # gradient returns a list, get the gradient for this dimension
-            grad = grad_list[0] if isinstance(grad_list, (list, tuple)) else grad_list
-            gradients[f'gradient_dim_{dim_idx}'] = grad
-        
-        # Discover constraints
-        new_constraints = self.constraint_field.discover_constraints(
-            self.unified_field, gradients
-        )
-        
-        if new_constraints and not self.quiet_mode:
-            print(f"🔍 Discovered {len(new_constraints)} new constraints")
-    
+
     def _update_topology_regions(self):
         """
         Update memory regions based on field topology.
@@ -904,7 +858,7 @@ class DynamicUnifiedFieldBrain:
         return {
             'cycle': self.brain_cycles,
             'cognitive_mode': self.cognitive_autopilot.current_mode.value if self.cognitive_autopilot else 'unknown',
-            'active_constraints': len(self.constraint_field.active_constraints) if self.constraint_field else 0,
+
             'cycle_time_ms': getattr(self, '_last_cycle_time', 0) * 1000
         }
     

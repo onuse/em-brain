@@ -178,7 +178,8 @@ class BrainService(IBrainService):
                  save_interval_cycles: int = 1000,
                  auto_save: bool = True,
                  enable_logging: bool = True, 
-                 log_dir: str = "logs"):
+                 log_dir: str = "logs",
+                 quiet: bool = False):
         """
         Initialize brain service with persistence.
         
@@ -210,12 +211,14 @@ class BrainService(IBrainService):
                 auto_save=auto_save,
                 use_binary=True  # Use fast binary format
             )
-            print(f"✅ Integrated persistence initialized")
-            print(f"   Memory path: {memory_path}")
-            print(f"   Auto-save: every {save_interval_cycles} cycles")
+            if not quiet:
+                print(f"✅ Integrated persistence initialized")
+                print(f"   Memory path: {memory_path}")
+                print(f"   Auto-save: every {save_interval_cycles} cycles")
         except Exception as e:
-            print(f"❌ Failed to initialize integrated persistence: {e}")
-            print(f"   Brain will run without persistence")
+            if not quiet:
+                print(f"❌ Failed to initialize integrated persistence: {e}")
+                print(f"   Brain will run without persistence")
         
         # Logging setup (if needed)
         self.logging_service = None

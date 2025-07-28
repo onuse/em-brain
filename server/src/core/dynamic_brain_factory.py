@@ -121,7 +121,7 @@ class DynamicBrainFactory(IBrainFactory):
         # Dynamic brain is now the only option
         
         # Load cognitive configuration
-        self.cognitive_config = get_cognitive_config()
+        self.cognitive_config = get_cognitive_config(quiet=True)
         self.brain_config = self.cognitive_config.brain_config
         
         # Initialize dimension calculator
@@ -184,7 +184,8 @@ class DynamicBrainFactory(IBrainFactory):
                 if not self.quiet_mode:
                     print(f"   Blended reality: Integrated")
             
-            print(f"✅ Created dynamic unified field brain")
+            if not self.quiet_mode:
+                print(f"✅ Created dynamic unified field brain")
             return DynamicBrainWrapper(brain)
         
         # No fallback - dynamic brain requires robot to specify its capabilities
