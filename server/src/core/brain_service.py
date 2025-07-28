@@ -207,7 +207,8 @@ class BrainService(IBrainService):
             self.integrated_persistence = initialize_persistence(
                 memory_path=memory_path,
                 save_interval_cycles=save_interval_cycles,
-                auto_save=auto_save
+                auto_save=auto_save,
+                use_binary=True  # Use fast binary format
             )
             print(f"✅ Integrated persistence initialized")
             print(f"   Memory path: {memory_path}")
