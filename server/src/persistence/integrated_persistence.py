@@ -65,11 +65,7 @@ class IntegratedPersistence:
         # Ensure directory exists
         self.memory_path.mkdir(parents=True, exist_ok=True)
         
-        print(f"🗄️ Integrated persistence initialized")
-        print(f"   Memory path: {self.memory_path}")
-        print(f"   Auto-save: {'enabled' if auto_save else 'disabled'}")
-        print(f"   Save interval: {save_interval_cycles} cycles")
-        print(f"   Format: {'binary (fast)' if use_binary else 'JSON (slow)'}")
+        # Print statements removed - brain_service.py handles this
     
     def get_latest_state_file(self) -> Optional[Path]:
         """Find the most recent brain state file."""

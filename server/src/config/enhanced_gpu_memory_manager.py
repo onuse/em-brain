@@ -49,7 +49,7 @@ class EnhancedGPUMemoryManager:
             self._allocation_id_counter = 0
             self._mps_warnings_shown = set()
     
-    def configure(self, config: Dict[str, Any]):
+    def configure(self, config: Dict[str, Any], quiet: bool = False):
         """Configure GPU memory management from system config."""
         system_config = config.get('system', {})
         
@@ -76,19 +76,23 @@ class EnhancedGPUMemoryManager:
                 memory_fraction = (self._memory_limit_mb * 1024 * 1024) / total_memory
                 memory_fraction = min(memory_fraction, 1.0)  # Cap at 100%
                 torch.cuda.set_per_process_memory_fraction(memory_fraction)
-                print(f"🎯 CUDA memory limit: {self._memory_limit_mb}MB ({memory_fraction*100:.1f}%)")
+                if not quiet:
+                    print(f"🎯 CUDA memory limit: {self._memory_limit_mb}MB ({memory_fraction*100:.1f}%)")
             except Exception as e:
-                print(f"⚠️  Could not set CUDA memory fraction: {e}")
+                if not quiet:
+                    print(f"⚠️  Could not set CUDA memory fraction: {e}")
         
-        print(f"🖥️  Enhanced GPU Memory Manager configured:")
-        print(f"   Device: {self._device}")
-        print(f"   Memory limit: {self._memory_limit_mb}MB" if self._memory_limit_mb > 0 else "   Memory limit: unlimited")
-        
-        if self._device.type == 'mps':
-            print(f"   ⚠️  MPS Limitations:")
-            print(f"      - Max dimensions: {self.MPS_MAX_DIMENSIONS}")
-            print(f"      - Performance threshold: {self.MPS_PERFORMANCE_THRESHOLD}D")
-            print(f"      - Float64 disabled (using float32)")
+        if not quiet:
+            # Only print if not in quiet mode
+            print(f"🖥️  Enhanced GPU Memory Manager configured:")
+            print(f"   Device: {self._device}")
+            print(f"   Memory limit: {self._memory_limit_mb}MB" if self._memory_limit_mb > 0 else "   Memory limit: unlimited")
+            
+            if self._device.type == 'mps':
+                print(f"   ⚠️  MPS Limitations:")
+                print(f"      - Max dimensions: {self.MPS_MAX_DIMENSIONS}")
+                print(f"      - Performance threshold: {self.MPS_PERFORMANCE_THRESHOLD}D")
+                print(f"      - Float64 disabled (using float32)")
     
     def _detect_best_device(self, tensor_dimensions: Optional[int] = None) -> torch.device:
         """
@@ -325,9 +329,9 @@ class EnhancedGPUMemoryManager:
 _gpu_manager = EnhancedGPUMemoryManager()
 
 
-def configure_gpu_memory(config: Dict[str, Any]):
+def configure_gpu_memory(config: Dict[str, Any], quiet: bool = False):
     """Configure the global GPU memory manager."""
-    _gpu_manager.configure(config)
+    _gpu_manager.configure(config, quiet=quiet)
 
 
 def get_managed_device() -> torch.device:

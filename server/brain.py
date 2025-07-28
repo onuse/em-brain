@@ -42,7 +42,7 @@ class DynamicBrainServer:
     """
     
     def __init__(self, config_file: str = "settings.json"):
-        print("🧠 Initializing Dynamic Brain Server")
+        print("\n🧠 Initializing Dynamic Brain Server...")
         print("=" * 50)
         
         # Load configuration
@@ -52,10 +52,8 @@ class DynamicBrainServer:
         # Configure GPU memory management
         configure_gpu_memory(self.config)
         
-        # Display system information
-        self._display_system_info()
-        
         # Initialize components in dependency order
+        print("\n📦 Initializing components...")
         self._initialize_components()
         
         # Server state
@@ -118,54 +116,9 @@ class DynamicBrainServer:
         print("✅ All components initialized")
     
     def _display_system_info(self):
-        """Display system information on startup."""
-        import platform
-        import psutil
-        import torch
-        
-        print("\n📱 System Information")
-        print("=" * 50)
-        
-        # OS and Python info
-        print(f"🖥️  Operating System: {platform.system()} {platform.release()}")
-        print(f"🐍 Python Version: {platform.python_version()}")
-        print(f"📍 Working Directory: {os.getcwd()}")
-        
-        # CPU info
-        print(f"\n💻 CPU Information:")
-        print(f"   Cores: {psutil.cpu_count(logical=False)} physical, {psutil.cpu_count()} logical")
-        print(f"   Architecture: {platform.machine()}")
-        
-        # Memory info
-        mem = psutil.virtual_memory()
-        print(f"\n🧠 Memory Information:")
-        print(f"   Total: {mem.total / (1024**3):.1f} GB")
-        print(f"   Available: {mem.available / (1024**3):.1f} GB")
-        print(f"   Used: {mem.percent:.1f}%")
-        
-        # GPU info
-        # Use GPU memory manager for device info
-        print_gpu_memory_report()
-        
-        # PyTorch info
-        print(f"\n🔥 PyTorch Information:")
-        print(f"   Version: {torch.__version__}")
-        print(f"   Device: {self.config_manager.get_device()}")
-        
-        # Network info
-        print(f"\n🌐 Network Configuration:")
-        print(f"   Brain Server Port: {self.config.get('port', 9999)}")
-        print(f"   Monitoring Port: {self.config.get('port', 9999) - 1}")
-        print(f"   Bind Address: {self.config.get('host', '0.0.0.0')}")
-        
-        # Brain configuration
-        print(f"\n🧠 Brain Configuration:")
-        print(f"   Type: Dynamic Field Brain")
-        print(f"   Dimensions: Adaptive (based on robot)")
-        print(f"   Persistence: {'Enabled' if self.config.get('enable_persistence', True) else 'Disabled'}")
-        print(f"   Logging: {'Enabled' if self.config.get('enable_async_logging', True) else 'Disabled'}")
-        
-        print("=" * 50)
+        """Display consolidated system information."""
+        # Skip - we'll print a cleaner summary at the end
+        pass
     
     def start(self):
         """Start the dynamic brain server."""
@@ -196,12 +149,25 @@ class DynamicBrainServer:
         # Start maintenance scheduler
         self.maintenance_scheduler.start()
         
-        print("\n🌍 Dynamic Brain Server Architecture Active")
-        print("   - Brains created on-demand per robot type")
-        print("   - Dimensions adapt to robot capabilities")
-        print("   - Clean separation of concerns")
-        print("   - Automatic maintenance and optimization")
-        print("\n" + "=" * 50 + "\n")
+        # Print clean startup summary
+        import platform
+        import psutil
+        import torch
+        
+        print("\n" + "=" * 70)
+        print("🧠 DYNAMIC BRAIN SERVER READY")
+        print("=" * 70)
+        
+        # System summary
+        mem = psutil.virtual_memory()
+        device = self.config_manager.get_device()
+        spatial_res = self.config_manager.config.spatial_resolution
+        
+        print(f"💻 System: {platform.system()} | Python {platform.python_version()} | "
+              f"{psutil.cpu_count()} cores | {mem.total/(1024**3):.1f}GB RAM | {device}")
+        print(f"🧠 Brain: Dynamic Field | {spatial_res}³ spatial | Adaptive dimensions")
+        print(f"🌐 Server: {host}:{port} | Monitoring: {monitoring_port}")
+        print("=" * 70)
         
         try:
             # Start server (blocks until stopped)

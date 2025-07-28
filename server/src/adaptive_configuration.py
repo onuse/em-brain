@@ -80,9 +80,10 @@ class AdaptiveConfigurationManager:
     5. NO OTHER CONFIGURATION SYSTEMS SHOULD EXIST
     """
     
-    def __init__(self, settings_file: str = "settings.json"):
+    def __init__(self, settings_file: str = "settings.json", suppress_output: bool = False):
         self.settings_file = Path(settings_file)
         self.config = AdaptiveConfiguration()
+        self.suppress_output = suppress_output
         
         # Load user settings
         self._load_settings()
@@ -314,11 +315,12 @@ class AdaptiveConfigurationManager:
 _config_manager: Optional[AdaptiveConfigurationManager] = None
 
 
-def load_adaptive_configuration(settings_file: str = "settings.json") -> Dict[str, Any]:
+def load_adaptive_configuration(settings_file: str = "settings.json", suppress_output: bool = False) -> Dict[str, Any]:
     """Load configuration - This is the ONLY way to get configuration."""
     global _config_manager
-    _config_manager = AdaptiveConfigurationManager(settings_file)
-    _config_manager.print_summary()
+    _config_manager = AdaptiveConfigurationManager(settings_file, suppress_output)
+    if not suppress_output:
+        _config_manager.print_summary()
     return _config_manager.get_full_config()
 
 
