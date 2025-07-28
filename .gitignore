@@ -1,4 +1,5 @@
 *.gz
+*_meta.json
 *cache*/
 *.py[cod]
 *$py.class
@@ -6,6 +7,10 @@
 *.pyo
 *.pyd
 robot_memory*/
+test_memory*/
+brain_memory/
+*brain_memory*
+*server/brain_memory*/
 .DS_Store
 .claude*/
 run_logs/
