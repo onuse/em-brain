@@ -260,7 +260,7 @@ class ComprehensiveBehavioralTest:
         return (switch_score + diversity_score) / 2
     
     def test_field_stabilization(self, cycles: int = 30) -> float:
-        """Test field stabilization"""
+        """Test field stabilization - measures absolute stability"""
         if not self.quiet_mode:
             print(f"   Running {cycles} cycles...")
         
@@ -277,15 +277,58 @@ class ComprehensiveBehavioralTest:
             if telemetry:
                 energy_levels.append(telemetry.energy)
         
-        if len(energy_levels) >= 10:
-            early_variance = np.var(energy_levels[:10])
-            late_variance = np.var(energy_levels[-10:])
-            
-            if early_variance > 0:
-                stability_improvement = 1.0 - (late_variance / early_variance)
-                return max(0, min(1.0, stability_improvement))
+        if len(energy_levels) < 20:
+            return 0.5
         
-        return 0.5
+        # Convert to numpy array
+        energy = np.array(energy_levels)
+        
+        # 1. Absolute stability in the last quarter
+        last_quarter = energy[-len(energy)//4:]
+        mean_energy = np.mean(last_quarter)
+        if mean_energy > 0:
+            cv_last = np.std(last_quarter) / mean_energy  # Coefficient of variation
+            stability_score = 1.0 / (1.0 + cv_last * 10)  # Lower CV = higher score
+        else:
+            stability_score = 0.5
+        
+        # 2. Convergence trend - compare quarters
+        quarters = np.array_split(energy, 4)
+        quarter_stds = [np.std(q) for q in quarters]
+        
+        # Check if volatility decreases
+        if len(quarter_stds) >= 4:
+            early_volatility = np.mean(quarter_stds[:2])
+            late_volatility = np.mean(quarter_stds[-2:])
+            
+            if early_volatility > 0:
+                convergence_score = max(0, 1.0 - late_volatility / early_volatility)
+            else:
+                # If started stable, check if it stayed stable
+                convergence_score = 1.0 if late_volatility < 0.001 else 0.5
+        else:
+            convergence_score = 0.5
+        
+        # 3. Overall volatility reduction
+        window = max(5, len(energy) // 10)
+        rolling_std = [np.std(energy[i:i+window]) 
+                       for i in range(0, len(energy) - window, window//2)]
+        
+        if len(rolling_std) >= 2:
+            trend = np.polyfit(range(len(rolling_std)), rolling_std, 1)[0]
+            # Negative trend (decreasing volatility) is good
+            trend_score = 1.0 / (1.0 + np.exp(trend * 100))
+        else:
+            trend_score = 0.5
+        
+        # Combine scores with weights
+        final_score = (
+            0.4 * stability_score +      # Absolute stability matters most
+            0.3 * convergence_score +    # Convergence is important
+            0.3 * trend_score           # Overall trend
+        )
+        
+        return final_score
     
     def test_biological_realism(self, cycles: int = 50) -> float:
         """Test biological constraints"""

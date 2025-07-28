@@ -341,7 +341,7 @@ class RigorousBehavioralTestFramework:
         return (exploration_score + exploitation_score + mode_score) / 3
     
     def test_field_stabilization(self, cycles: int = 100) -> float:
-        """Test field stabilization"""
+        """Test field stabilization - measures absolute stability"""
         if not self.quiet_mode:
             print(f"  Testing field stabilization ({cycles} cycles)...")
         
@@ -356,16 +356,55 @@ class RigorousBehavioralTestFramework:
             if telemetry:
                 energy_history.append(telemetry.energy)
         
-        if len(energy_history) >= 20:
-            # Check convergence
-            early_var = np.var(energy_history[:10])
-            late_var = np.var(energy_history[-10:])
-            
-            if early_var > 0:
-                stability_improvement = 1.0 - (late_var / early_var)
-                return max(0, min(1.0, stability_improvement))
+        if len(energy_history) < 20:
+            return 0.5
         
-        return 0.5
+        # Convert to numpy array
+        energy = np.array(energy_history)
+        
+        # 1. Absolute stability in the last quarter
+        last_quarter = energy[-len(energy)//4:]
+        mean_energy = np.mean(last_quarter)
+        if mean_energy > 0:
+            cv_last = np.std(last_quarter) / mean_energy
+            stability_score = 1.0 / (1.0 + cv_last * 10)
+        else:
+            stability_score = 0.5
+        
+        # 2. Convergence trend
+        quarters = np.array_split(energy, 4)
+        quarter_stds = [np.std(q) for q in quarters]
+        
+        if len(quarter_stds) >= 4:
+            early_volatility = np.mean(quarter_stds[:2])
+            late_volatility = np.mean(quarter_stds[-2:])
+            
+            if early_volatility > 0:
+                convergence_score = max(0, 1.0 - late_volatility / early_volatility)
+            else:
+                convergence_score = 1.0 if late_volatility < 0.001 else 0.5
+        else:
+            convergence_score = 0.5
+        
+        # 3. Overall trend
+        window = max(5, len(energy) // 10)
+        rolling_std = [np.std(energy[i:i+window]) 
+                       for i in range(0, len(energy) - window, window//2)]
+        
+        if len(rolling_std) >= 2:
+            trend = np.polyfit(range(len(rolling_std)), rolling_std, 1)[0]
+            trend_score = 1.0 / (1.0 + np.exp(trend * 100))
+        else:
+            trend_score = 0.5
+        
+        # Combine scores
+        final_score = (
+            0.4 * stability_score +
+            0.3 * convergence_score +
+            0.3 * trend_score
+        )
+        
+        return final_score
     
     def test_computational_efficiency(self, cycles: int = 50) -> float:
         """Test computational efficiency"""

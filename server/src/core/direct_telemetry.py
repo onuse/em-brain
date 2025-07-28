@@ -56,10 +56,10 @@ class DirectTelemetry:
         while time.time() - start_time < max_wait:
             if client_id and self.connection_handler:
                 # Look for specific client's session  
-                if hasattr(self.connection_handler, 'robot_sessions'):
-                    for session_id, robot_id in self.connection_handler.robot_sessions.items():
-                        if robot_id == client_id:
-                            return session_id
+                if hasattr(self.connection_handler, 'client_sessions'):
+                    session = self.connection_handler.client_sessions.get(client_id)
+                    if session:
+                        return session.session_id
             else:
                 # Return first available session
                 sessions = self.get_all_sessions()
