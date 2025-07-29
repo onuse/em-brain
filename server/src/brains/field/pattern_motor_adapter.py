@@ -102,10 +102,13 @@ class PatternMotorAdapter:
         boredom = self._compute_boredom(dominant)
         tendencies['boredom'] = boredom
         
-        # Add spontaneous influence
+        # Add spontaneous influence (now comes from field dynamics)
         if spontaneous_activity is not None:
             spont_influence = torch.mean(torch.abs(spontaneous_activity)).item()
             tendencies['spontaneous'] = spont_influence
+        else:
+            # Spontaneous is now integrated into field - use field variance as proxy
+            tendencies['spontaneous'] = dominant.variance * 0.5
         
         # Convert tendencies to motor commands
         motor_commands = self._tendencies_to_motors(tendencies, exploration_params)

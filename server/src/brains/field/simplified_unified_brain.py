@@ -14,7 +14,6 @@ from collections import deque
 
 # Core imports
 from .field_types import UnifiedFieldExperience
-from .spontaneous_dynamics import SpontaneousDynamics
 from ...parameters.cognitive_config import get_cognitive_config
 from .unified_pattern_system import UnifiedPatternSystem
 from .pattern_motor_adapter import PatternMotorAdapter
@@ -98,8 +97,6 @@ class SimplifiedUnifiedBrain:
         self._current_prediction_confidence = brain_config.default_prediction_confidence
         self._predicted_field = None
         self._last_prediction_error = brain_config.optimal_prediction_error
-        self._last_spontaneous_magnitude = 0.0
-        self._last_spontaneous_variance = 0.0
         self._last_imprint_strength = 0.0
         self.modulation = {}  # Will be filled by unified field dynamics
         
@@ -114,10 +111,13 @@ class SimplifiedUnifiedBrain:
             
     def _initialize_core_systems(self, motor_dim: int):
         """Initialize all core brain systems."""
-        # Unified field dynamics (replaces energy + blended reality)
+        # Unified field dynamics (replaces energy + blended reality + spontaneous)
         self.field_dynamics = UnifiedFieldDynamics(
+            field_shape=self.unified_field.shape,
             pattern_memory_size=100,
             confidence_window=50,
+            spontaneous_rate=self.spontaneous_rate,
+            resting_potential=self.cognitive_config.brain_config.resting_potential,
             device=self.device
         )
         
@@ -136,16 +136,7 @@ class SimplifiedUnifiedBrain:
             max_attractors=20
         )
         
-        # Blended reality now part of unified field dynamics
-        
-        # Spontaneous dynamics
-        self.spontaneous = SpontaneousDynamics(
-            field_shape=self.unified_field.shape,
-            resting_potential=self.cognitive_config.brain_config.resting_potential,
-            spontaneous_rate=self.spontaneous_rate,
-            coherence_scale=3.0,
-            device=self.device
-        )
+        # Blended reality and spontaneous dynamics now part of unified field dynamics
         
         # UNIFIED PATTERN SYSTEM - Shared by both motor and attention
         self.pattern_system = UnifiedPatternSystem(
@@ -287,13 +278,9 @@ class SimplifiedUnifiedBrain:
             pass
     
     def _evolve_field(self):
-        """Evolve field - simplified version."""
-        # 1. Energy-based modulation
-        if hasattr(self, 'energy_recommendations'):
-            self.unified_field = self.energy_system.modulate_field(
-                self.unified_field,
-                self.energy_recommendations
-            )
+        """Evolve field - unified version with integrated spontaneous dynamics."""
+        # 1. Apply unified field dynamics (includes spontaneous)
+        self.unified_field = self.field_dynamics.evolve_field(self.unified_field)
         
         # 2. Simple diffusion
         if self.field_diffusion_rate > 0:
@@ -303,24 +290,11 @@ class SimplifiedUnifiedBrain:
                 diffusion = (shifted_fwd + shifted_back - 2 * self.unified_field) / 2
                 self.unified_field += self.field_diffusion_rate * diffusion
         
-        # 3. Spontaneous dynamics
-        spontaneous_weight = self.modulation.get('spontaneous_weight', 0.5)
-        sensory_gating = 1.0 - spontaneous_weight
-        
-        spontaneous_activity = self.spontaneous.generate_spontaneous_activity(
-            self.unified_field,
-            sensory_gating=sensory_gating
-        )
-        self.unified_field += spontaneous_activity
-        
-        self._last_spontaneous_magnitude = torch.mean(torch.abs(spontaneous_activity)).item()
-        self._last_spontaneous_variance = torch.var(spontaneous_activity).item()
-        
-        # 4. Reward topology influence
+        # 3. Reward topology influence
         topology_influence = self.topology_shaper.apply_topology_influence(self.unified_field)
         self.unified_field += topology_influence
         
-        # 5. Log blended reality state
+        # 4. Log state
         if self.brain_cycles % 100 == 0 and not self.quiet_mode:
             state_desc = self.field_dynamics.get_state_description()
             print(state_desc)
@@ -348,19 +322,14 @@ class SimplifiedUnifiedBrain:
             'motor_noise': 0.2
         }
         
-        # Get spontaneous activity for this cycle
-        spontaneous_activity = self.spontaneous.generate_spontaneous_activity(
-            self.unified_field,
-            sensory_gating=0.5  # Temporary gating
-        )
-        
         # Get attention state from current attention processing
         attention_state = getattr(self, '_last_attention_state', None)
         
-        # Generate motor commands through unified pattern adapter
+        # Spontaneous activity is now integrated into field evolution
+        # Just pass the current field state
         motor_commands = self.pattern_motor.generate_motor_action(
             field=self.unified_field,
-            spontaneous_activity=spontaneous_activity,
+            spontaneous_activity=None,  # No longer needed separately
             attention_state=attention_state,
             exploration_params=exploration_params
         )
