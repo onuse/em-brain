@@ -50,7 +50,8 @@ def test_reward_topology_shaping():
     # Test baseline responses
     baseline_actions = []
     for i in range(5):
-        sensory_input = [0.5] * 16  # Neutral sensory input, no reward
+        # PiCar-X has 16 sensors, but we need 25 total for reward (24 + reward)
+        sensory_input = [0.5] * 24 + [0.0]  # 24 sensors + no reward
         action, state = brain.process_robot_cycle(sensory_input)
         baseline_actions.append(action[:4])
         print(f"   Cycle {i+1}: action = {[f'{a:.3f}' for a in action[:4]]}")
@@ -63,8 +64,7 @@ def test_reward_topology_shaping():
     print("-" * 40)
     
     # Give strong positive reward with specific sensory pattern
-    reward_pattern = [1.0, 0.0, 0.5] + [0.2] * 13  # Distinct pattern
-    reward_pattern[-1] = 0.8  # Strong positive reward
+    reward_pattern = [1.0, 0.0, 0.5] + [0.2] * 21 + [0.8]  # 24 sensors + strong positive reward
     
     print(f"   Applying reward pattern with reward = +0.8")
     action, state = brain.process_robot_cycle(reward_pattern)
@@ -79,9 +79,9 @@ def test_reward_topology_shaping():
     
     # Test if brain is drawn toward rewarded pattern
     test_patterns = [
-        ([1.0, 0.1, 0.4] + [0.2] * 13, "Similar to reward"),
-        ([0.0, 1.0, 0.0] + [0.2] * 13, "Different from reward"),
-        ([0.5, 0.5, 0.5] + [0.2] * 13, "Neutral pattern")
+        ([1.0, 0.1, 0.4] + [0.2] * 21 + [0.0], "Similar to reward"),
+        ([0.0, 1.0, 0.0] + [0.2] * 21 + [0.0], "Different from reward"),
+        ([0.5, 0.5, 0.5] + [0.2] * 21 + [0.0], "Neutral pattern")
     ]
     
     for pattern, desc in test_patterns:
@@ -99,8 +99,7 @@ def test_reward_topology_shaping():
     print("-" * 40)
     
     # Apply negative reward
-    punish_pattern = [0.0, 1.0, 0.0] + [0.3] * 13
-    punish_pattern[-1] = -0.7  # Strong negative reward
+    punish_pattern = [0.0, 1.0, 0.0] + [0.3] * 21 + [-0.7]  # 24 sensors + strong negative reward
     
     print(f"   Applying punishment pattern with reward = -0.7")
     action, state = brain.process_robot_cycle(punish_pattern)
@@ -112,7 +111,7 @@ def test_reward_topology_shaping():
     print("\n   Testing avoidance behavior:")
     for i in range(5):
         # Present the punished pattern without reward
-        test_pattern = [0.0, 1.0, 0.0] + [0.3] * 13 + [0.0]
+        test_pattern = [0.0, 1.0, 0.0] + [0.3] * 21 + [0.0]
         action, state = brain.process_robot_cycle(test_pattern)
         action_magnitude = np.linalg.norm(action[:4])
         print(f"   Cycle {i+1}: magnitude = {action_magnitude:.3f} (should avoid)")
@@ -122,7 +121,7 @@ def test_reward_topology_shaping():
     
     # Run many cycles to see if attractors persist
     print("   Running 20 neutral cycles...")
-    neutral_pattern = [0.5] * 16
+    neutral_pattern = [0.5] * 24 + [0.0]  # 24 sensors + no reward
     
     for i in range(20):
         action, state = brain.process_robot_cycle(neutral_pattern)

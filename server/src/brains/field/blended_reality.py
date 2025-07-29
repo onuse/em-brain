@@ -65,9 +65,12 @@ class BlendedReality:
             Smoothed confidence value
         """
         # Temporal smoothing for gradual transitions
+        # Handle both field names for compatibility
+        smoothing = getattr(self.config, 'confidence_smoothing', 
+                          getattr(self.config, 'confidence_smoothing_rate', 0.9))
         self._smoothed_confidence = (
-            self.config.confidence_smoothing * self._smoothed_confidence +
-            (1.0 - self.config.confidence_smoothing) * raw_confidence
+            smoothing * self._smoothed_confidence +
+            (1.0 - smoothing) * raw_confidence
         )
         
         return self._smoothed_confidence
@@ -118,13 +121,16 @@ class BlendedReality:
         """
         if self._dream_mode:
             # Pure fantasy in dream mode
-            return self.config.dream_spontaneous_weight
+            return getattr(self.config, 'dream_spontaneous_weight', 0.95)
         
         # Linear interpolation based on confidence
         # High confidence = strong spontaneous, Low confidence = weak spontaneous
-        weight_range = self.config.max_spontaneous_weight - self.config.base_spontaneous_weight
+        # Handle both field names for compatibility
+        base_weight = getattr(self.config, 'base_spontaneous_weight', 0.3)
+        max_weight = getattr(self.config, 'max_spontaneous_weight', 0.9)
+        weight_range = max_weight - base_weight
         spontaneous_weight = (
-            self.config.base_spontaneous_weight + 
+            base_weight + 
             (weight_range * self._smoothed_confidence)
         )
         

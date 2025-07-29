@@ -24,13 +24,12 @@ from .field_types import (
 from .optimized_gradients import create_optimized_gradient_calculator
 from ...core.dynamic_dimension_calculator import DynamicDimensionCalculator
 from .spontaneous_dynamics import SpontaneousDynamics
-from ...utils.cognitive_autopilot import CognitiveAutopilot
-from .blended_reality import integrate_blended_reality
+# Cognitive autopilot removed - behavior emerges from field dynamics
+from .blended_reality import BlendedReality
 from ...parameters.cognitive_config import get_cognitive_config
 from ...config.enhanced_gpu_memory_manager import get_device_for_tensor
 # IntegratedAttention removed - using PatternBasedAttention only
-from .enhanced_dynamics import EnhancedFieldDynamics, PhaseTransitionConfig, AttractorConfig
-from .brain_field_adapter import BrainFieldAdapter
+# Enhanced dynamics removed - using organic energy + reward topology instead
 # Emergent spatial removed - pattern-based motor provides coordinate-free movement
 from .pattern_based_motor import PatternBasedMotorGenerator
 from .pattern_based_attention_fast import FastPatternBasedAttention
@@ -142,8 +141,6 @@ class DynamicUnifiedFieldBrain:
         self.topology_discoveries = 0
         self.gradient_actions = 0
         
-        # Developmental confidence (naive exploration)
-        self.enable_developmental_confidence = True
         
         # Position tracking
         self._last_imprint_indices = None
@@ -187,7 +184,6 @@ class DynamicUnifiedFieldBrain:
         # self._start_maintenance_thread()
         
         # Spontaneous dynamics system with cognitive constants
-        self.spontaneous_enabled = True
         self.spontaneous = SpontaneousDynamics(
             field_shape=self.unified_field.shape,
             resting_potential=brain_config.resting_potential,
@@ -200,15 +196,10 @@ class DynamicUnifiedFieldBrain:
         self._last_spontaneous_magnitude = 0.0
         self._last_spontaneous_variance = 0.0
         
-        # Cognitive autopilot with cognitive constants
-        self.cognitive_autopilot = CognitiveAutopilot(
-            autopilot_confidence_threshold=brain_config.autopilot_confidence_threshold,
-            focused_confidence_threshold=brain_config.focused_confidence_threshold,
-            stability_window=10
-        )
+        # Cognitive autopilot removed - behavior emerges from energy and prediction confidence
         
-        # Enable blended reality (confidence-based blending)
-        self.blended_reality_enabled = True
+        # Initialize blended reality (confidence-based spontaneous/sensory blending)
+        self.blended_reality = BlendedReality(self.cognitive_config.blended_reality_config)
         
         # Initialize integrated attention system
         # Use parameter if provided, otherwise check config, default to True
@@ -235,38 +226,8 @@ class DynamicUnifiedFieldBrain:
             if not quiet_mode:
                 print(f"   Pattern-based attention: ENABLED (fast version)")
         
-        # Initialize enhanced dynamics system
-        self.enhanced_dynamics_enabled = self.cognitive_config.brain_config.__dict__.get('enhanced_dynamics', True)
-        if self.enhanced_dynamics_enabled:
-            # Configure phase transitions
-            phase_config = PhaseTransitionConfig(
-                energy_threshold=0.7,
-                stability_threshold=0.3,
-                transition_strength=brain_config.novelty_boost,  # Use novelty boost for transitions
-                coherence_factor=0.6,
-                decay_rate=brain_config.field_decay_rate
-            )
-            
-            # Configure attractors
-            attractor_config = AttractorConfig(
-                attractor_strength=brain_config.constraint_enforcement_strength,
-                repulsor_strength=0.2,
-                spatial_spread=min(3.0, spatial_resolution / 2.0),
-                temporal_persistence=temporal_window / 2.0,
-                auto_discovery=True
-            )
-            
-            # Create adapter for enhanced dynamics
-            self.field_adapter = BrainFieldAdapter(self)
-            self.enhanced_dynamics = EnhancedFieldDynamics(
-                field_impl=self.field_adapter,
-                phase_config=phase_config,
-                attractor_config=attractor_config,
-                quiet_mode=quiet_mode
-            )
-        
+        # Enhanced dynamics removed - organic energy + reward topology provide all needed dynamics
         # Emergent navigation removed - pattern-based motor provides coordinate-free movement
-        self.emergent_navigation_enabled = False
         
         # Initialize pattern-based motor generation
         # Always use pattern-based motor (coordinate-free)
@@ -297,7 +258,6 @@ class DynamicUnifiedFieldBrain:
             print(f"   Spontaneous dynamics: ENABLED")
             print(f"   Blended reality: ENABLED")
             print(f"   Integrated attention: {'ENABLED' if self.attention_enabled else 'DISABLED'}")
-            print(f"   Enhanced dynamics: {'ENABLED' if self.enhanced_dynamics_enabled else 'DISABLED'}")            # Emergent navigation removed
             self._print_dimension_summary()
     
     def update_motor_dimensions(self, motor_dim: int):
@@ -329,33 +289,6 @@ class DynamicUnifiedFieldBrain:
             device=self.device
         )
 
-    @property
-    def developmental_confidence(self) -> float:
-        """
-        Calculate developmental confidence factor (0.0 to 1.0).
-        
-        This implements a biologically-inspired confidence boost for naive brains,
-        similar to how young animals exhibit fearless exploration before experience
-        teaches caution. This is NOT a hack but a principled approach to the
-        bootstrap problem: how does a brain with no experience begin learning?
-        
-        In nature, evolution provides innate behaviors and reflexes. Here, we
-        provide elevated baseline confidence that naturally diminishes as the
-        brain accumulates memories and learns from experience.
-        
-        Returns:
-            float: Confidence boost factor (1.0 = maximum naive confidence, 0.0 = experienced)
-        """
-        if not self.enable_developmental_confidence:
-            return 0.0
-            
-        # Memory saturation: how "full" is our long-term memory
-        memory_saturation = min(1.0, len(self.topology_regions) / TOPOLOGY_REGIONS_MAX)
-        
-        # Developmental confidence is inverse of memory saturation
-        # Empty brain = high confidence, Full brain = no boost
-        return 1.0 - memory_saturation
-    
     def _calculate_memory_usage(self) -> float:
         """Calculate field memory usage in MB."""
         elements = 1
@@ -396,37 +329,9 @@ class DynamicUnifiedFieldBrain:
                     actual_sensory=torch.tensor(sensory_input, device=self.device)
                 )
             
-        # Apply developmental confidence boost
-        if self.enable_developmental_confidence:
-            dev_confidence = self.developmental_confidence
-            if dev_confidence > 0:
-                # Boost prediction confidence for naive brains
-                # Max boost of 0.3 when completely naive
-                confidence_boost = dev_confidence * 0.3
-                self._current_prediction_confidence = min(1.0, 
-                    self._current_prediction_confidence + confidence_boost)
         
-        # Update cognitive autopilot state
-        prediction_error = 0.0
-        if hasattr(self, '_last_prediction_error'):
-            prediction_error = self._last_prediction_error
-        
-        # Adjust prediction confidence for cognitive autopilot
-        # Naive brains think they know more than they do
-        effective_prediction_confidence = self._current_prediction_confidence
-        if self.enable_developmental_confidence:
-            dev_confidence = self.developmental_confidence
-            # Inflate confidence for cognitive mode decision
-            # This makes naive brains more likely to use autopilot
-            confidence_inflation = dev_confidence * 0.2  # Max 20% inflation
-            effective_prediction_confidence = min(1.0, 
-                self._current_prediction_confidence + confidence_inflation)
-            
-        autopilot_state = self.cognitive_autopilot.update_cognitive_state(
-            prediction_confidence=effective_prediction_confidence,
-            prediction_error=prediction_error,
-            brain_state={'field_energy': float(torch.mean(torch.abs(self.unified_field)))}
-        )
+        # Cognitive state emerges from prediction confidence and energy
+        # No explicit modes needed
         
         # 3. Imprint experience in unified field
         self._imprint_unified_experience(field_experience)
@@ -448,17 +353,7 @@ class DynamicUnifiedFieldBrain:
             )
         # IntegratedAttention removed - only pattern-based attention available
         
-        # 6. Process emergent navigation if enabled
-        navigation_state = None
-        if self.emergent_navigation_enabled and hasattr(self, 'emergent_spatial'):
-            # Process spatial experience
-            navigation_state = self.emergent_spatial.process_spatial_experience(
-                current_field=self.unified_field,
-                sensory_input=sensory_input,
-                reward=sensory_input[-1] if len(sensory_input) > 24 else 0.0
-            )
-        
-        # 7. Update energy system (replaces old energy management)
+        # 6. Update energy system (replaces old energy management)
         sensory_pattern = torch.tensor(sensory_input[:-1], device=self.device) if len(sensory_input) > 1 else torch.tensor(sensory_input, device=self.device)
         reward = sensory_input[-1] if len(sensory_input) > 24 else 0.0
         
@@ -474,7 +369,7 @@ class DynamicUnifiedFieldBrain:
         energy_behavior = energy_dynamics['behavior']
         self.energy_recommendations = energy_behavior  # Store for field evolution
         
-        # 7b. Process reward for topology shaping
+        # 6b. Process reward for topology shaping
         # This creates lasting impressions in the field landscape
         if abs(reward) > 0.1:  # Only significant rewards shape topology
             deformation = self.topology_shaper.process_reward(
@@ -485,7 +380,7 @@ class DynamicUnifiedFieldBrain:
             if not self.quiet_mode and deformation is not None:
                 print(f"🎯 Reward {reward:+.2f} creating topology deformation")
         
-        # 8. Evolve unified field with all dynamics
+        # 7. Evolve unified field with all dynamics
         self._evolve_unified_field()
         
         # 8. Apply attention modulation to field
@@ -520,7 +415,7 @@ class DynamicUnifiedFieldBrain:
         spontaneous_info = {
             'magnitude': self._last_spontaneous_magnitude,
             'variance': self._last_spontaneous_variance,
-            'weight': self.blended_reality.calculate_spontaneous_weight() if hasattr(self, 'blended_reality') else 0.5
+            'weight': self.blended_reality.calculate_spontaneous_weight()
         }
         
         baseline_action = self.pattern_motor_generator.generate_motor_action(
@@ -571,13 +466,8 @@ class DynamicUnifiedFieldBrain:
         # Set timestamp
         action.timestamp = time.time()
         
-        # Apply developmental confidence to action confidence
+        # Use actual action confidence
         effective_action_confidence = action.confidence
-        if self.enable_developmental_confidence:
-            dev_confidence = self.developmental_confidence
-            # Boost action confidence for naive brains
-            confidence_boost = dev_confidence * 0.4  # Stronger boost for actions
-            effective_action_confidence = min(1.0, action.confidence + confidence_boost)
         
         motor_commands, motor_feedback = self.motor_cortex.process_intentions(
             intentions=action.output_stream,
@@ -622,12 +512,8 @@ class DynamicUnifiedFieldBrain:
             'working_memory_size': len(self.working_memory),
             'conceptual_dims': self.total_dimensions,
             'tensor_dims': len(self.tensor_shape),
-            'spontaneous_enabled': self.spontaneous_enabled,
-            'cognitive_mode': self.cognitive_autopilot.current_mode.value,
-            'cognitive_recommendations': self.cognitive_autopilot._generate_system_recommendations({}),
             'pattern_motor': True,  # Always pattern-based (coordinate-free)
             'pattern_attention_enabled': self.pattern_attention_enabled,
-            'developmental_confidence': self.developmental_confidence,
             'memory_saturation': len(self.topology_regions) / TOPOLOGY_REGIONS_MAX,
             'energy_state': {
                 'energy': energy_dynamics['smoothed_energy'] if 'energy_dynamics' in locals() else 0.5,
@@ -722,19 +608,34 @@ class DynamicUnifiedFieldBrain:
             else:  # Other dimensions get single points
                 region_slices.append(idx)
         
-        # Imprint with intensity based on reward and energy state
-        # Use base imprint strength from blended reality config
-        blended_config = self.cognitive_config.blended_reality_config
-        base_imprint_strength = blended_config.base_imprint_strength * experience.field_intensity
+        # Update blended reality confidence
+        self.blended_reality.update_confidence(self._current_prediction_confidence)
         
-        # Apply energy-based sensory amplification
-        if hasattr(self, 'energy_recommendations'):
-            sensory_amplification = self.energy_recommendations.get('sensory_amplification', 1.0)
-            imprint_strength = base_imprint_strength * sensory_amplification
-        else:
-            imprint_strength = base_imprint_strength
+        # Check if we have meaningful sensory input
+        has_meaningful_input = (hasattr(experience, 'raw_input_stream') and 
+                               experience.raw_input_stream is not None and
+                               torch.max(torch.abs(experience.raw_input_stream)) > 0.01)
+        
+        if has_meaningful_input:
+            # Calculate confidence-based imprint strength
+            base_intensity = experience.field_intensity
+            scaled_intensity = self.blended_reality.calculate_imprint_strength(
+                base_intensity, has_sensory_input=True
+            )
             
-        self.unified_field[tuple(region_slices)] += imprint_strength
+            # Apply energy-based sensory amplification
+            if hasattr(self, 'energy_recommendations'):
+                sensory_amplification = self.energy_recommendations.get('sensory_amplification', 1.0)
+                imprint_strength = scaled_intensity * sensory_amplification
+            else:
+                imprint_strength = scaled_intensity
+                
+            self.unified_field[tuple(region_slices)] += imprint_strength
+        else:
+            # No meaningful input - update blended reality state but don't imprint
+            self.blended_reality.calculate_imprint_strength(
+                experience.field_intensity, has_sensory_input=False
+            )
         
         # Store position for tracking
         self._last_imprint_indices = tensor_indices
@@ -801,45 +702,42 @@ class DynamicUnifiedFieldBrain:
                 diffusion = (shifted_forward + shifted_backward - 2 * self.unified_field) / 2
                 self.unified_field += self.field_diffusion_rate * diffusion
         
-        # 3. Spontaneous dynamics
-        if self.spontaneous_enabled:
-            # Get spontaneous weight from energy behavior
-            if hasattr(self, 'energy_recommendations'):
-                spontaneous_weight = self.energy_recommendations.get('spontaneous_weight', 0.5)
-            else:
-                spontaneous_weight = 0.5
-            
-            # sensory_gating: 0 = pure spontaneous, 1 = suppress spontaneous
-            # So we invert our spontaneous weight
-            sensory_gating = 1.0 - spontaneous_weight
-            
-            # Add spontaneous activity
-            spontaneous_activity = self.spontaneous.generate_spontaneous_activity(
-                self.unified_field,
-                sensory_gating=sensory_gating
-            )
-            self.unified_field += spontaneous_activity
-            
-            # Track spontaneous magnitude for exploration
-            self._last_spontaneous_magnitude = torch.mean(torch.abs(spontaneous_activity)).item()
-            
-            # Track spontaneous pattern richness (variance indicates complexity)
-            self._last_spontaneous_variance = torch.var(spontaneous_activity).item()
+        # 3. Spontaneous dynamics (always enabled)
+        # Get spontaneous weight from energy behavior
+        if hasattr(self, 'energy_recommendations'):
+            spontaneous_weight = self.energy_recommendations.get('spontaneous_weight', 0.5)
+        else:
+            spontaneous_weight = 0.5
         
-        # 4. Apply enhanced dynamics if enabled
-        if self.enhanced_dynamics_enabled and hasattr(self, 'enhanced_dynamics'):
-            # Enhanced dynamics handles phase transitions, attractors, and energy redistribution
-            # It will call back to our adapter which uses _imprint_unified_field
-            self.enhanced_dynamics.evolve_with_enhancements(
-                dt=0.1,  # Standard evolution timestep
-                current_input_stream=None  # Already handled by brain
-            )
+        # sensory_gating: 0 = pure spontaneous, 1 = suppress spontaneous
+        # So we invert our spontaneous weight
+        sensory_gating = 1.0 - spontaneous_weight
         
-        # 5. Apply reward topology influence
+        # Add spontaneous activity
+        spontaneous_activity = self.spontaneous.generate_spontaneous_activity(
+            self.unified_field,
+            sensory_gating=sensory_gating
+        )
+        self.unified_field += spontaneous_activity
+        
+        # Track spontaneous magnitude for exploration
+        self._last_spontaneous_magnitude = torch.mean(torch.abs(spontaneous_activity)).item()
+        
+        # Track spontaneous pattern richness (variance indicates complexity)
+        self._last_spontaneous_variance = torch.var(spontaneous_activity).item()
+        
+        # 4. Apply reward topology influence
         topology_influence = self.topology_shaper.apply_topology_influence(self.unified_field)
         self.unified_field += topology_influence
         
-        # 6. Baseline prevention handled by energy system
+        # 5. Baseline prevention handled by energy system
+        
+        # Log blended reality state occasionally
+        if self.brain_cycles % 100 == 0 and not self.quiet_mode:
+            state = self.blended_reality.get_blend_state()
+            print(f"🌀 BLEND: {state['reality_balance']} | "
+                  f"Dream: {state['dream_mode']} | "
+                  f"Confidence: {state['smoothed_confidence']:.2f}")
         
         self.field_evolution_cycles += 1
     
@@ -998,7 +896,6 @@ class DynamicUnifiedFieldBrain:
         """Get current brain state for telemetry"""
         return {
             'cycle': self.brain_cycles,
-            'cognitive_mode': self.cognitive_autopilot.current_mode.value if self.cognitive_autopilot else 'unknown',
 
             'cycle_time_ms': getattr(self, '_last_cycle_time', 0) * 1000
         }

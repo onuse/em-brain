@@ -75,26 +75,29 @@ The complete flow from sensory input to motor output:
       ↓
 3. Pattern Recognition (novelty detection via cosine similarity)
       ↓
-4. Field Imprinting (strength modulated by energy state)
+4. Reward Processing (significant rewards → topology deformation)
       ↓
-5. Attention Selection (pattern salience: novelty + surprise + importance)
+5. Field Imprinting (strength modulated by energy state)
       ↓
-6. Field Evolution (spontaneous + sensory, weighted by confidence)
+6. Attention Selection (pattern salience: novelty + surprise + importance)
       ↓
-7. Action Prediction (preview multiple candidates)
+7. Field Evolution (spontaneous + sensory + topology influence)
       ↓
-8. Value Estimation (score predicted outcomes)
+8. Action Prediction (preview multiple candidates)
       ↓
-9. Action Selection (value + uncertainty exploration)
+9. Value Estimation (score predicted outcomes)
       ↓
-10. Motor Generation (pattern → motor mapping)
+10. Action Selection (value + uncertainty exploration)
       ↓
-11. Learning (update predictions from outcomes)
+11. Motor Generation (pattern → motor mapping)
+      ↓
+12. Learning (update predictions from outcomes)
 ```
 
 ### Key Feedback Loops
 - **Energy ↔ Behavior**: Low energy drives exploration, which finds patterns that increase energy
 - **Prediction ↔ Action**: Actions chosen by predicted outcomes, errors improve predictions
+- **Reward ↔ Topology**: Rewards shape field topology, topology guides future behavior toward rewards
 - **Confidence ↔ Processing**: High confidence enables fantasy, low confidence demands reality
 - **Attention ↔ Memory**: Salient patterns form stronger memories
 
@@ -511,6 +514,15 @@ Intelligence Metrics:
 - **Uncertainty Bonus**: Unknown outcomes encourage exploration
 - **Adaptive Frequency**: Full prediction every 10 cycles or when exploring
 
+### Reward Topology Shaping (Emergent Intentionality)
+- **No Goals**: System has no explicit goal representation or planning
+- **Field Deformation**: Rewards create persistent "impressions" in field topology
+- **Attractors**: Positive rewards → field naturally flows toward rewarded states
+- **Repulsors**: Negative rewards → field naturally flows away from punished states
+- **Emergence**: Goal-seeking behavior emerges from topology alone
+- **Persistence**: Deformations decay slowly (95% persistence factor)
+- **Key Insight**: Like gravity warping spacetime, rewards warp field topology
+
 ## System Configuration
 
 **Architecture**: Single UnifiedFieldBrain implementation  
@@ -529,13 +541,19 @@ Intelligence Metrics:
 #### Fully Integrated Features
 - Pattern-based motor generation (coordinate-free)
 - Pattern-based attention (salience-based, no gradients)
-- Emergent navigation with place discovery
-- Enhanced field dynamics (phase transitions, attractors)
-- Constraint enforcement system (self-organization)
+- Organic energy system (emerges from field activity)
+- Predictive action selection (imagine before acting)
+- Reward topology shaping (emergent goal-seeking)
 - Persistence system (cross-session learning)
-- Blended reality (fantasy/reality mixing)
-- Spontaneous dynamics (autonomous activity)
-- Cognitive autopilot (adaptive processing)
+- Blended reality (integrated into field evolution)
+- Spontaneous dynamics (always active)
+
+#### Removed Systems (Simplified)
+- Enhanced Dynamics: Replaced by organic energy + reward topology
+- Developmental Confidence: Exploration emerges from energy alone
+- Cognitive Autopilot: Behavior emerges from field dynamics
+- BrainFieldAdapter: Direct integration is cleaner
+- Configuration Flags: Committed to core design choices
 
 #### Known Limitations
 - Topology region formation requires parameter tuning for different resolutions
