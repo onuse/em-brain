@@ -148,7 +148,10 @@ class DynamicMonitoringServer:
                     'active_brains',
                     'performance_metrics',
                     'telemetry',
-                    'telemetry <session_id>'
+                    'telemetry <session_id>',
+                    'prediction_metrics',
+                    'ping',
+                    'pattern_stats'
                 ]
             }
             client_socket.send((json.dumps(welcome) + "\n").encode('utf-8'))
@@ -319,6 +322,78 @@ class DynamicMonitoringServer:
                     'data': metrics
                 }
             
+            elif request_lower == "prediction_metrics":
+                # Get prediction confidence metrics for all sessions
+                sessions = self.brain_service.get_all_sessions()
+                prediction_data = []
+                
+                for session_id, session_data in sessions.items():
+                    # Get brain instance for this session
+                    brain_wrapper = self.brain_service.get_brain_for_session(session_id)
+                    if brain_wrapper and hasattr(brain_wrapper, 'brain'):
+                        brain = brain_wrapper.brain
+                        if hasattr(brain, '_current_prediction_confidence'):
+                            pred_metrics = {
+                                'session_id': session_id,
+                                'current_confidence': getattr(brain, '_current_prediction_confidence', 0.5),
+                                'last_prediction_error': getattr(brain, '_last_prediction_error', 0.0),
+                                'improvement_rate': 0.0,
+                                'confidence_history_length': len(getattr(brain, '_prediction_confidence_history', []))
+                            }
+                            
+                            # Calculate improvement rate if history available
+                            if hasattr(brain, '_improvement_rate_history') and len(brain._improvement_rate_history) > 0:
+                                import numpy as np
+                                pred_metrics['improvement_rate'] = float(np.mean(list(brain._improvement_rate_history)))
+                            
+                            prediction_data.append(pred_metrics)
+                
+                return {
+                    'status': 'success',
+                    'request': request,
+                    'timestamp': time.time(),
+                    'data': prediction_data
+                }
+            
+            elif request_lower == "ping":
+                # Simple health check
+                return {
+                    'status': 'success',
+                    'request': request,
+                    'timestamp': time.time(),
+                    'message': 'pong',
+                    'server_uptime': time.time() - self.clients.get(list(self.clients.keys())[0], {}).get('connected_at', time.time()) if self.clients else 0
+                }
+            
+            elif request_lower == "pattern_stats":
+                # Get pattern-based motor stats for debugging
+                sessions = self.brain_service.get_all_sessions()
+                pattern_data = []
+                
+                for session_id, session_data in sessions.items():
+                    brain_wrapper = self.brain_service.get_brain_for_session(session_id)
+                    if brain_wrapper and hasattr(brain_wrapper, 'brain'):
+                        brain = brain_wrapper.brain
+                        if hasattr(brain, 'pattern_motor_generator'):
+                            motor_gen = brain.pattern_motor_generator
+                            stats = motor_gen.get_pattern_stats()
+                            
+                            # Add session info
+                            stats['session_id'] = session_id
+                            
+                            # Add last features if available
+                            if hasattr(motor_gen, '_last_pattern_features') and motor_gen._last_pattern_features:
+                                stats['last_features'] = motor_gen._last_pattern_features
+                            
+                            pattern_data.append(stats)
+                
+                return {
+                    'status': 'success',
+                    'request': request,
+                    'timestamp': time.time(),
+                    'data': pattern_data
+                }
+            
             else:
                 # Unknown request
                 return {
@@ -333,7 +408,10 @@ class DynamicMonitoringServer:
                         'active_brains',
                         'performance_metrics',
                         'telemetry',
-                        'telemetry <session_id>'
+                        'telemetry <session_id>',
+                        'prediction_metrics',
+                        'ping',
+                        'pattern_stats'
                     ]
                 }
         

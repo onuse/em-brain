@@ -64,6 +64,40 @@ brain/
 └── tools/runners/             # Test orchestration
 ```
 
+## Cognitive Pipeline
+
+The complete flow from sensory input to motor output:
+
+```
+1. Sensory Input (24D + reward)
+      ↓
+2. Energy Assessment (field activity → exploration drive)
+      ↓
+3. Pattern Recognition (novelty detection via cosine similarity)
+      ↓
+4. Field Imprinting (strength modulated by energy state)
+      ↓
+5. Attention Selection (pattern salience: novelty + surprise + importance)
+      ↓
+6. Field Evolution (spontaneous + sensory, weighted by confidence)
+      ↓
+7. Action Prediction (preview multiple candidates)
+      ↓
+8. Value Estimation (score predicted outcomes)
+      ↓
+9. Action Selection (value + uncertainty exploration)
+      ↓
+10. Motor Generation (pattern → motor mapping)
+      ↓
+11. Learning (update predictions from outcomes)
+```
+
+### Key Feedback Loops
+- **Energy ↔ Behavior**: Low energy drives exploration, which finds patterns that increase energy
+- **Prediction ↔ Action**: Actions chosen by predicted outcomes, errors improve predictions
+- **Confidence ↔ Processing**: High confidence enables fantasy, low confidence demands reality
+- **Attention ↔ Memory**: Salient patterns form stronger memories
+
 ## Core Architecture
 
 ### Dynamic Brain Architecture
@@ -409,18 +443,19 @@ Intelligence Metrics:
 ### Emergent Properties
 - Memory: Persistent field topology patterns
 - Attention: Pattern salience (novelty, surprise, importance)
-- Motor Control: Field evolution patterns → motor tendencies
-- Learning: Continuous field evolution
+- Motor Control: Action-outcome prediction guides behavior
+- Learning: Continuous field evolution from prediction errors
 - Reasoning: Field dynamics and constraint satisfaction
-- Prediction: Field evolution as future state anticipation
-- Value: Reward-modulated field topology
-- Curiosity: Seeking prediction errors for learning
-- Imagination: Spontaneous dynamics create internal simulations
+- Prediction: Actions preview outcomes before execution
+- Value: Anticipated outcomes guide action selection
+- Curiosity: Uncertainty-driven exploration
+- Imagination: Preview multiple action candidates internally
 - Dreaming: Pure fantasy states during extended idle
-- Anticipation: High-confidence predictions drive pre-emptive actions
+- Anticipation: Field evolution predicts sensory consequences
 - Navigation: Places emerge as stable field configurations
 - Spatial Understanding: Topological relationships, not coordinates
 - Cross-Modal Binding: Temporal synchrony creates unified percepts
+- Energy Flow: Exploration↔Consolidation emerges from field activity
 
 ### Architectural Simplicity
 - Single UnifiedFieldBrain implementation
@@ -463,12 +498,31 @@ Intelligence Metrics:
 - **Baseline Field Value**: 0.0001 (prevents zero without interfering)
 - **Reward Modulation**: Positive rewards increase field intensity 0.5-1.0
 
+### Energy Management
+- **Organic Energy System**: Energy emerges from field activity intensity
+- **No Modes**: Continuous behavioral influence, no hard thresholds
+- **Pattern Memory**: Cosine similarity replaces hashing
+- **Natural Flow**: Low energy → explore → patterns → high energy → consolidate
+
+### Predictive Action Selection
+- **Action Candidates**: Generate exploit, explore, and random options
+- **Outcome Preview**: Field evolution simulates action consequences
+- **Value Estimation**: Predicted states scored for desirability
+- **Uncertainty Bonus**: Unknown outcomes encourage exploration
+- **Adaptive Frequency**: Full prediction every 10 cycles or when exploring
+
 ## System Configuration
 
 **Architecture**: Single UnifiedFieldBrain implementation  
-**Processing**: Sensor input → adaptive field dynamics → motor output  
+**Processing**: Sensor → Energy → Prediction → Action → Motor  
 **Hardware**: Automatic GPU/MPS/CPU selection with adaptive spatial resolution  
 **Configuration**: settings.json for brain parameters and network settings
+
+### Performance Targets
+**Development**: <750ms cycle time acceptable (M1 MacBook)  
+**Production**: <150ms target (10x faster hardware)  
+**Testing**: <500ms for CI environments  
+**Embedded**: <100ms for resource-constrained systems
 
 ### Implementation Status
 
@@ -488,3 +542,4 @@ Intelligence Metrics:
 - GPU processing limited to CPU due to MPS tensor dimension constraints
 - Unified field persistence creates large files (100+ MB) without compression
 - Hardware deployment interface (picarx_brainstem.py) requires updating
+- Predictive action selection adds ~300ms on development hardware (30ms on production)

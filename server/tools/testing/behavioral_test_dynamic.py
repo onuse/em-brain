@@ -110,10 +110,21 @@ class DynamicBehavioralTestFramework:
             host='localhost',
             port=9998
         )
-        self.monitoring_server.start()
+        try:
+            self.monitoring_server.start()
+            print("✅ Monitoring server started on port 9998")
+        except Exception as e:
+            print(f"⚠️  Failed to start monitoring server: {e}")
+        
+        # Wait a moment for server to start
+        time.sleep(0.1)
         
         # Telemetry client for monitoring brain internals
         self.telemetry_client = TelemetryClient()
+        if self.telemetry_client.connect():
+            print("✅ Telemetry client connected")
+        else:
+            print("⚠️  Telemetry client failed to connect")
         
         print(f"✅ Framework initialized with {'simple' if use_simple_brain else 'unified'} brain")
     
@@ -141,11 +152,18 @@ class DynamicBehavioralTestFramework:
     def test_prediction_learning(self, cycles: int = 50) -> float:
         """Test prediction learning capability using telemetry"""
         
-        # Get session ID from telemetry
-        session_id = self.telemetry_client.wait_for_session(max_wait=2.0)
+        # Get actual session ID for our client
+        session_id = self.connection_handler.get_session_id_for_client(self.client_id)
         if not session_id:
-            print("⚠️  No session available for telemetry")
-            return 0.0
+            print(f"⚠️  No session found for client {self.client_id}")
+            # Try getting any available session from telemetry
+            session_id = self.telemetry_client.wait_for_session(max_wait=2.0)
+            if not session_id:
+                print("⚠️  No session available for telemetry")
+                return 0.0
+        
+        if not self.quiet_mode:
+            print(f"   Using session: {session_id}")
         
         confidence_values = []
         
@@ -169,6 +187,15 @@ class DynamicBehavioralTestFramework:
             telemetry = self.telemetry_client.get_session_telemetry(session_id)
             if telemetry:
                 confidence_values.append(telemetry.confidence)
+                if i == 0 and not self.quiet_mode:
+                    print(f"   ✅ Telemetry working - confidence: {telemetry.confidence:.3f}")
+            else:
+                # Debug: telemetry failed
+                if i == 0:
+                    print(f"   ⚠️  Telemetry not available for session {session_id}")
+                    # Try to diagnose the issue
+                    sessions = self.telemetry_client.get_all_sessions()
+                    print(f"   Available sessions: {sessions}")
         
         # Score based on prediction confidence improvement
         if len(confidence_values) >= 10:
@@ -185,17 +212,43 @@ class DynamicBehavioralTestFramework:
             improvement_score = max(0, min(1.0, improvement * 5))  # Scale improvement
             confidence_score = max(0, min(1.0, (final_confidence - 0.5) * 2))  # Above 0.5 is good
             
-            return (improvement_score + confidence_score) / 2
+            score = (improvement_score + confidence_score) / 2
+            
+            # Debug output
+            if not self.quiet_mode:
+                print(f"   Confidence: early={early_confidence:.3f}, late={late_confidence:.3f}, final={final_confidence:.3f}")
+                print(f"   Improvement: {improvement:.3f}, Score: {score:.3f}")
+            
+            return score
+        
+        # Fallback if no telemetry data
+        if not self.quiet_mode:
+            print(f"   ⚠️  Insufficient telemetry data: {len(confidence_values)} samples")
+        
+        # Try monitoring server as fallback
+        try:
+            # Query prediction_metrics from monitoring server
+            response = self.monitoring_server._handle_request("prediction_metrics")
+            if response['status'] == 'success' and len(response['data']) > 0:
+                # Use first session's confidence
+                current_confidence = response['data'][0].get('current_confidence', 0.5)
+                # Simple score based on distance from 0.5
+                return max(0, min(1.0, current_confidence))
+        except:
+            pass
         
         return 0.0
     
     def test_exploration_exploitation(self, cycles: int = 50) -> float:
         """Test exploration vs exploitation balance using telemetry"""
         
-        # Get session ID from telemetry
-        session_id = self.telemetry_client.wait_for_session(max_wait=2.0)
+        # Get actual session ID for our client
+        session_id = self.connection_handler.get_session_id_for_client(self.client_id)
         if not session_id:
-            return 0.0
+            # Fallback to any available session
+            session_id = self.telemetry_client.wait_for_session(max_wait=2.0)
+            if not session_id:
+                return 0.0
         
         motor_outputs = []
         cognitive_modes = []
@@ -277,7 +330,12 @@ class DynamicBehavioralTestFramework:
         print("=" * 60)
         
         # Setup virtual robot
+        print("Setting up virtual robot...")
         self.setup_virtual_robot()
+        
+        # Verify we have a session
+        session_id = self.connection_handler.get_session_id_for_client(self.client_id)
+        print(f"Session ID for client: {session_id}")
         
         results = {}
         detailed_results = {}

@@ -16,6 +16,7 @@ import torch
 import numpy as np
 from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
+from collections import deque
 
 from .field_types import FieldNativeAction, UnifiedFieldExperience, FieldDynamicsFamily
 
@@ -75,12 +76,19 @@ class PatternBasedMotorGenerator:
         self.field_history = []
         self.history_length = 3
         
+        # Pattern repetition tracking for boredom detection
+        self.pattern_history = deque(maxlen=20)  # Track patterns over time
+        self.boredom_threshold = 0.8  # Similarity threshold for boredom
+        self.boredom_counter = 0
+        
         # Motor smoothing
         self.previous_motor = None
         self.smoothing_factor = 0.7
         
         # Debug - store last pattern features
         self._last_pattern_features = None
+        self._debug_cycle_count = 0
+        self._debug_interval = 500  # Log every N cycles
         
         if not quiet_mode:
             print(f"🎮 Pattern-Based Motor Generator initialized")
@@ -90,7 +98,9 @@ class PatternBasedMotorGenerator:
     
     def generate_motor_action(self,
                             current_field: torch.Tensor,
-                            experience: Optional[UnifiedFieldExperience] = None) -> FieldNativeAction:
+                            experience: Optional[UnifiedFieldExperience] = None,
+                            improvement_rate: float = 0.0,
+                            spontaneous_info: Optional[Dict[str, float]] = None) -> FieldNativeAction:
         """
         Generate motor commands from field patterns.
         
@@ -109,19 +119,85 @@ class PatternBasedMotorGenerator:
         
         # Analyze pattern characteristics
         pattern_features = self._analyze_pattern_features(evolution_patterns)
+        
+        # Calculate boredom from pattern repetition
+        boredom = self._calculate_boredom(current_field)
+        pattern_features['boredom'] = boredom
+        
+        # Add improvement rate (negative = getting worse, positive = improving)
+        pattern_features['improvement_rate'] = improvement_rate
+        pattern_features['learning_stalled'] = abs(improvement_rate) < 0.01  # No significant change
+        
+        # Add spontaneous dynamics info
+        if spontaneous_info:
+            pattern_features['spontaneous_magnitude'] = spontaneous_info.get('magnitude', 0.0)
+            pattern_features['spontaneous_variance'] = spontaneous_info.get('variance', 0.0)
+            pattern_features['spontaneous_weight'] = spontaneous_info.get('weight', 0.0)
+        else:
+            pattern_features['spontaneous_magnitude'] = 0.0
+            pattern_features['spontaneous_variance'] = 0.0
+            pattern_features['spontaneous_weight'] = 0.0
+        
         self._last_pattern_features = pattern_features  # Store for debugging
+        self._last_exploration_drive = 0.0  # Will be updated in tendencies mapping
         
         # Map patterns to motor tendencies
         motor_tendencies = self._patterns_to_motor_tendencies(pattern_features)
         
+        # Debug logging
+        self._debug_cycle_count += 1
+        if not self.quiet_mode and self._debug_cycle_count % self._debug_interval == 0:
+            print(f"\n🔍 PATTERN DEBUG (cycle {self._debug_cycle_count}):")
+            print(f"   Field patterns:")
+            print(f"     - Oscillation: {pattern_features.get('oscillation', 0):.3f}")
+            print(f"     - Energy gradient: {pattern_features.get('energy_gradient', 0):.3f}")
+            print(f"     - Energy variance: {pattern_features.get('energy_variance', 0):.3f}")
+            print(f"     - Coherence: {pattern_features.get('coherence', 0):.3f}")
+            print(f"     - Novelty: {pattern_features.get('novelty', 0):.3f}")
+            print(f"     - Boredom: {pattern_features.get('boredom', 0):.3f}")
+            print(f"   Spontaneous dynamics:")
+            print(f"     - Magnitude: {pattern_features.get('spontaneous_magnitude', 0):.3f}")
+            print(f"     - Variance: {pattern_features.get('spontaneous_variance', 0):.3f}")
+            print(f"     - Weight: {pattern_features.get('spontaneous_weight', 0):.3f}")
+            print(f"   Motor tendencies:")
+            print(f"     - Forward: {motor_tendencies.get('forward', 0):.3f}")
+            print(f"     - Turn: {motor_tendencies.get('turn', 0):.3f}")
+            print(f"     - Speed: {motor_tendencies.get('speed', 0):.3f}")
+            print(f"     - Exploration: {motor_tendencies.get('exploration', 0):.3f}")
+            print(f"     - Confidence: {motor_tendencies.get('confidence', 0):.3f}")
+        
         # Convert tendencies to motor commands
         motor_commands = self._tendencies_to_commands(motor_tendencies)
         
+        # Adaptive smoothing - less smoothing when exploring
+        adaptive_smoothing = self.smoothing_factor * (1.0 - motor_tendencies.get('exploration', 0.0) * 0.5)
+        
         # Apply smoothing
         if self.previous_motor is not None:
-            motor_commands = (self.smoothing_factor * self.previous_motor + 
-                            (1 - self.smoothing_factor) * motor_commands)
+            motor_commands = (adaptive_smoothing * self.previous_motor + 
+                            (1 - adaptive_smoothing) * motor_commands)
+        
+        # Add exploration noise based on total exploration drive
+        exploration_level = motor_tendencies.get('exploration', 0.0)
+        if exploration_level > 0.2:  # Lower threshold since spontaneous is always present
+            # Noise proportional to exploration level
+            exploration_noise = torch.randn_like(motor_commands) * 0.3 * exploration_level
+            motor_commands = motor_commands + exploration_noise
+            motor_commands = torch.clamp(motor_commands, -1.0, 1.0)
+            
+            # Debug log exploration events periodically
+            # Use boredom counter as a proxy for cycles
+            if not self.quiet_mode and hasattr(self, 'boredom_counter') and self.boredom_counter % 50 == 0:
+                spont_exp = pattern_features['spontaneous_magnitude'] * (1.0 + pattern_features['spontaneous_variance']) * pattern_features['spontaneous_weight']
+                print(f"🎲 EXPLORATION: total={exploration_level:.2f}, " +
+                      f"spontaneous={spont_exp:.2f}, boredom={pattern_features['boredom']:.2f}")
+        
         self.previous_motor = motor_commands.clone()
+        
+        # Debug final motor commands
+        if not self.quiet_mode and self._debug_cycle_count % self._debug_interval == 0:
+            print(f"   Final motor commands: {[f'{cmd:.3f}' for cmd in motor_commands.tolist()]}")
+            print(f"   Exploration active: {exploration_level > 0.2}")
         
         # Create action
         action = FieldNativeAction(
@@ -303,6 +379,66 @@ class PatternBasedMotorGenerator:
         
         return novelty
     
+    def _calculate_boredom(self, current_pattern: torch.Tensor) -> float:
+        """
+        Calculate boredom level based on pattern repetition.
+        
+        High boredom = patterns are too similar/repetitive
+        Low boredom = patterns are varied
+        
+        Returns:
+            float: Boredom level [0, 1] where 1 = extremely bored
+        """
+        # Store current pattern signature (downsampled for efficiency)
+        pattern_signature = current_pattern.flatten()[::10]  # Sample every 10th element
+        
+        if len(self.pattern_history) == 0:
+            self.pattern_history.append(pattern_signature)
+            return 0.0  # No boredom initially
+        
+        # Calculate similarity to recent patterns
+        similarities = []
+        for past_pattern in self.pattern_history:
+            if len(past_pattern) == len(pattern_signature):
+                # Cosine similarity
+                dot_product = torch.sum(pattern_signature * past_pattern)
+                norm_current = torch.norm(pattern_signature)
+                norm_past = torch.norm(past_pattern)
+                
+                if norm_current > 1e-6 and norm_past > 1e-6:
+                    similarity = (dot_product / (norm_current * norm_past)).item()
+                    similarities.append(abs(similarity))
+        
+        # Track pattern
+        self.pattern_history.append(pattern_signature.clone())
+        
+        if not similarities:
+            return 0.0
+        
+        # Average similarity indicates how repetitive patterns are
+        avg_similarity = np.mean(similarities)
+        
+        # Count how many patterns are too similar
+        high_similarity_count = sum(1 for s in similarities if s > self.boredom_threshold)
+        
+        # Boredom increases with pattern repetition
+        repetition_ratio = high_similarity_count / len(similarities)
+        
+        # Combined boredom metric
+        boredom = 0.7 * avg_similarity + 0.3 * repetition_ratio
+        
+        # Update boredom counter
+        if boredom > 0.7:
+            self.boredom_counter += 1
+        else:
+            self.boredom_counter = max(0, self.boredom_counter - 1)
+        
+        # Amplify boredom if it persists
+        if self.boredom_counter > 10:
+            boredom = min(1.0, boredom * 1.5)
+        
+        return float(np.clip(boredom, 0.0, 1.0))
+    
     def _patterns_to_motor_tendencies(self, features: Dict[str, float]) -> Dict[str, float]:
         """Map pattern features to motor tendencies."""
         tendencies = {}
@@ -323,8 +459,53 @@ class PatternBasedMotorGenerator:
         # Urgency from energy variance
         tendencies['urgency'] = features['energy_variance'] * self.mapping.energy_variance_to_urgency
         
-        # Exploration from novelty
-        tendencies['exploration'] = features['novelty'] * self.mapping.novelty_to_exploration
+        # === UNIFIED EXPLORATION FRAMEWORK ===
+        # Exploration emerges from three sources:
+        
+        # 1. SPONTANEOUS DYNAMICS (Internal restlessness)
+        # High spontaneous activity = natural motor variability
+        spontaneous_magnitude = features.get('spontaneous_magnitude', 0.0)
+        spontaneous_variance = features.get('spontaneous_variance', 0.0)
+        spontaneous_weight = features.get('spontaneous_weight', 0.0)
+        
+        # Spontaneous exploration: magnitude * variance * weight
+        # - Magnitude: how active is the internal dynamics
+        # - Variance: how complex/rich are the patterns
+        # - Weight: how much the brain is in "fantasy" mode
+        spontaneous_exploration = spontaneous_magnitude * (1.0 + spontaneous_variance) * spontaneous_weight
+        
+        # 2. PATTERN STAGNATION (Environmental boredom)
+        # High boredom + low novelty = need new experiences
+        boredom_drive = features.get('boredom', 0.0)
+        novelty_satisfaction = features['novelty']
+        pattern_exploration = boredom_drive * (1.0 - novelty_satisfaction)
+        
+        # 3. LEARNING PLATEAU (Cognitive stagnation)
+        # No improvement = need to try something different
+        learning_exploration = 0.0
+        if features.get('learning_stalled', False):
+            stall_factor = 1.0 - abs(features.get('improvement_rate', 0.0))
+            learning_exploration = 0.3 * stall_factor
+        
+        # COMBINED EXPLORATION with baseline
+        # Always maintain some exploration to prevent getting stuck
+        EXPLORATION_BASELINE = 0.2  # 20% minimum exploration
+        
+        # Weighted combination of exploration sources
+        weighted_exploration = (
+            0.5 * spontaneous_exploration +  # Primary driver
+            0.3 * pattern_exploration +       # Environmental feedback
+            0.2 * learning_exploration        # Learning feedback
+        )
+        
+        # Add baseline to ensure minimum exploration
+        total_exploration = EXPLORATION_BASELINE + (1.0 - EXPLORATION_BASELINE) * weighted_exploration
+        
+        # Store for debugging
+        self._last_exploration_drive = total_exploration
+        
+        # Ensure reasonable bounds
+        tendencies['exploration'] = np.clip(total_exploration, 0.0, 1.0)
         
         # Overall confidence from coherence
         tendencies['confidence'] = features['coherence'] * self.mapping.coherence_to_confidence
@@ -336,25 +517,35 @@ class PatternBasedMotorGenerator:
         commands = torch.zeros(self.motor_dim, device=self.device)
         
         # Map tendencies to motor dimensions
-        if self.motor_dim >= 2:
-            # First two motors: forward/lateral movement
-            commands[0] = np.clip(tendencies['forward'] - tendencies['lateral'], -1.0, 1.0)
-            commands[1] = np.clip(tendencies['turn'], -1.0, 1.0)
-        
-        if self.motor_dim >= 3:
-            # Third motor: speed/intensity
-            commands[2] = np.clip(tendencies['speed'] * tendencies['confidence'], 0.0, 1.0)
-        
+        # For compatibility with biological_embodied_learning test: [forward, left, right, stop]
         if self.motor_dim >= 4:
-            # Fourth motor: action/exploration
-            commands[3] = np.clip(tendencies['urgency'] + tendencies['exploration'], 0.0, 1.0)
+            # Forward movement (pure forward tendency)
+            commands[0] = np.clip(tendencies['forward'], 0.0, 1.0)
+            
+            # Left turn (positive turn)
+            commands[1] = np.clip(max(0, tendencies['turn']), 0.0, 1.0)
+            
+            # Right turn (negative turn)
+            commands[2] = np.clip(max(0, -tendencies['turn']), 0.0, 1.0)
+            
+            # Stop (inverse of urgency and forward)
+            stop_tendency = 1.0 - max(tendencies['urgency'], tendencies['forward'])
+            commands[3] = np.clip(stop_tendency * 0.5, 0.0, 1.0)  # Scale down stop
+        
+        elif self.motor_dim >= 2:
+            # Fallback for 2D motor (forward, turn)
+            commands[0] = np.clip(tendencies['forward'], -1.0, 1.0)
+            commands[1] = np.clip(tendencies['turn'], -1.0, 1.0)
         
         if self.motor_dim >= 5:
             # Fifth motor: camera pan (exploration-driven)
             commands[4] = np.clip(tendencies['exploration'] * 2.0 - 1.0, -1.0, 1.0)
         
-        # Apply confidence scaling (without artificial boost)
-        commands = commands * (0.5 + 0.5 * tendencies['confidence'])
+        # Apply confidence scaling with minimum threshold
+        # Never scale below 70% to maintain movement capability
+        MIN_COMMAND_SCALE = 0.7
+        confidence_scale = MIN_COMMAND_SCALE + (1.0 - MIN_COMMAND_SCALE) * tendencies['confidence']
+        commands = commands * confidence_scale
         
         return commands
     
@@ -382,5 +573,8 @@ class PatternBasedMotorGenerator:
             'history_length': len(self.field_history),
             'pattern_features': features,
             'motor_smoothing': self.smoothing_factor,
-            'pattern_based': True
+            'pattern_based': True,
+            'boredom_level': features.get('boredom', 0.0),
+            'boredom_counter': self.boredom_counter,
+            'pattern_history_length': len(self.pattern_history)
         }

@@ -183,6 +183,14 @@ class ConnectionHandler(IConnectionHandler):
             'error_stats': self.error_handler.get_error_stats()
         }
     
+    def get_session_id_for_client(self, client_id: str) -> Optional[str]:
+        """Get the brain session ID for a given client ID."""
+        with self.lock:
+            session = self.client_sessions.get(client_id)
+            if session:
+                return session.session_id
+            return None
+    
     def get_active_clients(self) -> List[str]:
         """Get list of active client IDs."""
         with self.lock:

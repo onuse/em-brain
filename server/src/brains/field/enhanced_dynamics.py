@@ -122,7 +122,8 @@ class EnhancedFieldDynamics:
     def _update_energy_metrics(self) -> None:
         """Update global energy and flow metrics."""
         stats = self.field_impl.get_field_statistics()
-        self.global_energy_level = stats.get('total_activation', 0.0)
+        # Use field_energy (mean) instead of total_activation (sum) for consistency
+        self.global_energy_level = stats.get('field_energy', 0.0)
         
         # Track energy history for phase detection
         self.phase_energy_history.append(self.global_energy_level)

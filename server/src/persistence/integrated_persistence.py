@@ -100,8 +100,11 @@ class IntegratedPersistence:
                 return False
                 
             try:
-                # Convert dict back to brain state
-                brain_state = self.adapter.dict_to_brain_state(state_dict)
+                # Convert dict back to brain state using correct method
+                if hasattr(self.adapter, 'deserialize_from_dict'):
+                    brain_state = self.adapter.deserialize_from_dict(state_dict)
+                else:
+                    brain_state = self.adapter.dict_to_brain_state(state_dict)
                 
                 # Apply to brain
                 self.adapter.restore_brain_state(brain, brain_state)
@@ -142,8 +145,11 @@ class IntegratedPersistence:
             with open(latest_file, 'r') as f:
                 state_dict = json.load(f)
             
-            # Convert to brain state
-            brain_state = self.adapter.dict_to_brain_state(state_dict)
+            # Convert to brain state using correct method
+            if hasattr(self.adapter, 'deserialize_from_dict'):
+                brain_state = self.adapter.deserialize_from_dict(state_dict)
+            else:
+                brain_state = self.adapter.dict_to_brain_state(state_dict)
             
             # Apply to brain
             self.adapter.restore_brain_state(brain, brain_state)

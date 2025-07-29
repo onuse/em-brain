@@ -94,13 +94,20 @@ class MotorCortex:
         # Note: The brain already provides confidence boosted by developmental confidence,
         # so we use it directly without additional boosting
         
-        # For very low confidence, provide movement
-        if confidence < self.confidence_threshold:
+        # For low confidence, provide assistance
+        if confidence < 0.3:  # Help more often (was confidence_threshold = 0.05)
             self.rejected_uncertain += 1  # Track for statistics
             
-            # Provide minimal forward movement to enable exploration
-            motor_commands = torch.zeros_like(intentions)
-            motor_commands[0] = self.activation_threshold
+            # Scale assistance based on how low confidence is
+            # At conf=0.3: boost 1.5x, at conf=0: boost 2.1x
+            assistance_factor = 1.5 + (0.3 - confidence) * 2.0
+            
+            # Apply assistance to intentions
+            motor_commands = intentions * assistance_factor
+            
+            # Ensure minimum forward movement for exploration
+            if motor_commands[0] < self.activation_threshold:
+                motor_commands[0] = self.activation_threshold
             
             feedback = MotorFeedback(
                 accepted=True,  # Accept but note low confidence
@@ -146,6 +153,9 @@ class MotorCortex:
         # Apply amplification with safety clipping
         motor_commands = intentions * amplification
         motor_commands = torch.clamp(motor_commands, -1.0, 1.0)
+        
+        # Store for debugging
+        self._last_amplification = amplification
         
         # Optional: Apply pattern-specific modulation
         if pattern_features:

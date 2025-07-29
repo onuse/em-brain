@@ -32,8 +32,8 @@ class BrainConfig:
     )  # 0.1 = moderate field evolution
     
     field_decay_rate: float = field(
-        default_factory=lambda: 1.0 - StabilityConstants.MIN_ACTIVATION_VALUE
-    )  # 0.999 = very slow decay
+        default_factory=lambda: 0.9995  # Even slower decay for better stability
+    )  # 0.9995 = very slow decay
     
     field_diffusion_rate: float = field(
         default_factory=lambda: PerformancePressureConstants.PERFORMANCE_ADAPTATION_RATE * 2.5
@@ -101,6 +101,10 @@ class BrainConfig:
     field_energy_dissipation_rate: float = field(
         default_factory=lambda: StabilityConstants.ADAPTATION_MOMENTUM
     )  # 0.9 = energy dissipation
+    
+    # Field energy management
+    target_min_energy: float = field(default=0.2)  # Minimum healthy field energy (raised for stability)
+    target_max_energy: float = field(default=10.0)  # Maximum healthy field energy
     
     # Constraint discovery
     constraint_discovery_rate: float = field(

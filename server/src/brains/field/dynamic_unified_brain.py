@@ -33,10 +33,12 @@ from .enhanced_dynamics import EnhancedFieldDynamics, PhaseTransitionConfig, Att
 from .brain_field_adapter import BrainFieldAdapter
 # Emergent spatial removed - pattern-based motor provides coordinate-free movement
 from .pattern_based_motor import PatternBasedMotorGenerator
-from .pattern_based_attention import PatternBasedAttention
 from .pattern_based_attention_fast import FastPatternBasedAttention
 from .motor_cortex import MotorCortex
 from .field_constants import TOPOLOGY_REGIONS_MAX
+from .organic_energy_system import OrganicEnergySystem
+from .predictive_action_system import PredictiveActionSystem
+from .reward_topology_shaping import RewardTopologyShaper
 
 
 class DynamicUnifiedFieldBrain:
@@ -95,6 +97,11 @@ class DynamicUnifiedFieldBrain:
         # Higher initial energy enables better pattern formation and motor generation
         self.unified_field = torch.randn(tensor_shape, dtype=torch.float32, device=self.device) * 0.3 + 0.1
         
+        # Log initial field energy
+        initial_energy = torch.mean(torch.abs(self.unified_field)).item()
+        if not quiet_mode:
+            print(f"   Initial field energy: {initial_energy:.3f}")
+        
 
         
         # Initialize optimized gradient calculator with cognitive constants
@@ -141,9 +148,7 @@ class DynamicUnifiedFieldBrain:
         # Position tracking
         self._last_imprint_indices = None
         
-        # Maintenance tracking
-        self.last_maintenance_cycle = 0
-        self.maintenance_interval = 100
+        # Maintenance tracking removed - using unified energy system
         
         # Prediction system
         self._prediction_confidence_history = deque(maxlen=100)
@@ -151,11 +156,35 @@ class DynamicUnifiedFieldBrain:
         self._current_prediction_confidence = brain_config.default_prediction_confidence
         self._predicted_field = None
         
-        # Maintenance thread
-        self._maintenance_queue = queue.Queue(maxsize=1)
-        self._maintenance_thread = None
-        self._shutdown_maintenance = threading.Event()
-        self._start_maintenance_thread()
+        # Initialize organic energy system
+        self.energy_system = OrganicEnergySystem(pattern_memory_size=100, device=self.device)
+        if not quiet_mode:
+            print(f"   Organic energy system: ENABLED (no modes, smooth transitions)")
+            
+        # Initialize predictive action system
+        self.predictive_actions = PredictiveActionSystem(
+            field_shape=self.unified_field.shape,
+            motor_dim=self.expected_motor_dim or 4,
+            device=self.device
+        )
+        if not quiet_mode:
+            print(f"   Predictive action system: ENABLED (imagine before acting)")
+            
+        # Initialize reward topology shaper
+        self.topology_shaper = RewardTopologyShaper(
+            field_shape=self.unified_field.shape,
+            device=self.device,
+            persistence_factor=0.95,
+            max_attractors=20
+        )
+        if not quiet_mode:
+            print(f"   Reward topology shaping: ENABLED (emergent goal-seeking)")
+        
+        # Maintenance thread disabled - using unified energy system instead
+        # self._maintenance_queue = queue.Queue(maxsize=1)
+        # self._maintenance_thread = None
+        # self._shutdown_maintenance = threading.Event()
+        # self._start_maintenance_thread()
         
         # Spontaneous dynamics system with cognitive constants
         self.spontaneous_enabled = True
@@ -168,6 +197,8 @@ class DynamicUnifiedFieldBrain:
         )
         self._last_imprint_strength = 0.0
         self._last_prediction_error = brain_config.optimal_prediction_error  # Start at optimal
+        self._last_spontaneous_magnitude = 0.0
+        self._last_spontaneous_variance = 0.0
         
         # Cognitive autopilot with cognitive constants
         self.cognitive_autopilot = CognitiveAutopilot(
@@ -290,6 +321,13 @@ class DynamicUnifiedFieldBrain:
             max_amplification=3.0,
             quiet_mode=True
         )
+        
+        # Update predictive action system
+        self.predictive_actions = PredictiveActionSystem(
+            field_shape=self.unified_field.shape,
+            motor_dim=motor_dim,
+            device=self.device
+        )
 
     @property
     def developmental_confidence(self) -> float:
@@ -349,6 +387,14 @@ class DynamicUnifiedFieldBrain:
         # 2. Prediction and confidence tracking
         if self._predicted_field is not None:
             self._update_prediction_confidence(field_experience)
+            
+            # Learn from prediction errors if we have previous action
+            if hasattr(self, '_last_action_taken'):
+                self.predictive_actions.update_predictions(
+                    action_taken=self._last_action_taken,
+                    actual_outcome=self.unified_field,
+                    actual_sensory=torch.tensor(sensory_input, device=self.device)
+                )
             
         # Apply developmental confidence boost
         if self.enable_developmental_confidence:
@@ -412,7 +458,34 @@ class DynamicUnifiedFieldBrain:
                 reward=sensory_input[-1] if len(sensory_input) > 24 else 0.0
             )
         
-        # 7. Evolve unified field with all dynamics
+        # 7. Update energy system (replaces old energy management)
+        sensory_pattern = torch.tensor(sensory_input[:-1], device=self.device) if len(sensory_input) > 1 else torch.tensor(sensory_input, device=self.device)
+        reward = sensory_input[-1] if len(sensory_input) > 24 else 0.0
+        
+        # Process field dynamics for energy-based behavior
+        energy_dynamics = self.energy_system.process_field_dynamics(
+            field=self.unified_field,
+            sensory_pattern=sensory_pattern,
+            prediction_error=self._last_prediction_error if hasattr(self, '_last_prediction_error') else 0.5,
+            reward=reward
+        )
+        
+        # Get smooth behavioral influence (no modes or thresholds)
+        energy_behavior = energy_dynamics['behavior']
+        self.energy_recommendations = energy_behavior  # Store for field evolution
+        
+        # 7b. Process reward for topology shaping
+        # This creates lasting impressions in the field landscape
+        if abs(reward) > 0.1:  # Only significant rewards shape topology
+            deformation = self.topology_shaper.process_reward(
+                current_field=self.unified_field,
+                reward=reward,
+                threshold=0.1
+            )
+            if not self.quiet_mode and deformation is not None:
+                print(f"🎯 Reward {reward:+.2f} creating topology deformation")
+        
+        # 8. Evolve unified field with all dynamics
         self._evolve_unified_field()
         
         # 8. Apply attention modulation to field
@@ -428,18 +501,75 @@ class DynamicUnifiedFieldBrain:
         # 9. Update topology regions (memory formation)
         if self.brain_cycles % 10 == 0:
             self._update_topology_regions()
+            
+        # 10. Consolidate pattern memory if needed (organic forgetting)
+        if self.brain_cycles % 100 == 0 and self.energy_system.should_consolidate_memory():
+            self.energy_system.consolidate_patterns()
         
-        # 10. Generate motor commands (pattern-based, coordinate-free)
-        action = self.pattern_motor_generator.generate_motor_action(
-            current_field=self.unified_field,
-            experience=field_experience
-        )
-        # Set timestamp
-        action.timestamp = time.time()
+        # 10. Generate motor commands with predictive selection
         
-        # Process through motor cortex for intention-to-action translation
+        # Get pattern statistics first
         pattern_stats = self.pattern_motor_generator.get_pattern_stats()
         pattern_features = pattern_stats.get('pattern_features', {})
+        
+        # First, use pattern motor generator to get baseline action
+        improvement_rate = 0.0
+        if len(self._improvement_rate_history) > 0:
+            improvement_rate = np.mean(list(self._improvement_rate_history))
+        
+        spontaneous_info = {
+            'magnitude': self._last_spontaneous_magnitude,
+            'variance': self._last_spontaneous_variance,
+            'weight': self.blended_reality.calculate_spontaneous_weight() if hasattr(self, 'blended_reality') else 0.5
+        }
+        
+        baseline_action = self.pattern_motor_generator.generate_motor_action(
+            current_field=self.unified_field,
+            experience=field_experience,
+            improvement_rate=improvement_rate,
+            spontaneous_info=spontaneous_info
+        )
+        
+        # Now use predictive system to imagine outcomes
+        exploration_drive = self.energy_recommendations.get('exploration_drive', 0.5) if hasattr(self, 'energy_recommendations') else 0.5
+        
+        # Full predictive selection - we have 750ms to work with!
+        # Generate multiple action candidates
+        candidates = self.predictive_actions.generate_action_candidates(
+            current_field=self.unified_field,
+            current_patterns=pattern_features,
+            n_candidates=5  # Full set of candidates
+        )
+        
+        # Add baseline action as first candidate
+        candidates[0].motor_pattern = baseline_action.output_stream
+        
+        # Preview outcomes with full lookahead
+        for candidate in candidates:
+            self.predictive_actions.preview_action_outcome(
+                current_field=self.unified_field,
+                action=candidate,
+                evolution_steps=5  # Full preview depth
+            )
+            
+        # Select best action based on predicted outcomes
+        selected_action = self.predictive_actions.select_action(
+            candidates=candidates,
+            exploration_drive=exploration_drive
+        )
+        
+        # Use selected action
+        action = baseline_action  # Keep metadata
+        action.output_stream = selected_action.motor_pattern
+        
+        # Log when exploration drives novel actions
+        if not self.quiet_mode and self.brain_cycles % 100 == 0:
+            if selected_action.uncertainty > 0.7:
+                print(f"🎲 Exploratory action selected (uncertainty: {selected_action.uncertainty:.2f})")
+            elif selected_action.anticipated_value > 0.8:
+                print(f"💎 High-value action selected (value: {selected_action.anticipated_value:.2f})")
+        # Set timestamp
+        action.timestamp = time.time()
         
         # Apply developmental confidence to action confidence
         effective_action_confidence = action.confidence
@@ -455,16 +585,25 @@ class DynamicUnifiedFieldBrain:
             pattern_features=pattern_features
         )
         
+        # Apply energy-based motor noise for exploration
+        if hasattr(self, 'energy_recommendations'):
+            motor_noise = self.energy_recommendations.get('motor_noise', 0.0)
+            if motor_noise > 0:
+                # Add exploration noise when hungry
+                noise = torch.randn_like(motor_commands) * motor_noise
+                motor_commands = motor_commands + noise
+        
         # Update action with motor cortex output
         action.output_stream = motor_commands
         self.field_actions.append(action)
         
+        # Store action for learning from outcomes
+        self._last_action_taken = motor_commands
+        
         # 11. Create prediction for next cycle
         self._predicted_field = self._predict_next_field_state()
         
-        # 12. Trigger maintenance if needed
-        if self.brain_cycles - self.last_maintenance_cycle > self.maintenance_interval:
-            self._trigger_maintenance()
+        # 12. Maintenance removed - energy system handles everything
         
         # Update tracking
         self.brain_cycles += 1
@@ -489,7 +628,13 @@ class DynamicUnifiedFieldBrain:
             'pattern_motor': True,  # Always pattern-based (coordinate-free)
             'pattern_attention_enabled': self.pattern_attention_enabled,
             'developmental_confidence': self.developmental_confidence,
-            'memory_saturation': len(self.topology_regions) / TOPOLOGY_REGIONS_MAX
+            'memory_saturation': len(self.topology_regions) / TOPOLOGY_REGIONS_MAX,
+            'energy_state': {
+                'energy': energy_dynamics['smoothed_energy'] if 'energy_dynamics' in locals() else 0.5,
+                'novelty': energy_dynamics['novelty'] if 'energy_dynamics' in locals() else 0.0,
+                'exploration_drive': energy_behavior['exploration_drive'] if 'energy_behavior' in locals() else 0.5
+            },
+            'topology_shaping': self.topology_shaper.get_topology_state()
         }
         
         # Add attention state if enabled
@@ -577,10 +722,18 @@ class DynamicUnifiedFieldBrain:
             else:  # Other dimensions get single points
                 region_slices.append(idx)
         
-        # Imprint with intensity based on reward
+        # Imprint with intensity based on reward and energy state
         # Use base imprint strength from blended reality config
         blended_config = self.cognitive_config.blended_reality_config
-        imprint_strength = blended_config.base_imprint_strength * experience.field_intensity
+        base_imprint_strength = blended_config.base_imprint_strength * experience.field_intensity
+        
+        # Apply energy-based sensory amplification
+        if hasattr(self, 'energy_recommendations'):
+            sensory_amplification = self.energy_recommendations.get('sensory_amplification', 1.0)
+            imprint_strength = base_imprint_strength * sensory_amplification
+        else:
+            imprint_strength = base_imprint_strength
+            
         self.unified_field[tuple(region_slices)] += imprint_strength
         
         # Store position for tracking
@@ -626,8 +779,12 @@ class DynamicUnifiedFieldBrain:
         """
         Evolve the unified field with all dynamics.
         """
-        # 1. Natural decay (memory fading)
-        self.unified_field *= self.field_decay_rate
+        # 1. Apply energy-based modulation (organic, no pruning needed)
+        if hasattr(self, 'energy_recommendations'):
+            self.unified_field = self.energy_system.modulate_field(
+                self.unified_field,
+                self.energy_recommendations
+            )
         
         # 2. Diffusion (spreading activation)
         if self.field_diffusion_rate > 0:
@@ -646,27 +803,15 @@ class DynamicUnifiedFieldBrain:
         
         # 3. Spontaneous dynamics
         if self.spontaneous_enabled:
-            if hasattr(self, 'blended_reality'):
-                # Use blended reality system for weighting
-                spontaneous_weight = self.blended_reality.calculate_spontaneous_weight()
-                
-                # sensory_gating: 0 = pure spontaneous, 1 = suppress spontaneous
-                # So we invert our spontaneous weight
-                sensory_gating = 1.0 - spontaneous_weight
+            # Get spontaneous weight from energy behavior
+            if hasattr(self, 'energy_recommendations'):
+                spontaneous_weight = self.energy_recommendations.get('spontaneous_weight', 0.5)
             else:
-                # Original implementation
-                # Use prediction confidence for sensory gating
-                # High confidence = less sensory attention (more spontaneous)
-                # Low confidence = more sensory attention (less spontaneous)  
-                # Never completely ignore sensors - max suppression from blended reality config
-                confidence_gating = self._current_prediction_confidence * blended_config.max_spontaneous_weight
-                
-                # Also consider recent sensory strength (but weighted less)
-                # Recency gating uses attention threshold
-                recency_gating = min(1.0, self._last_imprint_strength * 2.0) * self.cognitive_config.brain_config.attention_threshold * 2
-                
-                # Combined gating: mostly confidence-based, slightly recency-based
-                sensory_gating = confidence_gating + recency_gating
+                spontaneous_weight = 0.5
+            
+            # sensory_gating: 0 = pure spontaneous, 1 = suppress spontaneous
+            # So we invert our spontaneous weight
+            sensory_gating = 1.0 - spontaneous_weight
             
             # Add spontaneous activity
             spontaneous_activity = self.spontaneous.generate_spontaneous_activity(
@@ -674,6 +819,12 @@ class DynamicUnifiedFieldBrain:
                 sensory_gating=sensory_gating
             )
             self.unified_field += spontaneous_activity
+            
+            # Track spontaneous magnitude for exploration
+            self._last_spontaneous_magnitude = torch.mean(torch.abs(spontaneous_activity)).item()
+            
+            # Track spontaneous pattern richness (variance indicates complexity)
+            self._last_spontaneous_variance = torch.var(spontaneous_activity).item()
         
         # 4. Apply enhanced dynamics if enabled
         if self.enhanced_dynamics_enabled and hasattr(self, 'enhanced_dynamics'):
@@ -684,9 +835,11 @@ class DynamicUnifiedFieldBrain:
                 current_input_stream=None  # Already handled by brain
             )
         
-        # 5. Ensure minimum baseline (prevents complete decay)
-        self.unified_field = torch.maximum(self.unified_field, 
-                                         torch.tensor(self.cognitive_config.brain_config.activation_threshold, device=self.device))
+        # 5. Apply reward topology influence
+        topology_influence = self.topology_shaper.apply_topology_influence(self.unified_field)
+        self.unified_field += topology_influence
+        
+        # 6. Baseline prevention handled by energy system
         
         self.field_evolution_cycles += 1
     
@@ -765,14 +918,35 @@ class DynamicUnifiedFieldBrain:
         # Confidence should be high when:
         # 1. Prediction error is low AND
         # 2. We're actually predicting something meaningful (not just baseline)
-        if activation_magnitude < self.cognitive_config.brain_config.resting_potential:
-            # Near baseline - low confidence regardless of error
-            self._current_prediction_confidence = self.cognitive_config.brain_config.attention_threshold * 2  # 0.2
-        else:
-            # Normal confidence calculation based on error
-            # Scale error by activation magnitude for better normalization
+        
+        # More nuanced baseline handling
+        baseline_factor = 1.0
+        if activation_magnitude < self.cognitive_config.brain_config.resting_potential * 5:  # More lenient threshold
+            # Near baseline - reduce confidence but don't fix it at minimum
+            # Use a smooth transition instead of hard cutoff
+            baseline_factor = 0.3 + 0.7 * (activation_magnitude / (self.cognitive_config.brain_config.resting_potential * 5))
+        
+        # Calculate base confidence from prediction error
+        if activation_magnitude > 1e-6:  # Avoid division by zero
+            # Scale error by activation magnitude for normalization
+            # Reduced multiplier (1.0 instead of 2.0) for less sensitivity
             normalized_error = prediction_error / (activation_magnitude + self.cognitive_config.brain_config.attention_threshold)
-            self._current_prediction_confidence = float(1.0 / (1.0 + normalized_error * 2.0))
+            base_confidence = float(1.0 / (1.0 + normalized_error * 1.0))
+        else:
+            # Very low activation - moderate confidence
+            base_confidence = 0.5
+        
+        # Apply baseline factor
+        raw_confidence = base_confidence * baseline_factor
+        
+        # Add small random variation to prevent getting stuck
+        # This represents inherent uncertainty in predictions
+        confidence_noise = np.random.normal(0, 0.05)
+        raw_confidence = raw_confidence + confidence_noise
+        
+        # Ensure reasonable bounds with softer limits
+        # Allow more variation instead of hard clamping at 0.21
+        self._current_prediction_confidence = float(np.clip(raw_confidence, 0.1, 0.95))
         
         self._prediction_confidence_history.append(self._current_prediction_confidence)
         self._last_prediction_error = float(prediction_error)
@@ -783,6 +957,21 @@ class DynamicUnifiedFieldBrain:
             older_confidence = np.mean(list(self._prediction_confidence_history)[-20:-10])
             improvement = recent_confidence - older_confidence
             self._improvement_rate_history.append(improvement)
+            
+            # Periodic confidence "reset" if stuck at extremes
+            if len(self._prediction_confidence_history) > 50:
+                last_50_confidence = list(self._prediction_confidence_history)[-50:]
+                confidence_variance = np.var(last_50_confidence)
+                
+                # If confidence has been too stable (low variance), add a reset
+                if confidence_variance < 0.01:
+                    avg_confidence = np.mean(last_50_confidence)
+                    if avg_confidence < 0.3 or avg_confidence > 0.8:
+                        # Stuck at extreme - nudge toward center
+                        reset_target = 0.5 + np.random.normal(0, 0.1)
+                        self._current_prediction_confidence = float(np.clip(reset_target, 0.3, 0.7))
+                        if not self.quiet_mode:
+                            print(f"🔄 Confidence reset: {avg_confidence:.2f} → {self._current_prediction_confidence:.2f}")
     
     def _predict_next_field_state(self) -> torch.Tensor:
         """
@@ -830,50 +1019,10 @@ class DynamicUnifiedFieldBrain:
             'total_activation': float(torch.sum(torch.abs(self.unified_field)))
         }
     
-    def _trigger_maintenance(self):
-        """
-        Trigger background maintenance.
-        """
-        try:
-            self._maintenance_queue.put_nowait(self.brain_cycles)
-            self.last_maintenance_cycle = self.brain_cycles
-        except queue.Full:
-            pass  # Maintenance already pending
+    # Maintenance methods removed - using unified energy system
     
-    def _start_maintenance_thread(self):
-        """
-        Start the background maintenance thread.
-        """
-        def maintenance_worker():
-            while not self._shutdown_maintenance.is_set():
-                try:
-                    # Wait for maintenance signal
-                    cycle = self._maintenance_queue.get(timeout=1.0)
-                    
-                    # Perform maintenance
-                    with torch.no_grad():
-                        # Energy dissipation
-                        self.unified_field *= self.field_energy_dissipation_rate
-                        
-                        # Prune weak activations using cognitive threshold
-                        mask = torch.abs(self.unified_field) > self.cognitive_config.brain_config.activation_threshold
-                        self.unified_field *= mask.float()
-                        
-                        # Reset to baseline where pruned
-                        self.unified_field[~mask] = self.cognitive_config.brain_config.activation_threshold
-                    
-                except queue.Empty:
-                    continue
-                except Exception as e:
-                    if not self.quiet_mode:
-                        print(f"⚠️  Maintenance error: {e}")
-        
-        self._maintenance_thread = threading.Thread(target=maintenance_worker, daemon=True)
-        self._maintenance_thread.start()
+    # _start_maintenance_thread removed - using unified energy system
     
     def __del__(self):
         """Cleanup when brain is destroyed."""
-        if hasattr(self, '_shutdown_maintenance'):
-            self._shutdown_maintenance.set()
-        if hasattr(self, '_maintenance_thread') and self._maintenance_thread:
-            self._maintenance_thread.join(timeout=1.0)
+        pass  # Organic system has no threads to clean up

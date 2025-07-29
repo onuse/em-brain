@@ -294,6 +294,13 @@ class BrainService(IBrainService):
         
         return True
     
+    def get_brain_for_session(self, session_id: str) -> Optional[Any]:
+        """Get the brain instance for a specific session."""
+        session = self.sessions.get(session_id)
+        if session and hasattr(session, 'brain'):
+            return session.brain
+        return None
+    
     def get_statistics(self) -> Dict[str, Any]:
         """Get service statistics."""
         uptime = time.time() - self.start_time
