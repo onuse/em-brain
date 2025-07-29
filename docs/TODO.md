@@ -16,17 +16,17 @@
 
 ## High Priority Tasks
 
-### 1. Performance Optimization
-- [ ] Profile GPU memory usage and optimize tensor operations
-- [ ] Implement batch processing for multiple robots
-- [ ] Add tensor operation fusion for common patterns
-- [ ] Optimize pattern extraction in attention system
-
-### 3. Core Architecture Cleanup
+### 1. Core Architecture Cleanup
 - [ ] Remove remaining coordinate-based code
 - [ ] Standardize all tensor operations
 - [ ] Clean up adapter workarounds for simplified brain
 - [ ] Improve error handling throughout
+
+### 2. Performance Optimization
+- [ ] Profile GPU memory usage and optimize tensor operations
+- [ ] Implement batch processing for multiple robots
+- [ ] Add tensor operation fusion for common patterns
+- [ ] Optimize pattern extraction in attention system
 
 ## Medium Priority Features
 

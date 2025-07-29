@@ -59,9 +59,8 @@ class StreamCapabilities:
 
 @dataclass
 class UnifiedFieldExperience:
-    """A unified field experience - replaces all discrete pattern storage."""
+    """A unified field experience - pattern-based, coordinate-free."""
     timestamp: float
-    field_coordinates: torch.Tensor      # Position in 37D unified field
     raw_input_stream: torch.Tensor       # Original input stream
     field_intensity: float               # Overall field activation strength
     dynamics_family_activations: Dict[FieldDynamicsFamily, float]
@@ -69,9 +68,8 @@ class UnifiedFieldExperience:
 
 @dataclass
 class FieldNativeAction:
-    """A field-native action - replaces discrete action generation."""
+    """A field-native action - pattern-based, coordinate-free."""
     timestamp: float
     output_stream: torch.Tensor          # Generic output stream
-    field_gradients: torch.Tensor        # Field gradients that generated action
     confidence: float                    # Action confidence from field stability
     dynamics_family_contributions: Dict[FieldDynamicsFamily, float]

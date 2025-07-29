@@ -35,24 +35,21 @@ class SimplifiedBrainWrapper(IBrain):
         # Process through brain
         action_output, brain_state = self.brain.process_robot_cycle(sensory_input)
         
-        # The simplified brain returns motor commands directly
-        # We need to return a "fake" field tensor that the motor adapter can process
-        # Create a small tensor that embeds the motor commands
-        motor_tensor = torch.tensor(action_output, dtype=torch.float32)
+        # Store motor commands for direct access
+        self._last_motor_commands = action_output
+        self._last_brain_state = brain_state
         
-        # Pad to expected field dimensions (26) for compatibility
-        if len(action_output) < 26:
-            padding = torch.zeros(26 - len(action_output))
-            field_output = torch.cat([motor_tensor, padding])
-        else:
-            field_output = motor_tensor[:26]
-            
-        return field_output
+        # Return motor commands as tensor (no padding needed)
+        return torch.tensor(action_output, dtype=torch.float32)
+    
+    def get_motor_commands(self) -> list:
+        """Get motor commands directly without field space conversion."""
+        return getattr(self, '_last_motor_commands', [])
     
     def get_field_dimensions(self) -> int:
         """Get number of field dimensions."""
-        # For compatibility with the adapter system, report 26D
-        return 26
+        # Return actual motor dimensions instead of fake 26D
+        return len(self.get_motor_commands()) if hasattr(self, '_last_motor_commands') else 5
     
     def get_brain_state(self) -> Dict[str, Any]:
         """Get current brain state."""

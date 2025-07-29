@@ -8,9 +8,12 @@ All cognitive properties emerge from unified field dynamics.
 import torch
 import numpy as np
 import time
+import logging
 from typing import List, Dict, Any, Tuple, Optional
 from dataclasses import dataclass
 from collections import deque
+
+logger = logging.getLogger(__name__)
 
 # Core imports
 from .field_types import UnifiedFieldExperience
@@ -23,6 +26,11 @@ from .field_constants import TOPOLOGY_REGIONS_MAX
 from .unified_field_dynamics import UnifiedFieldDynamics
 from .predictive_action_system import PredictiveActionSystem
 from .reward_topology_shaping import RewardTopologyShaper
+from ...utils.tensor_ops import create_randn, field_energy, field_stats, apply_diffusion
+from ...utils.error_handling import (
+    validate_list_input, validate_tensor_shape, ErrorContext,
+    BrainError, safe_tensor_op
+)
 
 
 class SimplifiedUnifiedBrain:
@@ -79,7 +87,7 @@ class SimplifiedUnifiedBrain:
             print(f"   Memory: {self._calculate_memory_usage():.1f}MB")
         
         # Initialize unified field with moderate random values
-        self.unified_field = torch.randn(self.tensor_shape, dtype=torch.float32, device=self.device) * 0.3 + 0.1
+        self.unified_field = create_randn(self.tensor_shape, device=self.device, scale=0.3, bias=0.1)
         
         # Core parameters
         self.field_evolution_rate = brain_config.field_evolution_rate
@@ -173,58 +181,77 @@ class SimplifiedUnifiedBrain:
         """
         cycle_start = time.perf_counter()
         
-        # 1. Create field experience from sensors
-        experience = self._create_field_experience(sensory_input)
-        
-        # 2. Update prediction tracking
-        if self._predicted_field is not None:
-            prediction_error = torch.mean(torch.abs(self.unified_field - self._predicted_field)).item()
-            self._last_prediction_error = prediction_error
-            self._current_prediction_confidence = 1.0 - min(1.0, prediction_error * 2.0)
-        
-        # 3. Imprint sensory experience
-        self._imprint_experience(experience)
-        
-        # 4. Process attention
-        attention_data = self._process_attention(sensory_input)
-        
-        # 5. Update unified field dynamics
-        reward = sensory_input[-1] if len(sensory_input) > 24 else 0.0
-        
-        # Compute field state (energy, novelty, etc.)
-        field_state = self.field_dynamics.compute_field_state(self.unified_field)
-        novelty = self.field_dynamics.compute_novelty(self.unified_field)
-        
-        # Update confidence from prediction error
-        self.field_dynamics.update_confidence(self._last_prediction_error)
-        
-        # Get unified modulation parameters
-        has_input = len(sensory_input) > 0 and any(abs(v) > 0.01 for v in sensory_input[:-1])
-        self.modulation = self.field_dynamics.compute_field_modulation(
-            field_state, has_sensory_input=has_input
-        )
-        
-        # 6. Process reward topology
-        if abs(reward) > 0.1:
-            self.topology_shaper.process_reward(
-                current_field=self.unified_field,
-                reward=reward,
-                threshold=0.1
+        try:
+            # Validate input
+            with ErrorContext("validating sensory input"):
+                # Allow variable length for different robot configurations
+                validate_list_input(sensory_input, len(sensory_input), "sensory_input", -10.0, 10.0)
+            
+            # 1. Create field experience from sensors
+            with ErrorContext("creating field experience"):
+                experience = self._create_field_experience(sensory_input)
+            
+            # 2. Update prediction tracking
+            if self._predicted_field is not None:
+                prediction_error = torch.mean(torch.abs(self.unified_field - self._predicted_field)).item()
+                self._last_prediction_error = prediction_error
+                self._current_prediction_confidence = 1.0 - min(1.0, prediction_error * 2.0)
+            
+            # 3. Imprint sensory experience
+            self._imprint_experience(experience)
+            
+            # 4. Process attention
+            attention_data = self._process_attention(sensory_input)
+            
+            # 5. Update unified field dynamics
+            reward = sensory_input[-1] if len(sensory_input) > 24 else 0.0
+            
+            # Compute field state (energy, novelty, etc.)
+            field_state = self.field_dynamics.compute_field_state(self.unified_field)
+            novelty = self.field_dynamics.compute_novelty(self.unified_field)
+            
+            # Update confidence from prediction error
+            self.field_dynamics.update_confidence(self._last_prediction_error)
+            
+            # Get unified modulation parameters
+            has_input = len(sensory_input) > 0 and any(abs(v) > 0.01 for v in sensory_input[:-1])
+            self.modulation = self.field_dynamics.compute_field_modulation(
+                field_state, has_sensory_input=has_input
             )
-        
-        # 7. Evolve field
-        self._evolve_field()
-        
-        # 8. Generate motor action
-        motor_output = self._generate_motor_action()
-        
-        # 9. Update state
-        self.brain_cycles += 1
-        self._last_cycle_time = time.perf_counter() - cycle_start
-        
-        # Return motor output and state
-        brain_state = self._create_brain_state()
-        return motor_output, brain_state
+            
+            # 6. Process reward topology
+            if abs(reward) > 0.1:
+                self.topology_shaper.process_reward(
+                    current_field=self.unified_field,
+                    reward=reward,
+                    threshold=0.1
+                )
+            
+            # 7. Evolve field
+            self._evolve_field()
+            
+            # 8. Generate motor action
+            motor_output = self._generate_motor_action()
+            
+            # 9. Update state
+            self.brain_cycles += 1
+            self._last_cycle_time = time.perf_counter() - cycle_start
+            
+            # Return motor output and state
+            brain_state = self._create_brain_state()
+            return motor_output, brain_state
+            
+        except BrainError:
+            # Re-raise brain errors as-is
+            raise
+        except Exception as e:
+            # Wrap unexpected errors
+            self.brain_cycles += 1  # Still increment to avoid getting stuck
+            logger.error(f"Unexpected error in brain cycle {self.brain_cycles}: {e}")
+            # Return safe defaults
+            safe_motors = [0.0] * (self.motor_cortex.motor_dim - 1)
+            safe_state = {'cycle': self.brain_cycles, 'error': str(e)}
+            return safe_motors, safe_state
     
     def _create_field_experience(self, sensory_input: List[float]) -> UnifiedFieldExperience:
         """Create field experience from sensory input."""
@@ -235,15 +262,9 @@ class SimplifiedUnifiedBrain:
         reward = sensory_input[-1] if len(sensory_input) > 24 else 0.0
         field_intensity = 0.5 + reward * 0.5  # Map [-1,1] to [0,1]
         
-        # For 4D tensor, we don't need complex coordinate mapping
-        # Just create a simple position in the center
-        field_coords = torch.zeros(4, device=self.device)
-        field_coords[:3] = 0.0  # Center position
-        
         return UnifiedFieldExperience(
             timestamp=time.time(),
             raw_input_stream=raw_input,
-            field_coordinates=field_coords,
             field_intensity=field_intensity,
             dynamics_family_activations={}
         )
@@ -277,18 +298,15 @@ class SimplifiedUnifiedBrain:
             # No sensory input - just track for statistics
             pass
     
+    @safe_tensor_op
     def _evolve_field(self):
         """Evolve field - unified version with integrated spontaneous dynamics."""
         # 1. Apply unified field dynamics (includes spontaneous)
         self.unified_field = self.field_dynamics.evolve_field(self.unified_field)
         
-        # 2. Simple diffusion
+        # 2. Apply diffusion
         if self.field_diffusion_rate > 0:
-            for dim in range(3):  # Only spatial dimensions
-                shifted_fwd = torch.roll(self.unified_field, shifts=1, dims=dim)
-                shifted_back = torch.roll(self.unified_field, shifts=-1, dims=dim)
-                diffusion = (shifted_fwd + shifted_back - 2 * self.unified_field) / 2
-                self.unified_field += self.field_diffusion_rate * diffusion
+            self.unified_field = apply_diffusion(self.unified_field, self.field_diffusion_rate, dims=(0, 1, 2))
         
         # 3. Reward topology influence
         topology_influence = self.topology_shaper.apply_topology_influence(self.unified_field)
@@ -314,6 +332,7 @@ class SimplifiedUnifiedBrain:
         self._last_attention_state = attention_state
         return attention_state
     
+    @safe_tensor_op
     def _generate_motor_action(self) -> List[float]:
         """Generate motor action - simplified with unified pattern system."""
         # Generate motor action using unified pattern system
@@ -380,11 +399,12 @@ class SimplifiedUnifiedBrain:
     
     def _create_brain_state(self) -> Dict[str, Any]:
         """Create brain state for telemetry."""
+        stats = field_stats(self.unified_field)
         return {
             'cycle': self.brain_cycles,
             'cycle_time_ms': self._last_cycle_time * 1000,
-            'field_energy': float(torch.mean(torch.abs(self.unified_field))),
-            'max_activation': float(torch.max(torch.abs(self.unified_field))),
+            'field_energy': stats['energy'],
+            'max_activation': stats['max'],
             'prediction_confidence': self._current_prediction_confidence,
             'memory_saturation': len(self.topology_regions) / TOPOLOGY_REGIONS_MAX,
             'energy_state': {

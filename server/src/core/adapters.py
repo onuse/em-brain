@@ -141,42 +141,23 @@ class MotorAdapter(IMotorAdapter):
         if field_state.is_cuda or field_state.device.type == 'mps':
             field_state = field_state.cpu()
         
-        # Special case: if field dimensions is 26 and we have exactly the motor dimensions
-        # in the first positions, this is from the simplified brain
-        is_simplified_brain = False
-        if self.field_dimensions == 26 and self.motor_dim <= 26:
-            # Check if the values after motor_dim are all zeros (padding)
-            if torch.all(field_state[self.motor_dim:] == 0):
-                # This is from simplified brain - motor values are already in first positions
-                motor_normalized = field_state[:self.motor_dim]
-                is_simplified_brain = True
-            else:
-                # Normal extraction using learned weights
-                motor_normalized = self.extraction(field_state)
-        else:
-            # Normal extraction using learned weights
-            motor_normalized = self.extraction(field_state)
+        # Extract motor commands using learned weights
+        motor_normalized = self.extraction(field_state)
         
-        # Apply activation to ensure bounded outputs (skip for simplified brain)
-        if not is_simplified_brain:
-            motor_normalized = torch.tanh(motor_normalized)
+        # Apply activation to ensure bounded outputs
+        motor_normalized = torch.tanh(motor_normalized)
         
-        # Handle simplified brain case - values are already in correct range
-        if is_simplified_brain:
-            # Motor values are already in the correct range from the brain
-            motor_commands = motor_normalized.tolist()
-        else:
-            # Denormalize to motor ranges
-            motor_commands = []
-            for i, channel in enumerate(self.robot.motor_channels):
-                # Convert from [-1, 1] to motor range
-                normalized_value = motor_normalized[i].item()
-                range_span = channel.range_max - channel.range_min
-                value = channel.range_min + (normalized_value + 1.0) * range_span / 2.0
-                
-                # Clamp to valid range
-                value = max(channel.range_min, min(channel.range_max, value))
-                motor_commands.append(value)
+        # Denormalize to motor ranges
+        motor_commands = []
+        for i, channel in enumerate(self.robot.motor_channels):
+            # Convert from [-1, 1] to motor range
+            normalized_value = motor_normalized[i].item()
+            range_span = channel.range_max - channel.range_min
+            value = channel.range_min + (normalized_value + 1.0) * range_span / 2.0
+            
+            # Clamp to valid range
+            value = max(channel.range_min, min(channel.range_max, value))
+            motor_commands.append(value)
         
         return motor_commands
     

@@ -18,6 +18,11 @@ from typing import Dict, Any, Optional, Tuple
 from collections import deque
 import numpy as np
 
+from ...utils.tensor_ops import (
+    create_zeros, create_randn, safe_mean, safe_var, 
+    safe_normalize, field_energy
+)
+
 
 class UnifiedFieldDynamics:
     """
@@ -81,10 +86,10 @@ class UnifiedFieldDynamics:
             Dictionary with energy, novelty, confidence metrics
         """
         # Energy emerges from field activity
-        energy = float(torch.mean(torch.abs(field)))
+        energy = field_energy(field)
         
         # Also consider field variance (structured vs random)
-        variance = float(torch.var(field))
+        variance = float(safe_var(field))
         
         # Combined measure: high activity + high structure = high energy
         combined_energy = energy * (1.0 + variance)
@@ -276,10 +281,11 @@ class UnifiedFieldDynamics:
         
         # Only use first 3 dimensions for spatial waves
         wave_dims = min(3, len(self.field_shape))
-        wave_vectors = torch.randn(n_waves, wave_dims, device=self.device)
+        wave_vectors = create_randn((n_waves, wave_dims), device=self.device)
         
         # Normalize to control wave speed
-        wave_vectors = wave_vectors / torch.norm(wave_vectors, dim=1, keepdim=True)
+        for i in range(n_waves):
+            wave_vectors[i] = safe_normalize(wave_vectors[i])
         
         return wave_vectors
     
@@ -344,7 +350,7 @@ class UnifiedFieldDynamics:
         """Generate coherent traveling wave patterns."""
         # Start with zeros for first 3 dimensions only
         wave_shape = shape[:3] if len(shape) >= 3 else shape
-        waves = torch.zeros(wave_shape, device=self.device)
+        waves = create_zeros(wave_shape, device=self.device)
         
         # Create coordinate grids for first 3 dimensions
         coords = []
