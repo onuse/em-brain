@@ -31,9 +31,11 @@ from ...utils.error_handling import (
     validate_list_input, validate_tensor_shape, ErrorContext,
     BrainError, safe_tensor_op
 )
+from .pattern_cache_pool import PatternCachePool
+from .optimized_brain_cycle import OptimizedBrainMixin, CycleCache
 
 
-class SimplifiedUnifiedBrain:
+class SimplifiedUnifiedBrain(OptimizedBrainMixin):
     """
     Simplified brain with 4D tensor architecture.
     
@@ -49,7 +51,8 @@ class SimplifiedUnifiedBrain:
                  motor_dim: int = 5,
                  spatial_resolution: int = 32,
                  device: Optional[torch.device] = None,
-                 quiet_mode: bool = False):
+                 quiet_mode: bool = False,
+                 use_optimized: bool = True):
         """
         Initialize simplified brain.
         
@@ -97,6 +100,18 @@ class SimplifiedUnifiedBrain:
         
         # Initialize core systems
         self._initialize_core_systems(motor_dim)
+        
+        # Initialize optimization features
+        self.use_optimized = use_optimized
+        if use_optimized:
+            # Initialize OptimizedBrainMixin
+            OptimizedBrainMixin.__init__(self)
+            # Create pattern cache pool
+            self.pattern_cache_pool = PatternCachePool(
+                field_shape=self.tensor_shape,
+                max_patterns=50,
+                device=self.device
+            )
         
         # State tracking
         self.brain_cycles = 0
@@ -179,6 +194,10 @@ class SimplifiedUnifiedBrain:
         """
         Main processing cycle - simplified version.
         """
+        # Use optimized version if enabled
+        if self.use_optimized:
+            return self.process_robot_cycle_optimized(sensory_input)
+        
         cycle_start = time.perf_counter()
         
         try:
