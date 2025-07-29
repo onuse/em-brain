@@ -23,7 +23,7 @@ from src.core.single_brain_pool import SingleBrainPool
 from src.core.brain_service import BrainService
 from src.core.adapters import AdapterFactory
 from src.core.connection_handler import ConnectionHandler
-from src.core.dynamic_brain_factory import DynamicBrainFactory
+from src.core.simplified_brain_factory import SimplifiedBrainFactory
 from src.core.monitoring_server import DynamicMonitoringServer
 from src.core.maintenance_scheduler import MaintenanceScheduler
 from src.communication.clean_tcp_server import CleanTCPServer
@@ -68,7 +68,7 @@ class DynamicBrainServer:
         self.robot_registry = RobotRegistry(profiles_dir=profiles_dir)
         
         # 2. Brain Factory - creates brains
-        self.brain_factory = DynamicBrainFactory(config=self.config)
+        self.brain_factory = SimplifiedBrainFactory(brain_config=self.config)
         
         # 3. Brain Pool - single brain locked to first brainstem dimensions
         self.brain_pool = SingleBrainPool(brain_factory=self.brain_factory)
@@ -157,7 +157,7 @@ class DynamicBrainServer:
         
         print(f"💻 System: {platform.system()} | Python {platform.python_version()} | "
               f"{psutil.cpu_count()} cores | {mem.total/(1024**3):.1f}GB RAM | {device}")
-        print(f"🧠 Brain: Dynamic Field | {spatial_res}³ spatial | Adaptive dimensions")
+        print(f"🧠 Brain: Simplified 4D Field | {spatial_res}³ spatial | GPU optimized")
         print(f"🌐 Server: {host}:{port} | Monitoring: {monitoring_port}")
         print("=" * 70)
         

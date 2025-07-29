@@ -9,6 +9,5 @@ Common functionality for minimal brain:
 
 # Only import what exists after vector stream migration
 from .brain_logger import BrainLogger
-from .cognitive_autopilot import CognitiveAutopilot
 
-__all__ = ["BrainLogger", "CognitiveAutopilot"]
+__all__ = ["BrainLogger"]

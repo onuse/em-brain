@@ -12,7 +12,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'server'))
 
 import time
 import numpy as np
-from src.core.dynamic_brain_factory import DynamicBrainFactory
+from src.core.simplified_brain_factory import SimplifiedBrainFactory
 
 
 def run_blended_reality_demo():
@@ -31,7 +31,7 @@ def run_blended_reality_demo():
     print()
     
     # Create brain with blended reality
-    factory = DynamicBrainFactory({
+    factory = SimplifiedBrainFactory({
         'use_dynamic_brain': True,
         'use_full_features': True,
         'quiet_mode': False
@@ -65,8 +65,8 @@ def run_blended_reality_demo():
         motors, state = brain.process_robot_cycle(sensors)
         
         if i % 10 == 0:
-            print(f"  Cycle {i:3d}: Mode={state['cognitive_mode']}, "
-                  f"Confidence={state['prediction_confidence']:.2f}")
+            print(f"  Cycle {i:3d}: "
+                  f"Confidence={state.get('prediction_confidence', 0.5):.2f}")
     
     show_blend_state("After exploration")
     
@@ -82,8 +82,8 @@ def run_blended_reality_demo():
         motors, state = brain.process_robot_cycle(base_pattern)
         
         if i % 10 == 0:
-            print(f"  Cycle {i:3d}: Mode={state['cognitive_mode']}, "
-                  f"Confidence={state['prediction_confidence']:.2f}")
+            print(f"  Cycle {i:3d}: "
+                  f"Confidence={state.get('prediction_confidence', 0.5):.2f}")
     
     show_blend_state("After learning")
     
@@ -98,9 +98,9 @@ def run_blended_reality_demo():
         motors, state = brain.process_robot_cycle(sensors)
         
         if i % 10 == 0:
-            print(f"  Cycle {i:3d}: Mode={state['cognitive_mode']}, "
-                  f"Confidence={state['prediction_confidence']:.2f}, "
-                  f"Energy={state['field_energy']:.4f}")
+            print(f"  Cycle {i:3d}: "
+                  f"Confidence={state.get('prediction_confidence', 0.5):.2f}, "
+                  f"Energy={state.get('field_energy', 0.0):.4f}")
     
     show_blend_state("During autopilot")
     
@@ -116,8 +116,8 @@ def run_blended_reality_demo():
         motors, state = brain.process_robot_cycle(surprise_pattern)
         
         if i % 5 == 0:
-            print(f"  Cycle {i:3d}: Mode={state['cognitive_mode']}, "
-                  f"Confidence={state['prediction_confidence']:.2f}")
+            print(f"  Cycle {i:3d}: "
+                  f"Confidence={state.get('prediction_confidence', 0.5):.2f}")
     
     show_blend_state("After surprise")
     

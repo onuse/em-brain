@@ -18,7 +18,7 @@ from enum import Enum
 brain_server_path = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(brain_server_path))
 
-from src.core.dynamic_brain_factory import DynamicBrainFactory
+from src.core.simplified_brain_factory import SimplifiedBrainFactory
 
 
 class IntelligenceMetric(Enum):
@@ -66,7 +66,7 @@ class BehavioralTestFramework:
             default_config.update(config)
             
         # Create factory
-        factory = DynamicBrainFactory(default_config)
+        factory = SimplifiedBrainFactory(default_config)
         
         # Create brain with correct PiCar-X profile (from picarx_profile.json)
         brain_wrapper = factory.create(
@@ -252,7 +252,10 @@ def main():
     # Performance info
     brain = brain_wrapper.brain
     print(f"\nBrain Info:")
-    print(f"  Conceptual dimensions: {brain.total_dimensions}D")
+    if hasattr(brain, 'total_dimensions'):
+        print(f"  Conceptual dimensions: {brain.total_dimensions}D")
+    else:
+        print(f"  Architecture: 4D Simplified")
     print(f"  Tensor shape: {brain.tensor_shape}")
     print(f"  Memory usage: {brain._calculate_memory_usage():.1f}MB")
     print(f"  Device: {brain.device}")

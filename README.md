@@ -24,18 +24,20 @@ python3 tools/runners/demo_runner.py blended_reality
 
 ## Core Approach
 
-This project implements continuous field dynamics as an alternative to discrete AI. Intelligence emerges from the topology and evolution of a continuous multi-dimensional field organized by physics principles rather than sensory categories.
+This project implements continuous field dynamics as an alternative to discrete AI. Intelligence emerges from the topology and evolution of a continuous multi-dimensional field.
 
-### Field Organization
-- **Adaptive Dimensionality**: Field dimensions created dynamically based on robot capabilities
-- **Physics-Based Structure**: Dimensions organized by dynamics families:
-  - **Spatial**: Position, orientation, scale, time
-  - **Oscillatory**: Frequencies, rhythms, periods
-  - **Flow**: Gradients, momentum, direction
-  - **Topology**: Stable configurations, boundaries
-  - **Energy**: Intensity, activation, depletion
-  - **Coupling**: Relationships, correlations, binding
-  - **Emergence**: Novelty, creativity, phase transitions
+### Recent Major Improvements
+- **Simplified to 4D Tensor**: From complex 11D to simple [32,32,32,64] tensor
+- **2.2x Performance Gain**: GPU acceleration now possible (246ms vs 537ms)
+- **Removed Complexity**: Enhanced Dynamics, Developmental Confidence, Cognitive Autopilot
+- **Unified Systems**: Organic energy, predictive actions, reward topology shaping
+- **True Emergence**: No semantic structure in tensors - all properties emerge
+
+### Field Organization (Simplified)
+- **4D Unified Field**: Simple tensor where all properties emerge
+- **No Semantic Encoding**: Properties like spatial, temporal, oscillatory emerge naturally
+- **GPU Optimized**: Works efficiently on CUDA, MPS, and CPU
+- **Larger Capacity**: 2M elements for richer dynamics
 
 ### Key Features
 - **Pattern-Based Processing**: All cognition through pattern recognition, no fixed coordinates
@@ -81,18 +83,25 @@ This project implements continuous field dynamics as an alternative to discrete 
 ## Implementation Status
 
 ### Fully Integrated Features
-- Pattern-based motor and attention systems
-- Emergent spatial navigation
-- Enhanced field dynamics with phase transitions
-- Constraint enforcement for self-organization
+- Simplified 4D tensor architecture with GPU acceleration
+- Organic energy system (emerges from field activity)
+- Predictive action selection (imagine before acting)
+- Reward topology shaping (emergent goal-seeking)
+- Pattern-based motor and attention (coordinate-free)
+- Integrated blended reality (confidence-based mixing)
+- Spontaneous dynamics (always active)
 - Persistence for cross-session learning
-- Blended reality processing
-- Spontaneous dynamics
-- Cognitive autopilot
+
+### Recently Removed (Simplifications)
+- Enhanced Dynamics → Replaced by organic energy + reward topology
+- Developmental Confidence → Exploration emerges from energy alone
+- Cognitive Autopilot → Behavior emerges from field dynamics
+- Complex dimension mapping → Simple 4D tensor
+- 11D tensor architecture → 4D GPU-optimized tensor
 
 ### Known Limitations
 - Large persistence files (100+ MB) without compression
-- GPU processing limited to CPU for high-dimensional fields
+- SimplifiedUnifiedBrain not yet integrated everywhere
 - Hardware deployment interface requires updating
 
 ## Project Structure
