@@ -54,6 +54,15 @@ Combines energy, confidence, and behavioral modulation into one coherent system:
 - **Confidence**: Prediction accuracy tracking
 - **Modulation**: Continuous balance between internal dynamics and external input
 - **Dream States**: Pure internal dynamics after extended idle
+- **Temporal Persistence**: Differential decay rates create working memory (spatial features decay fast, temporal features persist)
+
+#### Evolved Field Dynamics (Core System)
+The field encodes its own evolution rules:
+- **Dynamic Parameters**: Last 16 features encode local decay, diffusion, coupling, plasticity
+- **Topology-Driven Evolution**: Each region develops specialized dynamics
+- **Meta-Learning**: System learns how to learn through experience
+- **Gradual Emergence**: Starts with minimal self-modification, naturally increases
+- **True Autonomy**: No fixed parameters - everything evolves
 
 #### Pattern-Based Processing
 All cognitive functions operate on patterns without coordinates:
@@ -82,6 +91,20 @@ Autonomous field activity without input:
 - Local recurrence creates persistent activity
 - Homeostatic balance of field energy
 - Critical dynamics at edge of chaos
+
+#### Topology Region System
+Stable patterns form persistent structures:
+- **Region Detection**: Identifies stable field configurations
+- **Causal Tracking**: Links temporal sequences of activations
+- **Abstraction Formation**: Composes regions into higher-level concepts
+- **Memory Consolidation**: Strengthens important regions during idle
+
+#### Consolidation System
+Advanced learning during rest periods:
+- **Pattern Replay**: Reactivates important patterns
+- **Dream Generation**: Creates novel pattern combinations
+- **Topology Refinement**: Optimizes field organization
+- **Cross-scale Integration**: Links patterns across resolutions
 
 ### Dynamic Brain Creation
 
@@ -115,12 +138,15 @@ brain/
 │   │   │
 │   │   ├── brains/field/      # Field brain implementation
 │   │   │   ├── simplified_unified_brain.py
-│   │   │   ├── unified_field_dynamics.py
-│   │   │   ├── pattern_based_motor.py
-│   │   │   ├── pattern_based_attention_fast.py
+│   │   │   ├── evolved_field_dynamics.py
+│   │   │   ├── unified_pattern_system.py
+│   │   │   ├── pattern_motor_adapter.py
+│   │   │   ├── pattern_attention_adapter.py
 │   │   │   ├── predictive_action_system.py
 │   │   │   ├── reward_topology_shaping.py
-│   │   │   └── spontaneous_dynamics.py
+│   │   │   ├── topology_region_system.py
+│   │   │   ├── consolidation_system.py
+│   │   │   └── motor_cortex.py
 │   │   │
 │   │   ├── persistence/       # State management
 │   │   └── communication/     # Network protocol
@@ -189,9 +215,17 @@ Server → Client: [motor_data...]
 - Pattern-based processing
 - Predictive action selection
 - Reward topology shaping
-- Persistence and recovery
+- Working memory through temporal persistence
+- Topology regions for abstraction
+- Consolidation and dream states
 - Spontaneous dynamics
 - Dynamic robot adaptation
+
+### Evolved Field Dynamics
+- Field evolution rules are part of the field itself
+- Regional specialization emerges naturally
+- Self-modification strength grows with experience
+- No distinction between state and dynamics
 
 ### Known Limitations
 - Large persistence files without compression

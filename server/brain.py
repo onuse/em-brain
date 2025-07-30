@@ -22,6 +22,7 @@ from src.core.robot_registry import RobotRegistry
 from src.core.single_brain_pool import SingleBrainPool
 from src.core.brain_service import BrainService
 from src.core.adapters import AdapterFactory
+from src.core.simplified_adapters import SimplifiedAdapterFactory
 from src.core.connection_handler import ConnectionHandler
 from src.core.simplified_brain_factory import SimplifiedBrainFactory
 from src.core.monitoring_server import DynamicMonitoringServer
@@ -74,7 +75,11 @@ class DynamicBrainServer:
         self.brain_pool = SingleBrainPool(brain_factory=self.brain_factory)
         
         # 4. Adapter Factory - creates sensory/motor adapters
-        self.adapter_factory = AdapterFactory()
+        # Use simplified adapters when using simplified brain
+        if isinstance(self.brain_factory, SimplifiedBrainFactory):
+            self.adapter_factory = SimplifiedAdapterFactory()
+        else:
+            self.adapter_factory = AdapterFactory()
         
         # 5. Brain Service - manages sessions with persistence
         persistence_config = self.config.get('persistence', {})

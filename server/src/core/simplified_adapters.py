@@ -56,19 +56,30 @@ class SimplifiedMotorAdapter(IMotorAdapter):
         self.robot = robot
         self.motor_dim = len(robot.motor_channels)
     
-    def from_field_space(self, motor_commands: List[float]) -> List[float]:
+    def from_field_space(self, motor_commands) -> List[float]:
         """
         Motor commands from simplified brain are already in [-1, 1] range.
         Just validate and return them.
         """
-        if len(motor_commands) != self.motor_dim:
-            raise ValueError(f"Expected {self.motor_dim} motor values, got {len(motor_commands)}")
+        # Handle both tensor and list inputs
+        if isinstance(motor_commands, torch.Tensor):
+            motor_list = motor_commands.cpu().tolist()
+        else:
+            motor_list = motor_commands
+            
+        if len(motor_list) != self.motor_dim:
+            # SimplifiedBrain returns 3 motor commands, but robot expects 4
+            # Add a default confidence value if missing
+            if len(motor_list) == self.motor_dim - 1:
+                motor_list = motor_list + [0.5]  # Default confidence
+            else:
+                raise ValueError(f"Expected {self.motor_dim} motor values, got {len(motor_list)}")
         
         # Validate each motor command is in valid range
         validated_commands = []
-        for i, (value, channel) in enumerate(zip(motor_commands, self.robot.motor_channels)):
+        for i, (value, channel) in enumerate(zip(motor_list, self.robot.motor_channels)):
             # The brain outputs in [-1, 1], but let's ensure it's clamped
-            value = max(-1.0, min(1.0, value))
+            value = max(-1.0, min(1.0, float(value)))
             validated_commands.append(value)
         
         return validated_commands
@@ -76,3 +87,15 @@ class SimplifiedMotorAdapter(IMotorAdapter):
     def get_motor_dimensions(self) -> int:
         """Get motor dimensions."""
         return self.motor_dim
+
+
+class SimplifiedAdapterFactory:
+    """Factory for creating simplified adapters."""
+    
+    def create_sensory_adapter(self, robot: Robot, field_dimensions: int = None) -> ISensoryAdapter:
+        """Create simplified sensory adapter."""
+        return SimplifiedSensoryAdapter(robot)
+    
+    def create_motor_adapter(self, robot: Robot, field_dimensions: int = None) -> IMotorAdapter:
+        """Create simplified motor adapter."""
+        return SimplifiedMotorAdapter(robot)

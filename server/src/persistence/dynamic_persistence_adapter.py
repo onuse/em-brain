@@ -86,7 +86,13 @@ class DynamicPersistenceAdapter:
         state.total_cycles = brain_wrapper.total_cycles if hasattr(brain_wrapper, 'total_cycles') else 0
         
         # Dynamic architecture info
-        state.conceptual_dimensions = brain.total_dimensions
+        if hasattr(brain, 'total_dimensions'):
+            state.conceptual_dimensions = brain.total_dimensions
+        else:
+            # SimplifiedUnifiedBrain doesn't have total_dimensions
+            # Use the product of tensor shape as a proxy
+            state.conceptual_dimensions = len(brain.tensor_shape)
+        
         state.tensor_shape = list(brain.tensor_shape)
         if hasattr(brain, 'dimension_mapping'):
             # Convert dimension mapping to serializable format

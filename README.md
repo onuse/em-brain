@@ -28,10 +28,19 @@ This project implements continuous field dynamics as an alternative to discrete 
 
 ### Recent Major Improvements
 - **Simplified to 4D Tensor**: From complex 11D to simple [32,32,32,64] tensor
-- **2.2x Performance Gain**: GPU acceleration now possible (246ms vs 537ms)
-- **Removed Complexity**: Enhanced Dynamics, Developmental Confidence, Cognitive Autopilot
-- **Unified Systems**: Organic energy, predictive actions, reward topology shaping
+- **2.2x Performance Gain**: GPU acceleration now possible (~183ms optimized)
+- **Unified Systems**: Energy + confidence + spontaneous dynamics in one system
+- **Working Memory**: Temporal persistence through differential decay rates
+- **Topology Regions**: Abstraction formation and causal relationship tracking
+- **Consolidation System**: Pattern replay and dream states during idle
 - **True Emergence**: No semantic structure in tensors - all properties emerge
+
+### 🚀 Next Major Upgrade: Self-Modifying Field Dynamics
+The field will encode its own evolution rules, enabling:
+- **True Autonomy**: System determines how to learn
+- **Open-Ended Evolution**: No ceiling on complexity
+- **Meta-Learning**: Field improves its own learning
+- **Emergent Architecture**: Structure arises from dynamics
 
 ### Field Organization (Simplified)
 - **4D Unified Field**: Simple tensor where all properties emerge
@@ -56,23 +65,30 @@ This project implements continuous field dynamics as an alternative to discrete 
 
 ### Cognitive Systems
 
+#### Evolved Field Dynamics
+- **Self-Modifying**: Evolution rules encoded in the field itself
+- **Energy & Confidence**: Emerge from field state, not fixed parameters
+- **Spontaneous Activity**: Traveling waves with learned parameters
+- **Working Memory**: Temporal persistence through differential decay
+- **Meta-Learning**: System improves its learning over time
+
 #### Pattern-Based Intelligence
-- **Motor Generation**: Field evolution patterns → motor commands
-- **Attention**: Pattern salience (novelty, surprise, importance)
-- **Sensory Processing**: Pattern features → field impressions
-- No spatial coordinates or gradients used
+- **Unified Pattern System**: Shared extraction for motor and attention
+- **Motor Generation**: Field patterns → motor commands via motor cortex
+- **Attention**: Pattern salience (novelty + surprise + importance)
+- **No coordinates**: All processing through pattern matching
 
 #### Self-Organizing Dynamics
-- **Constraint System**: N-dimensional constraint discovery and enforcement
-- **Phase Transitions**: Stable → high energy → chaotic → low energy
-- **Attractors**: Stable field configurations as memory anchors
-- **Energy Management**: Redistribution for optimal dynamics
+- **Topology Regions**: Stable patterns form persistent structures
+- **Causal Tracking**: Temporal sequences create relationships
+- **Abstraction Formation**: Regions compose into concepts
+- **Reward Topology**: Goals emerge from field deformations
 
 #### Autonomous Behavior
-- **Spontaneous Activity**: Traveling waves, local recurrence, homeostasis
-- **Cognitive Modes**: AUTOPILOT (>90% confidence), FOCUSED (70-90%), DEEP_THINK (<70%)
-- **Dream States**: Pure fantasy after extended idle
-- **Predictive Processing**: Field evolution as future state anticipation
+- **Predictive Actions**: Imagine outcomes before acting
+- **Exploration Drive**: Emerges from low energy + high novelty
+- **Dream States**: Consolidation and pattern replay during idle
+- **No fixed modes**: Continuous energy/confidence dynamics
 
 #### Navigation and Memory
 - **Emergent Places**: Stable field configurations, not coordinates
@@ -84,19 +100,20 @@ This project implements continuous field dynamics as an alternative to discrete 
 
 ### Fully Integrated Features
 - Simplified 4D tensor architecture with GPU acceleration
-- Organic energy system (emerges from field activity)
+- Evolved field dynamics (self-modifying evolution rules)
+- Working memory through temporal persistence
+- Topology regions for abstraction and memory
+- Consolidation system with dreams and replay
 - Predictive action selection (imagine before acting)
 - Reward topology shaping (emergent goal-seeking)
 - Pattern-based motor and attention (coordinate-free)
-- Integrated blended reality (confidence-based mixing)
-- Spontaneous dynamics (always active)
 - Persistence for cross-session learning
 
 ### Recently Removed (Simplifications)
-- Enhanced Dynamics → Replaced by organic energy + reward topology
-- Developmental Confidence → Exploration emerges from energy alone
-- Cognitive Autopilot → Behavior emerges from field dynamics
-- Complex dimension mapping → Simple 4D tensor
+- Enhanced Dynamics → Replaced by unified field dynamics
+- Developmental Confidence → Exploration emerges from energy
+- Cognitive Autopilot → Continuous dynamics instead of modes
+- Coordinate systems → Pure pattern-based processing
 - 11D tensor architecture → 4D GPU-optimized tensor
 
 ### Known Limitations
@@ -146,7 +163,24 @@ The field approach builds on:
 ## Development
 
 See CLAUDE.md for development instructions. Key components:
-- `dynamic_unified_brain_full.py` - Primary brain implementation
-- `pattern_based_*.py` - Coordinate-free cognitive systems
-- `constraint_field_nd.py` - Self-organization dynamics
-- `integrated_persistence.py` - Cross-session learning
+- `simplified_unified_brain.py` - Primary brain implementation
+- `evolved_field_dynamics.py` - Self-modifying field evolution
+- `topology_region_system.py` - Abstraction and memory formation
+- `consolidation_system.py` - Learning during rest
+- `unified_pattern_system.py` - Shared pattern extraction
+
+### Running the System
+
+```bash
+# Start brain server
+python3 server/brain.py
+
+# Run tests
+python3 tools/runners/test_runner.py all
+
+# Run demos
+python3 tools/runners/demo_runner.py spatial_learning
+
+# Run validation studies
+python3 tools/runners/validation_runner.py biological_embodied_learning
+```

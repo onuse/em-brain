@@ -23,9 +23,11 @@ from .pattern_motor_adapter import PatternMotorAdapter
 from .pattern_attention_adapter import PatternAttentionAdapter
 from .motor_cortex import MotorCortex
 from .field_constants import TOPOLOGY_REGIONS_MAX
-from .unified_field_dynamics import UnifiedFieldDynamics
+from .evolved_field_dynamics import EvolvedFieldDynamics
 from .predictive_action_system import PredictiveActionSystem
 from .reward_topology_shaping import RewardTopologyShaper
+from .consolidation_system import ConsolidationSystem
+from .topology_region_system import TopologyRegionSystem
 from ...utils.tensor_ops import create_randn, field_energy, field_stats, apply_diffusion
 from ...utils.error_handling import (
     validate_list_input, validate_tensor_shape, ErrorContext,
@@ -124,7 +126,6 @@ class SimplifiedUnifiedBrain(OptimizedBrainMixin):
         self.modulation = {}  # Will be filled by unified field dynamics
         
         # Memory systems
-        self.topology_regions = []
         self.working_memory = deque(maxlen=brain_config.working_memory_limit)
         self.temporal_experiences = deque(maxlen=100)
         self.field_experiences = deque(maxlen=1000)
@@ -134,15 +135,20 @@ class SimplifiedUnifiedBrain(OptimizedBrainMixin):
             
     def _initialize_core_systems(self, motor_dim: int):
         """Initialize all core brain systems."""
-        # Unified field dynamics (replaces energy + blended reality + spontaneous)
-        self.field_dynamics = UnifiedFieldDynamics(
+        # Evolved field dynamics - THE core system
+        self.field_dynamics = EvolvedFieldDynamics(
             field_shape=self.unified_field.shape,
             pattern_memory_size=100,
             confidence_window=50,
-            spontaneous_rate=self.spontaneous_rate,
-            resting_potential=self.cognitive_config.brain_config.resting_potential,
+            initial_spontaneous_rate=self.spontaneous_rate,
+            initial_resting_potential=self.cognitive_config.brain_config.resting_potential,
+            temporal_features=16,  # For working memory
+            dynamics_features=16,  # For self-modifying dynamics
             device=self.device
         )
+        
+        # Initialize the dynamics features in the field
+        self.field_dynamics.initialize_field_dynamics(self.unified_field)
         
         # Predictive action system
         self.predictive_actions = PredictiveActionSystem(
@@ -188,6 +194,20 @@ class SimplifiedUnifiedBrain(OptimizedBrainMixin):
             pattern_system=self.pattern_system,
             attention_capacity=5,
             device=self.device
+        )
+        
+        # Consolidation system for advanced learning
+        self.consolidation_system = ConsolidationSystem(
+            field_shape=self.tensor_shape,
+            device=self.device
+        )
+        
+        # Topology region system for abstraction and causal understanding
+        self.topology_region_system = TopologyRegionSystem(
+            field_shape=self.tensor_shape,
+            device=self.device,
+            stability_threshold=0.1,
+            max_regions=200
         )
         
     def process_robot_cycle(self, sensory_input: List[float]) -> Tuple[List[float], Dict[str, Any]]:
@@ -249,12 +269,19 @@ class SimplifiedUnifiedBrain(OptimizedBrainMixin):
             # 7. Evolve field
             self._evolve_field()
             
-            # 8. Generate motor action
+            # 8. Detect and update topology regions
+            activated_regions = self.topology_region_system.detect_topology_regions(
+                self.unified_field,
+                current_patterns=self.pattern_system.extract_patterns(self.unified_field, n_patterns=5)
+            )
+            
+            # 9. Generate motor action
             motor_output = self._generate_motor_action()
             
-            # 9. Update state
+            # 10. Update state
             self.brain_cycles += 1
             self._last_cycle_time = time.perf_counter() - cycle_start
+            self._last_activated_regions = activated_regions
             
             # Return motor output and state
             brain_state = self._create_brain_state()
@@ -419,19 +446,28 @@ class SimplifiedUnifiedBrain(OptimizedBrainMixin):
     def _create_brain_state(self) -> Dict[str, Any]:
         """Create brain state for telemetry."""
         stats = field_stats(self.unified_field)
+        topology_stats = self.topology_region_system.get_statistics()
+        
         return {
             'cycle': self.brain_cycles,
             'cycle_time_ms': self._last_cycle_time * 1000,
             'field_energy': stats['energy'],
             'max_activation': stats['max'],
             'prediction_confidence': self._current_prediction_confidence,
-            'memory_saturation': len(self.topology_regions) / TOPOLOGY_REGIONS_MAX,
+            'memory_saturation': topology_stats['total_regions'] / self.topology_region_system.max_regions,
             'energy_state': {
                 'energy': self.modulation.get('energy', 0.5),
                 'novelty': self.modulation.get('novelty', 0.0),
                 'exploration_drive': self.modulation.get('exploration_drive', 0.5)
             },
             'topology_shaping': self.topology_shaper.get_topology_state(),
+            'topology_regions': {
+                'total': topology_stats['total_regions'],
+                'active': topology_stats['active_regions'],
+                'abstract': topology_stats['abstract_regions'],
+                'causal_links': topology_stats['causal_links'],
+                'activated_now': len(getattr(self, '_last_activated_regions', []))
+            },
             'tensor_shape': self.tensor_shape,
             'device': str(self.device)
         }
@@ -442,3 +478,47 @@ class SimplifiedUnifiedBrain(OptimizedBrainMixin):
         for dim in self.tensor_shape:
             elements *= dim
         return (elements * 4) / (1024 * 1024)
+    
+    def perform_maintenance(self):
+        """Perform maintenance including memory consolidation."""
+        # Start consolidation
+        self.consolidation_system.start_consolidation(self)
+        
+        # Run consolidation for a short period (5 seconds)
+        metrics = self.consolidation_system.consolidate_memories(self, duration_seconds=5.0)
+        
+        # Also consolidate topology regions
+        self.topology_region_system.consolidate_regions(self)
+        
+        if not self.quiet_mode:
+            topology_stats = self.topology_region_system.get_statistics()
+            print(f"🧠 Consolidation complete: {metrics.patterns_strengthened} patterns strengthened, "
+                  f"{metrics.dream_sequences} dreams, benefit={metrics.consolidation_benefit:.3f}")
+            print(f"🏔️ Topology: {topology_stats['total_regions']} regions, "
+                  f"{topology_stats['abstract_regions']} abstractions, "
+                  f"{topology_stats['causal_links']} causal links")
+    
+    def start_idle_consolidation(self, duration_seconds: float = 60.0):
+        """Start extended consolidation during idle period."""
+        if not self.quiet_mode:
+            print(f"😴 Starting {duration_seconds}s consolidation phase...")
+        
+        self.consolidation_system.start_consolidation(self)
+        metrics = self.consolidation_system.consolidate_memories(self, duration_seconds)
+        
+        if not self.quiet_mode:
+            print(f"✅ Consolidation complete: benefit={metrics.consolidation_benefit:.3f}")
+        
+        return metrics
+    
+    def get_evolution_state(self) -> Dict[str, Any]:
+        """Get current state of field evolution."""
+        props = self.field_dynamics.get_emergent_properties()
+        
+        return {
+            'evolution_cycles': props['evolution_cycles'],
+            'self_modification_strength': props['self_modification_strength'],
+            'smoothed_energy': props['smoothed_energy'],
+            'smoothed_confidence': props['smoothed_confidence'],
+            'working_memory': self.field_dynamics.get_working_memory_state(self.unified_field)
+        }
