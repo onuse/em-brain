@@ -161,7 +161,7 @@ brain/
 │   │
 │   └── tests/                 # Test suite
 │
-├── client_picarx/             # Robot implementation
+├── client_picarx/             # Robot implementation  
 ├── demos/                     # Interactive demos
 ├── validation/                # Scientific validation
 └── tools/                     # Development tools

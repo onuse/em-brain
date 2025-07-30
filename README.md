@@ -5,7 +5,6 @@ Research implementation of continuous multi-dimensional field dynamics as an alt
 See docs/ folder for technical documentation:
 - **ARCHITECTURE.md** - System architecture and field organization
 - **TODO.md** - Pending tasks and implementation status
-- **CLAUDE.md** - Development instructions
 
 ## Quick Start
 
@@ -26,17 +25,17 @@ python3 tools/runners/demo_runner.py blended_reality
 
 This project implements continuous field dynamics as an alternative to discrete AI. Intelligence emerges from the topology and evolution of a continuous multi-dimensional field.
 
-### Recent Major Improvements
-- **Simplified to 4D Tensor**: From complex 11D to simple [32,32,32,64] tensor
-- **2.2x Performance Gain**: GPU acceleration now possible (~183ms optimized)
-- **Unified Systems**: Energy + confidence + spontaneous dynamics in one system
+### Architectural Evolution
+- **4D Tensor Architecture**: Simple [32,32,32,64] tensor for GPU optimization
+- **Performance**: ~250ms cycle time with GPU acceleration
+- **Evolved Field Dynamics**: Self-modifying evolution rules encoded in the field
 - **Working Memory**: Temporal persistence through differential decay rates
 - **Topology Regions**: Abstraction formation and causal relationship tracking
 - **Consolidation System**: Pattern replay and dream states during idle
 - **True Emergence**: No semantic structure in tensors - all properties emerge
 
-### 🚀 Latest Achievement: Fully Emergent Brain
-The brain now features complete emergence with:
+### 🚀 Project goal: Fully Emergent Brain
+The brain features complete emergence with:
 - **Self-Modifying Dynamics**: Evolution rules encoded in the field itself
 - **Emergent Sensory Mapping**: Patterns find natural locations through resonance
 - **True Autonomy**: System determines how to learn
@@ -111,12 +110,12 @@ The brain now features complete emergence with:
 - Pattern-based motor and attention (coordinate-free)
 - Persistence for cross-session learning
 
-### Recently Removed (Simplifications)
-- Enhanced Dynamics → Replaced by unified field dynamics
-- Developmental Confidence → Exploration emerges from energy
-- Cognitive Autopilot → Continuous dynamics instead of modes
-- Coordinate systems → Pure pattern-based processing
-- 11D tensor architecture → 4D GPU-optimized tensor
+### Recent Evolution
+- Multiple brain architectures → Single SimplifiedUnifiedBrain
+- Fixed field dynamics → Evolved self-modifying dynamics
+- Center-based sensory dumping → Emergent sensory mapping
+- Dual pathways → Single unified architecture
+- Complex tensor dimensions → Simple 4D GPU-optimized tensor
 
 ### Known Limitations
 - Large persistence files (100+ MB) without compression
