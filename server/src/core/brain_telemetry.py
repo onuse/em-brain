@@ -96,11 +96,14 @@ class BrainTelemetryAdapter:
     
     def get_telemetry(self) -> BrainTelemetry:
         """Extract current telemetry from brain"""
-        # Get brain state
-        brain_state = self.brain.get_brain_state() if hasattr(self.brain, 'get_brain_state') else {}
+        # Handle SimplifiedUnifiedBrain
+        if hasattr(self.brain, '_create_brain_state'):
+            brain_state = self.brain._create_brain_state()
+        else:
+            brain_state = self.brain.get_brain_state() if hasattr(self.brain, 'get_brain_state') else {}
         
         # Get field statistics
-        field_stats = self.brain.get_field_statistics() if hasattr(self.brain, 'get_field_statistics') else {}
+        field_stats = brain_state  # SimplifiedUnifiedBrain includes stats in brain_state
         
         # Get blended reality state
         blend_state = {'reality_weight': 1.0, 'fantasy_weight': 0.0}
