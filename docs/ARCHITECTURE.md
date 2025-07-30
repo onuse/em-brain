@@ -106,6 +106,13 @@ Advanced learning during rest periods:
 - **Topology Refinement**: Optimizes field organization
 - **Cross-scale Integration**: Links patterns across resolutions
 
+#### Emergent Sensory Mapping
+Patterns find their natural place in the field:
+- **Resonance Detection**: Patterns locate based on field resonance
+- **Correlation Clustering**: Similar patterns become neighbors
+- **Reward-based Importance**: Critical patterns claim prime locations
+- **Self-Organization**: No fixed mappings - organization emerges
+
 ### Dynamic Brain Creation
 
 1. **Robot Connection**: Robot provides sensory/motor dimensions via handshake
@@ -146,6 +153,7 @@ brain/
 │   │   │   ├── reward_topology_shaping.py
 │   │   │   ├── topology_region_system.py
 │   │   │   ├── consolidation_system.py
+│   │   │   ├── emergent_sensory_mapping.py
 │   │   │   └── motor_cortex.py
 │   │   │
 │   │   ├── persistence/       # State management
@@ -221,11 +229,12 @@ Server → Client: [motor_data...]
 - Spontaneous dynamics
 - Dynamic robot adaptation
 
-### Evolved Field Dynamics
-- Field evolution rules are part of the field itself
-- Regional specialization emerges naturally
-- Self-modification strength grows with experience
-- No distinction between state and dynamics
+### Complete Emergence
+- **Evolved Field Dynamics**: Evolution rules are part of the field itself
+- **Regional Specialization**: Each area develops unique dynamics
+- **Self-Modification**: Strength grows naturally with experience
+- **Emergent Sensory Organization**: Patterns find their place through resonance
+- **No Fixed Architecture**: Everything emerges from field dynamics
 
 ### Known Limitations
 - Large persistence files without compression

@@ -24,6 +24,7 @@ from .pattern_attention_adapter import PatternAttentionAdapter
 from .motor_cortex import MotorCortex
 from .field_constants import TOPOLOGY_REGIONS_MAX
 from .evolved_field_dynamics import EvolvedFieldDynamics
+from .emergent_sensory_mapping import EmergentSensoryMapping
 from .predictive_action_system import PredictiveActionSystem
 from .reward_topology_shaping import RewardTopologyShaper
 from .consolidation_system import ConsolidationSystem
@@ -210,6 +211,14 @@ class SimplifiedUnifiedBrain(OptimizedBrainMixin):
             max_regions=200
         )
         
+        # Emergent sensory mapping - patterns find their place
+        self.sensory_mapping = EmergentSensoryMapping(
+            field_shape=self.tensor_shape,
+            device=self.device,
+            resonance_threshold=0.3,
+            spatial_decay=0.95
+        )
+        
     def process_robot_cycle(self, sensory_input: List[float]) -> Tuple[List[float], Dict[str, Any]]:
         """
         Main processing cycle - simplified version.
@@ -316,9 +325,7 @@ class SimplifiedUnifiedBrain(OptimizedBrainMixin):
         )
     
     def _imprint_experience(self, experience: UnifiedFieldExperience):
-        """Imprint experience into field - simplified version."""
-        # Confidence is now updated in unified field dynamics
-        
+        """Imprint experience into field through emergent mapping."""
         # Check for meaningful input
         has_input = (experience.raw_input_stream is not None and
                     torch.max(torch.abs(experience.raw_input_stream)) > 0.01)
@@ -328,16 +335,35 @@ class SimplifiedUnifiedBrain(OptimizedBrainMixin):
             scaled_intensity = experience.field_intensity * self.modulation.get('imprint_strength', 0.5)
             scaled_intensity *= self.modulation.get('sensory_amplification', 1.0)
             
-            # Simple imprint - add to center region
-            cx, cy, cz = self.spatial_resolution // 2, self.spatial_resolution // 2, self.spatial_resolution // 2
-            region_size = 3
+            # Find emergent location for this sensory pattern
+            reward = experience.raw_input_stream[-1].item() if len(experience.raw_input_stream) > 24 else 0.0
+            x, y, z = self.sensory_mapping.find_imprint_location(
+                sensory_pattern=experience.raw_input_stream,
+                field_state=self.unified_field,
+                reward=reward
+            )
             
-            self.unified_field[
-                cx-region_size:cx+region_size+1,
-                cy-region_size:cy+region_size+1,
-                cz-region_size:cz+region_size+1,
-                :
-            ] += scaled_intensity
+            # Imprint at discovered location with spatial spread
+            region_size = 2  # Slightly smaller since location is more precise
+            
+            # Ensure bounds
+            x_start = max(0, x - region_size)
+            x_end = min(self.spatial_resolution, x + region_size + 1)
+            y_start = max(0, y - region_size)
+            y_end = min(self.spatial_resolution, y + region_size + 1)
+            z_start = max(0, z - region_size)
+            z_end = min(self.spatial_resolution, z + region_size + 1)
+            
+            # Apply with distance-based falloff
+            for dx in range(x_start - x, x_end - x):
+                for dy in range(y_start - y, y_end - y):
+                    for dz in range(z_start - z, z_end - z):
+                        distance = abs(dx) + abs(dy) + abs(dz)
+                        weight = 0.8 ** distance  # Exponential falloff
+                        
+                        self.unified_field[
+                            x + dx, y + dy, z + dz, :
+                        ] += scaled_intensity * weight
             
             self._last_imprint_strength = scaled_intensity
         else:
@@ -469,7 +495,8 @@ class SimplifiedUnifiedBrain(OptimizedBrainMixin):
                 'activated_now': len(getattr(self, '_last_activated_regions', []))
             },
             'tensor_shape': self.tensor_shape,
-            'device': str(self.device)
+            'device': str(self.device),
+            'sensory_organization': self.sensory_mapping.get_statistics()
         }
     
     def _calculate_memory_usage(self) -> float:
@@ -489,6 +516,9 @@ class SimplifiedUnifiedBrain(OptimizedBrainMixin):
         
         # Also consolidate topology regions
         self.topology_region_system.consolidate_regions(self)
+        
+        # Reorganize sensory mappings for better topological organization
+        self.sensory_mapping.reorganize_mappings(self.unified_field)
         
         if not self.quiet_mode:
             topology_stats = self.topology_region_system.get_statistics()
