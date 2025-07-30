@@ -358,14 +358,41 @@ class BrainService(IBrainService):
         """Get telemetry for all active sessions"""
         telemetry = {}
         for session_id, session in self.sessions.items():
-            if hasattr(session, 'telemetry_adapter'):
+            # Try to get brain state directly for SimplifiedUnifiedBrain
+            if hasattr(session, 'brain') and session.brain:
+                brain = session.brain
+                if hasattr(brain, '_create_brain_state'):
+                    # SimplifiedUnifiedBrain
+                    telemetry[session_id] = brain._create_brain_state()
+                elif hasattr(brain, 'get_brain_state'):
+                    # Legacy brain
+                    telemetry[session_id] = brain.get_brain_state()
+            elif hasattr(session, 'telemetry_adapter'):
+                # Old telemetry adapter
                 telemetry[session_id] = session.telemetry_adapter.get_telemetry_summary()
         return telemetry
     
     def get_detailed_telemetry(self, session_id: str) -> Optional[Dict[str, Any]]:
         """Get detailed telemetry data for a session"""
         session = self.sessions.get(session_id)
-        if session and hasattr(session, 'telemetry_adapter'):
+        if not session:
+            return None
+            
+        # Try to get brain state directly for SimplifiedUnifiedBrain
+        if hasattr(session, 'brain') and session.brain:
+            brain = session.brain
+            if hasattr(brain, '_create_brain_state'):
+                # SimplifiedUnifiedBrain
+                brain_state = brain._create_brain_state()
+                # Add evolution state if available
+                if hasattr(brain, 'get_evolution_state'):
+                    brain_state['evolution_state'] = brain.get_evolution_state()
+                return brain_state
+            elif hasattr(brain, 'get_brain_state'):
+                # Legacy brain
+                return brain.get_brain_state()
+        elif session and hasattr(session, 'telemetry_adapter'):
+            # Old telemetry adapter
             telemetry = session.telemetry_adapter.get_telemetry()
             return {
                 'brain_cycles': telemetry.brain_cycles,
@@ -383,3 +410,19 @@ class BrainService(IBrainService):
                 'timestamp': telemetry.timestamp
             }
         return None
+    
+    def shutdown(self):
+        """Shutdown the brain service and save all brain states."""
+        print("   Shutting down brain service...")
+        
+        # Save all brain states
+        for session_id, session in self.sessions.items():
+            if session.brain:
+                print(f"   💾 Saving state for session {session_id}")
+                self.persistence.save_brain_state(session.brain, force=True)
+        
+        # Stop persistence if it has a stop method
+        if hasattr(self.persistence, 'stop'):
+            self.persistence.stop()
+        
+        print("   ✅ Brain service shutdown complete")

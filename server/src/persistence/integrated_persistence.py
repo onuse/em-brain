@@ -56,6 +56,7 @@ class IntegratedPersistence:
         self.last_save_cycle = 0
         self.session_id = f"session_{int(time.time())}"
         self.save_count = 0
+        self.session_count = 0  # Track session count for recovery
         
         # Threading
         self._lock = threading.Lock()

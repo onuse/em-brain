@@ -33,6 +33,7 @@ sys.path.insert(0, str(brain_root / 'server'))
 from src.communication import MinimalBrainClient
 from src.communication.monitoring_client import create_monitoring_client
 from validation.embodied_learning.environments.sensory_motor_world import SensoryMotorWorld
+from validation.embodied_learning.experiments.enhanced_telemetry_adapter import EnhancedTelemetryAdapter
 # TCP socket connection respects sensor→buffer→brain→buffer→motor architecture
 
 @dataclass
@@ -116,6 +117,7 @@ class BiologicalEmbodiedLearningExperiment:
         
         # Monitoring socket: Gets brain statistics and validation metrics
         self.monitoring_client = None  # Will be connected during experiment
+        self.telemetry_adapter = None  # Enhanced telemetry adapter
         
         self.environment = SensoryMotorWorld(
             world_size=config.world_size,
@@ -173,12 +175,23 @@ class BiologicalEmbodiedLearningExperiment:
             self.monitoring_client = create_monitoring_client()
             if self.monitoring_client:
                 print(f"   ✅ Connected to monitoring server")
+                # Initialize enhanced telemetry adapter
+                self.telemetry_adapter = EnhancedTelemetryAdapter(self.monitoring_client)
+                # Get initial brain state
+                initial_telemetry = self.telemetry_adapter.get_evolved_telemetry()
+                if initial_telemetry:
+                    evo_state = initial_telemetry.get('evolution_state', {})
+                    print(f"   🧬 Initial brain state:")
+                    print(f"      Self-modification: {evo_state.get('self_modification_strength', 0.01):.1%}")
+                    print(f"      Evolution cycles: {evo_state.get('evolution_cycles', 0)}")
             else:
                 print(f"   ⚠️  Monitoring server not available (continuing without brain metrics)")
                 self.monitoring_client = None
+                self.telemetry_adapter = None
         except Exception as e:
             print(f"   ⚠️  Monitoring connection failed: {e} (continuing without brain metrics)")
             self.monitoring_client = None
+            self.telemetry_adapter = None
         
         try:
             self.experiment_start_time = time.time()
@@ -210,8 +223,8 @@ class BiologicalEmbodiedLearningExperiment:
                     consolidation_analysis = self._run_consolidation_phase(session_count)
                     self.consolidation_analyses.append(consolidation_analysis)
                     
-                    # Sleep with keepalive pings
-                    self._consolidation_sleep(consolidation_duration)
+                    # Sleep with keepalive pings and telemetry tracking
+                    self._consolidation_sleep(consolidation_duration, pre_topology, pre_evolution)
                 
                 session_count += 1
             
@@ -242,7 +255,30 @@ class BiologicalEmbodiedLearningExperiment:
             print(f"   Total duration: {(time.time() - self.experiment_start_time)/3600:.1f} hours")
             print(f"   Sessions completed: {len(self.session_results)}")
             print(f"   Total actions: {self.total_actions_executed}")
-            print(f"   Results saved to: {self.results_dir}")
+            
+            # Show brain evolution summary if available
+            if self.telemetry_adapter:
+                evolution_analysis = self.telemetry_adapter.get_evolution_analysis()
+                if evolution_analysis.get('status') != 'insufficient_data':
+                    print(f"\n   🧬 Brain Evolution Summary:")
+                    print(f"      Initial self-modification: {evolution_analysis.get('initial_self_modification', 0.01):.1%}")
+                    print(f"      Final self-modification: {evolution_analysis.get('final_self_modification', 0.01):.1%}")
+                    print(f"      Growth: {evolution_analysis.get('self_modification_growth', 0):.3%}")
+                    print(f"      Total evolution cycles: {evolution_analysis.get('total_evolution_cycles', 0)}")
+                
+                # Show final brain state
+                final_telemetry = self.telemetry_adapter.get_evolved_telemetry()
+                if final_telemetry:
+                    topology = final_telemetry.get('topology_regions', {})
+                    sensory = final_telemetry.get('sensory_organization', {})
+                    print(f"\n   🧠 Final Brain State:")
+                    print(f"      Topology regions: {topology.get('total', 0)}")
+                    print(f"      Abstract regions: {topology.get('abstract', 0)}")
+                    print(f"      Causal links: {topology.get('causal_links', 0)}")
+                    print(f"      Unique sensory patterns: {sensory.get('unique_patterns', 0)}")
+                    print(f"      Memory saturation: {final_telemetry.get('memory_saturation', 0):.1%}")
+            
+            print(f"\n   Results saved to: {self.results_dir}")
             
             return final_results
             
@@ -269,8 +305,23 @@ class BiologicalEmbodiedLearningExperiment:
         action_counts = {'MOVE_FORWARD': 0, 'TURN_LEFT': 0, 'TURN_RIGHT': 0, 'STOP': 0}
         trajectory_points = []
         
+        # Telemetry tracking
+        confidence_progression = []
+        last_heartbeat_time = time.time()
+        heartbeat_interval = 300  # 5 minutes
+        last_behavior_state = None
+        
         print(f"   Duration: {self.config.session_duration_minutes} minutes")
         print(f"   Target actions: {int(session_duration * actions_per_second)}")
+        
+        # Get initial telemetry if available
+        if self.telemetry_adapter:
+            initial_telemetry = self.telemetry_adapter.get_evolved_telemetry()
+            if initial_telemetry:
+                evo_state = initial_telemetry.get('evolution_state', {})
+                print(f"   🧬 Session {session_id} starting brain state:")
+                print(f"      Self-modification: {evo_state.get('self_modification_strength', 0.01):.1%}")
+                print(f"      Working memory: {evo_state.get('working_memory', {}).get('n_patterns', 0)} patterns")
         
         # Main learning loop
         while (time.time() - session_start) < session_duration:
@@ -311,6 +362,51 @@ class BiologicalEmbodiedLearningExperiment:
                 actions_executed += 1
                 self.total_actions_executed += 1
                 
+                # Periodic telemetry heartbeat (every 5 minutes)
+                current_time = time.time()
+                if self.telemetry_adapter and (current_time - last_heartbeat_time) >= heartbeat_interval:
+                    last_heartbeat_time = current_time
+                    elapsed_minutes = (current_time - session_start) / 60
+                    
+                    # Get comprehensive telemetry
+                    telemetry = self.telemetry_adapter.get_evolved_telemetry()
+                    if telemetry:
+                        # Extract key metrics
+                        evo_state = telemetry.get('evolution_state', {})
+                        energy_state = telemetry.get('energy_state', {})
+                        topology = telemetry.get('topology_regions', {})
+                        
+                        # Determine behavior state
+                        exploration = energy_state.get('exploration_drive', 0.5)
+                        if exploration > 0.6:
+                            behavior_state = 'exploring'
+                        elif exploration < 0.4:
+                            behavior_state = 'exploiting'
+                        else:
+                            behavior_state = 'balanced'
+                        
+                        # Log heartbeat
+                        print(f"\n   💓 Heartbeat [{elapsed_minutes:.1f}min] Session {session_id}:")
+                        print(f"      Actions: {actions_executed:,} | Light dist: {np.mean(light_distances[-100:]):.2f}")
+                        print(f"      Brain: {behavior_state} | Confidence: {telemetry.get('prediction_confidence', 0):.1%}")
+                        print(f"      Evolution: {evo_state.get('self_modification_strength', 0.01):.1%} | Cycles: {evo_state.get('evolution_cycles', 0)}")
+                        print(f"      Memory: {topology.get('total', 0)} regions | {topology.get('causal_links', 0)} links")
+                        print(f"      Energy: {telemetry.get('field_energy', 0):.3f} | Saturation: {telemetry.get('memory_saturation', 0):.1%}\n")
+                        
+                        # Track behavior transitions
+                        if behavior_state != last_behavior_state:
+                            print(f"      🔄 Behavior transition: {last_behavior_state} → {behavior_state}")
+                            last_behavior_state = behavior_state
+                        
+                        # Track confidence progression
+                        confidence_progression.append(telemetry.get('prediction_confidence', 0.5))
+                
+                # Track telemetry every 100 actions for fine-grained analysis
+                if self.telemetry_adapter and actions_executed % 100 == 0:
+                    telemetry = self.telemetry_adapter.get_evolved_telemetry()
+                    if telemetry:
+                        confidence_progression.append(telemetry.get('prediction_confidence', 0.5))
+                
                 # Maintain target action rate
                 action_time = time.time() - start_time
                 target_interval = 1.0 / actions_per_second
@@ -332,15 +428,19 @@ class BiologicalEmbodiedLearningExperiment:
         exploration_score = self._calculate_exploration_score(trajectory_points)
         
         # DUAL APPROACH EFFICIENCY: Combine behavioral analysis + brain monitoring
+        efficiency = 0.0
+        learning_detected = False
+        
         try:
-            # Primary: Get brain prediction metrics from monitoring socket
-            brain_metrics = self.monitoring_client.get_prediction_metrics() if self.monitoring_client else None
-            
-            if brain_metrics:
-                # Use actual brain prediction efficiency
-                efficiency = brain_metrics.get('prediction_efficiency', 0.0)
-                self.latest_brain_metrics = brain_metrics
-                print(f"   📊 Brain efficiency: {efficiency:.3f} (learning: {brain_metrics.get('learning_detected', False)})")
+            # Use enhanced telemetry adapter if available
+            if self.telemetry_adapter:
+                learning_metrics = self.telemetry_adapter.get_learning_metrics()
+                efficiency = learning_metrics.get('efficiency', 0.0)
+                learning_detected = learning_metrics.get('learning_detected', False)
+                self.latest_brain_metrics = learning_metrics
+                print(f"   🧬 Brain efficiency: {efficiency:.3f} (learning: {learning_detected})")
+                print(f"      Self-modification: {learning_metrics.get('self_modification_strength', 0.01):.1%}")
+                print(f"      Working memory: {learning_metrics.get('working_memory_patterns', 0)} patterns")
             else:
                 # Fallback: Calculate from observable behavior
                 efficiency = self._calculate_prediction_efficiency(prediction_errors)
@@ -364,6 +464,33 @@ class BiologicalEmbodiedLearningExperiment:
         # Behavioral analysis
         trajectory_complexity = self._calculate_trajectory_complexity(trajectory_points)
         
+        # Get final telemetry state
+        final_confidence_state = {}
+        confidence_patterns = []
+        
+        if self.telemetry_adapter:
+            # Get comprehensive report
+            telemetry_report = self.telemetry_adapter.get_comprehensive_report()
+            
+            # Extract final state
+            final_telemetry = self.telemetry_adapter.get_evolved_telemetry()
+            if final_telemetry:
+                evo_state = final_telemetry.get('evolution_state', {})
+                final_confidence_state = {
+                    'prediction_confidence': final_telemetry.get('prediction_confidence', 0.5),
+                    'self_modification': evo_state.get('self_modification_strength', 0.01),
+                    'evolution_cycles': evo_state.get('evolution_cycles', 0),
+                    'working_memory_patterns': evo_state.get('working_memory', {}).get('n_patterns', 0),
+                    'field_energy': final_telemetry.get('field_energy', 0.0),
+                    'memory_saturation': final_telemetry.get('memory_saturation', 0.0),
+                    'topology_regions': final_telemetry.get('topology_regions', {}).get('total', 0),
+                    'behavior_state': telemetry_report['behavioral_analysis'].get('dominant_behavior', 'unknown')
+                }
+            
+            # Extract behavioral patterns
+            behavioral_analysis = telemetry_report.get('behavioral_analysis', {})
+            confidence_patterns = ['stable' if behavioral_analysis.get('behavior_stability', 0) > 0.7 else 'variable']
+        
         # Create session results
         session_results = SessionResults(
             session_id=session_id,
@@ -382,7 +509,12 @@ class BiologicalEmbodiedLearningExperiment:
             motor_coordination_score=motor_coordination_score,
             
             action_distribution=action_counts,
-            trajectory_complexity=trajectory_complexity
+            trajectory_complexity=trajectory_complexity,
+            
+            # Enhanced telemetry data
+            confidence_progression=confidence_progression,
+            confidence_patterns=confidence_patterns,
+            final_confidence_state=final_confidence_state
         )
         
         # Print session summary
@@ -407,6 +539,20 @@ class BiologicalEmbodiedLearningExperiment:
                 strategy_refinement=0.0,
                 memory_stability=0.0
             )
+        
+        # Get pre-consolidation brain state
+        pre_topology = {}
+        pre_evolution = {}
+        
+        if self.telemetry_adapter:
+            pre_telemetry = self.telemetry_adapter.get_evolved_telemetry()
+            if pre_telemetry:
+                pre_topology = pre_telemetry.get('topology_regions', {})
+                pre_evolution = pre_telemetry.get('evolution_state', {})
+                print(f"   🧠 Pre-consolidation brain state:")
+                print(f"      Topology regions: {pre_topology.get('total', 0)}")
+                print(f"      Causal links: {pre_topology.get('causal_links', 0)}")
+                print(f"      Self-modification: {pre_evolution.get('self_modification_strength', 0.01):.1%}")
         
         # Compare performance before and after consolidation
         pre_session = self.session_results[-2]
@@ -442,16 +588,29 @@ class BiologicalEmbodiedLearningExperiment:
         
         return consolidation_analysis
     
-    def _consolidation_sleep(self, duration_seconds: float):
-        """Sleep during consolidation with keepalive pings."""
+    def _consolidation_sleep(self, duration_seconds: float, pre_topology: Dict = None, pre_evolution: Dict = None):
+        """Sleep during consolidation with keepalive pings and telemetry monitoring."""
         start_time = time.time()
+        last_heartbeat = start_time
+        heartbeat_interval = 60  # 1 minute during consolidation
+        
+        # Use empty dicts if not provided
+        if pre_topology is None:
+            pre_topology = {}
+        if pre_evolution is None:
+            pre_evolution = {}
+        
+        print(f"   💤 Entering consolidation sleep ({duration_seconds/60:.1f} minutes)")
         
         while (time.time() - start_time) < duration_seconds:
             # Sleep for 30 seconds
             time.sleep(30)
             
+            current_time = time.time()
+            elapsed = current_time - start_time
+            
             # Send keepalive pings to both sockets
-            if (time.time() - start_time) < duration_seconds:
+            if elapsed < duration_seconds:
                 try:
                     # Robot socket keepalive (send 24D zero vector matching sensory dimensions)
                     keepalive_sensory = [0.0] * 24  # 24-dimensional zero vector
@@ -465,6 +624,33 @@ class BiologicalEmbodiedLearningExperiment:
                         self.monitoring_client.ping()
                 except Exception:
                     pass  # Ignore monitoring keepalive failures
+                
+                # Consolidation heartbeat every minute
+                if self.telemetry_adapter and (current_time - last_heartbeat) >= heartbeat_interval:
+                    last_heartbeat = current_time
+                    elapsed_minutes = elapsed / 60
+                    
+                    telemetry = self.telemetry_adapter.get_evolved_telemetry()
+                    if telemetry:
+                        evo_state = telemetry.get('evolution_state', {})
+                        topology = telemetry.get('topology_regions', {})
+                        
+                        print(f"   💤 Consolidation [{elapsed_minutes:.1f}min]:")
+                        print(f"      Evolution cycles: {evo_state.get('evolution_cycles', 0)}")
+                        print(f"      Topology regions: {topology.get('total', 0)}")
+                        print(f"      Memory saturation: {telemetry.get('memory_saturation', 0):.1%}")
+        
+        
+        # Get post-consolidation state
+        if self.telemetry_adapter:
+            post_telemetry = self.telemetry_adapter.get_evolved_telemetry()
+            if post_telemetry:
+                post_topology = post_telemetry.get('topology_regions', {})
+                post_evolution = post_telemetry.get('evolution_state', {})
+                print(f"   🧠 Post-consolidation changes:")
+                print(f"      Topology growth: +{post_topology.get('total', 0) - pre_topology.get('total', 0)} regions")
+                print(f"      Causal links: +{post_topology.get('causal_links', 0) - pre_topology.get('causal_links', 0)} links")
+                print(f"      Evolution progress: +{post_evolution.get('evolution_cycles', 0) - pre_evolution.get('evolution_cycles', 0)} cycles")
     
     def _run_transfer_test(self) -> Dict:
         """Test transfer learning to new environment."""

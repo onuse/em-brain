@@ -88,6 +88,61 @@ class BrainMonitoringClient:
         """Get monitoring server status."""
         return self._send_request("server_status")
     
+    def request_data(self, request: str) -> Optional[Dict[str, Any]]:
+        """
+        Send a custom request to the monitoring server.
+        
+        Args:
+            request: Request string (e.g., "telemetry", "telemetry session_123")
+            
+        Returns:
+            Full response dict including status and data, or None if failed
+        """
+        if not self.connected:
+            print("⚠️  Not connected to monitoring server")
+            return None
+        
+        try:
+            # Send request
+            self.socket.send((request + "\n").encode('utf-8'))
+            
+            # Receive JSON response
+            response_data = b""
+            timeout_start = time.time()
+            timeout_seconds = 10.0
+            
+            while True:
+                if time.time() - timeout_start > timeout_seconds:
+                    print(f"⚠️  Monitoring request timeout ({timeout_seconds}s)")
+                    self._cleanup_connection()
+                    return None
+                
+                try:
+                    self.socket.settimeout(1.0)
+                    chunk = self.socket.recv(4096)
+                    
+                    if not chunk:
+                        print("⚠️  Monitoring server disconnected")
+                        self._cleanup_connection()
+                        return None
+                        
+                    response_data += chunk
+                    
+                    # Try to parse JSON
+                    try:
+                        response_str = response_data.decode('utf-8')
+                        response = json.loads(response_str)
+                        return response  # Return full response including status
+                    except (json.JSONDecodeError, UnicodeDecodeError):
+                        continue
+                        
+                except socket.timeout:
+                    continue
+                    
+        except Exception as e:
+            print(f"❌ Monitoring request failed: {e}")
+            self._cleanup_connection()
+            return None
     
     def _send_request(self, request: str) -> Optional[Dict[str, Any]]:
         """
