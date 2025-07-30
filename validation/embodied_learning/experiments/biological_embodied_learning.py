@@ -224,7 +224,7 @@ class BiologicalEmbodiedLearningExperiment:
                     self.consolidation_analyses.append(consolidation_analysis)
                     
                     # Sleep with keepalive pings and telemetry tracking
-                    self._consolidation_sleep(consolidation_duration, pre_topology, pre_evolution)
+                    self._consolidation_sleep(consolidation_duration)
                 
                 session_count += 1
             

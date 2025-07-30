@@ -79,6 +79,11 @@ class BrainMonitoringClient:
         Returns:
             True if server responded, False if disconnected
         """
+        if not self.connected:
+            # Try to reconnect
+            if not self.connect():
+                return False
+        
         response = self._send_request("ping")
         if response is None:
             return False
@@ -99,8 +104,10 @@ class BrainMonitoringClient:
             Full response dict including status and data, or None if failed
         """
         if not self.connected:
-            print("⚠️  Not connected to monitoring server")
-            return None
+            # Try to reconnect once
+            if not self.connect():
+                print("⚠️  Not connected to monitoring server")
+                return None
         
         try:
             # Send request

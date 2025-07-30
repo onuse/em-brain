@@ -147,6 +147,17 @@ class PatternMotorAdapter:
         tendencies['confidence'] = pattern.coherence * self.mapping.coherence_confidence
         tendencies['exploration'] = pattern.novelty * self.mapping.novelty_exploration
         
+        # Uncertainty-driven attention (for camera control)
+        # High variance + low coherence = high uncertainty
+        tendencies['uncertainty'] = pattern.variance * (1.0 - pattern.coherence)
+        
+        # Attention shift based on salience gradient
+        # This could be enhanced with actual spatial gradient computation
+        tendencies['attention_shift'] = pattern.salience * (1.0 - tendencies['confidence'])
+        
+        # Vertical interest (for tilt) - based on flow patterns
+        tendencies['vertical_interest'] = abs(pattern.flow_divergence) * 0.5
+        
         return tendencies
     
     def _compute_boredom(self, pattern: FieldPattern) -> float:
@@ -222,10 +233,26 @@ class PatternMotorAdapter:
                        np.random.normal(0, motor_noise * total_exploration)
         
         if self.motor_dim >= 4:
-            # More complex actuators
-            for i in range(3, self.motor_dim):
-                # Decreasing influence for additional motors
-                influence = 1.0 / (i - 1)
+            # Camera control (motors 3-4 for pan/tilt)
+            # These are driven by uncertainty and attention
+            uncertainty = tendencies.get('uncertainty', 0.5)
+            attention_shift = tendencies.get('attention_shift', 0)
+            
+            # Pan (motor 3) - horizontal scanning driven by uncertainty
+            motors[3] = (attention_shift * 0.8 + 
+                        uncertainty * np.random.normal(0, 0.3) +
+                        np.random.normal(0, motor_noise * total_exploration * 0.5))
+            
+        if self.motor_dim >= 5:
+            # Tilt (motor 4) - vertical scanning, less frequent
+            motors[4] = (tendencies.get('vertical_interest', 0) * 0.5 +
+                        uncertainty * np.random.normal(0, 0.2) +
+                        np.random.normal(0, motor_noise * total_exploration * 0.3))
+            
+        if self.motor_dim > 5:
+            # Additional motors beyond camera
+            for i in range(5, self.motor_dim):
+                influence = 1.0 / (i - 3)
                 motors[i] = (tendencies.get('urgency', 0) * influence +
                             np.random.normal(0, motor_noise * total_exploration))
         

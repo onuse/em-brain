@@ -30,7 +30,7 @@
   },
   
   "overrides": {
-    "force_spatial_resolution": 4,
+    "force_spatial_resolution": null,
     "force_device": null,
     "disable_adaptation": false
   }

@@ -526,3 +526,46 @@ class EvolvedFieldDynamics:
             'smoothed_confidence': self.smoothed_confidence,
             'cycles_without_input': self.cycles_without_input
         }
+    
+    def generate_uncertainty_map(self, field: torch.Tensor) -> torch.Tensor:
+        """
+        Generate spatial uncertainty map for predictive sampling.
+        
+        High uncertainty regions indicate where the field would benefit
+        from focused sensory sampling (e.g., visual glimpses).
+        
+        Returns:
+            3D uncertainty map matching spatial dimensions of field
+        """
+        # Extract content features (excluding dynamics features)
+        content = field[:, :, :, :self.content_features]
+        
+        # Compute local variance as proxy for uncertainty
+        # High variance = transitioning/uncertain regions
+        local_variance = torch.var(content, dim=3, keepdim=False)
+        
+        # Factor in temporal dynamics
+        # Regions with high temporal features are less certain
+        if self.temporal_features > 0:
+            temporal_activity = torch.mean(
+                torch.abs(content[:, :, :, self.spatial_features:]),
+                dim=3
+            )
+            uncertainty = local_variance + 0.5 * temporal_activity
+        else:
+            uncertainty = local_variance
+        
+        # Include global confidence inverse
+        # Low confidence = high uncertainty everywhere
+        confidence_factor = 1.0 - self.smoothed_confidence
+        uncertainty = uncertainty * (1.0 + confidence_factor)
+        
+        # Add exploration bonus to unexplored regions
+        # This encourages sampling of quiet areas occasionally
+        exploration_noise = torch.randn_like(uncertainty) * 0.1
+        uncertainty = uncertainty + torch.relu(exploration_noise)
+        
+        # Normalize to [0, 1] range
+        uncertainty = (uncertainty - uncertainty.min()) / (uncertainty.max() - uncertainty.min() + 1e-6)
+        
+        return uncertainty

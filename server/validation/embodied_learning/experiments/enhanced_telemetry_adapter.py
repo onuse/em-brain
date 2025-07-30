@@ -38,7 +38,21 @@ class EnhancedTelemetryAdapter:
                 response = self.client.request_data("telemetry")
                 
             if response and response.get('status') == 'success':
-                telemetry = response.get('data', {})
+                data = response.get('data', {})
+                
+                # Handle different response formats
+                if isinstance(data, dict):
+                    if session_id and session_id in data:
+                        # Specific session requested
+                        telemetry = data[session_id]
+                    elif not session_id and data:
+                        # All sessions returned, get first one
+                        telemetry = next(iter(data.values()))
+                    else:
+                        telemetry = data
+                else:
+                    telemetry = data
+                
                 self.telemetry_history.append(telemetry)
                 
                 # Extract evolution data if available

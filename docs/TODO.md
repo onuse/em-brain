@@ -70,6 +70,71 @@
 - Learning accelerates over time (meta-learning)
 - Novel behaviors emerge without programming
 
+## 🚀 NEW: Active Vision Through Predictive Sampling
+
+### Vision as Hypothesis Testing, Not Image Processing
+
+**Core Insight**: The field doesn't process images - it tests predictions by directing attention. Rich sensors provide focused glimpses based on uncertainty, creating natural active vision behaviors.
+
+#### Natural Evolution from Existing Systems:
+
+1. **Prediction → Sampling** (Minimal change to PredictiveActionSystem)
+   - Field already predicts outcomes and tracks confidence
+   - Low confidence regions generate "glimpse requests"
+   - Sensory adapter returns focused patches instead of full frames
+   - Same prediction error updates confidence
+
+2. **Motor Integration** (Eye movements as actions)
+   - Camera position/focus becomes part of motor output
+   - Field learns that moving sensors reduces uncertainty
+   - Saccades emerge from prediction-driven exploration
+   - No new systems - just additional motor dimensions
+
+3. **Hierarchical Emergence** (Natural pattern formation)
+   - Simple patterns (edges) stabilize quickly in field
+   - Complex patterns need multiple simple patterns
+   - Abstraction happens through existing topology regions
+   - Visual hierarchy emerges from use, not design
+
+#### Implementation Approach:
+
+**Phase 1: Predictive Sampling (2-3 days)**
+- [ ] Add uncertainty map generation to EvolvedFieldDynamics
+- [ ] Modify sensor adapter to accept glimpse coordinates
+- [ ] Return focused patches (32×32) instead of full frames
+- [ ] Use existing prediction error for confidence updates
+
+**Phase 2: Active Sensing (2-3 days)**
+- [ ] Add sensor position to motor output space
+- [ ] Let PredictiveActionSystem include sensor movements
+- [ ] Learn that moving sensors reveals information
+- [ ] Document emergent saccadic behaviors
+
+**Phase 3: Pattern Hierarchies (3-4 days)**
+- [ ] Monitor how patterns naturally layer in field
+- [ ] Track which regions specialize for simple vs complex
+- [ ] Observe cross-modal binding through topology regions
+- [ ] Validate with different sensor configurations
+
+#### Why This Is Natural Evolution:
+- Uses existing prediction/confidence infrastructure
+- Leverages current motor system for sensor control
+- Builds on established pattern formation dynamics
+- No new subsystems - just connecting what's there
+
+#### Expected Behaviors:
+- Smooth pursuit when tracking predictable objects
+- Rapid saccades to surprising/uncertain areas
+- Fixation on complex patterns needing detail
+- Ignoring stable/predictable regions
+- Unique scanning patterns per individual brain
+
+#### Success Metrics:
+- 100x reduction in sensory bandwidth requirements
+- Natural emergence of biological-like eye movements
+- Improved learning with active vs passive sensing
+- Graceful scaling from simple to complex sensors
+
 ## High Priority Tasks
 
 ### 1. Advanced Learning
@@ -77,6 +142,7 @@
 - [x] Dream states for pattern reorganization
 - [x] Working memory through temporal persistence
 - [x] Self-modifying field dynamics (COMPLETED - now core architecture)
+- [ ] Information-driven field allocation (NEW - see above)
 - [ ] Curiosity-driven exploration metrics
 - [ ] Meta-learning from learning progress
 

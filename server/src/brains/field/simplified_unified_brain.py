@@ -474,6 +474,24 @@ class SimplifiedUnifiedBrain(OptimizedBrainMixin):
         stats = field_stats(self.unified_field)
         topology_stats = self.topology_region_system.get_statistics()
         
+        # Get evolution state from field dynamics
+        evolution_props = self.field_dynamics.get_emergent_properties()
+        working_memory = self.field_dynamics.get_working_memory_state(self.unified_field)
+        
+        # Determine cognitive mode based on energy and confidence
+        energy = self.modulation.get('energy', 0.5)
+        confidence = evolution_props['smoothed_confidence']
+        exploration = self.modulation.get('exploration_drive', 0.5)
+        
+        if energy < 0.3:
+            cognitive_mode = "exploring"
+        elif energy > 0.7 and self.field_dynamics.cycles_without_input > 50:
+            cognitive_mode = "dreaming"
+        elif confidence > 0.6:
+            cognitive_mode = "exploiting"
+        else:
+            cognitive_mode = "balanced"
+        
         return {
             'cycle': self.brain_cycles,
             'cycle_time_ms': self._last_cycle_time * 1000,
@@ -481,10 +499,19 @@ class SimplifiedUnifiedBrain(OptimizedBrainMixin):
             'max_activation': stats['max'],
             'prediction_confidence': self._current_prediction_confidence,
             'memory_saturation': topology_stats['total_regions'] / self.topology_region_system.max_regions,
+            'cognitive_mode': cognitive_mode,
             'energy_state': {
-                'energy': self.modulation.get('energy', 0.5),
+                'energy': energy,
                 'novelty': self.modulation.get('novelty', 0.0),
-                'exploration_drive': self.modulation.get('exploration_drive', 0.5)
+                'exploration_drive': exploration
+            },
+            'evolution_state': {
+                'self_modification_strength': evolution_props['self_modification_strength'],
+                'evolution_cycles': evolution_props['evolution_cycles'],
+                'smoothed_energy': evolution_props['smoothed_energy'],
+                'smoothed_confidence': evolution_props['smoothed_confidence'],
+                'cycles_without_input': evolution_props['cycles_without_input'],
+                'working_memory': working_memory
             },
             'topology_shaping': self.topology_shaper.get_topology_state(),
             'topology_regions': {
@@ -496,7 +523,8 @@ class SimplifiedUnifiedBrain(OptimizedBrainMixin):
             },
             'tensor_shape': self.tensor_shape,
             'device': str(self.device),
-            'sensory_organization': self.sensory_mapping.get_statistics()
+            'sensory_organization': self.sensory_mapping.get_statistics(),
+            'timestamp': time.time()
         }
     
     def _calculate_memory_usage(self) -> float:
