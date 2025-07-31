@@ -99,16 +99,17 @@ Field Updates ← Self-Modification → Motor Output
 
 ```bash
 # Install dependencies
-pip install numpy torch psutil
+pip install numpy torch
+pip install pygame  # Optional: for visual demo
 
-# Run interactive demo
+# Run interactive demo (visual robot simulation)
 python3 demo.py
 
-# Test specific behaviors
-python3 tools/runners/demo_runner.py spatial_learning
-python3 tools/runners/demo_runner.py predictive_behavior
+# Other demo modes
+python3 demo.py --mode terminal  # Terminal-only demo
+python3 demo.py --mode server    # Start brain server
 
-# Start brain server
+# Start brain server directly
 python3 server/brain.py
 ```
 

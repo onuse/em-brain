@@ -1,263 +1,346 @@
 #!/usr/bin/env python3
 """
-Minimal Brain Demo Launcher
+Field-Native Intelligence Demo
 
-A simple picker to run any demo from the project root with clean imports.
-This eliminates all subfolder import issues and provides a clean demo experience.
+An interactive demonstration of the brain's emergent intelligence through
+continuous field dynamics and predictive processing.
+
+This demo showcases:
+- Self-modifying field dynamics
+- Predictive processing in action
+- Emergent behaviors from simple rules
+- Real-time learning and adaptation
+
+Usage:
+    python3 demo.py                    # Run interactive visualization
+    python3 demo.py --mode terminal    # Terminal-only mode
+    python3 demo.py --mode server      # Server mode (for external clients)
 """
 
-import subprocess
 import sys
 import os
 import time
+import subprocess
+import signal
+import argparse
+from pathlib import Path
+
+# Add server to path
+sys.path.append(os.path.join(os.path.dirname(__file__), 'server'))
 
 def check_dependencies():
-    """Check which demos are available based on dependencies."""
-    
-    available_demos = []
-    
-    print("🔍 Checking demo dependencies...")
-    
-    # Core demos (always available)
-    available_demos.extend([
-        'text_demo',
-        'spatial_demo', 
-        'brain_tests'
-    ])
-    
-    # GUI-based demos
-    try:
-        import pygame
-        available_demos.append('grid_debug_demo')
-        available_demos.append('wireframe_demo')
-        print("✅ pygame available - 2D/3D demos ready")
-    except ImportError:
-        print("⚠️  pygame not available - install with: pip install pygame")
-    
-    try:
-        import matplotlib
-        available_demos.append('scientific_demo')
-        print("✅ matplotlib available - Scientific 3D demo ready")
-    except ImportError:
-        print("⚠️  matplotlib not available - install with: pip install matplotlib")
-    
-    return available_demos
-
-def run_demo(demo_name, command, description):
-    """Run a demo with proper error handling."""
-    
-    print(f"\n🚀 Starting {demo_name}")
-    print(f"   {description}")
-    print(f"   Command: {command}")
-    print("-" * 50)
-    
-    try:
-        # Run the demo
-        result = subprocess.run(command, shell=True, check=True)
-        print(f"\n✅ {demo_name} completed successfully!")
-        return True
-        
-    except subprocess.CalledProcessError as e:
-        print(f"\n❌ {demo_name} failed with return code {e.returncode}")
-        return False
-    except KeyboardInterrupt:
-        print(f"\n⏹️  {demo_name} interrupted by user")
-        return False
-    except Exception as e:
-        print(f"\n❌ {demo_name} failed: {e}")
-        return False
-
-def show_demo_menu():
-    """Show the interactive demo selection menu."""
-    
-    demos = {
-        '1': {
-            'name': 'Core Brain Tests',
-            'command': 'python3 tests/test_minimal_brain.py',
-            'description': 'Validate all 4 brain systems with comprehensive tests',
-            'always_available': True
-        },
-        '2': {
-            'name': 'Text ASCII Demo',
-            'command': 'python3 -c "from demos.picar_x.picar_x_text_demo import main; main()"',
-            'description': 'ASCII robot simulation - works everywhere',
-            'always_available': True
-        },
-        '3': {
-            'name': 'Spatial Learning Demo', 
-            'command': 'python3 -c "from demos.spatial_learning_demo import main; main()"',
-            'description': 'Watch spatial navigation emerge from similarity matching',
-            'always_available': True
-        },
-        '4': {
-            'name': '2D Grid Debug Demo',
-            'command': 'python3 -c "from demos.picar_x.picar_x_2d_debug_demo import main; main()"',
-            'description': 'Large grid view for debugging navigation errors',
-            'requires': 'pygame'
-        },
-        '5': {
-            'name': 'Wireframe 3D Demo',
-            'command': 'python3 -c "from demos.picar_x.picar_x_wireframe_demo import main; main()"',
-            'description': 'Battlezone-style first-person robot perspective',
-            'requires': 'pygame'
-        },
-        '6': {
-            'name': 'Scientific 3D Demo',
-            'command': 'python3 -c "from demos.picar_x.picar_x_3d_demo import main; main()"',
-            'description': 'Detailed matplotlib 3D analysis with brain metrics',
-            'requires': 'matplotlib'
-        },
-        '7': {
-            'name': 'Brain Server',
-            'command': 'python3 server/brain_server.py',
-            'description': 'Start TCP server for client-server robot deployment',
-            'always_available': True
-        }
+    """Check and report on available dependencies."""
+    deps = {
+        'pygame': {'available': False, 'purpose': '2D visualization'},
+        'matplotlib': {'available': False, 'purpose': '3D plots'},
+        'numpy': {'available': False, 'purpose': 'core computation'},
+        'torch': {'available': False, 'purpose': 'tensor operations'}
     }
     
-    # Check dependencies
-    available_demos = check_dependencies()
-    has_pygame = any('pygame' in str(x) for x in available_demos if 'demo' in str(x))
-    has_matplotlib = 'scientific_demo' in available_demos
+    # Check each dependency
+    for module, info in deps.items():
+        try:
+            __import__(module)
+            info['available'] = True
+        except ImportError:
+            pass
     
-    while True:
-        print("\n" + "="*60)
-        print("🎮 MINIMAL BRAIN DEMO LAUNCHER")
-        print("="*60)
-        print("Select a demo to run:")
-        print()
-        
-        for key, demo in demos.items():
-            # Check if demo is available
-            if demo.get('always_available', False):
-                status = "✅"
-            elif demo.get('requires') == 'pygame' and has_pygame:
-                status = "✅"
-            elif demo.get('requires') == 'matplotlib' and has_matplotlib:
-                status = "✅"
-            elif demo.get('requires'):
-                status = "❌"
-            else:
-                status = "✅"
-            
-            print(f"   {key}. {status} {demo['name']}")
-            print(f"      {demo['description']}")
-            if demo.get('requires') and status == "❌":
-                print(f"      (Requires: {demo['requires']})")
-            print()
-        
-        print("   q. Quit")
-        print()
-        
-        choice = input("Enter choice (1-7, q): ").strip().lower()
-        
-        if choice == 'q':
-            print("\n👋 Thanks for using the minimal brain!")
-            break
-        
-        if choice in demos:
-            demo = demos[choice]
-            
-            # Check if demo is available
-            available = True
-            if demo.get('requires') == 'pygame' and not has_pygame:
-                available = False
-                print(f"\n❌ {demo['name']} requires pygame")
-                print("   Install with: pip install pygame")
-                continue
-            elif demo.get('requires') == 'matplotlib' and not has_matplotlib:
-                available = False
-                print(f"\n❌ {demo['name']} requires matplotlib")
-                print("   Install with: pip install matplotlib")
-                continue
-            
-            if available:
-                success = run_demo(demo['name'], demo['command'], demo['description'])
-                
-                if success:
-                    print("\n🎉 Demo completed! Returning to menu...")
-                else:
-                    print("\n⚠️  Demo ended. Returning to menu...")
-                
-                input("\nPress Enter to continue...")
-        else:
-            print("❌ Invalid choice. Please try again.")
-
-def quick_test():
-    """Run a quick test of core functionality."""
+    # Report status
+    all_available = all(d['available'] for d in deps.values())
+    required = ['numpy', 'torch']
+    required_available = all(deps[m]['available'] for m in required)
     
-    print("🧪 QUICK BRAIN TEST")
-    print("="*25)
-    
-    try:
-        from server.src.brain_factory import MinimalBrain
-        
-        # Test brain creation
-        brain = MinimalBrain()
-        print("✅ Brain creation successful")
-        
-        # Test brain processing
-        action, state = brain.process_sensory_input([1, 2, 3, 4])
-        print(f"✅ Brain processing successful")
-        print(f"   Action: {action[:2]}...")
-        print(f"   Method: {state['prediction_method']}")
-        
-        # Test experience storage
-        brain.store_experience([1, 2, 3, 4], action, [1.5, 2.5, 3.5, 4.5])
-        print(f"✅ Experience storage successful")
-        print(f"   Total experiences: {brain.total_experiences}")
-        
-        print("\n🎉 All core systems working perfectly!")
-        return True
-        
-    except Exception as e:
-        print(f"\n❌ Core test failed: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
-
-def main():
-    """Main demo launcher."""
-    
-    print("🚀 MINIMAL BRAIN PROJECT")
-    print("Emergent Intelligence from 4 Simple Systems")
-    print()
-    
-    # Quick validation
-    if not os.path.exists("server/src/brain.py"):
-        print("❌ Error: Run this from the brain/ project root directory")
-        print(f"   Current directory: {os.getcwd()}")
+    if not required_available:
+        print("❌ Missing required dependencies:")
+        for module in required:
+            if not deps[module]['available']:
+                print(f"   - {module}: {deps[module]['purpose']}")
+        print("\nInstall with: pip install numpy torch")
         sys.exit(1)
     
-    # Offer quick test or full menu
-    print("Options:")
-    print("   1. Quick brain test (validate core functionality)")
-    print("   2. Interactive demo menu (choose specific demos)")
-    print("   3. Exit")
+    return all_available, deps
+
+def run_terminal_demo():
+    """Run a terminal-based demonstration."""
+    print("\n" + "="*60)
+    print("TERMINAL DEMONSTRATION")
+    print("="*60)
     
-    choice = input("\nSelect option (1-3): ").strip()
+    from src.brains.field.simplified_unified_brain import SimplifiedUnifiedBrain
+    import numpy as np
     
-    if choice == '1':
-        print()
-        success = quick_test()
-        if success:
-            print("\n🎯 Core brain is working! Ready for full demos.")
-            cont = input("Continue to demo menu? (y/n): ").strip().lower()
-            if cont == 'y':
-                show_demo_menu()
-    elif choice == '2':
-        show_demo_menu()
-    elif choice == '3':
-        print("\n👋 Goodbye!")
-    else:
-        print("Invalid choice")
+    print("\n1. Creating brain...")
+    brain = SimplifiedUnifiedBrain(
+        sensory_dim=8,
+        motor_dim=3,
+        spatial_resolution=32,
+        quiet_mode=False
+    )
+    
+    print("\n2. Testing basic responsiveness...")
+    for i in range(5):
+        sensory = [0.5 + 0.2 * np.sin(i * 0.5 + j * 0.1) for j in range(8)]
+        motor, state = brain.process_robot_cycle(sensory)
+        print(f"   Cycle {i+1}: confidence={state.get('confidence', 0):.2f}, "
+              f"motor=[{', '.join(f'{m:.2f}' for m in motor)}]")
+    
+    print("\n3. Testing pattern learning...")
+    pattern = [[1.0 if j == i % 8 else 0.0 for j in range(8)] for i in range(4)]
+    
+    for epoch in range(3):
+        print(f"\n   Epoch {epoch + 1}:")
+        for i, p in enumerate(pattern):
+            motor, state = brain.process_robot_cycle(p)
+            print(f"     Pattern {i+1}: energy={state.get('energy', 0):.2f}")
+    
+    print("\n4. Field statistics:")
+    props = brain.field_dynamics.get_emergent_properties()
+    print(f"   Evolution cycles: {brain.field_dynamics.evolution_count}")
+    print(f"   Self-modification: {brain.field_dynamics.self_modification_strength:.3f}")
+    print(f"   Confidence: {props['smoothed_confidence']:.3f}")
+    print(f"   Active regions: {len(brain.topology_region_system.regions)}")
+    
+    print("\n✅ Terminal demo complete!")
+
+def run_visual_demo():
+    """Run the visual demonstration with pygame."""
+    try:
+        import pygame
+        import numpy as np
+        from src.brains.field.simplified_unified_brain import SimplifiedUnifiedBrain
+        
+        # Initialize pygame
+        pygame.init()
+        width, height = 1200, 800
+        screen = pygame.display.set_mode((width, height))
+        pygame.display.set_caption("Field-Native Intelligence Demo")
+        clock = pygame.time.Clock()
+        font = pygame.font.Font(None, 24)
+        
+        # Create brain
+        brain = SimplifiedUnifiedBrain(
+            sensory_dim=8,
+            motor_dim=2,  # 2D movement
+            spatial_resolution=32,
+            quiet_mode=True
+        )
+        
+        # Virtual robot state
+        robot_x, robot_y = width // 2, height // 2
+        robot_angle = 0
+        trail = []
+        
+        # Light sources (goals)
+        lights = [
+            {'x': width * 0.25, 'y': height * 0.25, 'intensity': 1.0},
+            {'x': width * 0.75, 'y': height * 0.75, 'intensity': 1.0}
+        ]
+        
+        # Main loop
+        running = True
+        cycle = 0
+        
+        while running:
+            # Handle events
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        # Reset robot position
+                        robot_x, robot_y = width // 2, height // 2
+                        trail.clear()
+                    elif event.key == pygame.K_r:
+                        # Add random light
+                        lights.append({
+                            'x': np.random.randint(100, width-100),
+                            'y': np.random.randint(100, height-100),
+                            'intensity': np.random.uniform(0.5, 1.0)
+                        })
+            
+            # Calculate sensory input based on lights
+            sensory = []
+            for i in range(8):
+                angle = robot_angle + (i * 45)  # 8 sensors, 45 degrees apart
+                sensor_x = robot_x + np.cos(np.radians(angle)) * 50
+                sensor_y = robot_y + np.sin(np.radians(angle)) * 50
+                
+                # Calculate light intensity at sensor
+                intensity = 0
+                for light in lights:
+                    dist = np.sqrt((sensor_x - light['x'])**2 + (sensor_y - light['y'])**2)
+                    intensity += light['intensity'] * max(0, 1 - dist / 300)
+                
+                sensory.append(min(1.0, intensity))
+            
+            # Process through brain
+            motor, brain_state = brain.process_robot_cycle(sensory)
+            
+            # Update robot position
+            if len(motor) >= 2:
+                # Motor[0] = forward/backward, Motor[1] = turn
+                speed = motor[0] * 5
+                robot_x += np.cos(np.radians(robot_angle)) * speed
+                robot_y += np.sin(np.radians(robot_angle)) * speed
+                robot_angle += motor[1] * 10
+                
+                # Keep robot on screen
+                robot_x = max(50, min(width - 50, robot_x))
+                robot_y = max(50, min(height - 50, robot_y))
+                
+                # Add to trail
+                trail.append((robot_x, robot_y))
+                if len(trail) > 200:
+                    trail.pop(0)
+            
+            # Clear screen
+            screen.fill((20, 20, 30))
+            
+            # Draw lights
+            for light in lights:
+                intensity = int(light['intensity'] * 255)
+                pygame.draw.circle(screen, (intensity, intensity, 100), 
+                                 (int(light['x']), int(light['y'])), 30)
+                # Light glow
+                for r in range(30, 100, 10):
+                    alpha = int((100 - r) * 2)
+                    pygame.draw.circle(screen, (alpha, alpha, 50), 
+                                     (int(light['x']), int(light['y'])), r, 1)
+            
+            # Draw trail
+            for i in range(1, len(trail)):
+                alpha = int(255 * (i / len(trail)))
+                color = (alpha // 4, alpha // 2, alpha)
+                pygame.draw.line(screen, color, trail[i-1], trail[i], 2)
+            
+            # Draw robot
+            robot_color = (100, 200, 100)  # Default green
+            confidence = brain_state.get('confidence', 0)
+            if confidence > 0.7:
+                robot_color = (100, 100, 200)  # Blue when confident
+            elif confidence < 0.3:
+                robot_color = (200, 100, 100)  # Red when uncertain
+            
+            pygame.draw.circle(screen, robot_color, (int(robot_x), int(robot_y)), 20)
+            
+            # Draw robot direction
+            end_x = robot_x + np.cos(np.radians(robot_angle)) * 30
+            end_y = robot_y + np.sin(np.radians(robot_angle)) * 30
+            pygame.draw.line(screen, (255, 255, 255), 
+                           (robot_x, robot_y), (end_x, end_y), 3)
+            
+            # Draw sensor rays
+            for i in range(8):
+                angle = robot_angle + (i * 45)
+                sensor_x = robot_x + np.cos(np.radians(angle)) * 50
+                sensor_y = robot_y + np.sin(np.radians(angle)) * 50
+                intensity = int(sensory[i] * 255)
+                pygame.draw.line(screen, (intensity, intensity, 0), 
+                               (robot_x, robot_y), (sensor_x, sensor_y), 1)
+            
+            # Draw HUD
+            y_offset = 10
+            texts = [
+                f"Field-Native Intelligence Demo",
+                f"Cycle: {cycle}",
+                f"Confidence: {confidence:.2f}",
+                f"Energy: {brain_state.get('energy', 0):.2f}",
+                f"Information: {brain_state.get('information', 0):.2f}",
+                f"Active Regions: {len(brain.topology_region_system.regions)}",
+                "",
+                "Controls:",
+                "SPACE - Reset position",
+                "R - Add random light",
+                "ESC - Exit"
+            ]
+            
+            for text in texts:
+                if text:  # Skip empty lines
+                    surface = font.render(text, True, (255, 255, 255))
+                    screen.blit(surface, (10, y_offset))
+                y_offset += 25
+            
+            # Update display
+            pygame.display.flip()
+            clock.tick(30)  # 30 FPS
+            cycle += 1
+        
+        pygame.quit()
+        print("\n✅ Visual demo complete!")
+        
+    except ImportError as e:
+        print(f"\n❌ Cannot run visual demo: {e}")
+        print("Install pygame with: pip install pygame")
+        print("\nFalling back to terminal demo...")
+        run_terminal_demo()
+
+def run_server_demo():
+    """Run the brain server for external connections."""
+    print("\n" + "="*60)
+    print("BRAIN SERVER MODE")
+    print("="*60)
+    
+    # Kill any existing servers
+    subprocess.run(['pkill', '-f', 'brain.py'], stderr=subprocess.DEVNULL)
+    time.sleep(1)
+    
+    # Start the brain server
+    print("\nStarting brain server...")
+    server_process = subprocess.Popen(
+        [sys.executable, 'server/brain.py'],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    
+    print("✅ Brain server started on port 9999")
+    print("\nYou can now connect with:")
+    print("  - Python clients using MinimalBrainClient")
+    print("  - The biological embodied learning experiment")
+    print("  - Custom robot simulations")
+    print("\nPress Ctrl+C to stop the server")
+    
+    try:
+        # Wait for interrupt
+        server_process.wait()
+    except KeyboardInterrupt:
+        print("\n\nStopping server...")
+        server_process.terminate()
+        time.sleep(1)
+        if server_process.poll() is None:
+            server_process.kill()
+        print("✅ Server stopped")
+
+def main():
+    """Main entry point for the demo."""
+    parser = argparse.ArgumentParser(description="Field-Native Intelligence Demo")
+    parser.add_argument('--mode', choices=['visual', 'terminal', 'server'], 
+                       default='visual', help='Demo mode to run')
+    args = parser.parse_args()
+    
+    print("\n🧠 FIELD-NATIVE INTELLIGENCE SYSTEM")
+    print("="*60)
+    print("A continuous field-based artificial brain that combines")
+    print("predictive processing with self-modifying dynamics.")
+    print("="*60)
+    
+    # Check dependencies
+    all_deps, deps = check_dependencies()
+    
+    if args.mode == 'visual' and not deps['pygame']['available']:
+        print("\n⚠️  Pygame not available, falling back to terminal mode")
+        args.mode = 'terminal'
+    
+    # Run appropriate demo
+    if args.mode == 'visual':
+        print("\n🎮 Starting visual demo...")
+        run_visual_demo()
+    elif args.mode == 'terminal':
+        print("\n📟 Starting terminal demo...")
+        run_terminal_demo()
+    elif args.mode == 'server':
+        print("\n🌐 Starting server mode...")
+        run_server_demo()
 
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        print("\n\n👋 Demo launcher interrupted. Goodbye!")
-    except Exception as e:
-        print(f"\n❌ Demo launcher failed: {e}")
-        import traceback
-        traceback.print_exc()
+    main()
