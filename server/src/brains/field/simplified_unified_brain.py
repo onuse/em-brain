@@ -349,9 +349,29 @@ class SimplifiedUnifiedBrain:
             # 2. Update prediction tracking
             if self._predicted_sensory is not None and experience.raw_input_stream is not None:
                 # Compare predicted vs actual sensory input
-                actual_sensory = experience.raw_input_stream[:len(self._predicted_sensory)]
-                sensory_error = torch.mean(torch.abs(actual_sensory - self._predicted_sensory)).item()
-                self._last_prediction_error = sensory_error
+                # Check if input includes a reward (more elements than sensory_dim)
+                if experience.raw_input_stream.shape[0] > self.sensory_dim:
+                    # Input has reward as last element, exclude it
+                    actual_sensory = experience.raw_input_stream[:self.sensory_dim]
+                else:
+                    # Input is just sensors, use as-is
+                    actual_sensory = experience.raw_input_stream
+                
+                # Debug logging for size mismatch
+                if actual_sensory.shape[0] != self._predicted_sensory.shape[0]:
+                    if not self.quiet_mode and self.brain_cycles % 10 == 0:
+                        print(f"[DEBUG] Size mismatch: actual_sensory={actual_sensory.shape[0]}, predicted={self._predicted_sensory.shape[0]}")
+                        print(f"[DEBUG] raw_input_stream={experience.raw_input_stream.shape[0]}, sensory_dim={self.sensory_dim}")
+                
+                if actual_sensory.shape[0] == self._predicted_sensory.shape[0]:
+                    sensory_error = torch.mean(torch.abs(actual_sensory - self._predicted_sensory)).item()
+                    self._last_prediction_error = actual_sensory - self._predicted_sensory  # Store full error for Phase 2
+                else:
+                    # Fallback if dimensions still don't match
+                    min_dim = min(actual_sensory.shape[0], self._predicted_sensory.shape[0])
+                    sensory_error = torch.mean(torch.abs(actual_sensory[:min_dim] - self._predicted_sensory[:min_dim])).item()
+                    self._last_prediction_error = actual_sensory[:min_dim] - self._predicted_sensory[:min_dim]
+                
                 self._current_prediction_confidence = 1.0 - min(1.0, sensory_error * 2.0)
                 
                 # Phase 4: Update action-outcome mapping if enabled
@@ -374,12 +394,12 @@ class SimplifiedUnifiedBrain:
                     )
                     
                     # Phase 2: Send prediction errors to field dynamics for learning
-                    prediction_errors = actual_sensory - self._predicted_sensory
-                    self.field_dynamics.process_prediction_errors(
-                        prediction_errors=prediction_errors,
-                        topology_regions=self._last_activated_regions,
-                        current_field=self.unified_field
-                    )
+                    if hasattr(self, '_last_prediction_error') and self._last_prediction_error is not None:
+                        self.field_dynamics.process_prediction_errors(
+                            prediction_errors=self._last_prediction_error,
+                            topology_regions=self._last_activated_regions,
+                            current_field=self.unified_field
+                        )
             elif self._predicted_field is not None:
                 # Fallback to field comparison
                 prediction_error = torch.mean(torch.abs(self.unified_field - self._predicted_field)).item()
@@ -396,20 +416,25 @@ class SimplifiedUnifiedBrain:
             attention_data = self._process_attention(sensory_input)
             
             # 5. Update unified field dynamics
-            reward = sensory_input[-1] if len(sensory_input) > 24 else 0.0
+            reward = sensory_input[-1] if len(sensory_input) > self.sensory_dim else 0.0
             
             # Compute field state (information, novelty, etc.)
             field_state = self.field_dynamics.compute_field_state(self.unified_field)
             novelty = self.field_dynamics.compute_novelty(self.unified_field)
             
             # Update confidence from prediction error
-            self.field_dynamics.update_confidence(self._last_prediction_error)
+            # Convert to scalar if it's a tensor
+            if torch.is_tensor(self._last_prediction_error):
+                error_scalar = torch.mean(torch.abs(self._last_prediction_error)).detach().item()
+            else:
+                error_scalar = self._last_prediction_error
+            self.field_dynamics.update_confidence(error_scalar)
             
             # Debug confidence values
             if self.brain_cycles % 100 == 0 and not self.quiet_mode:
                 print(f"[DEBUG] Confidence: current={self._current_prediction_confidence:.3f}, " +
                       f"smoothed={self.field_dynamics.smoothed_confidence:.3f}, " +
-                      f"error={self._last_prediction_error:.3f}")
+                      f"error={error_scalar:.3f}")
             
             # Get unified modulation parameters
             has_input = len(sensory_input) > 0 and any(abs(v) > 0.01 for v in sensory_input[:-1])
@@ -463,8 +488,13 @@ class SimplifiedUnifiedBrain:
             # Update topology regions with prediction results (will happen next cycle)
             self._last_activated_regions = topology_regions
             
-            # Update recent sensory history for momentum prediction (exclude reward)
-            self.recent_sensory.append(sensory_input[:-1] if len(sensory_input) > 1 else sensory_input)
+            # Update recent sensory history for momentum prediction (exclude reward if present)
+            if len(sensory_input) > self.sensory_dim:
+                # Has reward, exclude it
+                self.recent_sensory.append(sensory_input[:-1])
+            else:
+                # No reward, use as-is
+                self.recent_sensory.append(sensory_input)
             
             # Phase 5: Update active vision learning if glimpse was processed
             if self.use_active_vision and glimpse_data is not None:
@@ -506,6 +536,17 @@ class SimplifiedUnifiedBrain:
         except Exception as e:
             # Wrap unexpected errors
             self.brain_cycles += 1  # Still increment to avoid getting stuck
+            # Enhanced error logging for numpy conversion issues
+            error_msg = str(e)
+            if "can't convert" in error_msg and "numpy" in error_msg:
+                import traceback
+                print(f"\n{'='*60}")
+                print(f"NUMPY CONVERSION ERROR at cycle {self.brain_cycles}")
+                print(f"{'='*60}")
+                print(f"Error: {e}")
+                print("\nFull stack trace:")
+                traceback.print_exc()
+                print(f"{'='*60}\n")
             logger.error(f"Unexpected error in brain cycle {self.brain_cycles}: {e}")
             # Return safe defaults
             safe_motors = [0.0] * (self.motor_cortex.motor_dim - 1)
@@ -517,8 +558,11 @@ class SimplifiedUnifiedBrain:
         # Simple mapping - just convert to tensor
         raw_input = torch.tensor(sensory_input, dtype=torch.float32, device=self.device)
         
-        # Extract reward if present
-        reward = sensory_input[-1] if len(sensory_input) > 24 else 0.0
+        # Extract reward if present (only if input has more elements than sensory_dim)
+        # This allows robots to either:
+        # 1. Send sensory_dim values (no reward)
+        # 2. Send sensory_dim + 1 values (with reward as last element)
+        reward = sensory_input[-1] if len(sensory_input) > self.sensory_dim else 0.0
         field_intensity = 0.5 + reward * 0.5  # Map [-1,1] to [0,1]
         
         return UnifiedFieldExperience(
@@ -556,7 +600,7 @@ class SimplifiedUnifiedBrain:
                 scaled_intensity *= (min_imprint + (1.0 - min_imprint) * surprise_factor)
             
             # Find emergent location for this sensory pattern
-            reward = experience.raw_input_stream[-1].item() if len(experience.raw_input_stream) > 24 else 0.0
+            reward = experience.raw_input_stream[-1].item() if experience.raw_input_stream.shape[0] > self.sensory_dim else 0.0
             x, y, z = self.sensory_mapping.find_imprint_location(
                 sensory_pattern=experience.raw_input_stream,
                 field_state=self.unified_field,

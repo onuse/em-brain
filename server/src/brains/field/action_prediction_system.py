@@ -202,14 +202,24 @@ class ActionPredictionSystem:
             actual_outcome: The sensory outcome that resulted
             predicted_action: The prediction that was made (if any)
         """
-        # Store in history
+        # Store in history - ensure consistent size
         self.action_history.append(action.detach().clone())
-        self.outcome_history.append(actual_outcome.detach().clone())
+        # Pad or truncate outcome to consistent size
+        if actual_outcome.shape[0] < self.sensory_dim:
+            # Pad with zeros if too small
+            padded = torch.zeros(self.sensory_dim, device=self.device)
+            padded[:actual_outcome.shape[0]] = actual_outcome
+            self.outcome_history.append(padded.detach().clone())
+        else:
+            # Truncate if too large
+            self.outcome_history.append(actual_outcome[:self.sensory_dim].detach().clone())
         
         # Update immediate mapping (gradient descent)
         # Ensure dimensions match
         min_dim = min(actual_outcome.shape[0], self.sensory_dim)
-        prediction = torch.matmul(action, self.immediate_action_weights)[:min_dim]
+        # Fix: matmul produces full sensory_dim output, we need to slice before comparing
+        full_prediction = torch.matmul(action, self.immediate_action_weights)
+        prediction = full_prediction[:min_dim]
         error = actual_outcome[:min_dim] - prediction
         
         # Weight update
@@ -232,9 +242,11 @@ class ActionPredictionSystem:
             
             # Update short-term mapping
             short_pred = torch.matmul(avg_action, self.short_term_action_weights)
-            short_error = avg_outcome - short_pred
+            # Ensure dimensions match for comparison
+            min_dim = min(avg_outcome.shape[0], short_pred.shape[0])
+            short_error = avg_outcome[:min_dim] - short_pred[:min_dim]
             short_grad = torch.outer(avg_action, short_error)
-            self.short_term_action_weights += short_grad * self.action_lr * 0.5
+            self.short_term_action_weights[:, :min_dim] += short_grad[:, :min_dim] * self.action_lr * 0.5
         
         if len(self.action_history) >= 100:
             # Long-term: average over last 100 actions/outcomes
@@ -246,9 +258,11 @@ class ActionPredictionSystem:
             
             # Update long-term mapping
             long_pred = torch.matmul(avg_action, self.long_term_action_weights)
-            long_error = avg_outcome - long_pred
+            # Ensure dimensions match for comparison
+            min_dim = min(avg_outcome.shape[0], long_pred.shape[0])
+            long_error = avg_outcome[:min_dim] - long_pred[:min_dim]
             long_grad = torch.outer(avg_action, long_error)
-            self.long_term_action_weights += long_grad * self.action_lr * 0.1
+            self.long_term_action_weights[:, :min_dim] += long_grad[:, :min_dim] * self.action_lr * 0.1
     
     def _predict_action_outcome(self, action: torch.Tensor, action_type: str) -> PredictiveAction:
         """Predict outcomes for a given action at all timescales."""

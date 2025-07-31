@@ -80,9 +80,10 @@ class PredictionErrorLearning:
                 
             # Get this region's prediction errors
             region_errors = []
+            error_size = prediction_errors.shape[0] if len(prediction_errors.shape) > 0 else 1
             for sensor_idx in region.sensor_indices:
-                if sensor_idx < len(prediction_errors):
-                    region_errors.append(prediction_errors[sensor_idx].item())
+                if sensor_idx < error_size:
+                    region_errors.append(prediction_errors[sensor_idx].detach().item())
             
             if not region_errors:
                 continue
@@ -126,7 +127,7 @@ class PredictionErrorLearning:
                     ] -= consolidation_strength  # Negative = consolidation
         
         # Also create a global error signal based on overall prediction quality
-        global_error = torch.mean(torch.abs(prediction_errors)).item()
+        global_error = torch.mean(torch.abs(prediction_errors)).detach().item()
         self.error_history.append(global_error)
         
         # Add weak global signal
@@ -145,9 +146,9 @@ class PredictionErrorLearning:
             Dictionary of learning modulation parameters
         """
         # Compute error statistics
-        mean_error = torch.mean(torch.abs(error_field)).item()
-        max_error = torch.max(torch.abs(error_field)).item()
-        error_variance = torch.var(error_field).item()
+        mean_error = torch.mean(torch.abs(error_field)).detach().item()
+        max_error = torch.max(torch.abs(error_field)).detach().item()
+        error_variance = torch.var(error_field).detach().item()
         
         # High errors should increase self-modification
         # Low errors should decrease it (system is predicting well)

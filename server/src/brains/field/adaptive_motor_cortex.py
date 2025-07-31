@@ -315,9 +315,9 @@ class AdaptiveMotorCortex:
             'acceptance_rate': acceptance_rate,
             'avg_threshold': avg_threshold,
             'avg_adaptation_factor': avg_adaptation,
-            'current_thresholds': self.motor_thresholds.cpu().numpy().tolist(),
+            'current_thresholds': self.motor_thresholds.detach().cpu().numpy().tolist(),
             'noise_floor': self.noise_floor.mean().item(),
-            'habituation': self.habituation_level.cpu().numpy().tolist(),
-            'sensitization': self.sensitization_level.cpu().numpy().tolist(),
+            'habituation': self.habituation_level.detach().cpu().numpy().tolist(),
+            'sensitization': self.sensitization_level.detach().cpu().numpy().tolist(),
             'adaptation_events': self.adaptation_events
         }

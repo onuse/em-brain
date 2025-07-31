@@ -415,14 +415,15 @@ class BrainService(IBrainService):
         """Shutdown the brain service and save all brain states."""
         print("   Shutting down brain service...")
         
-        # Save all brain states
-        for session_id, session in self.sessions.items():
-            if session.brain:
-                print(f"   💾 Saving state for session {session_id}")
-                self.persistence.save_brain_state(session.brain, force=True)
-        
-        # Stop persistence if it has a stop method
-        if hasattr(self.persistence, 'stop'):
-            self.persistence.stop()
+        # Save all brain states if persistence is available
+        if self.integrated_persistence:
+            for session_id, session in self.sessions.items():
+                if session.brain:
+                    print(f"   💾 Saving state for session {session_id}")
+                    self.integrated_persistence.save_brain_state(session.brain, force=True)
+            
+            # Stop persistence if it has a stop method
+            if hasattr(self.integrated_persistence, 'stop'):
+                self.integrated_persistence.stop()
         
         print("   ✅ Brain service shutdown complete")

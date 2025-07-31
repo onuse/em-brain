@@ -692,9 +692,15 @@ class EvolvedFieldDynamics:
         """
         # Initialize prediction error learning if needed
         if self.prediction_error_learning is None:
+            # Handle both tensor and scalar inputs
+            if torch.is_tensor(prediction_errors):
+                error_dim = prediction_errors.shape[0] if len(prediction_errors.shape) > 0 else 1
+            else:
+                error_dim = 1
+            
             self.prediction_error_learning = PredictionErrorLearning(
                 field_shape=self.field_shape,
-                sensory_dim=len(prediction_errors),
+                sensory_dim=error_dim,
                 device=self.device
             )
         

@@ -126,7 +126,7 @@ class TopologyRegion:
         errors = []
         for i, sensor_idx in enumerate(self.sensor_indices):
             if sensor_idx < len(actual_values) and i < len(predicted_values):
-                error = abs(actual_values[sensor_idx] - predicted_values[i]).item()
+                error = abs(actual_values[sensor_idx] - predicted_values[i]).detach().item()
                 errors.append(error)
         
         if errors:
@@ -275,9 +275,9 @@ class TopologyRegionSystem:
         
         # Compute field statistics
         field_abs = torch.abs(field)
-        mean_activation = torch.mean(field_abs).item()
-        std_activation = torch.std(field_abs).item()
-        max_activation = torch.max(field_abs).item()
+        mean_activation = torch.mean(field_abs).detach().item()
+        std_activation = torch.std(field_abs).detach().item()
+        max_activation = torch.max(field_abs).detach().item()
         
         # Threshold for salience - use a more sensitive threshold
         # Start detecting regions when activation is above mean
@@ -300,7 +300,7 @@ class TopologyRegionSystem:
                 z = idx % field_mean.shape[2]
                 y = (idx // field_mean.shape[2]) % field_mean.shape[1]
                 x = idx // (field_mean.shape[1] * field_mean.shape[2])
-                max_indices.append([x.item(), y.item(), z.item()])
+                max_indices.append([x.detach().item(), y.detach().item(), z.detach().item()])
             max_indices = torch.tensor(max_indices, device=field.device)
         else:
             # Use points above threshold
@@ -323,14 +323,14 @@ class TopologyRegionSystem:
             
             # Find dominant feature dimension
             feature_activations = field[x, y, z, :]
-            feature_center = torch.argmax(torch.abs(feature_activations)).item()
+            feature_center = torch.argmax(torch.abs(feature_activations)).detach().item()
             
             # Extract pattern around center
             pattern = self._extract_pattern(field, (x, y, z), feature_center)
             
             # Compute region statistics
-            strength = torch.max(torch.abs(local_region)).item()
-            stability = 1.0 / (torch.std(local_region).item() + 1e-6)
+            strength = torch.max(torch.abs(local_region)).detach().item()
+            stability = 1.0 / (torch.std(local_region).detach().item() + 1e-6)
             coherence = self._compute_coherence(local_region)
             
             salient_regions.append({
@@ -387,7 +387,7 @@ class TopologyRegionSystem:
         ) / 3.0
         
         # Coherence is inverse of gradient
-        coherence = 1.0 / (1.0 + grad_mag.item())
+        coherence = 1.0 / (1.0 + grad_mag.detach().item())
         
         return coherence
     
@@ -412,7 +412,7 @@ class TopologyRegionSystem:
                     similarity = F.cosine_similarity(
                         pattern.flatten().unsqueeze(0),
                         region.activation_pattern.flatten().unsqueeze(0)
-                    ).item()
+                    ).detach().item()
                     
                     if similarity > self.similarity_threshold and similarity > best_similarity:
                         best_match = region_id

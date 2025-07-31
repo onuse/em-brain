@@ -257,7 +257,7 @@ class PredictiveFieldSystem:
             feature_idx = sensor_idx % self.temporal_features
             
             # Prediction is based on temporal feature activation
-            prediction_val = temporal_mean[feature_idx].item()
+            prediction_val = temporal_mean[feature_idx].detach().item()
             
             # Confidence based on feature strength
             confidence = min(1.0, abs(prediction_val) * 2.0)
@@ -290,7 +290,7 @@ class PredictiveFieldSystem:
         abs_errors = torch.abs(errors)
         
         # Track error history
-        self.error_history.append(abs_errors.mean().item())
+        self.error_history.append(abs_errors.mean().detach().item())
         
         # Phase 3: Process hierarchical errors if enabled
         if self.use_hierarchical and hasattr(self, '_last_hierarchical_prediction'):
@@ -320,9 +320,9 @@ class PredictiveFieldSystem:
         
         # Compute error statistics
         error_stats = {
-            'mean_error': abs_errors.mean().item(),
-            'max_error': abs_errors.max().item(),
-            'per_sensor_error': abs_errors.cpu().numpy(),
+            'mean_error': abs_errors.mean().detach().item(),
+            'max_error': abs_errors.max().detach().item(),
+            'per_sensor_error': abs_errors.detach().cpu().numpy(),
             'improving': self._is_prediction_improving(),
             'specialized_sensors': sum(1 for r in topology_regions if getattr(r, 'is_sensory_predictive', False))
         }
@@ -353,7 +353,7 @@ class PredictiveFieldSystem:
             
             # Compute average error for this region's sensors
             region_errors = errors[current_sensors]
-            avg_error = region_errors.mean().item()
+            avg_error = region_errors.mean().detach().item()
             
             # If prediction is good, strengthen association
             # If bad, weaken and potentially remove

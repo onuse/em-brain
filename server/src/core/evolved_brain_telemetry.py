@@ -69,6 +69,13 @@ class EvolvedBrainTelemetry:
     tensor_shape: List[int]
     memory_usage_mb: float
     
+    # Prediction system phases (NEW)
+    sensory_predictions: Optional[Dict[str, Any]] = None
+    prediction_errors: Optional[Dict[str, Any]] = None
+    hierarchical_predictions: Optional[Dict[str, Any]] = None
+    action_selection: Optional[Dict[str, Any]] = None
+    active_sensing: Optional[Dict[str, Any]] = None
+    
     # Timestamp
     timestamp: float = field(default_factory=time.time)
 
@@ -175,6 +182,13 @@ class EvolvedBrainTelemetryAdapter:
         # Calculate memory usage
         memory_mb = self.brain._calculate_memory_usage()
         
+        # Extract 5-phase prediction metrics
+        sensory_predictions = self._extract_sensory_predictions()
+        prediction_errors = self._extract_prediction_errors()
+        hierarchical_predictions = self._extract_hierarchical_predictions()
+        action_selection = self._extract_action_selection()
+        active_sensing = self._extract_active_sensing()
+        
         # Create telemetry snapshot
         telemetry = EvolvedBrainTelemetry(
             # Core metrics
@@ -224,6 +238,13 @@ class EvolvedBrainTelemetryAdapter:
             motor_acceptance_rate=motor_stats.get('acceptance_rate', 0.0),
             motor_variability=0.0,  # Not currently tracked
             
+            # Prediction system phases
+            sensory_predictions=sensory_predictions,
+            prediction_errors=prediction_errors,
+            hierarchical_predictions=hierarchical_predictions,
+            action_selection=action_selection,
+            active_sensing=active_sensing,
+            
             # Device info
             device=brain_state['device'],
             tensor_shape=brain_state['tensor_shape'],
@@ -239,6 +260,188 @@ class EvolvedBrainTelemetryAdapter:
             self.last_evolution_check = self.brain.brain_cycles
         
         return telemetry
+    
+    def _extract_sensory_predictions(self) -> Dict[str, Any]:
+        """Extract Phase 1 sensory prediction metrics."""
+        try:
+            if hasattr(self.brain, 'predictive_field_system'):
+                pfs = self.brain.predictive_field_system
+                stats = pfs.get_statistics() if hasattr(pfs, 'get_statistics') else {}
+                
+                # Get per-sensor confidence
+                confidence_per_sensor = []
+                if hasattr(pfs, 'sensor_confidence'):
+                    confidence_per_sensor = pfs.sensor_confidence.tolist()
+                elif 'sensor_confidence' in stats:
+                    confidence_per_sensor = stats['sensor_confidence']
+                
+                # Count specialized regions
+                specialized_regions = 0
+                if hasattr(self.brain.topology_region_system, 'regions'):
+                    for region in self.brain.topology_region_system.regions:
+                        if hasattr(region, 'is_sensory_predictive') and region.is_sensory_predictive:
+                            specialized_regions += 1
+                
+                return {
+                    'accuracy': stats.get('prediction_accuracy', 0.0),
+                    'confidence_per_sensor': confidence_per_sensor,
+                    'specialized_regions': specialized_regions,
+                    'momentum_predictions': stats.get('momentum_predictions', False)
+                }
+            
+            # Fallback if predictive system not available
+            return {
+                'accuracy': self.brain._create_brain_state().get('prediction_confidence', 0.0),
+                'confidence_per_sensor': [],
+                'specialized_regions': 0,
+                'momentum_predictions': False
+            }
+        except Exception:
+            return {}
+    
+    def _extract_prediction_errors(self) -> Dict[str, Any]:
+        """Extract Phase 2 prediction error learning metrics."""
+        try:
+            evo_state = self.brain.get_evolution_state()
+            
+            # Get current prediction error
+            if hasattr(self.brain, '_last_prediction_error'):
+                error_magnitude = float(torch.mean(torch.abs(self.brain._last_prediction_error)))
+            else:
+                error_magnitude = 0.0
+            
+            # Get self-modification strength
+            mod_strength = evo_state.get('self_modification_strength', 0.01)
+            
+            # High error regions
+            high_error_count = 0
+            if hasattr(self.brain, '_error_field') and self.brain._error_field is not None:
+                threshold = torch.mean(self.brain._error_field) + torch.std(self.brain._error_field)
+                high_error_count = int(torch.sum(self.brain._error_field > threshold))
+            
+            return {
+                'magnitude': error_magnitude,
+                'modification_strength': mod_strength,
+                'high_error_count': high_error_count
+            }
+        except Exception:
+            return {}
+    
+    def _extract_hierarchical_predictions(self) -> Dict[str, Any]:
+        """Extract Phase 3 hierarchical timescale metrics."""
+        try:
+            if hasattr(self.brain, 'hierarchical_prediction_system'):
+                hps = self.brain.hierarchical_prediction_system
+                stats = hps.get_statistics() if hasattr(hps, 'get_statistics') else {}
+                
+                return {
+                    'immediate_accuracy': stats.get('immediate_accuracy', 0.0),
+                    'short_term_accuracy': stats.get('short_term_accuracy', 0.0),
+                    'long_term_accuracy': stats.get('long_term_accuracy', 0.0),
+                    'abstract_pattern_count': stats.get('abstract_patterns', 0)
+                }
+            
+            # Estimate from field structure if system not available
+            field = self.brain.unified_field
+            return {
+                'immediate_accuracy': 0.0,
+                'short_term_accuracy': 0.0,
+                'long_term_accuracy': 0.0,
+                'abstract_pattern_count': len(self.brain.topology_region_system.regions) if hasattr(self.brain.topology_region_system, 'regions') else 0
+            }
+        except Exception:
+            return {}
+    
+    def _extract_action_selection(self) -> Dict[str, Any]:
+        """Extract Phase 4 action prediction metrics."""
+        try:
+            if hasattr(self.brain, 'action_prediction_system'):
+                aps = self.brain.action_prediction_system
+                stats = aps.get_statistics() if hasattr(aps, 'get_statistics') else {}
+                
+                # Get strategy counts
+                history = getattr(aps, 'strategy_history', [])
+                total = len(history)
+                exploit = sum(1 for s in history if s == 'exploit')
+                explore = sum(1 for s in history if s == 'explore')
+                test = sum(1 for s in history if s == 'test')
+                
+                # Get current strategy
+                current_strategy = 'unknown'
+                if hasattr(aps, '_last_strategy'):
+                    current_strategy = aps._last_strategy
+                elif total > 0:
+                    current_strategy = history[-1]
+                
+                return {
+                    'current_strategy': current_strategy,
+                    'total_actions': total,
+                    'exploit_count': exploit,
+                    'explore_count': explore,
+                    'test_count': test,
+                    'preview_accuracy': stats.get('preview_accuracy', 0.0)
+                }
+            
+            # Estimate from exploration drive
+            modulation = self.brain.modulation
+            exploration = modulation.get('exploration_drive', 0.5)
+            
+            if exploration > 0.6:
+                strategy = 'explore'
+            elif exploration < 0.4:
+                strategy = 'exploit'
+            else:
+                strategy = 'test'
+            
+            return {
+                'current_strategy': strategy,
+                'total_actions': self.brain.brain_cycles,
+                'exploit_count': 0,
+                'explore_count': 0,
+                'test_count': 0,
+                'preview_accuracy': 0.0
+            }
+        except Exception:
+            return {}
+    
+    def _extract_active_sensing(self) -> Dict[str, Any]:
+        """Extract Phase 5 active sensing metrics."""
+        try:
+            if hasattr(self.brain, 'active_vision') and self.brain.active_vision is not None:
+                avs = self.brain.active_vision
+                stats = avs.get_attention_statistics() if hasattr(avs, 'get_attention_statistics') else {}
+                
+                # Get uncertainty
+                if hasattr(avs, '_last_uncertainty_map'):
+                    uncertainty = avs._last_uncertainty_map.total_uncertainty
+                else:
+                    uncertainty = stats.get('uncertainty_level', 0.0)
+                
+                # Get pattern
+                pattern = stats.get('current_pattern', 'unknown')
+                
+                # Get information gain
+                info_gain = 0.0
+                if hasattr(avs, 'information_gain_history') and len(avs.information_gain_history) > 0:
+                    info_gain = np.mean(avs.information_gain_history[-10:])
+                
+                return {
+                    'total_uncertainty': uncertainty,
+                    'current_pattern': pattern,
+                    'saccade_count': stats.get('saccade_count', 0),
+                    'smooth_pursuit_time': stats.get('smooth_pursuit_ratio', 0.0),
+                    'information_gain': info_gain
+                }
+            
+            return {
+                'total_uncertainty': 0.0,
+                'current_pattern': 'inactive',
+                'saccade_count': 0,
+                'smooth_pursuit_time': 0.0,
+                'information_gain': 0.0
+            }
+        except Exception:
+            return {}
     
     def _capture_evolution_snapshot(self):
         """Capture detailed evolution snapshot for long-term tracking."""

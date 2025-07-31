@@ -411,12 +411,29 @@ class BiologicalEmbodiedLearningExperiment:
                         
                         # Track confidence progression
                         confidence_progression.append(telemetry.get('prediction_confidence', 0.5))
+                        
+                        # Track prediction system phases
+                        if 'phase1_sensory_prediction' in telemetry:
+                            phase1 = telemetry['phase1_sensory_prediction']
+                            print(f"      🎯 Sensory prediction: {phase1['avg_prediction_accuracy']:.1%} | {phase1['specialized_regions']} regions")
+                        
+                        if 'phase2_error_learning' in telemetry:
+                            phase2 = telemetry['phase2_error_learning']
+                            if phase2['error_magnitude'] > 0.1:
+                                print(f"      📈 Error learning: magnitude {phase2['error_magnitude']:.3f} → modification {phase2['self_modification_response']:.1%}")
+                        
+                        if 'phase4_action_strategies' in telemetry:
+                            phase4 = telemetry['phase4_action_strategies']
+                            print(f"      🎲 Action strategy: {phase4['strategy']} (exploit: {phase4['exploit_ratio']:.1%}, explore: {phase4['explore_ratio']:.1%})")
                 
                 # Track telemetry every 100 actions for fine-grained analysis
                 if self.telemetry_adapter and actions_executed % 100 == 0:
                     telemetry = self.telemetry_adapter.get_evolved_telemetry()
                     if telemetry:
                         confidence_progression.append(telemetry.get('prediction_confidence', 0.5))
+                        
+                        # Update phase metrics
+                        self._update_phase_metrics(telemetry)
                 
                 # Maintain target action rate
                 action_time = time.time() - start_time
@@ -689,6 +706,65 @@ class BiologicalEmbodiedLearningExperiment:
             'transfer_session_data': transfer_results.to_dict()
         }
     
+    def _update_phase_metrics(self, telemetry: Dict):
+        """Update tracking of 5-phase prediction system metrics."""
+        # Phase 1: Track sensory prediction improvement
+        if 'phase1_sensory_prediction' in telemetry:
+            phase1 = telemetry['phase1_sensory_prediction']
+            if 'phase1_history' not in self.__dict__:
+                self.phase1_history = []
+            self.phase1_history.append({
+                'accuracy': phase1['avg_prediction_accuracy'],
+                'regions': phase1['specialized_regions'],
+                'predictable_sensors': phase1.get('predictable_sensors', [])
+            })
+        
+        # Phase 2: Track error-driven learning
+        if 'phase2_error_learning' in telemetry:
+            phase2 = telemetry['phase2_error_learning']
+            if 'phase2_history' not in self.__dict__:
+                self.phase2_history = []
+            self.phase2_history.append({
+                'error': phase2['error_magnitude'],
+                'modification': phase2['self_modification_response'],
+                'ratio': phase2['error_to_modification_ratio']
+            })
+        
+        # Phase 3: Track hierarchical predictions
+        if 'phase3_hierarchical' in telemetry:
+            phase3 = telemetry['phase3_hierarchical']
+            if 'phase3_history' not in self.__dict__:
+                self.phase3_history = []
+            self.phase3_history.append({
+                'immediate': phase3['immediate_accuracy'],
+                'short_term': phase3['short_term_accuracy'],
+                'long_term': phase3['long_term_accuracy'],
+                'coherence': phase3['timescale_coherence']
+            })
+        
+        # Phase 4: Track action strategies
+        if 'phase4_action_strategies' in telemetry:
+            phase4 = telemetry['phase4_action_strategies']
+            if 'phase4_history' not in self.__dict__:
+                self.phase4_history = []
+            self.phase4_history.append({
+                'strategy': phase4['strategy'],
+                'exploit': phase4['exploit_ratio'],
+                'explore': phase4['explore_ratio'],
+                'test': phase4['test_ratio']
+            })
+        
+        # Phase 5: Track active sensing
+        if 'phase5_active_sensing' in telemetry:
+            phase5 = telemetry['phase5_active_sensing']
+            if 'phase5_history' not in self.__dict__:
+                self.phase5_history = []
+            self.phase5_history.append({
+                'uncertainty': phase5['uncertainty_level'],
+                'pattern': phase5['attention_pattern'],
+                'info_gain': phase5['information_gain']
+            })
+    
     def _generate_scientific_analysis(self) -> Dict:
         """Generate comprehensive scientific analysis."""
         
@@ -697,7 +773,8 @@ class BiologicalEmbodiedLearningExperiment:
             'consolidation_effects': self._analyze_consolidation_effects(),
             'behavioral_emergence': self._analyze_behavioral_emergence(),
             'biological_realism': self._analyze_biological_realism(),
-            'efficiency_trends': self._analyze_efficiency_trends()
+            'efficiency_trends': self._analyze_efficiency_trends(),
+            'prediction_phases': self._analyze_prediction_phases()
         }
         
         return analysis
@@ -808,6 +885,132 @@ class BiologicalEmbodiedLearningExperiment:
             'session_performances': performances,
             'biological_realism_score': final_score
         }
+    
+    def _analyze_prediction_phases(self) -> Dict:
+        """Analyze the 5-phase prediction system performance."""
+        phase_analysis = {}
+        
+        # Phase 1: Sensory Prediction Analysis
+        if hasattr(self, 'phase1_history') and len(self.phase1_history) > 0:
+            phase1_data = self.phase1_history
+            initial_accuracy = np.mean([d['accuracy'] for d in phase1_data[:5]]) if len(phase1_data) >= 5 else 0
+            final_accuracy = np.mean([d['accuracy'] for d in phase1_data[-5:]]) if len(phase1_data) >= 5 else phase1_data[-1]['accuracy']
+            
+            phase_analysis['phase1_sensory_prediction'] = {
+                'initial_accuracy': initial_accuracy,
+                'final_accuracy': final_accuracy,
+                'improvement': final_accuracy - initial_accuracy,
+                'specialized_regions': phase1_data[-1]['regions'] if phase1_data else 0,
+                'predictable_sensors': len(phase1_data[-1].get('predictable_sensors', [])) if phase1_data else 0
+            }
+        
+        # Phase 2: Error-Driven Learning Analysis
+        if hasattr(self, 'phase2_history') and len(self.phase2_history) > 0:
+            phase2_data = self.phase2_history
+            avg_ratio = np.mean([d['ratio'] for d in phase2_data])
+            error_trend = [d['error'] for d in phase2_data]
+            
+            phase_analysis['phase2_error_learning'] = {
+                'avg_error_response_ratio': avg_ratio,
+                'error_reduction': self._calculate_trend_improvement(error_trend),
+                'adaptive_learning': avg_ratio > 0.5,  # Good if modification scales with error
+                'final_error_magnitude': phase2_data[-1]['error'] if phase2_data else 0
+            }
+        
+        # Phase 3: Hierarchical Timescales Analysis
+        if hasattr(self, 'phase3_history') and len(self.phase3_history) > 0:
+            phase3_data = self.phase3_history
+            final_data = phase3_data[-1]
+            
+            phase_analysis['phase3_hierarchical'] = {
+                'immediate_accuracy': final_data['immediate'],
+                'short_term_accuracy': final_data['short_term'],
+                'long_term_accuracy': final_data['long_term'],
+                'timescale_coherence': final_data['coherence'],
+                'hierarchy_formed': final_data['short_term'] > final_data['immediate'] * 0.8
+            }
+        
+        # Phase 4: Action Strategies Analysis
+        if hasattr(self, 'phase4_history') and len(self.phase4_history) > 0:
+            phase4_data = self.phase4_history
+            strategies = [d['strategy'] for d in phase4_data]
+            
+            # Calculate strategy distribution
+            total = len(strategies)
+            exploit_count = sum(1 for s in strategies if s == 'exploit')
+            explore_count = sum(1 for s in strategies if s == 'explore')
+            test_count = sum(1 for s in strategies if s == 'test')
+            
+            phase_analysis['phase4_action_prediction'] = {
+                'strategy_distribution': {
+                    'exploit': exploit_count / total if total > 0 else 0,
+                    'explore': explore_count / total if total > 0 else 0,
+                    'test': test_count / total if total > 0 else 0
+                },
+                'balanced_exploration': 0.1 < (explore_count + test_count) / total < 0.5 if total > 0 else False,
+                'dominant_strategy': max(set(strategies), key=strategies.count) if strategies else 'none'
+            }
+        
+        # Phase 5: Active Sensing Analysis
+        if hasattr(self, 'phase5_history') and len(self.phase5_history) > 0:
+            phase5_data = self.phase5_history
+            patterns = [d['pattern'] for d in phase5_data]
+            info_gains = [d['info_gain'] for d in phase5_data]
+            
+            phase_analysis['phase5_active_sensing'] = {
+                'avg_information_gain': np.mean(info_gains) if info_gains else 0,
+                'attention_patterns': list(set(patterns)),
+                'saccade_ratio': patterns.count('saccade') / len(patterns) if patterns else 0,
+                'smooth_pursuit_ratio': patterns.count('smooth_pursuit') / len(patterns) if patterns else 0,
+                'active_sensing_engaged': np.mean(info_gains) > 0.1 if info_gains else False
+            }
+        
+        # Overall prediction system health
+        phase_analysis['overall'] = {
+            'phases_active': len(phase_analysis) - 1,  # Exclude 'overall' itself
+            'prediction_system_healthy': self._assess_prediction_health(phase_analysis)
+        }
+        
+        return phase_analysis
+    
+    def _calculate_trend_improvement(self, values: List[float]) -> float:
+        """Calculate improvement trend in a series of values."""
+        if len(values) < 10:
+            return 0.0
+        
+        early = np.mean(values[:5])
+        recent = np.mean(values[-5:])
+        
+        if early > 0:
+            return (early - recent) / early  # Positive = improvement for errors
+        return 0.0
+    
+    def _assess_prediction_health(self, phase_analysis: Dict) -> bool:
+        """Assess overall health of the prediction system."""
+        health_checks = []
+        
+        # Phase 1: Good if accuracy > 20%
+        if 'phase1_sensory_prediction' in phase_analysis:
+            health_checks.append(phase_analysis['phase1_sensory_prediction']['final_accuracy'] > 0.2)
+        
+        # Phase 2: Good if error response is adaptive
+        if 'phase2_error_learning' in phase_analysis:
+            health_checks.append(phase_analysis['phase2_error_learning']['adaptive_learning'])
+        
+        # Phase 3: Good if hierarchy formed
+        if 'phase3_hierarchical' in phase_analysis:
+            health_checks.append(phase_analysis['phase3_hierarchical']['hierarchy_formed'])
+        
+        # Phase 4: Good if exploration is balanced
+        if 'phase4_action_prediction' in phase_analysis:
+            health_checks.append(phase_analysis['phase4_action_prediction']['balanced_exploration'])
+        
+        # Phase 5: Good if active sensing engaged
+        if 'phase5_active_sensing' in phase_analysis:
+            health_checks.append(phase_analysis['phase5_active_sensing']['active_sensing_engaged'])
+        
+        # Healthy if at least 3 out of 5 phases are working well
+        return sum(health_checks) >= 3
     
     def _analyze_efficiency_trends(self) -> Dict:
         """Analyze efficiency trends over time."""
@@ -1190,6 +1393,9 @@ class BiologicalEmbodiedLearningExperiment:
         # Create behavioral emergence plot
         self._plot_behavioral_emergence(results)
         
+        # Create prediction phases plot
+        self._plot_prediction_phases(results)
+        
         print(f"📈 Visualizations saved to {self.results_dir}")
     
     def _plot_learning_progression(self, results: Dict):
@@ -1284,6 +1490,142 @@ class BiologicalEmbodiedLearningExperiment:
         plt.savefig(self.results_dir / 'behavioral_emergence.png', dpi=300, bbox_inches='tight')
         plt.close()
     
+    def _plot_prediction_phases(self, results: Dict):
+        """Plot prediction system phase metrics over time."""
+        if 'prediction_phases' not in results['analysis']:
+            return
+        
+        fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+        axes = axes.flatten()
+        
+        # Phase 1: Sensory Prediction Accuracy
+        if hasattr(self, 'phase1_history') and len(self.phase1_history) > 0:
+            accuracies = [d['accuracy'] for d in self.phase1_history]
+            regions = [d['regions'] for d in self.phase1_history]
+            
+            ax = axes[0]
+            ax.plot(accuracies, 'b-', label='Prediction Accuracy')
+            ax2 = ax.twinx()
+            ax2.plot(regions, 'r--', label='Specialized Regions')
+            ax.set_xlabel('Samples')
+            ax.set_ylabel('Accuracy', color='b')
+            ax2.set_ylabel('Regions', color='r')
+            ax.set_title('Phase 1: Sensory Prediction')
+            ax.grid(True, alpha=0.3)
+        
+        # Phase 2: Error-Driven Learning
+        if hasattr(self, 'phase2_history') and len(self.phase2_history) > 0:
+            errors = [d['error'] for d in self.phase2_history]
+            modifications = [d['modification'] for d in self.phase2_history]
+            
+            ax = axes[1]
+            ax.plot(errors, 'r-', label='Prediction Error')
+            ax2 = ax.twinx()
+            ax2.plot(modifications, 'g--', label='Self-Modification')
+            ax.set_xlabel('Samples')
+            ax.set_ylabel('Error', color='r')
+            ax2.set_ylabel('Modification', color='g')
+            ax.set_title('Phase 2: Error-Driven Learning')
+            ax.grid(True, alpha=0.3)
+        
+        # Phase 3: Hierarchical Timescales
+        if hasattr(self, 'phase3_history') and len(self.phase3_history) > 0:
+            immediate = [d['immediate'] for d in self.phase3_history]
+            short_term = [d['short_term'] for d in self.phase3_history]
+            long_term = [d['long_term'] for d in self.phase3_history]
+            
+            ax = axes[2]
+            ax.plot(immediate, 'b-', label='Immediate', alpha=0.7)
+            ax.plot(short_term, 'g-', label='Short-term', alpha=0.7)
+            ax.plot(long_term, 'r-', label='Long-term', alpha=0.7)
+            ax.set_xlabel('Samples')
+            ax.set_ylabel('Accuracy')
+            ax.set_title('Phase 3: Hierarchical Predictions')
+            ax.legend()
+            ax.grid(True, alpha=0.3)
+        
+        # Phase 4: Action Strategy Distribution
+        if hasattr(self, 'phase4_history') and len(self.phase4_history) > 0:
+            # Create stacked area chart for strategies
+            exploit = [d['exploit'] for d in self.phase4_history]
+            explore = [d['explore'] for d in self.phase4_history]
+            test = [d['test'] for d in self.phase4_history]
+            
+            ax = axes[3]
+            x = range(len(exploit))
+            ax.stackplot(x, exploit, explore, test, 
+                        labels=['Exploit', 'Explore', 'Test'],
+                        colors=['green', 'orange', 'blue'],
+                        alpha=0.7)
+            ax.set_xlabel('Samples')
+            ax.set_ylabel('Strategy Proportion')
+            ax.set_title('Phase 4: Action Strategies')
+            ax.legend(loc='upper right')
+            ax.grid(True, alpha=0.3)
+        
+        # Phase 5: Active Sensing
+        if hasattr(self, 'phase5_history') and len(self.phase5_history) > 0:
+            uncertainty = [d['uncertainty'] for d in self.phase5_history]
+            info_gain = [d['info_gain'] for d in self.phase5_history]
+            
+            ax = axes[4]
+            ax.plot(uncertainty, 'r-', label='Uncertainty')
+            ax2 = ax.twinx()
+            ax2.plot(info_gain, 'b--', label='Info Gain')
+            ax.set_xlabel('Samples')
+            ax.set_ylabel('Uncertainty', color='r')
+            ax2.set_ylabel('Information Gain', color='b')
+            ax.set_title('Phase 5: Active Sensing')
+            ax.grid(True, alpha=0.3)
+        
+        # Overall System Health
+        ax = axes[5]
+        phases = results['analysis']['prediction_phases']
+        if 'overall' in phases:
+            # Create a radar chart for phase health
+            categories = ['Phase 1', 'Phase 2', 'Phase 3', 'Phase 4', 'Phase 5']
+            values = []
+            
+            # Score each phase
+            if 'phase1_sensory_prediction' in phases:
+                values.append(min(1.0, phases['phase1_sensory_prediction']['final_accuracy'] * 2))
+            else:
+                values.append(0)
+                
+            if 'phase2_error_learning' in phases:
+                values.append(1.0 if phases['phase2_error_learning']['adaptive_learning'] else 0.3)
+            else:
+                values.append(0)
+                
+            if 'phase3_hierarchical' in phases:
+                values.append(1.0 if phases['phase3_hierarchical']['hierarchy_formed'] else 0.3)
+            else:
+                values.append(0)
+                
+            if 'phase4_action_prediction' in phases:
+                values.append(1.0 if phases['phase4_action_prediction']['balanced_exploration'] else 0.3)
+            else:
+                values.append(0)
+                
+            if 'phase5_active_sensing' in phases:
+                values.append(1.0 if phases['phase5_active_sensing']['active_sensing_engaged'] else 0.3)
+            else:
+                values.append(0)
+            
+            # Create bar chart
+            ax.bar(categories, values, color=['blue', 'green', 'orange', 'red', 'purple'], alpha=0.7)
+            ax.set_ylabel('Health Score')
+            ax.set_title('Prediction System Health')
+            ax.set_ylim(0, 1.1)
+            ax.grid(True, alpha=0.3, axis='y')
+            
+            # Add health threshold line
+            ax.axhline(y=0.6, color='black', linestyle='--', alpha=0.5, label='Health Threshold')
+        
+        plt.tight_layout()
+        plt.savefig(self.results_dir / 'prediction_phases.png', dpi=300, bbox_inches='tight')
+        plt.close()
+    
     def _calculate_session_performance_from_dict(self, session_dict: Dict) -> float:
         """Calculate session performance from dictionary."""
         return (session_dict['exploration_score'] * 0.3 + 
@@ -1340,6 +1682,41 @@ def main():
         print(f"   Learning detected: {learning_progression['total_improvement'] > 0.1}")
     else:
         print(f"   Learning detected: Insufficient data for analysis")
+    
+    # Print prediction phase analysis
+    if 'prediction_phases' in results['analysis']:
+        phases = results['analysis']['prediction_phases']
+        print(f"\n🧠 Prediction System Analysis:")
+        
+        if 'phase1_sensory_prediction' in phases:
+            p1 = phases['phase1_sensory_prediction']
+            print(f"   Phase 1 - Sensory Prediction: {p1['final_accuracy']:.1%} accuracy ({p1['improvement']:+.1%} improvement)")
+            print(f"      Specialized regions: {p1['specialized_regions']}, Predictable sensors: {p1['predictable_sensors']}")
+        
+        if 'phase2_error_learning' in phases:
+            p2 = phases['phase2_error_learning']
+            print(f"   Phase 2 - Error Learning: {'✓ Adaptive' if p2['adaptive_learning'] else '✗ Weak'} (ratio: {p2['avg_error_response_ratio']:.2f})")
+            print(f"      Error reduction: {p2['error_reduction']:.1%}")
+        
+        if 'phase3_hierarchical' in phases:
+            p3 = phases['phase3_hierarchical']
+            print(f"   Phase 3 - Hierarchical: {'✓ Formed' if p3['hierarchy_formed'] else '✗ Not formed'}")
+            print(f"      Immediate: {p3['immediate_accuracy']:.1%}, Short: {p3['short_term_accuracy']:.1%}, Long: {p3['long_term_accuracy']:.1%}")
+        
+        if 'phase4_action_prediction' in phases:
+            p4 = phases['phase4_action_prediction']
+            dist = p4['strategy_distribution']
+            print(f"   Phase 4 - Action Strategies: {'✓ Balanced' if p4['balanced_exploration'] else '✗ Unbalanced'}")
+            print(f"      Exploit: {dist['exploit']:.1%}, Explore: {dist['explore']:.1%}, Test: {dist['test']:.1%}")
+        
+        if 'phase5_active_sensing' in phases:
+            p5 = phases['phase5_active_sensing']
+            print(f"   Phase 5 - Active Sensing: {'✓ Engaged' if p5['active_sensing_engaged'] else '✗ Not engaged'}")
+            print(f"      Information gain: {p5['avg_information_gain']:.3f}, Patterns: {', '.join(p5['attention_patterns'])}")
+        
+        if 'overall' in phases:
+            overall = phases['overall']
+            print(f"\n   Overall: {overall['phases_active']}/5 phases active, System {'✓ Healthy' if overall['prediction_system_healthy'] else '✗ Needs attention'}")
 
 
 if __name__ == "__main__":

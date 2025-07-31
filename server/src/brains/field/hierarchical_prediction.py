@@ -157,7 +157,7 @@ class HierarchicalPredictionSystem:
         # 1. Immediate prediction error
         min_dim = min(actual_sensory.shape[0], predicted.immediate.shape[0])
         immediate_error = actual_sensory[:min_dim] - predicted.immediate[:min_dim]
-        self.immediate_errors.append(torch.mean(torch.abs(immediate_error)).item())
+        self.immediate_errors.append(torch.mean(torch.abs(immediate_error)).detach().item())
         
         # Update immediate weights using gradient descent
         immediate_encoding = torch.mean(current_field[:, :, :, self.immediate_features], dim=(0, 1, 2))

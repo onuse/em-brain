@@ -134,14 +134,14 @@ class EmergentSensoryMapping:
             similarity = F.cosine_similarity(
                 pattern.unsqueeze(0),
                 mem_pattern.unsqueeze(0)
-            ).item()
+            ).detach().item()
             
             if similarity > 0.9 and similarity > best_similarity:  # Very high threshold
                 # Verify location is still responsive
                 x, y, z = mem_location
                 local_energy = torch.mean(torch.abs(
                     field_state[x-1:x+2, y-1:y+2, z-1:z+2, :]
-                )).item()
+                )).detach().item()
                 
                 if local_energy < 2.0:  # Not saturated
                     best_match = mem_location
@@ -184,7 +184,7 @@ class EmergentSensoryMapping:
         ).squeeze()
         
         # Find maximum resonance location
-        max_resonance = torch.max(resonance_smooth).item()
+        max_resonance = torch.max(resonance_smooth).detach().item()
         
         if max_resonance > self.resonance_threshold:
             # Find location of maximum
@@ -193,7 +193,7 @@ class EmergentSensoryMapping:
             y = (max_idx // self.field_shape[2]) % self.field_shape[1]
             x = max_idx // (self.field_shape[1] * self.field_shape[2])
             
-            return (x.item(), y.item(), z.item())
+            return (x.detach().item(), y.detach().item(), z.detach().item())
         
         return None
     
@@ -240,7 +240,7 @@ class EmergentSensoryMapping:
         y = (max_idx // self.field_shape[2]) % self.field_shape[1]
         x = max_idx // (self.field_shape[1] * self.field_shape[2])
         
-        return (x.item(), y.item(), z.item())
+        return (x.detach().item(), y.detach().item(), z.detach().item())
     
     def _find_nearby_empty(self, 
                           location: Tuple[int, int, int],
@@ -297,7 +297,7 @@ class EmergentSensoryMapping:
                         nz = min(max(fz + dz, 0), self.field_shape[2] - 1)
                         
                         weight = self.spatial_decay ** (abs(dx) + abs(dy) + abs(dz))
-                        field_proj[nx, ny, nz] += value.item() * weight
+                        field_proj[nx, ny, nz] += value.detach().item() * weight
         
         return field_proj
     
@@ -315,7 +315,7 @@ class EmergentSensoryMapping:
                 correlation = F.cosine_similarity(
                     pattern.unsqueeze(0),
                     other_pattern.unsqueeze(0)
-                ).item()
+                ).detach().item()
                 
                 # Update correlation matrix
                 if pattern_hash not in self.correlation_matrix:
@@ -336,7 +336,7 @@ class EmergentSensoryMapping:
         """Create hash for pattern identification."""
         # Simple hash based on quantized values
         quantized = torch.round(pattern * 10) / 10
-        return hash(tuple(quantized.cpu().numpy()))
+        return hash(tuple(quantized.detach().cpu().numpy()))
     
     def reorganize_mappings(self, field_state: torch.Tensor):
         """Periodically reorganize mappings for better organization."""
@@ -363,5 +363,5 @@ class EmergentSensoryMapping:
             'mapping_events': self.mapping_events,
             'reorganization_count': self.reorganization_count,
             'clustering_coefficient': clustering,
-            'occupancy_ratio': torch.mean(self.occupancy_map).item()
+            'occupancy_ratio': torch.mean(self.occupancy_map).detach().item()
         }

@@ -171,7 +171,7 @@ class RewardTopologyShaper:
         similarity = F.cosine_similarity(
             current_field.flatten().unsqueeze(0),
             attractor_pattern.flatten().unsqueeze(0)
-        ).item()
+        ).detach().item()
         
         # Attractors pull stronger when close, repulsors push stronger when close
         if valence > 0:

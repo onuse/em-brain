@@ -89,7 +89,7 @@ class MotorCortex:
         self.total_intentions += 1
         
         # Check if intentions are strong enough
-        intention_strength = torch.max(torch.abs(intentions)).item()
+        intention_strength = torch.max(torch.abs(intentions)).detach().item()
         
         # Note: The brain already provides confidence boosted by developmental confidence,
         # so we use it directly without additional boosting
