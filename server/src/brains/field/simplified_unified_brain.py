@@ -31,6 +31,7 @@ from .reward_topology_shaping import RewardTopologyShaper
 from .consolidation_system import ConsolidationSystem
 from .topology_region_system import TopologyRegionSystem
 from .predictive_field_system import PredictiveFieldSystem
+from .action_prediction_system import ActionPredictionSystem
 from ...utils.tensor_ops import create_randn, field_information, field_stats, apply_diffusion
 from ...utils.error_handling import (
     validate_list_input, validate_tensor_shape, ErrorContext,
@@ -124,6 +125,8 @@ class SimplifiedUnifiedBrain:
         self._last_imprint_strength = 0.0
         self._last_activated_regions = []
         self.modulation = {}  # Will be filled by unified field dynamics
+        self._last_action = None
+        self._last_predicted_action = None
         
         # Memory systems
         self.working_memory = deque(maxlen=brain_config.working_memory_limit)
@@ -229,6 +232,41 @@ class SimplifiedUnifiedBrain:
             device=self.device
         )
         
+        # Action-prediction integration system (Phase 4)
+        self.action_prediction = ActionPredictionSystem(
+            motor_dim=motor_dim - 1,  # Exclude confidence dimension
+            sensory_dim=self.sensory_dim,
+            device=self.device
+        )
+        self.use_action_prediction = False  # Will be enabled when ready
+        
+    def enable_hierarchical_prediction(self, enable: bool = True):
+        """
+        Enable Phase 3: Hierarchical prediction at multiple timescales.
+        
+        When enabled, the brain predicts at immediate, short-term, long-term,
+        and abstract timescales simultaneously.
+        """
+        self.predictive_field.enable_hierarchical_prediction(enable)
+        if not self.quiet_mode:
+            status = "enabled" if enable else "disabled"
+            print(f"🧠 Hierarchical prediction {status}")
+    
+    def enable_action_prediction(self, enable: bool = True):
+        """
+        Enable Phase 4: Action as prediction testing.
+        
+        When enabled, actions are selected based on predicted outcomes
+        at multiple timescales. Every action tests a hypothesis.
+        """
+        self.use_action_prediction = enable
+        # Action prediction requires hierarchical prediction
+        if enable and not self.predictive_field.use_hierarchical:
+            self.enable_hierarchical_prediction(True)
+        if not self.quiet_mode:
+            status = "enabled" if enable else "disabled"
+            print(f"🧠 Action-prediction integration {status}")
+        
     @torch.no_grad()  # Disable gradient computation for performance
     def process_robot_cycle(self, sensory_input: List[float]) -> Tuple[List[float], Dict[str, Any]]:
         """
@@ -254,12 +292,23 @@ class SimplifiedUnifiedBrain:
                 self._last_prediction_error = sensory_error
                 self._current_prediction_confidence = 1.0 - min(1.0, sensory_error * 2.0)
                 
+                # Phase 4: Update action-outcome mapping if enabled
+                if self.use_action_prediction and self._last_action is not None:
+                    # Ensure sensory dimension matches
+                    sensory_for_action = actual_sensory[:self.action_prediction.sensory_dim]
+                    self.action_prediction.update_action_outcome_mapping(
+                        action=self._last_action,
+                        actual_outcome=sensory_for_action,
+                        predicted_action=self._last_predicted_action
+                    )
+                
                 # Process prediction error to improve region-sensor associations
                 if hasattr(self, '_last_activated_regions') and self._last_activated_regions:
                     error_stats = self.predictive_field.process_prediction_error(
                         predicted=self._predicted_sensory,
                         actual=actual_sensory,
-                        topology_regions=self._last_activated_regions
+                        topology_regions=self._last_activated_regions,
+                        current_field=self.unified_field
                     )
                     
                     # Phase 2: Send prediction errors to field dynamics for learning
@@ -347,12 +396,13 @@ class SimplifiedUnifiedBrain:
             # Store predictions for next cycle
             self._predicted_sensory = prediction.values
             self._prediction_confidence_per_sensor = prediction.confidence
+            self._temporal_basis = prediction.temporal_basis
             
             # Update topology regions with prediction results (will happen next cycle)
             self._last_activated_regions = topology_regions
             
-            # Update recent sensory history for momentum prediction
-            self.recent_sensory.append(sensory_input)
+            # Update recent sensory history for momentum prediction (exclude reward)
+            self.recent_sensory.append(sensory_input[:-1] if len(sensory_input) > 1 else sensory_input)
             
             # 8. Detect and update topology regions
             # Only run every 5 cycles for performance
@@ -480,7 +530,12 @@ class SimplifiedUnifiedBrain:
         topology_influence = self.topology_shaper.apply_topology_influence(self.unified_field)
         self.unified_field += topology_influence
         
-        # 4. Log state
+        # 4. Apply hierarchical prediction updates if available
+        hierarchical_update = self.predictive_field.get_pending_hierarchical_update()
+        if hierarchical_update is not None:
+            self.unified_field += hierarchical_update
+        
+        # 5. Log state
         if self.brain_cycles % 100 == 0 and not self.quiet_mode:
             state_desc = self.field_dynamics.get_state_description()
             print(state_desc)
@@ -502,68 +557,97 @@ class SimplifiedUnifiedBrain:
     
     @safe_tensor_op
     def _generate_motor_action(self) -> List[float]:
-        """Generate motor action - simplified with unified pattern system."""
-        # Generate motor action using unified pattern system
-        exploration_params = {
-            'exploration_drive': self.modulation.get('exploration_drive', 0.5),
-            'motor_noise': self.modulation.get('motor_noise', 0.2)
-        }
-        
-        # Get attention state from current attention processing
-        attention_state = getattr(self, '_last_attention_state', None)
-        
-        # Spontaneous activity is now integrated into field evolution
-        # Just pass the current field state
-        motor_commands = self.pattern_motor.generate_motor_action(
-            field=self.unified_field,
-            spontaneous_activity=None,  # No longer needed separately
-            attention_state=attention_state,
-            exploration_params=exploration_params
-        )
-        
-        # Predictive action selection (still uses pattern features)
-        # Extract patterns for predictive system
-        patterns = self.pattern_system.extract_patterns(self.unified_field, n_patterns=5)
-        pattern_features = {}
-        if patterns:
-            # Convert top pattern to features dict
-            top_pattern = patterns[0]
-            pattern_features = top_pattern.to_dict()
-        
-        candidates = self.predictive_actions.generate_action_candidates(
-            current_field=self.unified_field,
-            current_patterns=pattern_features,
-            n_candidates=3  # Fewer candidates for speed
-        )
-        
-        # Preview outcomes
-        for candidate in candidates:
-            self.predictive_actions.preview_action_outcome(
-                current_field=self.unified_field,
-                action=candidate,
-                evolution_steps=3  # Fewer steps for speed
-            )
-        
-        # Select best action
+        """Generate motor action - with Phase 4 action-prediction integration."""
         exploration_drive = self.modulation.get('exploration_drive', 0.5)
-        selected_action = self.predictive_actions.select_action(
-            candidates=candidates,
-            exploration_drive=exploration_drive
-        )
         
-        # Blend pattern-based and predictive actions
-        # Handle potential dimension mismatch
-        if len(motor_commands) != len(selected_action.motor_pattern):
-            # Just use motor commands if dimensions don't match
-            final_commands = motor_commands
+        if self.use_action_prediction:
+            # Phase 4: Actions as prediction testing
+            # Get current hierarchical predictions
+            if hasattr(self.predictive_field, 'hierarchical_system') and hasattr(self.predictive_field, '_last_hierarchical_prediction'):
+                hierarchical_pred = self.predictive_field._last_hierarchical_prediction
+                current_predictions = {
+                    'immediate': hierarchical_pred.immediate,
+                    'short_term': hierarchical_pred.short_term,
+                    'long_term': hierarchical_pred.long_term
+                }
+            else:
+                current_predictions = {}
+            
+            # Generate action candidates based on predictions
+            candidates = self.action_prediction.generate_action_candidates(
+                current_predictions=current_predictions,
+                n_candidates=5
+            )
+            
+            # Select best action based on predictions and exploration
+            motor_tensor, selected_action = self.action_prediction.select_action(
+                candidates=candidates,
+                hierarchical_predictions=self.predictive_field._last_hierarchical_prediction if hasattr(self.predictive_field, '_last_hierarchical_prediction') else None,
+                exploration_drive=exploration_drive
+            )
+            
+            # Store for next cycle's learning
+            self._last_action = motor_tensor
+            self._last_predicted_action = selected_action
+            
+            # Convert to list and return
+            return motor_tensor.tolist()
+        
         else:
-            # Use pattern-based as baseline, modulate with predictive
-            final_commands = motor_commands * 0.7 + selected_action.motor_pattern * 0.3
-        
-        # Ensure commands are in valid range
-        final_commands = torch.clamp(final_commands, -1.0, 1.0)
-        
-        return final_commands.tolist()
+            # Original pattern-based motor generation
+            exploration_params = {
+                'exploration_drive': exploration_drive,
+                'motor_noise': self.modulation.get('motor_noise', 0.2)
+            }
+            
+            # Get attention state from current attention processing
+            attention_state = getattr(self, '_last_attention_state', None)
+            
+            # Generate motor action using unified pattern system
+            motor_commands = self.pattern_motor.generate_motor_action(
+                field=self.unified_field,
+                spontaneous_activity=None,
+                attention_state=attention_state,
+                exploration_params=exploration_params
+            )
+            
+            # Predictive action selection (still uses pattern features)
+            patterns = self.pattern_system.extract_patterns(self.unified_field, n_patterns=5)
+            pattern_features = {}
+            if patterns:
+                top_pattern = patterns[0]
+                pattern_features = top_pattern.to_dict()
+            
+            candidates = self.predictive_actions.generate_action_candidates(
+                current_field=self.unified_field,
+                current_patterns=pattern_features,
+                n_candidates=3
+            )
+            
+            # Preview outcomes
+            for candidate in candidates:
+                self.predictive_actions.preview_action_outcome(
+                    current_field=self.unified_field,
+                    action=candidate,
+                    evolution_steps=3
+                )
+            
+            # Select best action
+            selected_action = self.predictive_actions.select_action(
+                candidates=candidates,
+                exploration_drive=exploration_drive
+            )
+            
+            # Blend pattern-based and predictive actions
+            if len(motor_commands) != len(selected_action.motor_pattern):
+                final_commands = motor_commands
+            else:
+                final_commands = motor_commands * 0.7 + selected_action.motor_pattern * 0.3
+            
+            # Ensure commands are in valid range
+            final_commands = torch.clamp(final_commands, -1.0, 1.0)
+            
+            return final_commands.tolist()
     
     def _create_brain_state(self) -> Dict[str, Any]:
         """Create brain state for telemetry."""
@@ -620,8 +704,15 @@ class SimplifiedUnifiedBrain:
             'tensor_shape': self.tensor_shape,
             'device': str(self.device),
             'sensory_organization': self.sensory_mapping.get_statistics(),
+            'temporal_basis': getattr(self, '_temporal_basis', 'immediate'),
             'timestamp': time.time()
         }
+        
+        # Add action prediction statistics if enabled
+        if self.use_action_prediction:
+            brain_state['action_prediction'] = self.action_prediction.get_action_statistics()
+        
+        return brain_state
     
     def _calculate_memory_usage(self) -> float:
         """Calculate memory usage in MB."""

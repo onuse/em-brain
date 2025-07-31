@@ -20,6 +20,7 @@ from dataclasses import dataclass
 from collections import deque
 
 from ...utils.tensor_ops import create_zeros, safe_normalize
+from .hierarchical_prediction import HierarchicalPredictionSystem, HierarchicalPrediction
 
 
 @dataclass
@@ -77,6 +78,18 @@ class PredictiveFieldSystem:
         self.short_term_window = 10  # Next 10 cycles
         self.long_term_window = 100  # Next 100 cycles
         
+        # Hierarchical prediction system (Phase 3)
+        self.hierarchical_system = HierarchicalPredictionSystem(
+            field_shape=field_shape,
+            sensory_dim=sensory_dim,
+            device=device
+        )
+        self.use_hierarchical = False  # Will be enabled when ready
+        
+    def enable_hierarchical_prediction(self, enable: bool = True):
+        """Enable or disable hierarchical prediction (Phase 3)."""
+        self.use_hierarchical = enable
+        
     def generate_sensory_prediction(self, 
                                    field: torch.Tensor,
                                    topology_regions: List[any],
@@ -98,6 +111,35 @@ class PredictiveFieldSystem:
         predictions = create_zeros((self.sensory_dim,), device=self.device)
         confidences = create_zeros((self.sensory_dim,), device=self.device)
         source_regions = []
+        temporal_basis = "immediate"  # Default
+        
+        # Phase 3: Use hierarchical predictions if enabled
+        if self.use_hierarchical:
+            hierarchical_pred = self.hierarchical_system.extract_hierarchical_predictions(field)
+            self._last_hierarchical_prediction = hierarchical_pred  # Store for error processing
+            
+            # Combine predictions from all timescales
+            hierarchical_combined = self.hierarchical_system.combine_hierarchical_predictions(hierarchical_pred)
+            # Handle dimension mismatch
+            min_dim = min(predictions.shape[0], hierarchical_combined.shape[0])
+            predictions[:min_dim] += hierarchical_combined[:min_dim] * 0.4  # Weight hierarchical contribution
+            
+            # Use best confidence from any timescale
+            best_confidence = max(
+                hierarchical_pred.immediate_confidence,
+                hierarchical_pred.short_term_confidence,
+                hierarchical_pred.long_term_confidence,
+                hierarchical_pred.abstract_confidence
+            )
+            confidences += best_confidence * 0.3
+            
+            # Determine primary temporal basis
+            if hierarchical_pred.abstract_confidence > 0.7:
+                temporal_basis = "abstract"
+            elif hierarchical_pred.long_term_confidence > 0.6:
+                temporal_basis = "long_term"
+            elif hierarchical_pred.short_term_confidence > 0.5:
+                temporal_basis = "short_term"
         
         # 1. Extract temporal predictive features
         temporal_field = field[:, :, :, self.spatial_features:self.spatial_features + self.temporal_features]
@@ -105,7 +147,7 @@ class PredictiveFieldSystem:
         # 2. Get momentum-based predictions from recent history
         if recent_sensory and len(recent_sensory) >= 2:
             # Simple momentum: continue recent trends
-            recent_vals = torch.stack([torch.tensor(s, device=self.device) for s in list(recent_sensory)[-3:]])
+            recent_vals = torch.stack([torch.tensor(s, dtype=torch.float32, device=self.device) for s in list(recent_sensory)[-3:]])
             momentum = self._compute_momentum_prediction(recent_vals)
             predictions += momentum * 0.3  # Weight momentum contribution
             confidences += 0.2  # Base confidence from momentum
@@ -157,7 +199,7 @@ class PredictiveFieldSystem:
             values=predictions,
             confidence=confidences,
             source_regions=source_regions,
-            temporal_basis="immediate"  # TODO: Add multi-timescale
+            temporal_basis=temporal_basis
         )
     
     def _compute_momentum_prediction(self, recent_vals: torch.Tensor) -> torch.Tensor:
@@ -227,7 +269,8 @@ class PredictiveFieldSystem:
     def process_prediction_error(self,
                                 predicted: torch.Tensor,
                                 actual: torch.Tensor,
-                                topology_regions: List[any]) -> Dict[str, any]:
+                                topology_regions: List[any],
+                                current_field: Optional[torch.Tensor] = None) -> Dict[str, any]:
         """
         Process prediction error and update region-sensor associations.
         
@@ -248,6 +291,19 @@ class PredictiveFieldSystem:
         
         # Track error history
         self.error_history.append(abs_errors.mean().item())
+        
+        # Phase 3: Process hierarchical errors if enabled
+        if self.use_hierarchical and hasattr(self, '_last_hierarchical_prediction'):
+            # Create field update from hierarchical error processing
+            hierarchical_update = self.hierarchical_system.process_hierarchical_errors(
+                predicted=self._last_hierarchical_prediction,
+                actual_sensory=actual,
+                current_field=current_field if current_field is not None else actual
+            )
+            # Store update to be applied in the next field evolution
+            self._pending_hierarchical_update = hierarchical_update
+        else:
+            self._pending_hierarchical_update = None
         
         # Update region prediction confidence based on their performance
         for region in topology_regions:
@@ -369,3 +425,10 @@ class PredictiveFieldSystem:
         """Compute fraction of sensors with dedicated predictors."""
         sensors_with_predictors = len(self.sensor_region_affinity)
         return sensors_with_predictors / self.sensory_dim if self.sensory_dim > 0 else 0.0
+    
+    def get_pending_hierarchical_update(self) -> Optional[torch.Tensor]:
+        """Get pending hierarchical field update if available."""
+        update = getattr(self, '_pending_hierarchical_update', None)
+        # Clear it after retrieval
+        self._pending_hierarchical_update = None
+        return update
