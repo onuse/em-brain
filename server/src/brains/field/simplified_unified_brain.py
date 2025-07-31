@@ -26,12 +26,14 @@ from .adaptive_motor_cortex import AdaptiveMotorCortex
 from .field_constants import TOPOLOGY_REGIONS_MAX
 from .evolved_field_dynamics import EvolvedFieldDynamics
 from .emergent_sensory_mapping import EmergentSensoryMapping
-from .predictive_action_system import PredictiveActionSystem
 from .reward_topology_shaping import RewardTopologyShaper
 from .consolidation_system import ConsolidationSystem
 from .topology_region_system import TopologyRegionSystem
 from .predictive_field_system import PredictiveFieldSystem
 from .action_prediction_system import ActionPredictionSystem
+from .active_vision_system import ActiveVisionSystem
+from .active_audio_system import ActiveAudioSystem
+from .active_tactile_system import ActiveTactileSystem
 from ...utils.tensor_ops import create_randn, field_information, field_stats, apply_diffusion
 from ...utils.error_handling import (
     validate_list_input, validate_tensor_shape, ErrorContext,
@@ -154,12 +156,6 @@ class SimplifiedUnifiedBrain:
         # Initialize the dynamics features in the field
         self.field_dynamics.initialize_field_dynamics(self.unified_field)
         
-        # Predictive action system
-        self.predictive_actions = PredictiveActionSystem(
-            field_shape=self.unified_field.shape,
-            motor_dim=motor_dim,
-            device=self.device
-        )
         
         # Reward topology shaping
         self.topology_shaper = RewardTopologyShaper(
@@ -240,6 +236,20 @@ class SimplifiedUnifiedBrain:
         )
         self.use_action_prediction = False  # Will be enabled when ready
         
+        # Active sensing systems (Phase 5)
+        # Vision is the primary implementation
+        self.active_vision = ActiveVisionSystem(
+            field_shape=self.tensor_shape,
+            motor_dim=motor_dim - 1,  # Exclude confidence dimension
+            device=self.device
+        )
+        self.use_active_vision = False  # Will be enabled when ready
+        self._glimpse_adapter = None  # Set by enable_active_vision
+        
+        # Stubs for future modalities
+        self.active_audio = None  # Created when needed
+        self.active_tactile = None  # Created when needed
+        
     def enable_hierarchical_prediction(self, enable: bool = True):
         """
         Enable Phase 3: Hierarchical prediction at multiple timescales.
@@ -266,11 +276,40 @@ class SimplifiedUnifiedBrain:
         if not self.quiet_mode:
             status = "enabled" if enable else "disabled"
             print(f"🧠 Action-prediction integration {status}")
+    
+    def enable_active_vision(self, enable: bool = True, glimpse_adapter=None):
+        """
+        Enable Phase 5: Active vision through predictive sampling.
+        
+        When enabled, the brain directs attention to uncertain areas,
+        creating natural eye movements like saccades and smooth pursuit.
+        
+        Args:
+            enable: Whether to enable active vision
+            glimpse_adapter: Optional GlimpseSensoryAdapter instance
+        """
+        self.use_active_vision = enable
+        self._glimpse_adapter = glimpse_adapter
+        
+        # Active vision requires both hierarchical and action prediction
+        if enable:
+            if not self.predictive_field.use_hierarchical:
+                self.enable_hierarchical_prediction(True)
+            if not self.use_action_prediction:
+                self.enable_action_prediction(True)
+        
+        if not self.quiet_mode:
+            status = "enabled" if enable else "disabled"
+            print(f"🧠 Active vision {status}")
         
     @torch.no_grad()  # Disable gradient computation for performance
-    def process_robot_cycle(self, sensory_input: List[float]) -> Tuple[List[float], Dict[str, Any]]:
+    def process_robot_cycle(self, sensory_input: List[float], glimpse_data: Optional[Dict[str, torch.Tensor]] = None) -> Tuple[List[float], Dict[str, Any]]:
         """
         Main processing cycle - simplified version.
+        
+        Args:
+            sensory_input: Regular sensor values
+            glimpse_data: Optional high-resolution glimpse data from active vision
         """
         cycle_start = time.perf_counter()
         
@@ -283,6 +322,29 @@ class SimplifiedUnifiedBrain:
             # 1. Create field experience from sensors
             with ErrorContext("creating field experience"):
                 experience = self._create_field_experience(sensory_input)
+            
+            # Track uncertainty before any glimpse processing
+            uncertainty_before = self._compute_current_uncertainty() if self.use_active_vision else 0.5
+            
+            # Phase 5: Process glimpse data if active vision is enabled
+            if self.use_active_vision and glimpse_data is not None and self._glimpse_adapter is not None:
+                
+                # Integrate glimpse data with regular sensory input
+                glimpse_field = self._glimpse_adapter.to_field_space_with_glimpses(
+                    sensory=sensory_input,
+                    glimpse_data=glimpse_data
+                )
+                
+                # Blend glimpse information with high priority
+                # Glimpses are focused attention, so they get higher weight
+                glimpse_influence = self.sensory_mapping.process_patterns(
+                    patterns=[glimpse_field],
+                    reward=experience.field_intensity,
+                    exploration_weight=0.8  # High weight for focused attention
+                )
+                
+                # Apply glimpse influence to field
+                self.unified_field += glimpse_influence * 1.5  # Boost glimpse importance
             
             # 2. Update prediction tracking
             if self._predicted_sensory is not None and experience.raw_input_stream is not None:
@@ -403,6 +465,18 @@ class SimplifiedUnifiedBrain:
             
             # Update recent sensory history for momentum prediction (exclude reward)
             self.recent_sensory.append(sensory_input[:-1] if len(sensory_input) > 1 else sensory_input)
+            
+            # Phase 5: Update active vision learning if glimpse was processed
+            if self.use_active_vision and glimpse_data is not None:
+                # Compute uncertainty after glimpse processing
+                uncertainty_after = self._compute_current_uncertainty()
+                
+                # Learn the value of this glimpse
+                self.active_vision.process_attention_return(
+                    attention_data=glimpse_data,
+                    uncertainty_before=uncertainty_before,
+                    uncertainty_after=uncertainty_after
+                )
             
             # 8. Detect and update topology regions
             # Only run every 5 cycles for performance
@@ -590,8 +664,27 @@ class SimplifiedUnifiedBrain:
             self._last_action = motor_tensor
             self._last_predicted_action = selected_action
             
-            # Convert to list and return
-            return motor_tensor.tolist()
+            # Phase 5: Add sensor control if active vision is enabled
+            if self.use_active_vision:
+                # Generate uncertainty map from topology regions
+                uncertainty_map = self.active_vision.generate_uncertainty_map(
+                    topology_regions=self._last_activated_regions if hasattr(self, '_last_activated_regions') else [],
+                    field=self.unified_field
+                )
+                
+                # Generate sensor control actions
+                sensor_control = self.active_vision.generate_attention_control(
+                    uncertainty_map=uncertainty_map,
+                    current_predictions=current_predictions,
+                    exploration_drive=exploration_drive
+                )
+                
+                # Combine motor and sensor control
+                full_motor = torch.cat([motor_tensor, sensor_control])
+                return full_motor.tolist()
+            else:
+                # Convert to list and return
+                return motor_tensor.tolist()
         
         else:
             # Original pattern-based motor generation
@@ -611,43 +704,9 @@ class SimplifiedUnifiedBrain:
                 exploration_params=exploration_params
             )
             
-            # Predictive action selection (still uses pattern features)
-            patterns = self.pattern_system.extract_patterns(self.unified_field, n_patterns=5)
-            pattern_features = {}
-            if patterns:
-                top_pattern = patterns[0]
-                pattern_features = top_pattern.to_dict()
-            
-            candidates = self.predictive_actions.generate_action_candidates(
-                current_field=self.unified_field,
-                current_patterns=pattern_features,
-                n_candidates=3
-            )
-            
-            # Preview outcomes
-            for candidate in candidates:
-                self.predictive_actions.preview_action_outcome(
-                    current_field=self.unified_field,
-                    action=candidate,
-                    evolution_steps=3
-                )
-            
-            # Select best action
-            selected_action = self.predictive_actions.select_action(
-                candidates=candidates,
-                exploration_drive=exploration_drive
-            )
-            
-            # Blend pattern-based and predictive actions
-            if len(motor_commands) != len(selected_action.motor_pattern):
-                final_commands = motor_commands
-            else:
-                final_commands = motor_commands * 0.7 + selected_action.motor_pattern * 0.3
-            
-            # Ensure commands are in valid range
-            final_commands = torch.clamp(final_commands, -1.0, 1.0)
-            
-            return final_commands.tolist()
+            # Return pattern-based motor commands directly
+            # (Phase 4 action prediction supersedes this approach)
+            return motor_commands.tolist()
     
     def _create_brain_state(self) -> Dict[str, Any]:
         """Create brain state for telemetry."""
@@ -712,6 +771,10 @@ class SimplifiedUnifiedBrain:
         if self.use_action_prediction:
             brain_state['action_prediction'] = self.action_prediction.get_action_statistics()
         
+        # Add active sensing statistics if enabled
+        if self.use_active_vision:
+            brain_state['active_vision'] = self.active_vision.get_attention_statistics()
+        
         return brain_state
     
     def _calculate_memory_usage(self) -> float:
@@ -720,6 +783,22 @@ class SimplifiedUnifiedBrain:
         for dim in self.tensor_shape:
             elements *= dim
         return (elements * 4) / (1024 * 1024)
+    
+    def _compute_current_uncertainty(self) -> float:
+        """Compute current overall uncertainty from topology regions."""
+        if not hasattr(self, '_last_activated_regions') or not self._last_activated_regions:
+            return 0.5  # Default uncertainty
+        
+        # Average uncertainty across all active regions
+        uncertainties = []
+        for region in self._last_activated_regions:
+            if hasattr(region, 'prediction_confidence'):
+                uncertainties.append(1.0 - region.prediction_confidence)
+        
+        if uncertainties:
+            return sum(uncertainties) / len(uncertainties)
+        else:
+            return 0.5
     
     def perform_maintenance(self):
         """Perform maintenance including memory consolidation."""

@@ -293,7 +293,12 @@ class ActionPredictionSystem:
         # In reality, this could be learned through experience
         try:
             # Use immediate weights to invert
-            pseudo_inv = torch.pinverse(self.immediate_action_weights.T)
+            # Move to CPU for pinverse if on MPS to avoid warning
+            if self.device.type == 'mps':
+                weights_cpu = self.immediate_action_weights.T.cpu()
+                pseudo_inv = torch.pinverse(weights_cpu).to(self.device)
+            else:
+                pseudo_inv = torch.pinverse(self.immediate_action_weights.T)
             action = torch.matmul(pseudo_inv, desired_outcome)
             return torch.clamp(action, -1.0, 1.0)
         except:
