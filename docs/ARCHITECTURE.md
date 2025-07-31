@@ -2,249 +2,251 @@
 
 ## Core Paradigm
 
-This architecture implements continuous field-based intelligence as an alternative to discrete AI approaches. Cognitive functions emerge from the topology and dynamics of a continuous field. The brain adapts to each robot's sensory and motor capabilities through dynamic dimensioning.
+This architecture implements continuous field-based intelligence where cognition emerges from the topology and dynamics of a 4D tensor field. The system combines predictive processing with self-modifying dynamics to create a truly autonomous artificial brain.
+
+## Fundamental Principles
+
+### 1. Field-Native Intelligence
+All computation occurs through continuous field dynamics rather than discrete symbolic processing. The brain is a single unified tensor where different cognitive functions emerge from field interactions.
+
+### 2. Prediction as Organization
+While not the only principle, prediction serves as a fundamental organizing force:
+- The brain continuously predicts future states
+- Errors drive learning and reorganization  
+- Actions test predictive hypotheses
+- Attention follows prediction failures
+
+### 3. Self-Modifying Dynamics
+The field encodes its own evolution rules, enabling true meta-learning:
+- No fixed hyperparameters
+- Regional specialization emerges
+- Learning rules adapt through experience
+- Open-ended complexity growth
 
 ## System Architecture
 
-### 4D Tensor Architecture
+### 4D Tensor Field
 
-The brain uses a simplified 4D tensor structure:
-- **Dimensions**: [32, 32, 32, 64] - spatial volume with feature depth
-- **Total Elements**: 2M parameters
-- **Hardware**: Optimized for GPU/MPS/CPU execution
-- **Performance**: ~250ms cycle time on M1 MacBook
+**Structure**: [32, 32, 32, 64] continuous tensor
+- **Spatial dimensions** (32³): Topological organization
+- **Feature dimension** (64): 
+  - 0-31: Content features (patterns and representations)
+  - 32-47: Temporal features (dynamics and sequences)
+  - 48-63: Evolution parameters (self-modification rules)
+- **Total Parameters**: ~2M for rich dynamics in compact form
 
-Key principles:
-- No semantic encoding in tensor dimensions
-- All cognitive properties emerge from field dynamics
-- Single unified tensor for all processing
-- Hardware-optimized tensor operations
-
-### Cognitive Pipeline
-
-Processing flow from sensory input to motor output:
+### Processing Pipeline
 
 ```
-1. Sensory Input (NxD + reward)
-      ↓
-2. Unified Field Dynamics (energy + confidence + novelty)
-      ↓
-3. Pattern Recognition (cosine similarity in pattern space)
-      ↓
-4. Reward Topology (persistent field deformations)
-      ↓
-5. Field Imprinting (modulated sensory integration)
-      ↓
-6. Field Evolution (unified dynamics + spontaneous activity)
-      ↓
-7. Action Prediction (preview candidate outcomes)
-      ↓
-8. Action Selection (value + exploration balance)
-      ↓
-9. Motor Generation (pattern-based mapping)
-      ↓
-10. Learning (prediction error updates)
+1. Sensory Input → Emergent Mapping → Field Integration
+                          ↓
+2. Field State → Predictive Processing → Future State Estimates
+                          ↓
+3. Prediction Error → Error-Driven Learning → Field Modification
+                          ↓
+4. Uncertainty Map → Active Sensing → Attention Control
+                          ↓
+5. Action Candidates → Outcome Preview → Motor Selection
+                          ↓
+6. Field Evolution → Pattern Dynamics → Emergent Behavior
 ```
 
 ### Core Systems
 
 #### Unified Field Dynamics
-Combines energy, confidence, and behavioral modulation into one coherent system:
-- **Energy**: Field activity intensity (low = hungry/explore, high = satiated/consolidate)
-- **Confidence**: Prediction accuracy tracking
-- **Modulation**: Continuous balance between internal dynamics and external input
-- **Dream States**: Pure internal dynamics after extended idle
-- **Temporal Persistence**: Differential decay rates create working memory (spatial features decay fast, temporal features persist)
+Central system managing field evolution:
+- **Energy Dynamics**: Activity level emerges from field state
+- **Confidence Tracking**: Prediction accuracy modulates behavior
+- **Spontaneous Activity**: Traveling waves maintain coherence
+- **Differential Decay**: Creates working memory through temporal persistence
 
-#### Evolved Field Dynamics (Core System)
-The field encodes its own evolution rules:
-- **Dynamic Parameters**: Last 16 features encode local decay, diffusion, coupling, plasticity
-- **Topology-Driven Evolution**: Each region develops specialized dynamics
-- **Meta-Learning**: System learns how to learn through experience
-- **Gradual Emergence**: Starts with minimal self-modification, naturally increases
-- **True Autonomy**: No fixed parameters - everything evolves
+#### Evolved Field Dynamics
+Self-modifying evolution encoded in the field:
+- **Local Parameters**: Decay rate, diffusion, coupling, plasticity
+- **Experience-Driven**: Parameters evolve based on prediction success
+- **Regional Specialization**: Different areas develop unique dynamics
+- **Meta-Learning**: System improves its ability to learn
 
-#### Pattern-Based Processing
-All cognitive functions operate on patterns without coordinates:
-- **Attention**: Pattern salience (novelty + surprise + importance)
-- **Motor Generation**: Field evolution patterns → motor commands
-- **Sensory Processing**: Pattern features → field impressions
-- **Memory**: Stable field configurations
+#### Predictive Processing Systems
 
-#### Predictive Action System
-Actions selected through outcome imagination:
-- Generate candidate actions (exploit/explore/random)
-- Preview outcomes via field evolution
-- Select based on predicted value + uncertainty bonus
+**Phase 1 - Sensory Prediction**:
+- TopologyRegions learn sensor-specific predictions
+- Confidence emerges from accuracy tracking
+- 44% accuracy on predictable patterns
+
+**Phase 2 - Error-Driven Learning**:
+- All updates driven by prediction errors
+- Self-modification scales with error magnitude (up to 3x)
+- High-error regions gain computational priority
+
+**Phase 3 - Hierarchical Timescales**:
+- Immediate predictions (next cycle)
+- Short-term patterns (~10 cycles, 97% accuracy)
+- Long-term trends (~100 cycles)
+- Abstract invariants (timeless patterns)
+
+**Phase 4 - Predictive Actions**:
+- Generate action candidates
+- Preview outcomes through simulation
+- Select based on value + uncertainty
 - Learn from prediction errors
 
-#### Reward Topology Shaping
-Goal-seeking emerges from field topology:
-- Rewards create persistent "impressions" in field
-- Positive rewards → attractors in field space
-- Negative rewards → repulsors in field space
-- Behavior naturally flows toward rewarded states
+**Phase 5 - Active Sensing**:
+- Generate uncertainty maps from confidence
+- Direct sensors to maximize information
+- Natural behaviors emerge (saccades, pursuit, scanning)
+- Modality-agnostic framework
 
-#### Spontaneous Dynamics
-Autonomous field activity without input:
-- Traveling waves maintain coherent patterns
-- Local recurrence creates persistent activity
-- Homeostatic balance of field energy
-- Critical dynamics at edge of chaos
+#### Pattern-Based Processing
+All operations work with patterns, not coordinates:
+- **Pattern Extraction**: Unified system for all modalities
+- **Motor Mapping**: Patterns → actions via learned associations
+- **Attention**: Salience emerges from novelty + importance
+- **Memory**: Stable patterns persist as topology regions
 
-#### Topology Region System
-Stable patterns form persistent structures:
-- **Region Detection**: Identifies stable field configurations
-- **Causal Tracking**: Links temporal sequences of activations
-- **Abstraction Formation**: Composes regions into higher-level concepts
-- **Memory Consolidation**: Strengthens important regions during idle
+#### Memory and Consolidation
+Long-term structure emerges from field dynamics:
+- **Topology Regions**: Stable configurations become memories
+- **Causal Tracking**: Temporal sequences create relationships
+- **Consolidation**: Important patterns strengthen during rest
+- **Dream Generation**: Novel combinations explore possibilities
 
-#### Consolidation System
-Advanced learning during rest periods:
-- **Pattern Replay**: Reactivates important patterns
-- **Dream Generation**: Creates novel pattern combinations
-- **Topology Refinement**: Optimizes field organization
-- **Cross-scale Integration**: Links patterns across resolutions
+#### Reward and Motivation
+Goals emerge from field topology:
+- **Reward Impressions**: Persistent field deformations
+- **Attractors/Repulsors**: Shape behavioral flow
+- **Value Propagation**: Spreads through causal links
+- **Emergent Goals**: No explicit objectives needed
 
-#### Emergent Sensory Mapping
-Patterns find their natural place in the field:
-- **Resonance Detection**: Patterns locate based on field resonance
-- **Correlation Clustering**: Similar patterns become neighbors
-- **Reward-based Importance**: Critical patterns claim prime locations
-- **Self-Organization**: No fixed mappings - organization emerges
+## Information Flow
 
-### Dynamic Brain Creation
+### Sensory → Field
+1. Raw input arrives from robot sensors
+2. EmergentSensoryMapping finds resonant locations
+3. Integration strength based on confidence
+4. Immediate prediction error computed
 
-1. **Robot Connection**: Robot provides sensory/motor dimensions via handshake
-2. **Brain Creation**: System creates brain adapted to robot's capabilities
-3. **Dimension Locking**: Brain locks to first robot's dimensions
-4. **Adapter Mapping**: Translates between robot space and field space
+### Field → Motor
+1. Pattern extraction identifies salient features
+2. Action candidates generated (exploit/explore/test)
+3. Outcomes previewed through field simulation
+4. Best action selected and executed
 
-### Persistence System
+### Field → Field (Self-Modification)
+1. Prediction errors create error gradients
+2. High-error regions increase plasticity
+3. Successful regions stabilize
+4. Evolution parameters update locally
 
-Cross-session learning through state management:
-- Complete field state serialization
-- Delta compression for incremental updates
-- Background consolidation during idle
-- Corruption detection and recovery
+### Cross-Cycle Persistence
+1. Working memory through slow decay
+2. Topology regions maintain structure
+3. Causal links preserve sequences
+4. Consolidation strengthens important patterns
 
-## Project Structure
+## Emergent Properties
 
-```
-brain/
-├── server/                     # Brain implementation
-│   ├── brain.py               # Main server entry
-│   ├── settings.json          # Configuration
-│   │
-│   ├── src/
-│   │   ├── core/              # Architecture components
-│   │   │   ├── simplified_brain_factory.py
-│   │   │   ├── brain_service.py
-│   │   │   ├── adapters.py
-│   │   │   └── robot_registry.py
-│   │   │
-│   │   ├── brains/field/      # Field brain implementation
-│   │   │   ├── simplified_unified_brain.py
-│   │   │   ├── evolved_field_dynamics.py
-│   │   │   ├── unified_pattern_system.py
-│   │   │   ├── pattern_motor_adapter.py
-│   │   │   ├── pattern_attention_adapter.py
-│   │   │   ├── predictive_action_system.py
-│   │   │   ├── reward_topology_shaping.py
-│   │   │   ├── topology_region_system.py
-│   │   │   ├── consolidation_system.py
-│   │   │   ├── emergent_sensory_mapping.py
-│   │   │   └── motor_cortex.py
-│   │   │
-│   │   ├── persistence/       # State management
-│   │   └── communication/     # Network protocol
-│   │
-│   └── tests/                 # Test suite
-│
-├── client_picarx/             # Robot implementation  
-├── demos/                     # Interactive demos
-├── validation/                # Scientific validation
-└── tools/                     # Development tools
-```
+These arise without explicit programming:
 
-## Communication Protocol
+### Cognitive Emergence
+- **Memory**: Successful patterns persist
+- **Attention**: Resources follow uncertainty
+- **Concepts**: Invariant predictive models
+- **Goals**: Reward topology guides behavior
+- **Personality**: Unique dynamics per brain
 
-TCP-based protocol with capability negotiation:
+### Behavioral Emergence
+- **Exploration**: Low confidence drives novelty-seeking
+- **Exploitation**: High confidence enables efficiency
+- **Curiosity**: Information gain becomes intrinsic reward
+- **Dreams**: Spontaneous pattern recombination
 
-```
-Handshake:
-Client → Server: [robot_version, sensory_dim, motor_dim, hardware_type]
-Server → Client: [brain_version, field_dimensions, capabilities]
-
-Runtime:
-Client → Server: [sensor_data...] 
-Server → Client: [motor_data...]
-```
-
-## Key Design Principles
-
-### Emergence Over Engineering
-- Complexity emerges from simple dynamics
-- No explicit goals, modes, or thresholds
-- Continuous functions replace discrete states
-- Minimal code for maximum capability
-
-### Field-Native Intelligence
-- All computation through field dynamics
-- No coordinate systems or spatial mappings
-- Pattern-based processing throughout
-- Memory as field topology
-
-### Biological Inspiration
-- Energy as metabolic state
-- Confidence as prediction accuracy
-- Attention as limited resource
-- Dreams as pure internal dynamics
+### Structural Emergence
+- **Specialization**: Regions develop unique functions
+- **Hierarchy**: Multi-scale organization
+- **Modularity**: Functional clustering
+- **Plasticity Gradients**: Critical periods emerge
 
 ## Performance Characteristics
 
+### Computational Efficiency
+- **GPU Native**: All operations use tensor primitives
+- **Fixed Memory**: No growth over time
+- **Parallel Processing**: Field updates naturally parallel
+- **Sparse Activation**: Only relevant regions compute
+
+### Scalability
+- **Robot Agnostic**: Adapts to any configuration
+- **Modality Flexible**: Same principles for all senses
+- **Size Adaptable**: Field dimensions can scale
+- **Multi-Brain Ready**: Could network multiple brains
+
 ### Resource Usage
-- **CPU**: ~10% utilization (mostly idle between cycles)
-- **GPU**: ~4% utilization (efficient tensor operations)
 - **Memory**: ~8MB for field tensor
-- **Cycle Time**: 250ms (biological timescale)
+- **Computation**: ~250ms per cycle
+- **GPU Usage**: ~4% on modern hardware
+- **CPU Fallback**: Maintains functionality
 
-### Scaling Properties
-- Fixed tensor size (no memory growth)
-- Constant computation per cycle
-- Efficient for embedded deployment
-- Headroom for larger tensors if needed
+## Implementation Details
 
-## Implementation Status
+### Dynamic Brain Creation
+1. Robot provides sensor/motor dimensions
+2. System calculates optimal field size
+3. Brain initialized with appropriate adapters
+4. Dimensions locked to first robot
 
-### Core Features
-- 4D simplified tensor architecture
-- Unified field dynamics system
-- Pattern-based processing
-- Predictive action selection
-- Reward topology shaping
-- Working memory through temporal persistence
-- Topology regions for abstraction
-- Consolidation and dream states
-- Spontaneous dynamics
-- Dynamic robot adaptation
+### Communication Protocol
+```
+Handshake:
+Robot → Brain: [version, sensory_dim, motor_dim, hardware]
+Brain → Robot: [version, field_dims, capabilities]
 
-### Complete Emergence
-- **Evolved Field Dynamics**: Evolution rules are part of the field itself
-- **Regional Specialization**: Each area develops unique dynamics
-- **Self-Modification**: Strength grows naturally with experience
-- **Emergent Sensory Organization**: Patterns find their place through resonance
-- **No Fixed Architecture**: Everything emerges from field dynamics
+Runtime:
+Robot → Brain: [sensor_data, reward]
+Brain → Robot: [motor_data, brain_state]
+```
 
-### Known Limitations
-- Large persistence files without compression
-- MPS limited to 16 dimensions
-- Parameter tuning needed for different resolutions
+### Persistence System
+- Complete field serialization
+- Delta compression for updates
+- Background consolidation
+- Cross-session learning
 
-## System Configuration
+## Design Philosophy
 
-Configuration through `settings.json`:
-- Network parameters (host, port)
-- Brain parameters (spatial resolution, learning rates)
-- Hardware preferences (device selection)
-- Persistence settings (save frequency, location)
+### Why Continuous Fields?
+- **Biological Realism**: Matches neural dynamics
+- **Smooth Gradients**: Natural optimization
+- **Emergent Properties**: Rich behaviors from simple rules
+- **No Discretization**: Avoids artificial boundaries
+
+### Why Self-Modification?
+- **True Autonomy**: System determines its nature
+- **Adaptation**: Optimal dynamics for each brain
+- **Open-Ended**: No limits on complexity
+- **Evolution**: Literal evolution through experience
+
+### Why Prediction?
+- **Unifying Principle**: Explains diverse cognition
+- **Efficiency**: Anticipation reduces surprise
+- **Agency**: Actions become experiments
+- **Learning Signal**: Errors drive all updates
+
+## Future Architecture
+
+### Planned Enhancements
+- **Multi-Brain Networks**: Emergent communication
+- **Hardware Integration**: Real sensors and motors
+- **Abstract Reasoning**: Higher-order predictions
+- **Language**: Prediction alignment protocols
+
+### Research Directions
+- **Consciousness**: Global field coherence
+- **Creativity**: Controlled hallucination
+- **Social Cognition**: Mutual prediction
+- **Transfer Learning**: Field transplantation
+
+---
+
+*"Intelligence is the ability to predict and control the future through action."*
+*- This architecture embodies that principle in continuous field dynamics.*
