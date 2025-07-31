@@ -110,34 +110,25 @@ class PredictiveFieldSystem:
             predictions += momentum * 0.3  # Weight momentum contribution
             confidences += 0.2  # Base confidence from momentum
         
-        # 3. Let topology regions make predictions
-        for i, region in enumerate(topology_regions):
-            if not hasattr(region, 'pattern') or region.pattern is None:
+        # 3. Let topology regions make predictions using their enhanced capabilities
+        for region in topology_regions:
+            # Skip non-predictive regions
+            if not hasattr(region, 'is_sensory_predictive') or not region.is_sensory_predictive:
                 continue
+            
+            # Use the region's own prediction method
+            if hasattr(region, 'predict_from_field'):
+                region_predictions = region.predict_from_field(field, temporal_field)
                 
-            # Check if this region has learned sensor associations
-            if i not in self.region_sensor_affinity:
-                # New region - let it try to predict all sensors initially
-                sensor_indices = list(range(self.sensory_dim))
-            else:
-                sensor_indices = self.region_sensor_affinity[i]
-            
-            if not sensor_indices:
-                continue
+                # Apply predictions to the appropriate sensors
+                for i, sensor_idx in enumerate(region.sensor_indices):
+                    if sensor_idx < self.sensory_dim and i < len(region_predictions):
+                        # Weight by region's confidence
+                        weight = region.prediction_confidence * region.stability
+                        predictions[sensor_idx] += region_predictions[i] * weight
+                        confidences[sensor_idx] = max(confidences[sensor_idx], region.prediction_confidence)
                 
-            # Extract region's predictive contribution
-            region_prediction = self._extract_region_prediction(
-                region, temporal_field, sensor_indices
-            )
-            
-            # Weight by region stability (stable regions are better predictors)
-            stability = region.stability if hasattr(region, 'stability') else 0.5
-            
-            for idx, (pred, conf) in region_prediction.items():
-                predictions[idx] += pred * stability
-                confidences[idx] = max(confidences[idx], conf * stability)
-            
-            source_regions.append(i)
+                source_regions.append(region.region_id)
         
         # 4. Normalize predictions that had multiple contributors
         contributor_count = create_zeros((self.sensory_dim,), device=self.device)
@@ -258,9 +249,18 @@ class PredictiveFieldSystem:
         # Track error history
         self.error_history.append(abs_errors.mean().item())
         
-        # Update region-sensor affinities based on prediction success
-        # This is key - regions learn which sensors they predict well
-        self._update_region_sensor_affinity(abs_errors, topology_regions)
+        # Update region prediction confidence based on their performance
+        for region in topology_regions:
+            if hasattr(region, 'is_sensory_predictive') and region.is_sensory_predictive:
+                if hasattr(region, 'update_prediction_success'):
+                    # Get predicted values for this region's sensors
+                    region_predictions = torch.zeros(len(region.sensor_indices), device=self.device)
+                    for i, sensor_idx in enumerate(region.sensor_indices):
+                        if sensor_idx < len(predicted):
+                            region_predictions[i] = predicted[sensor_idx]
+                    
+                    # Update the region's prediction tracking
+                    region.update_prediction_success(actual, region_predictions)
         
         # Compute error statistics
         error_stats = {
@@ -268,7 +268,7 @@ class PredictiveFieldSystem:
             'max_error': abs_errors.max().item(),
             'per_sensor_error': abs_errors.cpu().numpy(),
             'improving': self._is_prediction_improving(),
-            'specialized_sensors': len(self.sensor_region_affinity)
+            'specialized_sensors': sum(1 for r in topology_regions if getattr(r, 'is_sensory_predictive', False))
         }
         
         return error_stats

@@ -54,6 +54,13 @@ class TopologyRegion:
     abstraction_level: int = 0  # 0 = concrete, higher = more abstract
     component_regions: Set[str] = field(default_factory=set)  # For hierarchical composition
     
+    # Sensory prediction capabilities
+    is_sensory_predictive: bool = False
+    sensor_indices: List[int] = field(default_factory=list)  # Which sensors this region predicts
+    sensory_prediction_history: deque = field(default_factory=lambda: deque(maxlen=50))
+    prediction_confidence: float = 0.0
+    prediction_momentum: torch.Tensor = None  # Temporal momentum for predictions
+    
     def update_activation(self, strength: float):
         """Update region activation statistics."""
         self.last_activation = time.time()
@@ -71,6 +78,68 @@ class TopologyRegion:
             self.causal_successors[successor_id] = (
                 self.causal_successors.get(successor_id, 0.0) + strength
             )
+    
+    def predict_from_field(self, field: torch.Tensor, temporal_field: torch.Tensor) -> torch.Tensor:
+        """Generate sensory predictions based on field state and temporal features."""
+        if not self.is_sensory_predictive or len(self.sensor_indices) == 0:
+            return torch.zeros(len(self.sensor_indices))
+        
+        # Extract local temporal features around this region
+        x, y, z = self.spatial_center
+        f = self.feature_center
+        
+        # Get temporal features in local neighborhood
+        x_min, x_max = max(0, x-2), min(field.shape[0], x+3)
+        y_min, y_max = max(0, y-2), min(field.shape[1], y+3)
+        z_min, z_max = max(0, z-2), min(field.shape[2], z+3)
+        
+        local_temporal = temporal_field[x_min:x_max, y_min:y_max, z_min:z_max, :]
+        
+        # Compute prediction based on temporal pattern
+        temporal_mean = torch.mean(local_temporal, dim=(0, 1, 2))
+        
+        # Use learned mapping from temporal features to sensor values
+        predictions = torch.zeros(len(self.sensor_indices), device=field.device)
+        
+        for i, sensor_idx in enumerate(self.sensor_indices):
+            # Map temporal features to this sensor
+            feature_idx = sensor_idx % temporal_field.shape[-1]
+            prediction_val = temporal_mean[feature_idx]
+            
+            # Apply momentum if available
+            if self.prediction_momentum is not None and i < self.prediction_momentum.shape[0]:
+                prediction_val = 0.7 * prediction_val + 0.3 * self.prediction_momentum[i]
+            
+            predictions[i] = prediction_val
+        
+        # Update momentum
+        self.prediction_momentum = predictions.clone().detach()
+        
+        return predictions
+    
+    def update_prediction_success(self, actual_values: torch.Tensor, predicted_values: torch.Tensor):
+        """Update prediction confidence based on accuracy."""
+        if len(self.sensor_indices) == 0:
+            return
+        
+        # Compute prediction error for our sensors
+        errors = []
+        for i, sensor_idx in enumerate(self.sensor_indices):
+            if sensor_idx < len(actual_values) and i < len(predicted_values):
+                error = abs(actual_values[sensor_idx] - predicted_values[i]).item()
+                errors.append(error)
+        
+        if errors:
+            avg_error = np.mean(errors)
+            # Update confidence (0 = bad, 1 = perfect)
+            self.prediction_confidence = 0.9 * self.prediction_confidence + 0.1 * (1.0 - min(1.0, avg_error))
+            
+            # Store in history
+            self.sensory_prediction_history.append({
+                'time': time.time(),
+                'error': avg_error,
+                'confidence': self.prediction_confidence
+            })
 
 
 class TopologyRegionSystem:
@@ -540,6 +609,78 @@ class TopologyRegionSystem:
                         # Reinforce the pattern
                         brain.unified_field[x, y, z, region.feature_center] *= 1.1
     
+    def update_sensory_predictions(self, sensory_dim: int, recent_sensory: Optional[deque] = None):
+        """
+        Update which regions should predict which sensors based on activity patterns.
+        This enables emergent sensory specialization.
+        """
+        if not self.regions or sensory_dim == 0:
+            return
+        
+        # Get recently active regions
+        current_time = time.time()
+        active_regions = [
+            (rid, r) for rid, r in self.regions.items()
+            if current_time - r.last_activation < 10.0  # Active in last 10 seconds
+        ]
+        
+        if not active_regions:
+            return
+        
+        # Assign sensors to regions based on:
+        # 1. Spatial distribution (spread sensors across regions)
+        # 2. Temporal stability (stable regions are better predictors)
+        # 3. Current prediction performance
+        
+        # Sort regions by stability and importance
+        sorted_regions = sorted(
+            active_regions,
+            key=lambda x: x[1].stability * x[1].importance,
+            reverse=True
+        )
+        
+        # Distribute sensors across top regions
+        sensors_per_region = max(1, sensory_dim // max(1, len(sorted_regions)))
+        
+        for i, (rid, region) in enumerate(sorted_regions):
+            # Determine which sensors this region should predict
+            if not region.is_sensory_predictive:
+                # New predictive region - assign initial sensors
+                start_idx = (i * sensors_per_region) % sensory_dim
+                end_idx = min(start_idx + sensors_per_region, sensory_dim)
+                
+                region.sensor_indices = list(range(start_idx, end_idx))
+                region.is_sensory_predictive = True
+                region.prediction_confidence = 0.3  # Start with low confidence
+                
+            else:
+                # Existing predictive region - update based on performance
+                if region.prediction_confidence < 0.2 and len(region.sensory_prediction_history) > 10:
+                    # Poor predictor - try different sensors
+                    shift = sensors_per_region // 2
+                    region.sensor_indices = [
+                        (idx + shift) % sensory_dim for idx in region.sensor_indices
+                    ]
+                    region.prediction_confidence = 0.3  # Reset confidence
+                    
+                elif region.prediction_confidence > 0.7:
+                    # Good predictor - maybe take on more sensors
+                    if len(region.sensor_indices) < sensors_per_region * 2:
+                        # Find unassigned sensors
+                        all_assigned = set()
+                        for _, r in self.regions.items():
+                            if r.is_sensory_predictive:
+                                all_assigned.update(r.sensor_indices)
+                        
+                        unassigned = [i for i in range(sensory_dim) if i not in all_assigned]
+                        if unassigned:
+                            # Take one unassigned sensor
+                            region.sensor_indices.append(unassigned[0])
+    
+    def get_predictive_regions(self) -> List[TopologyRegion]:
+        """Get all regions that are capable of sensory prediction."""
+        return [r for r in self.regions.values() if r.is_sensory_predictive]
+    
     def get_statistics(self) -> Dict[str, any]:
         """Get system statistics."""
         current_time = time.time()
@@ -554,10 +695,21 @@ class TopologyRegionSystem:
             if r.abstraction_level > 0
         ]
         
+        predictive_regions = [
+            r for r in self.regions.values()
+            if r.is_sensory_predictive
+        ]
+        
+        avg_prediction_confidence = np.mean([
+            r.prediction_confidence for r in predictive_regions
+        ]) if predictive_regions else 0.0
+        
         return {
             'total_regions': len(self.regions),
             'active_regions': len(active_regions),
             'abstract_regions': len(abstract_regions),
+            'predictive_regions': len(predictive_regions),
+            'avg_prediction_confidence': avg_prediction_confidence,
             'discovery_count': self.discovery_count,
             'avg_connections': np.mean([
                 len(r.associated_regions) for r in self.regions.values()

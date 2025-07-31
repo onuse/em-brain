@@ -10,7 +10,7 @@ Key principle: No fixed parameters. Everything emerges.
 
 import torch
 import torch.nn.functional as F
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any, Optional, Tuple, List
 from collections import deque
 import numpy as np
 
@@ -18,6 +18,7 @@ from ...utils.tensor_ops import (
     create_zeros, create_randn, safe_mean, safe_var, 
     safe_normalize, field_energy, field_information
 )
+from .prediction_error_learning import PredictionErrorLearning
 
 
 class EvolvedFieldDynamics:
@@ -93,6 +94,11 @@ class EvolvedFieldDynamics:
         # Use initial rates only for initialization
         self._initial_spontaneous = initial_spontaneous_rate
         self._initial_resting = initial_resting_potential
+        
+        # Prediction error learning system (Phase 2)
+        self.prediction_error_learning = None  # Will be initialized when needed
+        self._last_error_field = None
+        self._error_modulation = {}
     
     def evolve_field(self, field: torch.Tensor, 
                      external_input: Optional[torch.Tensor] = None) -> torch.Tensor:
@@ -146,9 +152,16 @@ class EvolvedFieldDynamics:
             new_content = self._integrate_input(new_content, external_input, input_strength, dynamics)
         
         # 6. Self-modification of dynamics
-        new_dynamics = self._evolve_dynamics(dynamics, new_content, exploration)
+        # Now modulated by prediction errors if available
+        if self._last_error_field is not None:
+            # Prediction errors directly influence dynamics evolution
+            new_dynamics = self._evolve_dynamics_with_errors(
+                dynamics, new_content, exploration, self._last_error_field
+            )
+        else:
+            new_dynamics = self._evolve_dynamics(dynamics, new_content, exploration)
         
-        # 7. Gradually increase self-modification strength
+        # 7. Update self-modification strength based on prediction errors
         self._update_self_modification_strength()
         
         # Combine and return
@@ -287,11 +300,48 @@ class EvolvedFieldDynamics:
         momentum = 0.95
         return dynamics * momentum + dynamics_update * (1 - momentum)
     
+    def _evolve_dynamics_with_errors(self, 
+                                   dynamics: torch.Tensor,
+                                   content: torch.Tensor,
+                                   exploration: float,
+                                   error_field: torch.Tensor) -> torch.Tensor:
+        """
+        Evolve dynamics with prediction errors as the primary signal.
+        
+        This is the Phase 2 enhancement - prediction errors directly
+        shape how field dynamics evolve.
+        """
+        # First apply base evolution
+        base_dynamics = self._evolve_dynamics(dynamics, content, exploration)
+        
+        # Then modulate by prediction errors
+        if self.prediction_error_learning is not None:
+            # Allocate resources based on prediction quality
+            error_modulated_dynamics = self.prediction_error_learning.allocate_field_resources(
+                error_field, base_dynamics
+            )
+            
+            # Blend based on error magnitude
+            error_weight = min(0.5, torch.mean(torch.abs(error_field)).item())
+            return (1 - error_weight) * base_dynamics + error_weight * error_modulated_dynamics
+        else:
+            return base_dynamics
+    
     def _update_self_modification_strength(self):
-        """Gradually increase self-modification over time."""
-        # Logarithmic growth that continues beyond 10%
-        # Starts at 1%, reaches 10% at 10k cycles, 20% at 100k, etc.
-        self.self_modification_strength = 0.01 + 0.09 * np.log10(1 + self.evolution_count / 1000)
+        """Update self-modification based on prediction errors and time."""
+        # Base logarithmic growth
+        base_strength = 0.01 + 0.09 * np.log10(1 + self.evolution_count / 1000)
+        
+        # Modulate by prediction errors if available
+        if self._error_modulation:
+            # High errors boost self-modification (need to adapt faster)
+            error_boost = self._error_modulation.get('self_modification_boost', 1.0)
+            self.self_modification_strength = base_strength * error_boost
+        else:
+            self.self_modification_strength = base_strength
+        
+        # Cap at reasonable maximum
+        self.self_modification_strength = min(0.3, self.self_modification_strength)
     
     def initialize_field_dynamics(self, field: torch.Tensor):
         """Initialize dynamics features with sensible defaults."""
@@ -625,6 +675,43 @@ class EvolvedFieldDynamics:
         """Reset traveling wave patterns."""
         self.wave_vectors = self._initialize_wave_vectors()
         self.phase_offset = 0.0
+    
+    def process_prediction_errors(self, 
+                                prediction_errors: torch.Tensor,
+                                topology_regions: List[any],
+                                current_field: torch.Tensor):
+        """
+        Process prediction errors to create learning signals.
+        
+        This is the main Phase 2 integration point.
+        
+        Args:
+            prediction_errors: Per-sensor prediction errors
+            topology_regions: Active topology regions
+            current_field: Current field state
+        """
+        # Initialize prediction error learning if needed
+        if self.prediction_error_learning is None:
+            self.prediction_error_learning = PredictionErrorLearning(
+                field_shape=self.field_shape,
+                sensory_dim=len(prediction_errors),
+                device=self.device
+            )
+        
+        # Convert errors to field representation
+        self._last_error_field = self.prediction_error_learning.error_to_field(
+            prediction_errors, topology_regions, current_field
+        )
+        
+        # Get learning modulation parameters
+        self._error_modulation = self.prediction_error_learning.compute_learning_modulation(
+            self._last_error_field
+        )
+        
+        # Update exploration based on learning progress
+        if 'exploration_boost' in self._error_modulation:
+            # This will affect next cycle's modulation
+            self._last_novelty *= self._error_modulation['exploration_boost']
     
     def get_emergent_properties(self) -> Dict[str, float]:
         """Get properties of the evolved system."""

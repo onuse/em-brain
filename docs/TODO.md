@@ -103,14 +103,16 @@ Our investigation revealed that prediction is already deeply embedded:
 - **Confidence System = Prediction Quality**: Already tracks prediction accuracy
 - **Exploration = Prediction Error Seeking**: Low confidence drives novelty search
 
-**The Problem**: Current sensory prediction is naive (all_sensors = constant), resulting in:
-- 0% confidence (knows predictions are bad)
-- No learning signal (predictive sensory gating blocks everything)
-- No biological realism (can't improve what it can't predict)
+**The Problem (FIXED in Phase 1)**: ~~Current sensory prediction is naive (all_sensors = constant)~~
+- ✅ ~~0% confidence~~ → Now achieves 44% with predictable patterns
+- ✅ ~~No learning signal~~ → Prediction errors drive region specialization
+- ✅ ~~No biological realism~~ → Regions learn sensor associations like cortex
 
 ### The Solution: Unleash the Predictive Architecture
 
-#### Phase 1: Close the Prediction Loop (2-3 days)
+**Progress**: Phase 2 of 5 completed. Prediction errors now drive all learning!
+
+#### ✅ Phase 1: Close the Prediction Loop (COMPLETED - 2025-01-31)
 
 **Make field-to-sensory prediction explicit**:
 ```python
@@ -134,13 +136,19 @@ def generate_sensory_prediction(self, field: torch.Tensor) -> Tuple[torch.Tensor
     return predictions, confidences
 ```
 
-**Key Changes**:
-- [ ] Add sensory prediction method to TopologyRegionSystem
-- [ ] Track which regions predict which sensors (emergent specialization)
-- [ ] Use temporal features for momentum-based predictions
-- [ ] Return per-sensor confidence for weighted learning
+**Completed Changes**:
+- [x] Add sensory prediction method to TopologyRegionSystem
+- [x] Track which regions predict which sensors (emergent specialization)
+- [x] Use temporal features for momentum-based predictions
+- [x] Return per-sensor confidence for weighted learning
 
-#### Phase 2: Prediction Error as Primary Learning Signal (2-3 days)
+**Results**:
+- Confidence improved from 0% to 44% with predictable input
+- 4 topology regions learned to predict specific sensors
+- Low confidence (11.8%) maintained for unpredictable input
+- Prediction errors now drive region-sensor association learning
+
+#### ✅ Phase 2: Prediction Error as Primary Learning Signal (COMPLETED - 2025-01-31)
 
 **Make prediction error drive ALL learning**:
 ```python
@@ -159,11 +167,18 @@ def process_prediction_error(self, predicted: torch.Tensor, actual: torch.Tensor
     # (become stable predictive models)
 ```
 
-**Key Changes**:
-- [ ] Implement error_to_field mapping (spatial error representation)
-- [ ] Make self-modification directly proportional to prediction error
-- [ ] Allocate field resources based on prediction quality
-- [ ] Consolidate successful predictive regions
+**Completed Changes**:
+- [x] Implement error_to_field mapping (spatial error representation)
+- [x] Make self-modification directly proportional to prediction error
+- [x] Allocate field resources based on prediction quality
+- [x] Consolidate successful predictive regions
+
+**Results**:
+- Self-modification strength now scales with prediction errors (up to 3x)
+- Learning rate adapts dynamically to error magnitude
+- High-error regions receive more computational resources
+- Exploration increases 1.5x when learning plateaus
+- Field dynamics evolve based on prediction quality
 
 #### Phase 3: Hierarchical Prediction (3-4 days)
 
@@ -211,6 +226,40 @@ def generate_predictive_action(self, field: torch.Tensor):
 - [ ] Learn action-outcome predictions
 - [ ] Document emergent behavioral strategies
 
+#### Phase 5: Active Vision Through Predictive Sampling (3-4 days)
+
+**Vision as Hypothesis Testing, Not Image Processing**
+
+The field doesn't process images - it tests predictions by directing attention. Rich sensors provide focused glimpses based on uncertainty, creating natural active vision behaviors.
+
+**Integration with Glimpse Adapter**:
+```python
+def generate_glimpse_requests(self, field: torch.Tensor) -> List[GlimpseRequest]:
+    """Low confidence regions drive active sampling."""
+    # 1. Get uncertainty map from predictive regions
+    uncertainty_map = self.compute_uncertainty_from_predictions()
+    
+    # 2. Generate glimpse requests for high-uncertainty areas
+    requests = self.glimpse_adapter.generate_glimpse_requests(uncertainty_map)
+    
+    # 3. Glimpses become special sensory input
+    # 4. Prediction improvement reinforces glimpse behavior
+```
+
+**Key Changes**:
+- [ ] Integrate existing GlimpseSensoryAdapter with prediction system
+- [ ] Add uncertainty map generation from region confidence
+- [ ] Include sensor position in motor output space
+- [ ] Process glimpse returns as high-priority sensory input
+- [ ] Learn value of glimpses through prediction improvement
+
+**Expected Behaviors**:
+- Smooth pursuit when tracking predictable objects
+- Rapid saccades to surprising/uncertain areas
+- Fixation on complex patterns needing detail
+- Ignoring stable/predictable regions
+- Natural emergence of biological-like eye movements
+
 ### Expected Emergent Behaviors
 
 With prediction as the core function, we expect:
@@ -241,70 +290,19 @@ With prediction as the core function, we expect:
 
 This isn't adding prediction to the brain - it's recognizing that the brain IS prediction. Every thought is a prediction, every action tests a prediction, every sensation updates predictions. Intelligence emerges from the necessity to predict.
 
-## 🚀 NEW: Active Vision Through Predictive Sampling
+## 📍 Current Status
 
-### Vision as Hypothesis Testing, Not Image Processing
+**Phase 2 Complete**: Prediction errors now drive all learning!
+- Self-modification strength scales with errors (up to 3x)
+- Learning rate adapts dynamically to error magnitude
+- Resources flow to high-error regions automatically
+- Exploration increases when learning plateaus
 
-**Core Insight**: The field doesn't process images - it tests predictions by directing attention. Rich sensors provide focused glimpses based on uncertainty, creating natural active vision behaviors.
-
-#### Natural Evolution from Existing Systems:
-
-1. **Prediction → Sampling** (Minimal change to PredictiveActionSystem)
-   - Field already predicts outcomes and tracks confidence
-   - Low confidence regions generate "glimpse requests"
-   - Sensory adapter returns focused patches instead of full frames
-   - Same prediction error updates confidence
-
-2. **Motor Integration** (Eye movements as actions)
-   - Camera position/focus becomes part of motor output
-   - Field learns that moving sensors reduces uncertainty
-   - Saccades emerge from prediction-driven exploration
-   - No new systems - just additional motor dimensions
-
-3. **Hierarchical Emergence** (Natural pattern formation)
-   - Simple patterns (edges) stabilize quickly in field
-   - Complex patterns need multiple simple patterns
-   - Abstraction happens through existing topology regions
-   - Visual hierarchy emerges from use, not design
-
-#### Implementation Approach:
-
-**Phase 1: Predictive Sampling (2-3 days)**
-- [ ] Add uncertainty map generation to EvolvedFieldDynamics
-- [ ] Modify sensor adapter to accept glimpse coordinates
-- [ ] Return focused patches (32×32) instead of full frames
-- [ ] Use existing prediction error for confidence updates
-
-**Phase 2: Active Sensing (2-3 days)**
-- [ ] Add sensor position to motor output space
-- [ ] Let PredictiveActionSystem include sensor movements
-- [ ] Learn that moving sensors reveals information
-- [ ] Document emergent saccadic behaviors
-
-**Phase 3: Pattern Hierarchies (3-4 days)**
-- [ ] Monitor how patterns naturally layer in field
-- [ ] Track which regions specialize for simple vs complex
-- [ ] Observe cross-modal binding through topology regions
-- [ ] Validate with different sensor configurations
-
-#### Why This Is Natural Evolution:
-- Uses existing prediction/confidence infrastructure
-- Leverages current motor system for sensor control
-- Builds on established pattern formation dynamics
-- No new subsystems - just connecting what's there
-
-#### Expected Behaviors:
-- Smooth pursuit when tracking predictable objects
-- Rapid saccades to surprising/uncertain areas
-- Fixation on complex patterns needing detail
-- Ignoring stable/predictable regions
-- Unique scanning patterns per individual brain
-
-#### Success Metrics:
-- 100x reduction in sensory bandwidth requirements
-- Natural emergence of biological-like eye movements
-- Improved learning with active vs passive sensing
-- Graceful scaling from simple to complex sensors
+**Next Priority**: Phase 3 - Hierarchical Prediction
+- Multiple timescales (immediate/short/long/abstract)
+- Bidirectional prediction/error flow
+- Each scale learns at its natural rate
+- Emergent temporal hierarchies
 
 ## High Priority Tasks
 

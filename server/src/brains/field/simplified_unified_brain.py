@@ -253,6 +253,22 @@ class SimplifiedUnifiedBrain:
                 sensory_error = torch.mean(torch.abs(actual_sensory - self._predicted_sensory)).item()
                 self._last_prediction_error = sensory_error
                 self._current_prediction_confidence = 1.0 - min(1.0, sensory_error * 2.0)
+                
+                # Process prediction error to improve region-sensor associations
+                if hasattr(self, '_last_activated_regions') and self._last_activated_regions:
+                    error_stats = self.predictive_field.process_prediction_error(
+                        predicted=self._predicted_sensory,
+                        actual=actual_sensory,
+                        topology_regions=self._last_activated_regions
+                    )
+                    
+                    # Phase 2: Send prediction errors to field dynamics for learning
+                    prediction_errors = actual_sensory - self._predicted_sensory
+                    self.field_dynamics.process_prediction_errors(
+                        prediction_errors=prediction_errors,
+                        topology_regions=self._last_activated_regions,
+                        current_field=self.unified_field
+                    )
             elif self._predicted_field is not None:
                 # Fallback to field comparison
                 prediction_error = torch.mean(torch.abs(self.unified_field - self._predicted_field)).item()
@@ -311,9 +327,17 @@ class SimplifiedUnifiedBrain:
             # Apply expected decay and diffusion
             self._predicted_field *= self.modulation.get('decay_rate', 0.995)
             
+            # Update topology regions for sensory prediction
+            self.topology_region_system.update_sensory_predictions(
+                sensory_dim=len(sensory_input) - 1,  # Exclude reward
+                recent_sensory=self.recent_sensory
+            )
+            
+            # Get predictive regions
+            topology_regions = self.topology_region_system.get_predictive_regions()
+            
             # Predict sensory input using the predictive field system
             # This is where the brain reveals what it expects to sense
-            topology_regions = getattr(self, '_last_activated_regions', [])
             prediction = self.predictive_field.generate_sensory_prediction(
                 field=self.unified_field,
                 topology_regions=topology_regions,
@@ -323,6 +347,9 @@ class SimplifiedUnifiedBrain:
             # Store predictions for next cycle
             self._predicted_sensory = prediction.values
             self._prediction_confidence_per_sensor = prediction.confidence
+            
+            # Update topology regions with prediction results (will happen next cycle)
+            self._last_activated_regions = topology_regions
             
             # Update recent sensory history for momentum prediction
             self.recent_sensory.append(sensory_input)
@@ -394,10 +421,15 @@ class SimplifiedUnifiedBrain:
             prediction_confidence = self._current_prediction_confidence
             surprise_factor = 1.0 - prediction_confidence  # 0 = perfectly predicted, 1 = totally surprising
             
-            # Add baseline to ensure some learning even with good predictions
-            # But heavily modulate based on surprise
-            min_imprint = 0.1  # Always learn a little
-            scaled_intensity *= (min_imprint + (1.0 - min_imprint) * surprise_factor)
+            # Phase 2 enhancement: Use error-driven learning rate if available
+            if hasattr(self.field_dynamics, '_error_modulation') and self.field_dynamics._error_modulation:
+                # Prediction errors directly modulate learning rate
+                error_learning_rate = self.field_dynamics._error_modulation.get('learning_rate', 0.1)
+                scaled_intensity *= error_learning_rate / 0.1  # Normalize by base rate
+            else:
+                # Fallback to surprise-based modulation
+                min_imprint = 0.1  # Always learn a little
+                scaled_intensity *= (min_imprint + (1.0 - min_imprint) * surprise_factor)
             
             # Find emergent location for this sensory pattern
             reward = experience.raw_input_stream[-1].item() if len(experience.raw_input_stream) > 24 else 0.0
