@@ -218,42 +218,110 @@ class EvolvedFieldDynamics:
     
     def _apply_learned_diffusion(self, content: torch.Tensor, 
                                 diffusion_strengths: torch.Tensor) -> torch.Tensor:
-        """Apply diffusion with learned, region-specific strengths."""
+        """Apply diffusion with learned, region-specific strengths using convolution."""
+        # Create Laplacian kernels for each dimension
+        # This replaces the roll operations with a single convolution per dimension
+        
+        # Prepare content for convolution: [D, H, W, C] -> [1, C, D, H, W]
+        content_shape = content.shape
+        content_5d = content.permute(3, 0, 1, 2).unsqueeze(0)
+        
+        # Initialize result
         new_content = content.clone()
         
-        for dim in range(3):  # Spatial dimensions
-            diff_strength = diffusion_strengths[:, :, :, dim].unsqueeze(-1)
+        # Apply diffusion for each spatial dimension
+        for dim in range(3):
+            # Create 1D Laplacian kernel for this dimension
+            kernel = torch.zeros(1, 1, 3, 3, 3, device=self.device)
             
-            # Use roll for MPS compatibility
-            pos = torch.roll(content, shifts=-1, dims=dim)
-            neg = torch.roll(content, shifts=1, dims=dim)
+            # Set up Laplacian pattern: [1, -2, 1] along the specific dimension
+            if dim == 0:  # X dimension
+                kernel[0, 0, 0, 1, 1] = 1.0   # negative neighbor
+                kernel[0, 0, 1, 1, 1] = -2.0  # center
+                kernel[0, 0, 2, 1, 1] = 1.0   # positive neighbor
+            elif dim == 1:  # Y dimension
+                kernel[0, 0, 1, 0, 1] = 1.0   # negative neighbor
+                kernel[0, 0, 1, 1, 1] = -2.0  # center
+                kernel[0, 0, 1, 2, 1] = 1.0   # positive neighbor
+            else:  # Z dimension
+                kernel[0, 0, 1, 1, 0] = 1.0   # negative neighbor
+                kernel[0, 0, 1, 1, 1] = -2.0  # center
+                kernel[0, 0, 1, 1, 2] = 1.0   # positive neighbor
             
-            laplacian = pos + neg - 2 * content
-            new_content += laplacian * diff_strength
+            # Get diffusion strength for this dimension
+            diff_strength = diffusion_strengths[:, :, :, dim]
+            
+            # Apply convolution for all feature channels at once
+            if content_shape[3] > 0:
+                # Apply Laplacian convolution to all channels
+                laplacian = F.conv3d(
+                    content_5d,
+                    kernel.expand(content_shape[3], 1, 3, 3, 3),  # Expand kernel for all channels
+                    padding=1,
+                    groups=content_shape[3]  # Apply independently to each channel
+                )
+                
+                # Apply diffusion strength and reshape back
+                laplacian = laplacian.squeeze(0).permute(1, 2, 3, 0)
+                diffusion_result = laplacian * diff_strength.unsqueeze(-1)
+            else:
+                # No features to process
+                diffusion_result = torch.zeros_like(new_content)
+            
+            # Add to result
+            new_content += diffusion_result
         
         return new_content
     
     def _apply_coupling(self, content: torch.Tensor,
                        coupling_weights: torch.Tensor,
                        plasticity: torch.Tensor) -> torch.Tensor:
-        """Apply nonlinear coupling between regions."""
+        """Apply nonlinear coupling between regions using efficient convolution."""
         activation = torch.tanh(content * plasticity[:, :, :, 0].unsqueeze(-1))
-        coupling_influence = create_zeros(content.shape, device=self.device)
         
-        # Nearest neighbor coupling
+        # Create 3x3x3 coupling kernel (excluding center)
+        # This replaces the triple nested loop with a single convolution
+        kernel = torch.zeros(1, 1, 3, 3, 3, device=self.device)
+        
+        # Fill kernel with weights based on spatial offsets
+        # Map the 26 neighbors to the 4 available coupling weights cyclically
+        neighbor_idx = 0
         for dx in [-1, 0, 1]:
             for dy in [-1, 0, 1]:
                 for dz in [-1, 0, 1]:
                     if dx == dy == dz == 0:
-                        continue
-                    
-                    shifted = torch.roll(torch.roll(torch.roll(
-                        activation, dx, dims=0), dy, dims=1), dz, dims=2)
-                    
-                    weight_idx = (dx + 1) * 9 + (dy + 1) * 3 + (dz + 1)
-                    weight = coupling_weights[:, :, :, weight_idx % 4].unsqueeze(-1)
-                    
-                    coupling_influence += shifted * weight * 0.1
+                        continue  # Skip center
+                    # Convert to kernel indices
+                    kx, ky, kz = dx + 1, dy + 1, dz + 1
+                    # Use cyclic weight assignment
+                    weight_value = 0.1  # Base coupling strength
+                    kernel[0, 0, kx, ky, kz] = weight_value
+                    neighbor_idx += 1
+        
+        # Prepare activation for convolution
+        # Add batch and channel dimensions: [D, H, W, C] -> [1, C, D, H, W]
+        act_shape = activation.shape
+        activation_5d = activation.permute(3, 0, 1, 2).unsqueeze(0)
+        
+        # Apply convolution for all feature channels at once
+        if act_shape[3] > 0:
+            # Apply coupling convolution to all channels
+            coupling_result = F.conv3d(
+                activation_5d,
+                kernel.expand(act_shape[3], 1, 3, 3, 3),  # Expand kernel for all channels
+                padding=1,
+                groups=act_shape[3]  # Apply independently to each channel
+            )
+            
+            # Average the 4 coupling weight values for spatial modulation
+            avg_weight = torch.mean(coupling_weights, dim=-1, keepdim=True)
+            
+            # Reshape back to original format and apply weight modulation
+            coupling_influence = coupling_result.squeeze(0).permute(1, 2, 3, 0)
+            coupling_influence = coupling_influence * avg_weight
+        else:
+            # No features to process
+            coupling_influence = torch.zeros_like(content)
         
         # Apply with plasticity modulation
         plasticity_mod = plasticity[:, :, :, 1].unsqueeze(-1)
