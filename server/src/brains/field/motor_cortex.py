@@ -175,7 +175,7 @@ class MotorCortex:
         )
         self.last_feedback = feedback
         
-        if not self.quiet_mode and self.total_intentions % 100 == 0:
+        if not self.quiet_mode and self.total_intentions % 1000 == 0:
             acceptance_rate = self.accepted / self.total_intentions
             print(f"⚡ Motor Cortex: {acceptance_rate:.1%} acceptance rate")
         

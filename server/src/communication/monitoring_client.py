@@ -32,6 +32,7 @@ class BrainMonitoringClient:
         # Connection state
         self.socket = None
         self.connected = False
+        self._welcome_received = False  # Track if we've received the welcome message
         
         print(f"📊 BrainMonitoringClient initialized for {server_host}:{server_port}")
     
@@ -50,8 +51,12 @@ class BrainMonitoringClient:
             print(f"📊 Connecting to monitoring server at {self.server_host}:{self.server_port}...")
             self.socket.connect((self.server_host, self.server_port))
             
+            # Connection successful
             self.connected = True
             print(f"✅ Connected to monitoring server!")
+            
+            # Note: The monitoring server sends a welcome message, but we'll handle it
+            # as part of the first request/response cycle to avoid synchronization issues
             
             return True
             
@@ -110,6 +115,32 @@ class BrainMonitoringClient:
                 return None
         
         try:
+            # Handle welcome message on first request
+            if not self._welcome_received:
+                # Read and discard welcome message
+                welcome_data = b""
+                timeout_start = time.time()
+                while True:
+                    if time.time() - timeout_start > 5.0:
+                        print("⚠️  Timeout waiting for welcome message")
+                        self._cleanup_connection()
+                        return None
+                    
+                    try:
+                        self.socket.settimeout(0.5)
+                        chunk = self.socket.recv(4096)
+                        if not chunk:
+                            print("⚠️  Connection closed while waiting for welcome")
+                            self._cleanup_connection()
+                            return None
+                        welcome_data += chunk
+                        
+                        if b'\n' in welcome_data:
+                            # We have the welcome message, mark as received
+                            self._welcome_received = True
+                            break
+                    except socket.timeout:
+                        continue
             # Send request
             self.socket.send((request + "\n").encode('utf-8'))
             
@@ -166,7 +197,41 @@ class BrainMonitoringClient:
             return None
         
         try:
+            # Handle welcome message on first request
+            if not self._welcome_received:
+                # Read and discard welcome message
+                welcome_data = b""
+                timeout_start = time.time()
+                while True:
+                    if time.time() - timeout_start > 5.0:
+                        print("⚠️  Timeout waiting for welcome message")
+                        self._cleanup_connection()
+                        return None
+                    
+                    try:
+                        self.socket.settimeout(0.5)
+                        chunk = self.socket.recv(4096)
+                        if not chunk:
+                            print("⚠️  Connection closed while waiting for welcome")
+                            self._cleanup_connection()
+                            return None
+                        welcome_data += chunk
+                        
+                        if b'\n' in welcome_data:
+                            # We have the welcome message, mark as received
+                            self._welcome_received = True
+                            # Debug: show what we received
+                            try:
+                                welcome_msg = json.loads(welcome_data.decode('utf-8').strip())
+                                print(f"   📋 Welcome received: {welcome_msg.get('status', 'unknown')}")
+                            except:
+                                print(f"   ⚠️  Welcome format unexpected: {welcome_data[:100]}")
+                            break
+                    except socket.timeout:
+                        continue
+            
             # Send request
+            print(f"   📤 Sending request: {request}")
             self.socket.send((request + "\n").encode('utf-8'))
             
             # Receive JSON response with timeout
@@ -226,6 +291,7 @@ class BrainMonitoringClient:
     def _cleanup_connection(self):
         """Clean up connection resources."""
         self.connected = False
+        self._welcome_received = False
         
         if self.socket:
             try:

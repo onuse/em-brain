@@ -19,7 +19,7 @@ class EvolvedBrainTelemetry:
     
     # Core metrics
     brain_cycles: int
-    field_energy: float
+    field_information: float
     max_activation: float
     prediction_confidence: float
     cycle_time_ms: float
@@ -27,13 +27,13 @@ class EvolvedBrainTelemetry:
     # Evolution dynamics
     evolution_cycles: int
     self_modification_strength: float
-    smoothed_energy: float
+    smoothed_information: float
     smoothed_confidence: float
     
     # Field dynamics
     exploration_drive: float
     internal_ratio: float  # Internal vs external processing
-    energy_state: str  # "low", "medium", "high"
+    information_state: str  # "low", "medium", "high"
     confidence_state: str  # "uncertain", "moderate", "confident"
     behavior_state: str  # "exploring", "exploiting", "balanced"
     
@@ -126,13 +126,13 @@ class EvolvedBrainTelemetryAdapter:
         modulation = self.brain.modulation
         
         # Determine states
-        energy_level = emergent_props['smoothed_energy']
-        if energy_level < 0.3:
-            energy_state = "low"
-        elif energy_level < 0.7:
-            energy_state = "medium"
+        information_level = emergent_props.get('smoothed_information', emergent_props.get('smoothed_energy', 0.5))
+        if information_level < 0.3:
+            information_state = "low"
+        elif information_level < 0.7:
+            information_state = "medium"
         else:
-            energy_state = "high"
+            information_state = "high"
             
         confidence = emergent_props['smoothed_confidence']
         if confidence < 0.4:
@@ -179,7 +179,7 @@ class EvolvedBrainTelemetryAdapter:
         telemetry = EvolvedBrainTelemetry(
             # Core metrics
             brain_cycles=brain_state['cycle'],
-            field_energy=brain_state['field_energy'],
+            field_information=brain_state.get('field_information', brain_state.get('field_energy', 0.0)),
             max_activation=brain_state['max_activation'],
             prediction_confidence=brain_state['prediction_confidence'],
             cycle_time_ms=brain_state['cycle_time_ms'],
@@ -187,13 +187,13 @@ class EvolvedBrainTelemetryAdapter:
             # Evolution dynamics
             evolution_cycles=evo_state['evolution_cycles'],
             self_modification_strength=evo_state['self_modification_strength'],
-            smoothed_energy=evo_state['smoothed_energy'],
+            smoothed_information=evo_state.get('smoothed_information', evo_state.get('smoothed_energy', 0.5)),
             smoothed_confidence=evo_state['smoothed_confidence'],
             
             # Field dynamics
             exploration_drive=modulation.get('exploration_drive', 0.5),
             internal_ratio=modulation.get('internal_ratio', 0.5),
-            energy_state=energy_state,
+            information_state=information_state,
             confidence_state=confidence_state,
             behavior_state=behavior_state,
             
@@ -440,7 +440,7 @@ class EvolvedBrainTelemetryAdapter:
         return {
             'current_state': {
                 'cycles': current.brain_cycles,
-                'energy': f"{current.energy_state} ({current.field_energy:.4f})",
+                'information': f"{current.information_state} ({current.field_information:.4f})",
                 'confidence': f"{current.confidence_state} ({current.prediction_confidence:.2%})",
                 'behavior': current.behavior_state,
                 'self_modification': f"{current.self_modification_strength:.1%}",

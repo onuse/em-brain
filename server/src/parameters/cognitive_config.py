@@ -32,8 +32,8 @@ class BrainConfig:
     )  # 0.1 = moderate field evolution
     
     field_decay_rate: float = field(
-        default_factory=lambda: 0.9995  # Even slower decay for better stability
-    )  # 0.9995 = very slow decay
+        default_factory=lambda: 0.999  # Balanced decay to maintain patterns while processing
+    )  # 0.999 = 0.1% decay per cycle, patterns persist ~5000 cycles
     
     field_diffusion_rate: float = field(
         default_factory=lambda: PerformancePressureConstants.PERFORMANCE_ADAPTATION_RATE * 2.5

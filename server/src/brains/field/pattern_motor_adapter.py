@@ -114,11 +114,35 @@ class PatternMotorAdapter:
         motor_commands = self._tendencies_to_motors(tendencies, exploration_params)
         
         # Apply motor cortex processing
-        motor_commands, feedback = self.motor_cortex.process_intentions(
-            intentions=motor_commands,
-            confidence=dominant.coherence,
-            pattern_features={'energy': dominant.energy}
-        )
+        # Check if this is adaptive motor cortex
+        if hasattr(self.motor_cortex, 'process_intentions'):
+            # Build brain state for adaptive cortex
+            brain_state = {
+                'exploration_drive': exploration_params.get('exploration_drive', 0.5) if exploration_params else 0.5,
+                'information': dominant.energy,  # Use pattern energy as proxy for field information
+                'confidence': dominant.coherence
+            }
+            
+            # Check method signature
+            import inspect
+            sig = inspect.signature(self.motor_cortex.process_intentions)
+            if 'brain_state' in sig.parameters:
+                # Adaptive motor cortex
+                motor_commands, feedback = self.motor_cortex.process_intentions(
+                    intentions=motor_commands,
+                    confidence=dominant.coherence,
+                    brain_state=brain_state
+                )
+            else:
+                # Original motor cortex
+                motor_commands, feedback = self.motor_cortex.process_intentions(
+                    intentions=motor_commands,
+                    confidence=dominant.coherence,
+                    pattern_features={'energy': dominant.energy}
+                )
+        else:
+            # Fallback
+            feedback = None
         
         # Update pattern memory
         self.recent_patterns.append(dominant)

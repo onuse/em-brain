@@ -84,14 +84,22 @@ def apply_diffusion(field: torch.Tensor,
 
 
 def field_energy(field: torch.Tensor) -> float:
-    """Compute field energy (mean absolute value)."""
+    """Compute field energy (mean absolute value).
+    DEPRECATED: Use field_information() instead.
+    """
+    return field_information(field)
+
+
+def field_information(field: torch.Tensor) -> float:
+    """Compute field information content (mean absolute value)."""
     return float(torch.mean(torch.abs(field)))
 
 
 def field_stats(field: torch.Tensor) -> dict:
     """Compute standard field statistics."""
     return {
-        'energy': field_energy(field),
+        'energy': field_energy(field),  # Keep for compatibility
+        'information': field_information(field),
         'variance': float(safe_var(field)),
         'max': float(torch.max(torch.abs(field))),
         'min': float(torch.min(torch.abs(field)))

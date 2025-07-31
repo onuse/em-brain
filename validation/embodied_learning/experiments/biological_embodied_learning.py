@@ -136,6 +136,9 @@ class BiologicalEmbodiedLearningExperiment:
         self.prediction_error_history = []
         self.behavioral_trajectories = []
         self.strategy_evolution = []
+        self.light_distance_history = []
+        self.action_history = []
+        self.collision_history = []  # Track collision events
         
         # Create results directory
         self.results_dir = Path(f"validation/embodied_learning/reports/{config.experiment_name}_{int(time.time())}")
@@ -350,10 +353,16 @@ class BiologicalEmbodiedLearningExperiment:
                 
                 prediction_errors.append(prediction_error)
                 light_distances.append(metrics['min_light_distance'])
+                self.light_distance_history.append(metrics['min_light_distance'])
                 
                 # Track action distribution
                 action_name = ['MOVE_FORWARD', 'TURN_LEFT', 'TURN_RIGHT', 'STOP'][execution_result['action_executed']]
                 action_counts[action_name] += 1
+                self.action_history.append(action_name)
+                
+                # Track collisions: a forward move that failed indicates collision
+                if action_name == 'MOVE_FORWARD' and not execution_result['success']:
+                    self.collision_history.append(len(self.action_history) - 1)
                 
                 # Track trajectory
                 robot_state = execution_result['robot_state']
@@ -391,7 +400,9 @@ class BiologicalEmbodiedLearningExperiment:
                         print(f"      Brain: {behavior_state} | Confidence: {telemetry.get('prediction_confidence', 0):.1%}")
                         print(f"      Evolution: {evo_state.get('self_modification_strength', 0.01):.1%} | Cycles: {evo_state.get('evolution_cycles', 0)}")
                         print(f"      Memory: {topology.get('total', 0)} regions | {topology.get('causal_links', 0)} links")
-                        print(f"      Energy: {telemetry.get('field_energy', 0):.3f} | Saturation: {telemetry.get('memory_saturation', 0):.1%}\n")
+                        # Handle both old and new field names
+                        field_info = telemetry.get('field_information', telemetry.get('field_energy', 0))
+                        print(f"      Information: {field_info:.3f} | Saturation: {telemetry.get('memory_saturation', 0):.1%}\n")
                         
                         # Track behavior transitions
                         if behavior_state != last_behavior_state:
@@ -481,7 +492,7 @@ class BiologicalEmbodiedLearningExperiment:
                     'self_modification': evo_state.get('self_modification_strength', 0.01),
                     'evolution_cycles': evo_state.get('evolution_cycles', 0),
                     'working_memory_patterns': evo_state.get('working_memory', {}).get('n_patterns', 0),
-                    'field_energy': final_telemetry.get('field_energy', 0.0),
+                    'field_information': final_telemetry.get('field_information', final_telemetry.get('field_energy', 0.0)),
                     'memory_saturation': final_telemetry.get('memory_saturation', 0.0),
                     'topology_regions': final_telemetry.get('topology_regions', {}).get('total', 0),
                     'behavior_state': telemetry_report['behavioral_analysis'].get('dominant_behavior', 'unknown')
@@ -853,28 +864,73 @@ class BiologicalEmbodiedLearningExperiment:
         return np.sum(grid) / (grid_size * grid_size)
     
     def _calculate_collision_rate(self, trajectory_points: List[Tuple[float, float]]) -> float:
-        """Calculate collision rate based on trajectory."""
-        # Simplified collision detection
-        return 0.0  # Placeholder
+        """Calculate collision rate based on actual collision events."""
+        # Look at recent collision events (last 100 actions)
+        recent_window = 100
+        if len(self.action_history) < recent_window:
+            recent_actions = self.action_history
+            time_window_start = 0
+        else:
+            recent_actions = self.action_history[-recent_window:]
+            time_window_start = len(self.action_history) - recent_window
+        
+        # Count forward movement attempts
+        forward_attempts = recent_actions.count('MOVE_FORWARD')
+        if forward_attempts == 0:
+            return 0.0
+        
+        # Count collisions in the same time window
+        recent_collisions = sum(1 for t in self.collision_history if t >= time_window_start)
+        
+        # Collision rate = collisions / forward movement attempts
+        collision_rate = recent_collisions / forward_attempts
+        
+        return min(1.0, collision_rate)  # Cap at 1.0
     
     def _calculate_prediction_efficiency(self, prediction_errors: List[float]) -> float:
-        """Calculate prediction efficiency from error trends."""
-        if len(prediction_errors) < 20:
-            return 0.0
+        """Calculate prediction efficiency from error trends and behavioral metrics."""
+        # Base efficiency from prediction improvement
+        prediction_efficiency = 0.0
+        if len(prediction_errors) >= 20:
+            early_errors = prediction_errors[:10]
+            recent_errors = prediction_errors[-10:]
+            
+            early_avg = np.mean(early_errors)
+            recent_avg = np.mean(recent_errors)
+            
+            if early_avg > 0:
+                improvement = max(0.0, (early_avg - recent_avg) / early_avg)
+                prediction_efficiency = min(1.0, improvement)
         
-        # Compare recent errors to early errors
-        early_errors = prediction_errors[:10]
-        recent_errors = prediction_errors[-10:]
+        # Navigation efficiency from light distance improvement
+        navigation_efficiency = 0.0
+        if hasattr(self, 'light_distance_history') and len(self.light_distance_history) >= 20:
+            early_distances = self.light_distance_history[:10]
+            recent_distances = self.light_distance_history[-10:]
+            
+            early_avg_dist = np.mean(early_distances)
+            recent_avg_dist = np.mean(recent_distances)
+            
+            if early_avg_dist > 0:
+                dist_improvement = max(0.0, (early_avg_dist - recent_avg_dist) / early_avg_dist)
+                navigation_efficiency = min(1.0, dist_improvement)
         
-        early_avg = np.mean(early_errors)
-        recent_avg = np.mean(recent_errors)
+        # Action efficiency from forward movement ratio
+        action_efficiency = 0.3  # Base efficiency
+        if hasattr(self, 'action_history') and len(self.action_history) >= 50:
+            recent_actions = self.action_history[-50:]
+            forward_ratio = recent_actions.count('MOVE_FORWARD') / len(recent_actions)
+            stop_ratio = recent_actions.count('STOP') / len(recent_actions)
+            
+            # Good efficiency: high forward movement, low stopping
+            action_efficiency = forward_ratio * 0.7 + (1 - stop_ratio) * 0.3
         
-        # Efficiency improves as prediction error decreases
-        if early_avg == 0:
-            return 0.0
+        # Combine all efficiency factors
+        total_efficiency = (prediction_efficiency * 0.4 + 
+                          navigation_efficiency * 0.4 + 
+                          action_efficiency * 0.2)
         
-        improvement = max(0.0, (early_avg - recent_avg) / early_avg)
-        return min(1.0, improvement)
+        return max(0.1, min(1.0, total_efficiency))  # Clamp to [0.1, 1.0]
     
     def _detect_learning_from_trends(self, prediction_errors: List[float]) -> bool:
         """Detect if learning is occurring from prediction error trends."""

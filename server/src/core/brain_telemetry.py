@@ -17,7 +17,7 @@ class BrainTelemetry:
     """Complete telemetry snapshot from a brain"""
     # Core metrics
     brain_cycles: int
-    field_energy: float
+    field_information: float
     prediction_confidence: float
     cognitive_mode: str
     
@@ -131,7 +131,7 @@ class BrainTelemetryAdapter:
         telemetry = BrainTelemetry(
             # Core metrics
             brain_cycles=getattr(self.brain, 'brain_cycles', 0),
-            field_energy=field_stats.get('field_energy', 0.0),
+            field_information=field_stats.get('field_information', field_stats.get('field_energy', 0.0)),
             prediction_confidence=getattr(self.brain, '_current_prediction_confidence', 0.5),
             cognitive_mode=brain_state.get('cognitive_mode', 'unknown'),
             
@@ -182,7 +182,7 @@ class BrainTelemetryAdapter:
         
         return {
             'cycles': telemetry.brain_cycles,
-            'energy': round(telemetry.field_energy, 6),
+            'information': round(telemetry.field_information, 6),
             'confidence': round(telemetry.prediction_confidence, 3),
             'mode': telemetry.cognitive_mode,
             'phase': telemetry.phase_state,

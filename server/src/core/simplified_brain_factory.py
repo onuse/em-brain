@@ -53,6 +53,11 @@ class SimplifiedBrainWrapper(IBrain):
     
     def get_brain_state(self) -> Dict[str, Any]:
         """Get current brain state."""
+        # Use the brain's full telemetry method if available
+        if hasattr(self.brain, '_create_brain_state'):
+            return self.brain._create_brain_state()
+        
+        # Fallback to basic state
         return {
             'cycle': self.brain.brain_cycles,
             'cycle_time_ms': self.brain._last_cycle_time * 1000,
@@ -60,6 +65,12 @@ class SimplifiedBrainWrapper(IBrain):
             'device': str(self.brain.device),
             'tensor_shape': self.brain.tensor_shape
         }
+    
+    def _create_brain_state(self) -> Dict[str, Any]:
+        """Delegate to underlying brain's telemetry method."""
+        if hasattr(self.brain, '_create_brain_state'):
+            return self.brain._create_brain_state()
+        return self.get_brain_state()
     
     def get_field_statistics(self) -> Dict[str, Any]:
         """Get field statistics."""

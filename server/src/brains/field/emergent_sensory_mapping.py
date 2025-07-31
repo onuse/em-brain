@@ -221,18 +221,18 @@ class EmergentSensoryMapping:
                             field_state: torch.Tensor,
                             pattern: torch.Tensor) -> Tuple[int, int, int]:
         """Find a good empty location for a new pattern."""
-        # Compute field energy to avoid crowded areas
-        field_energy = torch.mean(torch.abs(field_state), dim=3)
+        # Compute field information to avoid crowded areas
+        field_information = torch.mean(torch.abs(field_state), dim=3)
         
-        # Compute available space (low energy, low occupancy)
-        availability = (1 - self.occupancy_map) * (1 - torch.sigmoid(field_energy * 5))
+        # Compute available space (low information, low occupancy)
+        availability = (1 - self.occupancy_map) * (1 - torch.sigmoid(field_information * 5))
         
         # Add noise to prevent all patterns going to same spot
         availability += torch.randn_like(availability) * 0.1
         
         # Prefer locations with some activity (not dead zones)
         min_activity = 0.01
-        availability *= (field_energy > min_activity).float()
+        availability *= (field_information > min_activity).float()
         
         # Find best available location
         max_idx = torch.argmax(availability.flatten())

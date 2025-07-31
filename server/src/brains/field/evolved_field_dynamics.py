@@ -16,7 +16,7 @@ import numpy as np
 
 from ...utils.tensor_ops import (
     create_zeros, create_randn, safe_mean, safe_var, 
-    safe_normalize, field_energy
+    safe_normalize, field_energy, field_information
 )
 
 
@@ -30,6 +30,11 @@ class EvolvedFieldDynamics:
     
     The field's last features encode local dynamics, starting with
     sensible defaults that gradually specialize based on experience.
+    
+    Core paradigm: Energy = Information
+    - High field energy = high information content = need for rest/consolidation
+    - Low field energy = low information = ready for new experiences
+    - This creates natural explore/exploit/rest cycles
     """
     
     def __init__(self, 
@@ -55,16 +60,21 @@ class EvolvedFieldDynamics:
         self.spatial_features = self.content_features - temporal_features
         
         # Pattern memory for novelty detection
-        self.pattern_memory = deque(maxlen=pattern_memory_size)
-        self.pattern_energies = deque(maxlen=pattern_memory_size)
+        self.pattern_memory = deque(maxlen=pattern_memory_size * 2)  # Increased size
+        self.pattern_energies = deque(maxlen=pattern_memory_size * 2)
+        self.pattern_timestamps = deque(maxlen=pattern_memory_size * 2)  # Track when patterns were seen
         
         # Prediction tracking for confidence
         self.prediction_errors = deque(maxlen=confidence_window)
         self.smoothed_confidence = 0.5
         
-        # Energy and state tracking
-        self.energy_history = deque(maxlen=1000)
-        self.smoothed_energy = 0.5
+        # Learning improvement tracking for exploration
+        self.error_improvement_history = deque(maxlen=50)  # Track improvement rate
+        self.learning_plateau_cycles = 0  # How long since improvement
+        
+        # Information and state tracking
+        self.information_history = deque(maxlen=1000)
+        self.smoothed_information = 0.5
         self.cycles_without_input = 0
         
         # Current state
@@ -279,11 +289,9 @@ class EvolvedFieldDynamics:
     
     def _update_self_modification_strength(self):
         """Gradually increase self-modification over time."""
-        # Increase strength with experience, capping at 0.1
-        self.self_modification_strength = min(
-            0.1,
-            0.01 + (self.evolution_count / 10000) * 0.09
-        )
+        # Logarithmic growth that continues beyond 10%
+        # Starts at 1%, reaches 10% at 10k cycles, 20% at 100k, etc.
+        self.self_modification_strength = 0.01 + 0.09 * np.log10(1 + self.evolution_count / 1000)
     
     def initialize_field_dynamics(self, field: torch.Tensor):
         """Initialize dynamics features with sensible defaults."""
@@ -306,23 +314,43 @@ class EvolvedFieldDynamics:
         """Compute field state metrics."""
         content = field[:, :, :, :self.content_features]
         
-        energy = field_energy(content)
+        information = field_information(content)
         variance = float(safe_var(content))
-        combined_energy = energy * (1.0 + variance)
+        combined_information = information * (1.0 + variance)
         
-        self.energy_history.append(combined_energy)
-        self.smoothed_energy = 0.95 * self.smoothed_energy + 0.05 * combined_energy
+        self.information_history.append(combined_information)
+        self.smoothed_information = 0.95 * self.smoothed_information + 0.05 * combined_information
         
         return {
-            'raw_energy': energy,
+            'raw_information': information,
             'variance': variance,
-            'combined_energy': combined_energy,
-            'smoothed_energy': self.smoothed_energy
+            'combined_information': combined_information,
+            'smoothed_information': self.smoothed_information,
+            # Keep old names for compatibility
+            'raw_energy': information,
+            'combined_energy': combined_information,
+            'smoothed_energy': self.smoothed_information
         }
     
     def compute_novelty(self, field: torch.Tensor) -> float:
         """Compute novelty of current field state."""
+        # Always ensure we have timestamps deque initialized
+        if not hasattr(self, 'pattern_timestamps'):
+            self.pattern_timestamps = deque(maxlen=len(self.pattern_memory) * 2)
+            
         if len(self.pattern_memory) == 0:
+            # First pattern - high novelty
+            # Create a proper initial pattern from field
+            content = field[:, :, :, :self.content_features]
+            field_small = content[:8, :8, :8, :8] if content.shape[0] >= 8 else content
+            field_flat = field_small.flatten()
+            if len(field_flat) > 512:
+                indices = torch.linspace(0, len(field_flat)-1, 512, dtype=torch.long, device=field.device)
+                field_flat = field_flat[indices]
+            field_norm = field_flat / (torch.norm(field_flat) + 1e-8)
+            self.pattern_memory.append(field_norm.detach().clone())
+            self.pattern_timestamps.append(self.evolution_count)
+            self._last_novelty = 1.0
             return 1.0
         
         content = field[:, :, :, :self.content_features]
@@ -337,25 +365,61 @@ class EvolvedFieldDynamics:
         
         field_norm = field_flat / (torch.norm(field_flat) + 1e-8)
         
-        # Compare to memory
+        # Compare to recent memory with temporal weighting
         max_similarity = 0.0
-        for pattern in self.pattern_memory:
-            similarity = float(torch.dot(field_norm, pattern))
-            max_similarity = max(max_similarity, similarity)
+        current_time = self.evolution_count
         
+        # Only compare to recent patterns (temporal forgetting)
+        recent_patterns = []
+        # Handle case where timestamps might not exist for old patterns
+        if len(self.pattern_timestamps) < len(self.pattern_memory):
+            # Backfill timestamps for existing patterns
+            while len(self.pattern_timestamps) < len(self.pattern_memory):
+                self.pattern_timestamps.append(0)
+        
+        for i, (pattern, timestamp) in enumerate(zip(self.pattern_memory, self.pattern_timestamps)):
+            age = current_time - timestamp
+            if age < 1000:  # Only consider patterns from last 1000 cycles
+                weight = np.exp(-age / 500)  # Exponential decay
+                similarity = float(torch.dot(field_norm, pattern)) * weight
+                max_similarity = max(max_similarity, similarity)
+                recent_patterns.append(i)
+        
+        # Add temporal variation bonus
+        temporal_bonus = 0.1 * np.sin(current_time * 0.01)  # Slow oscillation
+        
+        # Store new pattern with timestamp
         self.pattern_memory.append(field_norm.detach().clone())
+        self.pattern_timestamps.append(current_time)
         
-        novelty = 1.0 - max_similarity
+        # Calculate novelty with minimum floor
+        base_novelty = 1.0 - max_similarity
+        novelty = max(0.1, base_novelty + temporal_bonus)  # Never less than 0.1
+        
         self._last_novelty = novelty
         
         return novelty
     
     def update_confidence(self, prediction_error: float):
-        """Update confidence based on prediction accuracy."""
+        """Update confidence based on prediction accuracy and track improvement."""
         self.prediction_errors.append(prediction_error)
         
         if len(self.prediction_errors) > 5:
             recent_error = np.mean(list(self.prediction_errors)[-10:])
+            
+            # Track improvement in prediction
+            if len(self.prediction_errors) > 20:
+                old_error = np.mean(list(self.prediction_errors)[-20:-10])
+                improvement = old_error - recent_error  # Positive = getting better
+                self.error_improvement_history.append(improvement)
+                
+                # Check if learning has plateaued
+                if len(self.error_improvement_history) > 10:
+                    recent_improvement = np.mean(list(self.error_improvement_history)[-10:])
+                    if abs(recent_improvement) < 0.001:  # Very little change
+                        self.learning_plateau_cycles += 1
+                    else:
+                        self.learning_plateau_cycles = 0
         else:
             recent_error = 0.5
         
@@ -363,10 +427,10 @@ class EvolvedFieldDynamics:
         self.smoothed_confidence = 0.9 * self.smoothed_confidence + 0.1 * raw_confidence
     
     def compute_field_modulation(self, 
-                                energy_state: Dict[str, float],
+                                field_state: Dict[str, float],
                                 has_sensory_input: bool = True) -> Dict[str, float]:
         """Compute modulation parameters."""
-        energy = energy_state['smoothed_energy']
+        information = field_state.get('smoothed_information', field_state.get('smoothed_energy', 0.5))
         novelty = self._last_novelty
         confidence = self.smoothed_confidence
         
@@ -376,17 +440,47 @@ class EvolvedFieldDynamics:
             self.cycles_without_input = 0
         
         is_dreaming = self.cycles_without_input > 100
-        norm_energy = np.clip(energy / 2.0, 0.0, 1.0)
+        # Normalize information with higher threshold to prevent quick saturation
+        # Most field states should fall in 0.1-1.5 range, normalize to 0-1
+        norm_information = np.clip(information / 3.0, 0.0, 1.0)
         
-        internal_drive = (norm_energy + confidence) / 2.0
+        internal_drive = (norm_information + confidence) / 2.0
         if is_dreaming:
             internal_drive = 0.95
         
-        exploration_drive = (1.0 - norm_energy) * (0.5 + 0.5 * novelty)
+        # Base exploration with minimum floor
+        # Core paradigm: information content in the field
+        # High information means the brain needs rest to process/consolidate
+        # Low information means the brain is ready for new experiences
+        # This creates a natural explore/exploit/rest cycle
+        base_exploration = (1.0 - norm_information) * (0.5 + 0.5 * novelty)
+        
+        # Learning-driven exploration: addiction to prediction improvement
+        # When learning plateaus, exploration pressure builds up
+        improvement_pressure = 0.0
+        if hasattr(self, 'learning_plateau_cycles'):
+            # Exploration pressure grows with plateau duration
+            # After 100 cycles of no improvement, adds 0.3 to exploration
+            # After 200 cycles, adds 0.5 (saturates at 0.5)
+            improvement_pressure = min(0.5, self.learning_plateau_cycles / 200.0)
+        
+        # Metabolic baseline - even resting brains explore a little
+        metabolic_baseline = 0.1
+        
+        # Combine all exploration pressures
+        exploration_drive = base_exploration + improvement_pressure + metabolic_baseline
+        
+        # Natural ceiling at 1.0, no artificial minimum needed
+        exploration_drive = min(1.0, exploration_drive)
+        
+        # Add uncertainty-based exploration bonus
+        uncertainty_bonus = (1.0 - confidence) * 0.2
+        exploration_drive = min(1.0, exploration_drive + uncertainty_bonus)
+        
         sensory_amplification = 1.0 + (1.0 - confidence) * 0.5
         imprint_strength = 0.1 + 0.7 * (1.0 - internal_drive)
-        motor_noise = exploration_drive * 0.4
-        decay_rate = 0.999 - 0.01 * norm_energy
+        motor_noise = exploration_drive * 0.5  # Increased from 0.4
+        decay_rate = 0.999 - 0.01 * norm_information
         attention_novelty_bias = (1.0 - internal_drive) * 0.8
         
         self._last_modulation = {
@@ -399,7 +493,8 @@ class EvolvedFieldDynamics:
             'decay_rate': decay_rate,
             'attention_novelty_bias': attention_novelty_bias,
             'is_dreaming': is_dreaming,
-            'energy': norm_energy,
+            'information': norm_information,
+            'energy': norm_information,  # Keep for compatibility
             'confidence': confidence,
             'novelty': novelty
         }
@@ -416,15 +511,25 @@ class EvolvedFieldDynamics:
         if m['is_dreaming']:
             return "💤 DREAM: Pure internal dynamics"
         
-        energy_desc = "High energy" if m['energy'] > 0.6 else "Low energy"
+        info_desc = "High information" if m['information'] > 0.6 else "Low information"
         confidence_desc = "confident" if m['confidence'] > 0.6 else "uncertain"
-        mode = "exploring" if m['exploration_drive'] > 0.5 else "exploiting"
+        
+        # Determine mode based on exploration drive and learning state
+        if hasattr(self, 'learning_plateau_cycles') and self.learning_plateau_cycles > 100:
+            mode = "EXPLORING (learning plateaued)"
+        elif m['exploration_drive'] > 0.7:
+            mode = "EXPLORING"
+        elif m['exploration_drive'] > 0.5:
+            mode = "exploring"
+        else:
+            mode = "exploiting"
+        
         balance = f"{int(m['internal_drive']*100)}% internal"
         
         # Add self-modification indicator
         self_mod = f"[SM: {self.self_modification_strength:.0%}]"
         
-        return f"🧠 {energy_desc}, {confidence_desc}, {mode} | {balance} {self_mod}"
+        return f"🧠 {info_desc}, {confidence_desc}, {mode} | {balance} {self_mod}"
     
     def get_working_memory_state(self, field: torch.Tensor) -> Dict[str, Any]:
         """Extract working memory state from temporal features."""
@@ -447,9 +552,13 @@ class EvolvedFieldDynamics:
         
         return {
             'n_patterns': len(memory_patterns),
-            'mean_activation': mean_activation,
-            'temporal_coherence': temporal_coherence,
-            'patterns': memory_patterns[:5]
+            'mean_activation': float(mean_activation.item()) if isinstance(mean_activation, torch.Tensor) else float(mean_activation),
+            'temporal_coherence': float(temporal_coherence.item()) if isinstance(temporal_coherence, torch.Tensor) else float(temporal_coherence),
+            # Don't include raw tensor patterns in telemetry - they're too large and not JSON serializable
+            'pattern_summary': {
+                'count': len(memory_patterns),
+                'avg_size': sum(p.numel() for p in memory_patterns[:5]) / min(5, len(memory_patterns)) if memory_patterns else 0
+            }
         }
     
     def _compute_temporal_coherence(self, patterns: torch.Tensor) -> torch.Tensor:
@@ -522,7 +631,7 @@ class EvolvedFieldDynamics:
         return {
             'self_modification_strength': self.self_modification_strength,
             'evolution_cycles': self.evolution_count,
-            'smoothed_energy': self.smoothed_energy,
+            'smoothed_information': self.smoothed_information,
             'smoothed_confidence': self.smoothed_confidence,
             'cycles_without_input': self.cycles_without_input
         }

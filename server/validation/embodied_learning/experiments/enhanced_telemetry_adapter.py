@@ -6,6 +6,7 @@ during validation experiments.
 """
 
 import json
+import time
 from typing import Dict, Any, Optional, List
 from src.communication.monitoring_client import BrainMonitoringClient
 
@@ -40,15 +41,32 @@ class EnhancedTelemetryAdapter:
             if response and response.get('status') == 'success':
                 data = response.get('data', {})
                 
+                # Debug: check what we received
+                if not data:
+                    print(f"   ⚠️  Empty telemetry data received")
+                elif isinstance(data, dict) and len(data) == 0:
+                    print(f"   ⚠️  Telemetry returned empty dict")
+                
                 # Handle different response formats
                 if isinstance(data, dict):
-                    if session_id and session_id in data:
-                        # Specific session requested
-                        telemetry = data[session_id]
-                    elif not session_id and data:
-                        # All sessions returned, get first one
-                        telemetry = next(iter(data.values()))
+                    # Check if data has session keys
+                    if any(key.startswith('session_') for key in data.keys()):
+                        # This is a dict of sessions
+                        if session_id and session_id in data:
+                            # Specific session requested
+                            telemetry = data[session_id]
+                        else:
+                            # Get first session
+                            session_keys = [k for k in data.keys() if k.startswith('session_')]
+                            if session_keys:
+                                first_session = session_keys[0]
+                                telemetry = data[first_session]
+                                if not session_id:  # Only print if no session was specified
+                                    print(f"   📊 Using telemetry from {first_session}")
+                            else:
+                                telemetry = data
                     else:
+                        # Direct telemetry data
                         telemetry = data
                 else:
                     telemetry = data
@@ -99,15 +117,31 @@ class EnhancedTelemetryAdapter:
             metrics['energy_level'] = energy.get('energy', 0.5)
             metrics['novelty'] = energy.get('novelty', 0.0)
             
-        # Calculate efficiency from confidence and energy
+        # Calculate efficiency from multiple factors
         confidence = metrics['prediction_confidence']
         energy = metrics['field_energy']
         
-        # High confidence + moderate energy = good efficiency
-        if confidence > 0.6 and 0.2 < energy < 0.8:
-            metrics['efficiency'] = confidence * 0.8
+        # If we have evolution data, use it for efficiency calculation
+        if 'self_modification_strength' in metrics and 'evolution_cycles' in metrics:
+            # Efficiency based on: confidence, self-modification activity, and working memory usage
+            sm_factor = min(1.0, metrics['self_modification_strength'] / 0.1)  # Normalize to 0-1
+            wm_factor = min(1.0, metrics['working_memory_patterns'] / 10.0)  # Normalize to 0-1
+            
+            # Weighted combination: confidence matters most, but activity indicators also contribute
+            metrics['efficiency'] = (confidence * 0.5 + sm_factor * 0.3 + wm_factor * 0.2)
+        elif energy > 0:
+            # Fallback to energy-based calculation if available
+            if confidence > 0.6 and 0.2 < energy < 0.8:
+                metrics['efficiency'] = confidence * 0.8
+            else:
+                metrics['efficiency'] = confidence * 0.5
         else:
-            metrics['efficiency'] = confidence * 0.5
+            # Final fallback: use confidence with learning detection boost
+            base_efficiency = confidence * 0.5
+            if metrics.get('learning_detected', False):
+                metrics['efficiency'] = min(1.0, base_efficiency * 1.5)
+            else:
+                metrics['efficiency'] = base_efficiency
             
         # Detect learning from confidence improvement
         if len(self.telemetry_history) > 10:

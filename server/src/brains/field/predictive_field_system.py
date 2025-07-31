@@ -1,0 +1,371 @@
+#!/usr/bin/env python3
+"""
+Predictive Field System - The Brain IS Prediction
+
+This system makes prediction explicit in the field dynamics. Rather than adding
+prediction as a feature, we're revealing that the entire field operation is
+fundamentally predictive.
+
+Key principles:
+1. Every field state embodies predictions about the future
+2. Topology regions are predictive models for specific sensors
+3. Temporal features encode prediction trajectories
+4. Prediction errors drive all learning
+"""
+
+import torch
+import numpy as np
+from typing import Dict, List, Tuple, Optional
+from dataclasses import dataclass
+from collections import deque
+
+from ...utils.tensor_ops import create_zeros, safe_normalize
+
+
+@dataclass
+class SensoryPrediction:
+    """Prediction for sensory input with confidence."""
+    values: torch.Tensor  # Predicted sensor values
+    confidence: torch.Tensor  # Per-sensor confidence (0-1)
+    source_regions: List[int]  # Which topology regions contributed
+    temporal_basis: str  # "immediate", "short_term", "long_term"
+
+
+class PredictiveFieldSystem:
+    """
+    Makes the field's predictive nature explicit.
+    
+    This system:
+    1. Extracts predictions from field state
+    2. Tracks which regions predict which sensors
+    3. Learns from prediction errors
+    4. Enables emergent sensory specialization
+    """
+    
+    def __init__(self,
+                 field_shape: Tuple[int, int, int, int],
+                 sensory_dim: int,
+                 device: torch.device):
+        """
+        Initialize predictive field system.
+        
+        Args:
+            field_shape: Shape of the 4D field
+            sensory_dim: Number of sensory inputs to predict
+            device: Computation device
+        """
+        self.field_shape = field_shape
+        self.sensory_dim = sensory_dim
+        self.device = device
+        
+        # Feature organization (matching field structure)
+        self.spatial_features = field_shape[-1] - 32  # First 32 for content
+        self.temporal_features = 16  # Next 16 for temporal
+        self.dynamics_features = 16  # Last 16 for dynamics
+        
+        # Prediction tracking
+        self.prediction_history = deque(maxlen=100)
+        self.error_history = deque(maxlen=100)
+        
+        # Region-sensor associations (learned through use)
+        # Start with no associations - they emerge
+        self.region_sensor_affinity = {}  # region_id -> sensor_indices
+        self.sensor_region_affinity = {}  # sensor_idx -> region_ids
+        
+        # Temporal prediction bases
+        self.immediate_window = 1  # Next cycle
+        self.short_term_window = 10  # Next 10 cycles
+        self.long_term_window = 100  # Next 100 cycles
+        
+    def generate_sensory_prediction(self, 
+                                   field: torch.Tensor,
+                                   topology_regions: List[any],
+                                   recent_sensory: Optional[deque] = None) -> SensoryPrediction:
+        """
+        Generate sensory predictions from current field state.
+        
+        This is where the magic happens - the field reveals its predictions.
+        
+        Args:
+            field: Current field state
+            topology_regions: Active topology regions
+            recent_sensory: Recent sensory history for momentum
+            
+        Returns:
+            SensoryPrediction with values and confidence
+        """
+        # Initialize predictions
+        predictions = create_zeros((self.sensory_dim,), device=self.device)
+        confidences = create_zeros((self.sensory_dim,), device=self.device)
+        source_regions = []
+        
+        # 1. Extract temporal predictive features
+        temporal_field = field[:, :, :, self.spatial_features:self.spatial_features + self.temporal_features]
+        
+        # 2. Get momentum-based predictions from recent history
+        if recent_sensory and len(recent_sensory) >= 2:
+            # Simple momentum: continue recent trends
+            recent_vals = torch.stack([torch.tensor(s, device=self.device) for s in list(recent_sensory)[-3:]])
+            momentum = self._compute_momentum_prediction(recent_vals)
+            predictions += momentum * 0.3  # Weight momentum contribution
+            confidences += 0.2  # Base confidence from momentum
+        
+        # 3. Let topology regions make predictions
+        for i, region in enumerate(topology_regions):
+            if not hasattr(region, 'pattern') or region.pattern is None:
+                continue
+                
+            # Check if this region has learned sensor associations
+            if i not in self.region_sensor_affinity:
+                # New region - let it try to predict all sensors initially
+                sensor_indices = list(range(self.sensory_dim))
+            else:
+                sensor_indices = self.region_sensor_affinity[i]
+            
+            if not sensor_indices:
+                continue
+                
+            # Extract region's predictive contribution
+            region_prediction = self._extract_region_prediction(
+                region, temporal_field, sensor_indices
+            )
+            
+            # Weight by region stability (stable regions are better predictors)
+            stability = region.stability if hasattr(region, 'stability') else 0.5
+            
+            for idx, (pred, conf) in region_prediction.items():
+                predictions[idx] += pred * stability
+                confidences[idx] = max(confidences[idx], conf * stability)
+            
+            source_regions.append(i)
+        
+        # 4. Normalize predictions that had multiple contributors
+        contributor_count = create_zeros((self.sensory_dim,), device=self.device)
+        for i in source_regions:
+            if i in self.region_sensor_affinity:
+                for idx in self.region_sensor_affinity[i]:
+                    contributor_count[idx] += 1
+        
+        mask = contributor_count > 1
+        predictions[mask] /= contributor_count[mask]
+        
+        # 5. Add field-wide prediction bias
+        # Low field activity predicts low sensory activity
+        field_activity = torch.mean(torch.abs(field[:, :, :, :self.spatial_features]))
+        predictions += field_activity * 0.1
+        
+        # 6. Ensure predictions are in reasonable range
+        predictions = torch.clamp(predictions, -1.0, 1.0)
+        confidences = torch.clamp(confidences, 0.0, 1.0)
+        
+        # For sensors with no prediction, use low confidence
+        no_prediction_mask = confidences < 0.01
+        confidences[no_prediction_mask] = 0.1  # Low but not zero
+        
+        return SensoryPrediction(
+            values=predictions,
+            confidence=confidences,
+            source_regions=source_regions,
+            temporal_basis="immediate"  # TODO: Add multi-timescale
+        )
+    
+    def _compute_momentum_prediction(self, recent_vals: torch.Tensor) -> torch.Tensor:
+        """Compute momentum-based prediction from recent values."""
+        if recent_vals.shape[0] < 2:
+            return create_zeros((self.sensory_dim,), device=self.device)
+        
+        # Simple linear extrapolation
+        if recent_vals.shape[0] == 2:
+            momentum = recent_vals[-1] - recent_vals[-2]
+        else:
+            # Weight recent changes more
+            momentum = 0.5 * (recent_vals[-1] - recent_vals[-2]) + \
+                      0.3 * (recent_vals[-2] - recent_vals[-3])
+        
+        # Predict next value
+        prediction = recent_vals[-1] + momentum
+        
+        return prediction
+    
+    def _extract_region_prediction(self,
+                                  region: any,
+                                  temporal_field: torch.Tensor,
+                                  sensor_indices: List[int]) -> Dict[int, Tuple[float, float]]:
+        """Extract prediction from a topology region."""
+        predictions = {}
+        
+        # Get region's location in field
+        if hasattr(region, 'location'):
+            x, y, z = region.location
+        else:
+            # Use region's pattern location
+            pattern = region.pattern
+            if hasattr(pattern, 'location'):
+                x, y, z = pattern.location
+            else:
+                return predictions
+        
+        # Extract temporal features at this location
+        local_temporal = temporal_field[
+            max(0, x-1):min(temporal_field.shape[0], x+2),
+            max(0, y-1):min(temporal_field.shape[1], y+2),
+            max(0, z-1):min(temporal_field.shape[2], z+2),
+            :
+        ]
+        
+        # Average temporal activity
+        temporal_mean = torch.mean(local_temporal, dim=(0, 1, 2))
+        
+        # Map temporal features to sensor predictions
+        # This is where regions learn to predict specific sensors
+        for sensor_idx in sensor_indices:
+            # Use specific temporal features for this sensor
+            # This mapping will improve through learning
+            feature_idx = sensor_idx % self.temporal_features
+            
+            # Prediction is based on temporal feature activation
+            prediction_val = temporal_mean[feature_idx].item()
+            
+            # Confidence based on feature strength
+            confidence = min(1.0, abs(prediction_val) * 2.0)
+            
+            predictions[sensor_idx] = (prediction_val, confidence)
+        
+        return predictions
+    
+    def process_prediction_error(self,
+                                predicted: torch.Tensor,
+                                actual: torch.Tensor,
+                                topology_regions: List[any]) -> Dict[str, any]:
+        """
+        Process prediction error and update region-sensor associations.
+        
+        This is where learning happens - regions that predict well
+        strengthen their sensor associations.
+        
+        Args:
+            predicted: Predicted sensor values
+            actual: Actual sensor values
+            topology_regions: Current topology regions
+            
+        Returns:
+            Error analysis dict
+        """
+        # Compute per-sensor errors
+        errors = actual - predicted
+        abs_errors = torch.abs(errors)
+        
+        # Track error history
+        self.error_history.append(abs_errors.mean().item())
+        
+        # Update region-sensor affinities based on prediction success
+        # This is key - regions learn which sensors they predict well
+        self._update_region_sensor_affinity(abs_errors, topology_regions)
+        
+        # Compute error statistics
+        error_stats = {
+            'mean_error': abs_errors.mean().item(),
+            'max_error': abs_errors.max().item(),
+            'per_sensor_error': abs_errors.cpu().numpy(),
+            'improving': self._is_prediction_improving(),
+            'specialized_sensors': len(self.sensor_region_affinity)
+        }
+        
+        return error_stats
+    
+    def _update_region_sensor_affinity(self,
+                                      errors: torch.Tensor,
+                                      topology_regions: List[any]):
+        """Update which regions predict which sensors based on errors."""
+        # Only update every 10 cycles to allow patterns to stabilize
+        if len(self.error_history) % 10 != 0:
+            return
+        
+        # For each region, track its prediction success
+        for i, region in enumerate(topology_regions):
+            if not hasattr(region, 'pattern') or region.pattern is None:
+                continue
+            
+            # Get current sensor associations
+            if i not in self.region_sensor_affinity:
+                # New region starts by trying to predict all sensors
+                self.region_sensor_affinity[i] = list(range(self.sensory_dim))
+            
+            current_sensors = self.region_sensor_affinity[i]
+            if not current_sensors:
+                continue
+            
+            # Compute average error for this region's sensors
+            region_errors = errors[current_sensors]
+            avg_error = region_errors.mean().item()
+            
+            # If prediction is good, strengthen association
+            # If bad, weaken and potentially remove
+            if avg_error < 0.2:  # Good prediction threshold
+                # This region is good at these sensors
+                for sensor_idx in current_sensors:
+                    if sensor_idx not in self.sensor_region_affinity:
+                        self.sensor_region_affinity[sensor_idx] = []
+                    if i not in self.sensor_region_affinity[sensor_idx]:
+                        self.sensor_region_affinity[sensor_idx].append(i)
+            
+            elif avg_error > 0.5:  # Poor prediction threshold
+                # Remove sensors this region can't predict well
+                poor_sensors = []
+                for j, sensor_idx in enumerate(current_sensors):
+                    if errors[sensor_idx] > 0.5:
+                        poor_sensors.append(sensor_idx)
+                
+                # Remove poor sensors from this region
+                self.region_sensor_affinity[i] = [
+                    s for s in current_sensors if s not in poor_sensors
+                ]
+                
+                # Remove this region from poor sensors
+                for sensor_idx in poor_sensors:
+                    if sensor_idx in self.sensor_region_affinity:
+                        self.sensor_region_affinity[sensor_idx] = [
+                            r for r in self.sensor_region_affinity[sensor_idx] if r != i
+                        ]
+    
+    def _is_prediction_improving(self) -> bool:
+        """Check if predictions are improving over time."""
+        if len(self.error_history) < 20:
+            return False
+        
+        recent_errors = list(self.error_history)[-10:]
+        older_errors = list(self.error_history)[-20:-10]
+        
+        return np.mean(recent_errors) < np.mean(older_errors)
+    
+    def get_predictive_statistics(self) -> Dict[str, any]:
+        """Get statistics about predictive performance."""
+        stats = {
+            'prediction_count': len(self.prediction_history),
+            'mean_error': np.mean(list(self.error_history)) if self.error_history else 0.5,
+            'error_trend': self._compute_error_trend(),
+            'specialized_regions': len(self.region_sensor_affinity),
+            'sensor_coverage': self._compute_sensor_coverage(),
+            'improving': self._is_prediction_improving()
+        }
+        
+        return stats
+    
+    def _compute_error_trend(self) -> float:
+        """Compute trend in prediction error (-1 to 1, negative is improving)."""
+        if len(self.error_history) < 10:
+            return 0.0
+        
+        errors = list(self.error_history)
+        x = np.arange(len(errors))
+        
+        # Simple linear regression
+        slope = np.polyfit(x, errors, 1)[0]
+        
+        # Normalize to [-1, 1]
+        return np.tanh(slope * 10)
+    
+    def _compute_sensor_coverage(self) -> float:
+        """Compute fraction of sensors with dedicated predictors."""
+        sensors_with_predictors = len(self.sensor_region_affinity)
+        return sensors_with_predictors / self.sensory_dim if self.sensory_dim > 0 else 0.0

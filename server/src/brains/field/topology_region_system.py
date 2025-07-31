@@ -208,9 +208,11 @@ class TopologyRegionSystem:
         field_abs = torch.abs(field)
         mean_activation = torch.mean(field_abs).item()
         std_activation = torch.std(field_abs).item()
+        max_activation = torch.max(field_abs).item()
         
-        # Threshold for salience - start with a lower threshold
-        salience_threshold = max(0.05, mean_activation + 0.5 * std_activation)
+        # Threshold for salience - use a more sensitive threshold
+        # Start detecting regions when activation is above mean
+        salience_threshold = max(0.01, mean_activation * 0.8)
         
         # Simplified approach: find top activations instead of local maxima
         field_mean = field_abs.mean(dim=3)

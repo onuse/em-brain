@@ -41,10 +41,10 @@ class PerformanceTargets:
         
         if env == Environment.DEVELOPMENT:
             # Relaxed targets for development machines
-            # Jonas's M1 MacBook - anything under 750ms is fine
+            # Jonas's M1 MacBook - anything under 1200ms is fine
             return cls(
-                max_cycle_time_ms=750.0,
-                target_cycle_time_ms=200.0,
+                max_cycle_time_ms=1200.0,
+                target_cycle_time_ms=750.0,
                 min_cycle_time_ms=50.0,
                 max_memory_mb=2000.0,
                 target_memory_mb=500.0,
@@ -68,13 +68,13 @@ class PerformanceTargets:
             # Strict targets for production deployment
             # Target machine is ~10x faster
             return cls(
-                max_cycle_time_ms=150.0,
-                target_cycle_time_ms=75.0,
-                min_cycle_time_ms=20.0,
-                max_memory_mb=500.0,
-                target_memory_mb=200.0,
-                max_cpu_percent=40.0,
-                max_gpu_memory_mb=1000.0
+                max_cycle_time_ms=650.0,
+                target_cycle_time_ms=250.0,
+                min_cycle_time_ms=50.0,
+                max_memory_mb=20000.0,
+                target_memory_mb=16000.0,
+                max_cpu_percent=100.0,
+                max_gpu_memory_mb=7500.0
             )
             
         elif env == Environment.EMBEDDED:

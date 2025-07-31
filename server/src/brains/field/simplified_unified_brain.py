@@ -22,6 +22,7 @@ from .unified_pattern_system import UnifiedPatternSystem
 from .pattern_motor_adapter import PatternMotorAdapter
 from .pattern_attention_adapter import PatternAttentionAdapter
 from .motor_cortex import MotorCortex
+from .adaptive_motor_cortex import AdaptiveMotorCortex
 from .field_constants import TOPOLOGY_REGIONS_MAX
 from .evolved_field_dynamics import EvolvedFieldDynamics
 from .emergent_sensory_mapping import EmergentSensoryMapping
@@ -29,16 +30,16 @@ from .predictive_action_system import PredictiveActionSystem
 from .reward_topology_shaping import RewardTopologyShaper
 from .consolidation_system import ConsolidationSystem
 from .topology_region_system import TopologyRegionSystem
-from ...utils.tensor_ops import create_randn, field_energy, field_stats, apply_diffusion
+from .predictive_field_system import PredictiveFieldSystem
+from ...utils.tensor_ops import create_randn, field_information, field_stats, apply_diffusion
 from ...utils.error_handling import (
     validate_list_input, validate_tensor_shape, ErrorContext,
     BrainError, safe_tensor_op
 )
 from .pattern_cache_pool import PatternCachePool
-from .optimized_brain_cycle import OptimizedBrainMixin, CycleCache
 
 
-class SimplifiedUnifiedBrain(OptimizedBrainMixin):
+class SimplifiedUnifiedBrain:
     """
     Simplified brain with 4D tensor architecture.
     
@@ -54,8 +55,7 @@ class SimplifiedUnifiedBrain(OptimizedBrainMixin):
                  motor_dim: int = 5,
                  spatial_resolution: int = 32,
                  device: Optional[torch.device] = None,
-                 quiet_mode: bool = False,
-                 use_optimized: bool = True):
+                 quiet_mode: bool = False):
         """
         Initialize simplified brain.
         
@@ -92,29 +92,26 @@ class SimplifiedUnifiedBrain(OptimizedBrainMixin):
             print(f"   Device: {self.device}")
             print(f"   Memory: {self._calculate_memory_usage():.1f}MB")
         
-        # Initialize unified field with moderate random values
-        self.unified_field = create_randn(self.tensor_shape, device=self.device, scale=0.3, bias=0.1)
+        # Initialize unified field with moderate random values and baseline activity
+        # Bias provides metabolic baseline to prevent complete silence
+        self.unified_field = create_randn(self.tensor_shape, device=self.device, scale=0.2, bias=0.05)
         
         # Core parameters
         self.field_evolution_rate = brain_config.field_evolution_rate
         self.field_decay_rate = brain_config.field_decay_rate
         self.field_diffusion_rate = brain_config.field_diffusion_rate
         self.spontaneous_rate = brain_config.spontaneous_rate
+        self.sensory_dim = sensory_dim
         
         # Initialize core systems
         self._initialize_core_systems(motor_dim)
         
-        # Initialize optimization features
-        self.use_optimized = use_optimized
-        if use_optimized:
-            # Initialize OptimizedBrainMixin
-            OptimizedBrainMixin.__init__(self)
-            # Create pattern cache pool
-            self.pattern_cache_pool = PatternCachePool(
-                field_shape=self.tensor_shape,
-                max_patterns=50,
-                device=self.device
-            )
+        # Create pattern cache pool for performance
+        self.pattern_cache_pool = PatternCachePool(
+            field_shape=self.tensor_shape,
+            max_patterns=50,
+            device=self.device
+        )
         
         # State tracking
         self.brain_cycles = 0
@@ -122,14 +119,17 @@ class SimplifiedUnifiedBrain(OptimizedBrainMixin):
         self._last_cycle_time = 0
         self._current_prediction_confidence = brain_config.default_prediction_confidence
         self._predicted_field = None
+        self._predicted_sensory = None  # Track what we expect to sense
         self._last_prediction_error = brain_config.optimal_prediction_error
         self._last_imprint_strength = 0.0
+        self._last_activated_regions = []
         self.modulation = {}  # Will be filled by unified field dynamics
         
         # Memory systems
         self.working_memory = deque(maxlen=brain_config.working_memory_limit)
         self.temporal_experiences = deque(maxlen=100)
         self.field_experiences = deque(maxlen=1000)
+        self.recent_sensory = deque(maxlen=10)  # For momentum-based prediction
         
         if not quiet_mode:
             print(f"✅ Brain initialized successfully on {self.device}")
@@ -177,10 +177,13 @@ class SimplifiedUnifiedBrain(OptimizedBrainMixin):
         )
         
         # Pattern-based motor using unified system
-        self.motor_cortex = MotorCortex(
+        # Use adaptive motor cortex for more nuanced outputs
+        self.motor_cortex = AdaptiveMotorCortex(
             motor_dim=motor_dim,
             device=self.device,
-            activation_threshold=0.1
+            base_sensitivity=0.1,
+            adaptation_rate=0.01,
+            quiet_mode=self.quiet_mode
         )
         
         self.pattern_motor = PatternMotorAdapter(
@@ -207,7 +210,7 @@ class SimplifiedUnifiedBrain(OptimizedBrainMixin):
         self.topology_region_system = TopologyRegionSystem(
             field_shape=self.tensor_shape,
             device=self.device,
-            stability_threshold=0.1,
+            stability_threshold=0.05,  # Lower threshold for better detection
             max_regions=200
         )
         
@@ -219,14 +222,18 @@ class SimplifiedUnifiedBrain(OptimizedBrainMixin):
             spatial_decay=0.95
         )
         
+        # Predictive field system - the brain IS prediction
+        self.predictive_field = PredictiveFieldSystem(
+            field_shape=self.tensor_shape,
+            sensory_dim=self.sensory_dim,
+            device=self.device
+        )
+        
+    @torch.no_grad()  # Disable gradient computation for performance
     def process_robot_cycle(self, sensory_input: List[float]) -> Tuple[List[float], Dict[str, Any]]:
         """
         Main processing cycle - simplified version.
         """
-        # Use optimized version if enabled
-        if self.use_optimized:
-            return self.process_robot_cycle_optimized(sensory_input)
-        
         cycle_start = time.perf_counter()
         
         try:
@@ -240,10 +247,20 @@ class SimplifiedUnifiedBrain(OptimizedBrainMixin):
                 experience = self._create_field_experience(sensory_input)
             
             # 2. Update prediction tracking
-            if self._predicted_field is not None:
+            if self._predicted_sensory is not None and experience.raw_input_stream is not None:
+                # Compare predicted vs actual sensory input
+                actual_sensory = experience.raw_input_stream[:len(self._predicted_sensory)]
+                sensory_error = torch.mean(torch.abs(actual_sensory - self._predicted_sensory)).item()
+                self._last_prediction_error = sensory_error
+                self._current_prediction_confidence = 1.0 - min(1.0, sensory_error * 2.0)
+            elif self._predicted_field is not None:
+                # Fallback to field comparison
                 prediction_error = torch.mean(torch.abs(self.unified_field - self._predicted_field)).item()
                 self._last_prediction_error = prediction_error
                 self._current_prediction_confidence = 1.0 - min(1.0, prediction_error * 2.0)
+            else:
+                # First cycle - no prediction yet, so low confidence
+                self._current_prediction_confidence = 0.5
             
             # 3. Imprint sensory experience
             self._imprint_experience(experience)
@@ -254,12 +271,18 @@ class SimplifiedUnifiedBrain(OptimizedBrainMixin):
             # 5. Update unified field dynamics
             reward = sensory_input[-1] if len(sensory_input) > 24 else 0.0
             
-            # Compute field state (energy, novelty, etc.)
+            # Compute field state (information, novelty, etc.)
             field_state = self.field_dynamics.compute_field_state(self.unified_field)
             novelty = self.field_dynamics.compute_novelty(self.unified_field)
             
             # Update confidence from prediction error
             self.field_dynamics.update_confidence(self._last_prediction_error)
+            
+            # Debug confidence values
+            if self.brain_cycles % 100 == 0 and not self.quiet_mode:
+                print(f"[DEBUG] Confidence: current={self._current_prediction_confidence:.3f}, " +
+                      f"smoothed={self.field_dynamics.smoothed_confidence:.3f}, " +
+                      f"error={self._last_prediction_error:.3f}")
             
             # Get unified modulation parameters
             has_input = len(sensory_input) > 0 and any(abs(v) > 0.01 for v in sensory_input[:-1])
@@ -274,15 +297,45 @@ class SimplifiedUnifiedBrain(OptimizedBrainMixin):
                     reward=reward,
                     threshold=0.1
                 )
+                
+                # Also give feedback to adaptive motor cortex
+                if hasattr(self.motor_cortex, 'inject_reward_feedback'):
+                    self.motor_cortex.inject_reward_feedback(reward)
             
             # 7. Evolve field
             self._evolve_field()
             
-            # 8. Detect and update topology regions
-            activated_regions = self.topology_region_system.detect_topology_regions(
-                self.unified_field,
-                current_patterns=self.pattern_system.extract_patterns(self.unified_field, n_patterns=5)
+            # Generate prediction for next cycle
+            # Simple approach: current field + expected evolution
+            self._predicted_field = self.unified_field.clone()
+            # Apply expected decay and diffusion
+            self._predicted_field *= self.modulation.get('decay_rate', 0.995)
+            
+            # Predict sensory input using the predictive field system
+            # This is where the brain reveals what it expects to sense
+            topology_regions = getattr(self, '_last_activated_regions', [])
+            prediction = self.predictive_field.generate_sensory_prediction(
+                field=self.unified_field,
+                topology_regions=topology_regions,
+                recent_sensory=self.recent_sensory
             )
+            
+            # Store predictions for next cycle
+            self._predicted_sensory = prediction.values
+            self._prediction_confidence_per_sensor = prediction.confidence
+            
+            # Update recent sensory history for momentum prediction
+            self.recent_sensory.append(sensory_input)
+            
+            # 8. Detect and update topology regions
+            # Only run every 5 cycles for performance
+            if self.brain_cycles % 5 == 0:
+                activated_regions = self.topology_region_system.detect_topology_regions(
+                    self.unified_field,
+                    current_patterns=self.pattern_system.extract_patterns(self.unified_field, n_patterns=5)
+                )
+            else:
+                activated_regions = self._last_activated_regions
             
             # 9. Generate motor action
             motor_output = self._generate_motor_action()
@@ -334,6 +387,17 @@ class SimplifiedUnifiedBrain(OptimizedBrainMixin):
             # Get modulated intensity from unified dynamics
             scaled_intensity = experience.field_intensity * self.modulation.get('imprint_strength', 0.5)
             scaled_intensity *= self.modulation.get('sensory_amplification', 1.0)
+            
+            # Predictive sensory gating: suppress well-predicted inputs
+            # High prediction error → high surprise → strong imprinting
+            # Low prediction error → low surprise → weak imprinting
+            prediction_confidence = self._current_prediction_confidence
+            surprise_factor = 1.0 - prediction_confidence  # 0 = perfectly predicted, 1 = totally surprising
+            
+            # Add baseline to ensure some learning even with good predictions
+            # But heavily modulate based on surprise
+            min_imprint = 0.1  # Always learn a little
+            scaled_intensity *= (min_imprint + (1.0 - min_imprint) * surprise_factor)
             
             # Find emergent location for this sensory pattern
             reward = experience.raw_input_stream[-1].item() if len(experience.raw_input_stream) > 24 else 0.0
@@ -410,7 +474,7 @@ class SimplifiedUnifiedBrain(OptimizedBrainMixin):
         # Generate motor action using unified pattern system
         exploration_params = {
             'exploration_drive': self.modulation.get('exploration_drive', 0.5),
-            'motor_noise': 0.2
+            'motor_noise': self.modulation.get('motor_noise', 0.2)
         }
         
         # Get attention state from current attention processing
@@ -478,14 +542,14 @@ class SimplifiedUnifiedBrain(OptimizedBrainMixin):
         evolution_props = self.field_dynamics.get_emergent_properties()
         working_memory = self.field_dynamics.get_working_memory_state(self.unified_field)
         
-        # Determine cognitive mode based on energy and confidence
-        energy = self.modulation.get('energy', 0.5)
+        # Determine cognitive mode based on information and confidence
+        information = self.modulation.get('information', 0.5)
         confidence = evolution_props['smoothed_confidence']
         exploration = self.modulation.get('exploration_drive', 0.5)
         
-        if energy < 0.3:
+        if information < 0.3:
             cognitive_mode = "exploring"
-        elif energy > 0.7 and self.field_dynamics.cycles_without_input > 50:
+        elif information > 0.7 and self.field_dynamics.cycles_without_input > 50:
             cognitive_mode = "dreaming"
         elif confidence > 0.6:
             cognitive_mode = "exploiting"
@@ -495,20 +559,20 @@ class SimplifiedUnifiedBrain(OptimizedBrainMixin):
         return {
             'cycle': self.brain_cycles,
             'cycle_time_ms': self._last_cycle_time * 1000,
-            'field_energy': stats['energy'],
+            'field_information': stats['information'],
             'max_activation': stats['max'],
             'prediction_confidence': self._current_prediction_confidence,
             'memory_saturation': topology_stats['total_regions'] / self.topology_region_system.max_regions,
             'cognitive_mode': cognitive_mode,
-            'energy_state': {
-                'energy': energy,
+            'information_state': {
+                'information': information,
                 'novelty': self.modulation.get('novelty', 0.0),
                 'exploration_drive': exploration
             },
             'evolution_state': {
                 'self_modification_strength': evolution_props['self_modification_strength'],
                 'evolution_cycles': evolution_props['evolution_cycles'],
-                'smoothed_energy': evolution_props['smoothed_energy'],
+                'smoothed_information': evolution_props.get('smoothed_information', evolution_props.get('smoothed_energy', 0.5)),
                 'smoothed_confidence': evolution_props['smoothed_confidence'],
                 'cycles_without_input': evolution_props['cycles_without_input'],
                 'working_memory': working_memory
@@ -576,7 +640,7 @@ class SimplifiedUnifiedBrain(OptimizedBrainMixin):
         return {
             'evolution_cycles': props['evolution_cycles'],
             'self_modification_strength': props['self_modification_strength'],
-            'smoothed_energy': props['smoothed_energy'],
+            'smoothed_information': props.get('smoothed_information', props.get('smoothed_energy', 0.5)),
             'smoothed_confidence': props['smoothed_confidence'],
             'working_memory': self.field_dynamics.get_working_memory_state(self.unified_field)
         }
