@@ -1,0 +1,245 @@
+{
+  "config": {
+    "experiment_name": "biological_embodied_learning",
+    "duration_hours": 0.5,
+    "session_duration_minutes": 20,
+    "consolidation_duration_minutes": 10,
+    "random_seed": 42,
+    "world_size": 10.0,
+    "num_light_sources": 2,
+    "num_obstacles": 5,
+    "actions_per_minute": 60,
+    "adaptation_enabled": true,
+    "transfer_test_enabled": true
+  },
+  "session_results": [
+    {
+      "session_id": 0,
+      "start_time": 1754072703.117696,
+      "duration_minutes": 20.010765051841737,
+      "total_actions": 629,
+      "avg_light_distance": 1.7806454454784664,
+      "exploration_score": 0.0275,
+      "efficiency": 0.45528489523923754,
+      "collision_rate": 0.0,
+      "battery_usage": 0.6402000000000003,
+      "prediction_error_trend": [
+        0.6749361283211454,
+        0.5952229344247458,
+        0.5843425521593612,
+        0.5558132832044765,
+        0.532557261175073,
+        0.532236588722285,
+        0.5067159785656622,
+        0.49211456155046035,
+        0.4807993781630898,
+        0.47595255080310234,
+        0.436320043395505
+      ],
+      "strategy_emergence_score": 0.19863431493713407,
+      "motor_coordination_score": 0.02543720190779014,
+      "action_distribution": {
+        "MOVE_FORWARD": 22,
+        "TURN_LEFT": 3,
+        "TURN_RIGHT": 592,
+        "STOP": 12
+      },
+      "trajectory_complexity": 1.5498661969923218,
+      "confidence_progression": [
+        0.000161161737190195,
+        0.008132952849426348,
+        0.10015046214570766,
+        0.0071833672968493675,
+        0.002776618988185841,
+        4.779389992482991e-05,
+        0.006609478708137067,
+        0.0698674121573083,
+        0.0003352792095749318
+      ],
+      "confidence_patterns": [
+        "stable"
+      ],
+      "final_confidence_state": {
+        "prediction_confidence": 0.04723708871575106,
+        "self_modification": 0.08714668814935927,
+        "evolution_cycles": 629,
+        "working_memory_patterns": 16,
+        "field_information": 1.6961525678634644,
+        "memory_saturation": 0.04,
+        "topology_regions": 8,
+        "behavior_state": "unknown"
+      }
+    },
+    {
+      "session_id": 1,
+      "start_time": 1754073903.87623,
+      "duration_minutes": 20.040261697769164,
+      "total_actions": 380,
+      "avg_light_distance": 3.0,
+      "exploration_score": 0.0025,
+      "efficiency": 0.5016726324349563,
+      "collision_rate": 0.0,
+      "battery_usage": 0.38,
+      "prediction_error_trend": [
+        0.5930671118566238,
+        0.5806158035869032,
+        0.5727638686538762,
+        0.5710783080756904,
+        0.5472542169153793,
+        0.5379161523867639,
+        0.5198789238632728,
+        0.5220704654916857,
+        0.5262047199578063,
+        0.5073577980277207
+      ],
+      "strategy_emergence_score": -7.213475800929758e-11,
+      "motor_coordination_score": 0.0,
+      "action_distribution": {
+        "MOVE_FORWARD": 0,
+        "TURN_LEFT": 0,
+        "TURN_RIGHT": 380,
+        "STOP": 0
+      },
+      "trajectory_complexity": 0.0,
+      "confidence_progression": [
+        0.1292646759978053,
+        0.15245776370870118,
+        0.07272504365175222,
+        0.061197438488508074,
+        0.0028135054187837885,
+        0.0033452648699126837
+      ],
+      "confidence_patterns": [
+        "stable"
+      ],
+      "final_confidence_state": {
+        "prediction_confidence": 0.013759600677632534,
+        "self_modification": 0.11174620128770507,
+        "evolution_cycles": 1009,
+        "working_memory_patterns": 16,
+        "field_information": 1.6946849822998047,
+        "memory_saturation": 0.04,
+        "topology_regions": 8,
+        "behavior_state": "unknown"
+      }
+    }
+  ],
+  "consolidation_analyses": [],
+  "transfer_results": {
+    "transfer_performance": 0.3574218731844028,
+    "transfer_session_data": {
+      "session_id": 999,
+      "start_time": 1754075108.752842,
+      "duration_minutes": 20.064939800898234,
+      "total_actions": 286,
+      "avg_light_distance": 4.5,
+      "exploration_score": 0.0025,
+      "efficiency": 0.5222395773294327,
+      "collision_rate": 0.0,
+      "battery_usage": 0.28600000000000003,
+      "prediction_error_trend": [
+        0.570361016311552,
+        0.5961012400376919,
+        0.5776090992320027,
+        0.5623779346731267,
+        0.5920620645041316,
+        0.5342473849607527,
+        0.574447077703806,
+        0.5463018874036452,
+        0.5284303357972439,
+        0.5560163667492595,
+        0.487123676949369
+      ],
+      "strategy_emergence_score": -7.213475800929758e-11,
+      "motor_coordination_score": 0.0,
+      "action_distribution": {
+        "MOVE_FORWARD": 0,
+        "TURN_LEFT": 0,
+        "TURN_RIGHT": 286,
+        "STOP": 0
+      },
+      "trajectory_complexity": 0.0,
+      "confidence_progression": [
+        5.618036593063166e-12,
+        0.00032513385909355754,
+        0.0026118574317578547,
+        0.007276969652609385,
+        0.04447915465886543
+      ],
+      "confidence_patterns": [
+        "stable"
+      ],
+      "final_confidence_state": {}
+    }
+  },
+  "analysis": {
+    "learning_progression": {
+      "learning_rate": -0.03331054184313825,
+      "initial_performance": 0.3845623315591981,
+      "final_performance": 0.3512517897160599,
+      "total_improvement": -0.0333105418431382,
+      "performance_trend": [
+        0.3845623315591981,
+        0.3512517897160599
+      ],
+      "light_distance_trend": [
+        1.7806454454784664,
+        3.0
+      ],
+      "exploration_trend": [
+        0.0275,
+        0.0025
+      ]
+    },
+    "consolidation_effects": {
+      "insufficient_data": true
+    },
+    "behavioral_emergence": {
+      "strategy_emergence_trend": [
+        0.19863431493713407,
+        -7.213475800929758e-11
+      ],
+      "motor_coordination_trend": [
+        0.02543720190779014,
+        0.0
+      ],
+      "trajectory_complexity_trend": [
+        1.5498661969923218,
+        0.0
+      ],
+      "behavioral_sophistication": 0.0
+    },
+    "biological_realism": {
+      "gradual_learning": false,
+      "consolidation_present": false,
+      "consolidation_beneficial": false,
+      "power_law_learning": 0.0,
+      "avg_consolidation_benefit": 0.0,
+      "session_performances": [
+        0.3845623315591981,
+        0.3512517897160599
+      ],
+      "biological_realism_score": 0.0
+    },
+    "efficiency_trends": {
+      "efficiency_trend": [
+        0.45528489523923754,
+        0.5016726324349563
+      ],
+      "exploration_trend": [
+        0.0275,
+        0.0025
+      ],
+      "efficiency_improvement": 0.04638773719571876,
+      "exploration_improvement": -0.025
+    },
+    "prediction_phases": {
+      "overall": {
+        "phases_active": -1,
+        "prediction_system_healthy": false
+      }
+    }
+  },
+  "experiment_duration": 3619.6137251853943,
+  "total_actions": 1295
+}

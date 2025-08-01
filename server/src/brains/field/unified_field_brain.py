@@ -538,11 +538,20 @@ class UnifiedFieldBrain:
             
             # 7. Strategic pattern discovery (background)
             if self.use_strategic_planning and self.strategic_planner is not None:
-                # Every 20 cycles or when reward changes significantly
+                # Measure current field tensions
+                current_tensions = self.strategic_planner._measure_field_tensions(self.unified_field)
+                total_tension = current_tensions['total']
+                
+                # Trigger discovery when:
+                # - High tension (> 0.6) indicates unmet drives
+                # - Every 20 cycles as baseline
+                # - No pattern exists yet
+                # - Low confidence (< 0.3) creates urgency
                 should_discover = (
+                    total_tension > 0.6 or
                     self.brain_cycles % 20 == 0 or
-                    abs(self._last_reward_signal) > 0.5 or
-                    self.current_strategic_pattern is None
+                    self.current_strategic_pattern is None or
+                    self._current_prediction_confidence < 0.3
                 )
                 
                 if should_discover:
@@ -552,6 +561,8 @@ class UnifiedFieldBrain:
                             self.current_strategic_pattern = pattern
                             if not self.quiet_mode:
                                 print(f"🧠 New strategic pattern discovered (score: {pattern.score:.2f})")
+                                print(f"   Tensions: {', '.join(f'{k}={v:.2f}' for k,v in current_tensions.items() if k != 'total')}")
+                                print(f"   Pattern persistence: {pattern.persistence:.0f} cycles")
                     
                     self.strategic_planner.discover_async(
                         self.unified_field,
@@ -765,14 +776,16 @@ class UnifiedFieldBrain:
             current_pattern = self.unified_field[:, :, :, 32:48]
             
             # Blend pattern with existing field (persistent but not overwhelming)
+            # Increased refresh from 0.05 to 0.15 for more active patterns
             self.unified_field[:, :, :, 32:48] = (
-                current_pattern * 0.95 +  # High persistence
-                pattern * 0.05  # Gentle refresh
+                current_pattern * 0.85 +  # Still persistent
+                pattern * 0.15  # More active refresh
             )
             
             # Pattern creates gradients that influence other channels
+            # Increased influence from 0.02 to 0.1 for stronger behavioral effect
             pattern_energy = self.unified_field[:, :, :, 32:48].mean(dim=-1, keepdim=True)
-            gradient_influence = torch.tanh(pattern_energy) * 0.02
+            gradient_influence = torch.tanh(pattern_energy) * 0.1
             self.unified_field[:, :, :, :32] += gradient_influence.expand(-1, -1, -1, 32)
         
         # 6. Log state
@@ -804,7 +817,7 @@ class UnifiedFieldBrain:
         # Strategic patterns in channels 32-47 create gradients that influence behavior
         motor_tendencies = self._extract_motor_tendencies_from_field()
         
-        # Add exploration noise
+        # Add exploration noise based on natural drive
         if exploration_drive > 0:
             noise = torch.randn(self.motor_dim, device=self.device) * exploration_drive * 0.3
             motor_tendencies = motor_tendencies + noise
@@ -856,9 +869,11 @@ class UnifiedFieldBrain:
         motor_tendencies = torch.zeros(self.motor_dim, device=self.device)
         
         # Map gradients to motor dimensions (robot-specific)
+        # Amplify gradients for better responsiveness
+        gradient_amplification = 5.0  # Increased from 2.0
         if self.motor_dim >= 2:
-            motor_tendencies[0] = x_grad * 2.0  # Forward/backward
-            motor_tendencies[1] = y_grad * 2.0  # Turn left/right
+            motor_tendencies[0] = x_grad * gradient_amplification  # Forward/backward
+            motor_tendencies[1] = y_grad * gradient_amplification  # Turn left/right
             
         if self.motor_dim >= 3:
             motor_tendencies[2] = pattern_strength  # Speed modulation

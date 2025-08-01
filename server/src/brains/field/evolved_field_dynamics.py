@@ -175,9 +175,11 @@ class EvolvedFieldDynamics:
         
         # Normalization to prevent runaway values
         # Content channels: Use tanh for bounded activation
-        evolved_field[:, :, :, :self.content_features] = torch.tanh(
-            evolved_field[:, :, :, :self.content_features] * 1.05  # Slight amplification before squashing
-        )
+        # Only apply if values are getting large to avoid unnecessary computation
+        content = evolved_field[:, :, :, :self.content_features]
+        max_val = content.abs().max().item()
+        if max_val > 2.0:  # Only normalize if needed
+            evolved_field[:, :, :, :self.content_features] = torch.tanh(content)
         
         # Dynamics channels: Keep bounded but allow more range
         dynamics_max = 5.0  # Maximum absolute value for dynamics

@@ -304,25 +304,26 @@ class FieldStrategicPlanner:
                                     pattern[x, y, z, feature_idx] += torch.randn(1, device=self.device).item() * 0.5
                                     
         elif dominant_tension == 'confidence':
-            # Create stabilizing radial pattern
-            # Coherent, predictable structure to build confidence
-            n_centers = 2  # Few, stable centers
-            for i in range(n_centers):
-                center = torch.tensor([
-                    self.field_shape[0] // 2 + torch.randint(-5, 5, (1,)).item(),
-                    self.field_shape[1] // 2 + torch.randint(-5, 5, (1,)).item(),
-                    self.field_shape[2] // 2 + torch.randint(-5, 5, (1,)).item()
-                ], device=self.device, dtype=torch.float32)
+            # When confidence is low, create exploration-inducing gradients
+            # NOT stabilizing patterns - we need movement to gather information!
+            
+            # Create multiple directional search patterns
+            n_search_directions = 3
+            for i in range(n_search_directions):
+                # Random search direction
+                direction = torch.randn(3, device=self.device)
+                direction = direction / (torch.norm(direction) + 1e-8)
                 
-                # Smooth radial pattern
+                # Create gradient along this direction with some noise
                 for x in range(self.field_shape[0]):
                     for y in range(self.field_shape[1]):
                         for z in range(self.field_shape[2]):
                             pos = torch.tensor([x, y, z], device=self.device, dtype=torch.float32)
-                            dist = torch.norm(pos - center)
-                            # Smooth Gaussian with confidence-building stability
-                            activation = torch.exp(-dist**2 / (self.field_shape[0]**2 / 2)) * tensions['confidence']
-                            pattern[x, y, z, i*8:(i+1)*8] = activation
+                            # Project position onto direction
+                            projection = torch.dot(pos, direction)
+                            # Add some spiral/wave component for search behavior
+                            spiral = torch.sin(projection * 0.5) * 0.3
+                            pattern[x, y, z, i*5:(i+1)*5] = (projection / self.field_shape[0] + spiral) * tensions['confidence']
                             
         elif dominant_tension == 'prediction':
             # Create corrective wave pattern
