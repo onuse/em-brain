@@ -231,7 +231,7 @@ class BrainMonitoringClient:
                         continue
             
             # Send request
-            print(f"   📤 Sending request: {request}")
+            # print(f"   📤 Sending request: {request}")  # Commented out to reduce log spam
             self.socket.send((request + "\n").encode('utf-8'))
             
             # Receive JSON response with timeout

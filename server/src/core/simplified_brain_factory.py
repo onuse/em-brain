@@ -159,6 +159,11 @@ class SimplifiedBrainFactory(IBrainFactory):
             quiet_mode=self.brain_config.get('quiet_mode', False)
         )
         
+        # Enable all predictive processing phases
+        brain.enable_hierarchical_prediction(True)  # Phase 3
+        brain.enable_action_prediction(True)        # Phase 4
+        brain.enable_active_vision(True)           # Phase 5
+        
         # Wrap in interface
         return SimplifiedBrainWrapper(brain)
     

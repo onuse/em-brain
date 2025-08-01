@@ -216,6 +216,10 @@ class EnhancedTelemetryAdapter:
             early_errors = np.mean([h['magnitude'] for h in list(self.error_history)[:5]])
             if early_errors > 0:
                 metrics['efficiency'] = max(0, min(1, (early_errors - recent_errors) / early_errors))
+        else:
+            # Default efficiency when not enough error history
+            # Use a more realistic default than 0.0
+            metrics['efficiency'] = 0.5
         
         # Extract current values
         if 'evolution_state' in self.last_telemetry:

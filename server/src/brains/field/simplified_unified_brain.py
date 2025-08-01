@@ -316,6 +316,11 @@ class SimplifiedUnifiedBrain:
         try:
             # Validate input
             with ErrorContext("validating sensory input"):
+                # Debug: Check if sensory_input contains tensors
+                if self.brain_cycles == 6 and not self.quiet_mode:
+                    print(f"[DEBUG Cycle 6] sensory_input types: {[type(v).__name__ for v in sensory_input[:5]]}")
+                    print(f"[DEBUG Cycle 6] sensory_input values: {sensory_input[:5]}")
+                
                 # Allow variable length for different robot configurations
                 validate_list_input(sensory_input, len(sensory_input), "sensory_input", -10.0, 10.0)
             
@@ -365,12 +370,12 @@ class SimplifiedUnifiedBrain:
                 
                 if actual_sensory.shape[0] == self._predicted_sensory.shape[0]:
                     sensory_error = torch.mean(torch.abs(actual_sensory - self._predicted_sensory)).item()
-                    self._last_prediction_error = actual_sensory - self._predicted_sensory  # Store full error for Phase 2
+                    self._last_prediction_error = actual_sensory - self._predicted_sensory  # Store tensor error for Phase 2
                 else:
                     # Fallback if dimensions still don't match
                     min_dim = min(actual_sensory.shape[0], self._predicted_sensory.shape[0])
                     sensory_error = torch.mean(torch.abs(actual_sensory[:min_dim] - self._predicted_sensory[:min_dim])).item()
-                    self._last_prediction_error = actual_sensory[:min_dim] - self._predicted_sensory[:min_dim]
+                    self._last_prediction_error = actual_sensory[:min_dim] - self._predicted_sensory[:min_dim]  # Store tensor error
                 
                 self._current_prediction_confidence = 1.0 - min(1.0, sensory_error * 2.0)
                 
@@ -418,16 +423,24 @@ class SimplifiedUnifiedBrain:
             # 5. Update unified field dynamics
             reward = sensory_input[-1] if len(sensory_input) > self.sensory_dim else 0.0
             
+            # Debug cycle 17
+            if self.brain_cycles == 17 and not self.quiet_mode:
+                print(f"[DEBUG Cycle 17] reward value: {reward}, type: {type(reward).__name__}")
+                print(f"[DEBUG Cycle 17] sensory_input length: {len(sensory_input)}, sensory_dim: {self.sensory_dim}")
+                if len(sensory_input) > 0:
+                    print(f"[DEBUG Cycle 17] last sensory value: {sensory_input[-1]}, type: {type(sensory_input[-1]).__name__}")
+            
             # Compute field state (information, novelty, etc.)
             field_state = self.field_dynamics.compute_field_state(self.unified_field)
             novelty = self.field_dynamics.compute_novelty(self.unified_field)
             
             # Update confidence from prediction error
-            # Convert to scalar if it's a tensor
+            # Always convert to scalar for confidence update
             if torch.is_tensor(self._last_prediction_error):
                 error_scalar = torch.mean(torch.abs(self._last_prediction_error)).detach().item()
             else:
-                error_scalar = self._last_prediction_error
+                # This shouldn't happen anymore, but handle it just in case
+                error_scalar = abs(float(self._last_prediction_error))
             self.field_dynamics.update_confidence(error_scalar)
             
             # Debug confidence values
@@ -437,13 +450,24 @@ class SimplifiedUnifiedBrain:
                       f"error={error_scalar:.3f}")
             
             # Get unified modulation parameters
-            has_input = len(sensory_input) > 0 and any(abs(v) > 0.01 for v in sensory_input[:-1])
+            try:
+                # Simpler approach - sensory_input should always be a list of floats
+                if len(sensory_input) > 0:
+                    # Check if any sensor (except reward) has significant input
+                    has_input = any(abs(float(v)) > 0.01 for v in sensory_input[:-1])
+                else:
+                    has_input = False
+            except Exception as e:
+                print(f"[ERROR] has_input calculation failed: {e}")
+                print(f"[ERROR] sensory_input types: {[type(v).__name__ for v in sensory_input[:5]]}")
+                print(f"[ERROR] sensory_input values: {sensory_input[:5]}")
+                raise
             self.modulation = self.field_dynamics.compute_field_modulation(
                 field_state, has_sensory_input=has_input
             )
             
             # 6. Process reward topology
-            if abs(reward) > 0.1:
+            if abs(reward.item() if torch.is_tensor(reward) else reward) > 0.1:
                 self.topology_shaper.process_reward(
                     current_field=self.unified_field,
                     reward=reward,
@@ -536,17 +560,17 @@ class SimplifiedUnifiedBrain:
         except Exception as e:
             # Wrap unexpected errors
             self.brain_cycles += 1  # Still increment to avoid getting stuck
-            # Enhanced error logging for numpy conversion issues
+            # Enhanced error logging for all errors
             error_msg = str(e)
-            if "can't convert" in error_msg and "numpy" in error_msg:
-                import traceback
-                print(f"\n{'='*60}")
-                print(f"NUMPY CONVERSION ERROR at cycle {self.brain_cycles}")
-                print(f"{'='*60}")
-                print(f"Error: {e}")
-                print("\nFull stack trace:")
-                traceback.print_exc()
-                print(f"{'='*60}\n")
+            import traceback
+            print(f"\n{'='*60}")
+            print(f"ERROR at brain cycle {self.brain_cycles}")
+            print(f"{'='*60}")
+            print(f"Error: {e}")
+            print(f"Error type: {type(e).__name__}")
+            print("\nFull stack trace:")
+            traceback.print_exc()
+            print(f"{'='*60}\n")
             logger.error(f"Unexpected error in brain cycle {self.brain_cycles}: {e}")
             # Return safe defaults
             safe_motors = [0.0] * (self.motor_cortex.motor_dim - 1)
@@ -723,9 +747,9 @@ class SimplifiedUnifiedBrain:
                     exploration_drive=exploration_drive
                 )
                 
-                # Combine motor and sensor control
-                full_motor = torch.cat([motor_tensor, sensor_control])
-                return full_motor.tolist()
+                # Return only motor commands - sensor control should be handled separately
+                # TODO: Implement proper sensor control mechanism
+                return motor_tensor.tolist()
             else:
                 # Convert to list and return
                 return motor_tensor.tolist()
@@ -806,6 +830,16 @@ class SimplifiedUnifiedBrain:
             },
             'tensor_shape': self.tensor_shape,
             'device': str(self.device),
+            'predictive_phases': {
+                'phase_3_hierarchical': hasattr(self.predictive_field, 'use_hierarchical_timescales') and self.predictive_field.use_hierarchical_timescales,
+                'phase_4_action_prediction': self.use_action_prediction,
+                'phase_5_active_vision': self.use_active_vision,
+                'enabled_count': sum([
+                    hasattr(self.predictive_field, 'use_hierarchical_timescales') and self.predictive_field.use_hierarchical_timescales,
+                    self.use_action_prediction,
+                    self.use_active_vision
+                ])
+            },
             'sensory_organization': self.sensory_mapping.get_statistics(),
             'temporal_basis': getattr(self, '_temporal_basis', 'immediate'),
             'timestamp': time.time()

@@ -62,7 +62,8 @@ class EnhancedTelemetryAdapter:
                                 first_session = session_keys[0]
                                 telemetry = data[first_session]
                                 if not session_id:  # Only print if no session was specified
-                                    print(f"   📊 Using telemetry from {first_session}")
+                                    # print(f"   📊 Using telemetry from {first_session}")  # Commented out to reduce log spam
+                                    pass
                             else:
                                 telemetry = data
                     else:
