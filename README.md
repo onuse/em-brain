@@ -34,6 +34,12 @@ The field encodes its own evolution rules:
 - **GPU Optimized**: Efficient tensor operations
 - **Pattern-Based**: All processing through pattern matching
 
+### 4. Autonomous Operation Through Intrinsic Drives
+- **No External Rewards**: Behavior emerges from field tensions
+- **Natural Motivations**: Like water seeking its level
+- **Tension-Based Planning**: Strategic patterns resolve field disequilibrium
+- **True Artificial Life**: Purpose emerges from structure itself
+
 ## Architecture Overview
 
 ### Core Systems
@@ -61,6 +67,16 @@ The field encodes its own evolution rules:
 - **Motor Commands**: Emerge from field gradients
 - **Pattern Library**: Learns successful behavioral strategies
 - **Exploration**: Novel pattern variations and discovery
+
+#### Autonomous Operation
+- **Intrinsic Drives**: No external rewards needed
+- **Field Tensions**: Natural drives from field disequilibrium
+  - Information tension → exploration behavior
+  - Learning tension → novelty seeking
+  - Confidence tension → systematic resolution
+  - Prediction tension → adaptive correction
+- **Tension Resolution**: Patterns selected by how well they reduce tensions
+- **True Autonomy**: Purpose emerges from structure, not external goals
 
 ### Information Flow
 

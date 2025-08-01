@@ -111,12 +111,15 @@ Long-term structure emerges from field dynamics:
 - **Pattern Library**: Successful patterns accumulate and blend
 - **Consolidation**: Important patterns strengthen during rest
 
-#### Reward and Motivation
-Goals emerge from field topology:
-- **Reward Impressions**: Persistent field deformations
-- **Attractors/Repulsors**: Shape behavioral flow
-- **Value Propagation**: Spreads through causal links
-- **Emergent Goals**: No explicit objectives needed
+#### Intrinsic Drives and Tensions
+The field operates through intrinsic tensions that create natural behavior:
+- **Information Tension**: Low field energy creates exploration drive
+- **Learning Velocity Tension**: Stagnant improvement creates novelty seeking
+- **Confidence Tension**: Uncertainty creates need for resolution
+- **Prediction Error Tension**: Errors create adaptation pressure
+- **Novelty Tension**: Low variance creates need for variation
+
+These tensions aren't external rewards but emergent properties of the field seeking equilibrium, like water flowing downhill.
 
 ## Information Flow
 
@@ -132,11 +135,17 @@ Goals emerge from field topology:
 3. Exploration adds variation to base tendencies
 4. Commands normalized for robot actuators
 
-### Strategic Planning
-1. Beneficial field configurations discovered through simulation
-2. Patterns stored with behavioral signatures in memory channels
-3. Similar contexts resonate with stored patterns
-4. Motor behavior emerges from pattern-induced gradients
+### Strategic Planning (Tension-Based)
+1. Field tensions measured (information, learning, confidence, prediction, novelty)
+2. Patterns generated to resolve dominant tensions:
+   - Information tension → Exploration gradients
+   - Learning tension → Novelty-inducing sparse activations
+   - Confidence tension → Stabilizing radial patterns
+   - Prediction tension → Corrective wave patterns
+   - Novelty tension → Multi-scale variations
+3. Patterns evaluated by tension reduction, not external rewards
+4. Successful tension-resolving patterns stored in memory channels 32-47
+5. Motor behavior emerges naturally from tension-resolving gradients
 
 ### Field → Field (Self-Modification)
 1. Prediction errors create error gradients
@@ -162,10 +171,12 @@ These arise without explicit programming:
 - **Personality**: Unique dynamics per brain
 
 ### Behavioral Emergence
-- **Exploration**: Low confidence drives novelty-seeking
-- **Exploitation**: High confidence enables efficiency
-- **Curiosity**: Information gain becomes intrinsic reward
-- **Dreams**: Spontaneous pattern recombination
+- **Exploration**: Information tension drives movement and sensing
+- **Learning**: Stagnation tension creates novelty-seeking behavior
+- **Confidence Building**: Uncertainty tension creates careful, systematic behavior
+- **Adaptation**: Prediction tension drives corrective actions
+- **Creativity**: Novelty tension generates varied behaviors
+- **Autonomy**: All behavior emerges from intrinsic tension resolution
 
 ### Structural Emergence
 - **Specialization**: Regions develop unique functions
