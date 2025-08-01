@@ -173,6 +173,18 @@ class EvolvedFieldDynamics:
             evolved_field[nan_mask] = torch.randn_like(evolved_field[nan_mask]) * 0.01
             print(f"Warning: NaN detected in evolved field at cycle {self.evolution_count}, replaced with small random values")
         
+        # Normalization to prevent runaway values
+        # Content channels: Use tanh for bounded activation
+        evolved_field[:, :, :, :self.content_features] = torch.tanh(
+            evolved_field[:, :, :, :self.content_features] * 1.05  # Slight amplification before squashing
+        )
+        
+        # Dynamics channels: Keep bounded but allow more range
+        dynamics_max = 5.0  # Maximum absolute value for dynamics
+        dynamics_channels = evolved_field[:, :, :, self.content_features:]
+        dynamics_channels = torch.clamp(dynamics_channels, -dynamics_max, dynamics_max)
+        evolved_field[:, :, :, self.content_features:] = dynamics_channels
+        
         # Return
         self.evolution_count += 1
         return evolved_field
