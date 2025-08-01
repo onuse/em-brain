@@ -332,12 +332,15 @@ class BiologicalEmbodiedLearningExperiment:
                 # Get sensory input
                 sensory_input = self.environment.get_sensory_input()
                 
+                # Send full 24D sensory input as brain now expects 24D
+                brain_sensory_input = sensory_input
+                
                 # Send to brain and get prediction via buffer interface
                 start_time = time.time()
                 
                 # Get brain prediction via robot socket (acts like real robot)
                 # Use 10s timeout for slow hardware (some cycles may take >1s)
-                prediction = self.robot_client.get_action(sensory_input, timeout=10.0)
+                prediction = self.robot_client.get_action(brain_sensory_input, timeout=10.0)
                 
                 if prediction is None:
                     print("   ⚠️ No response from brain")
@@ -349,7 +352,8 @@ class BiologicalEmbodiedLearningExperiment:
                 
                 # Record metrics
                 metrics = execution_result['metrics']
-                prediction_error = np.mean(np.abs(np.array(prediction) - np.array(sensory_input[:4])))
+                # Compare prediction (4D motor) to first 4 sensory values (position x,y, orientation, battery)
+                prediction_error = np.mean(np.abs(np.array(prediction) - np.array(brain_sensory_input[:4])))
                 
                 prediction_errors.append(prediction_error)
                 light_distances.append(metrics['min_light_distance'])

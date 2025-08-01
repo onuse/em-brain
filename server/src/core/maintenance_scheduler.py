@@ -49,7 +49,7 @@ class MaintenanceScheduler:
         
         # Thresholds
         self.memory_pressure_threshold = self.config.get('memory_pressure_threshold', 0.85)  # 85% memory usage
-        self.performance_degradation_threshold = self.config.get('performance_degradation_threshold', 2.0)  # 2x slower
+        self.performance_degradation_threshold = self.config.get('performance_degradation_threshold', 5.0)  # 5x slower
         
     def start(self):
         """Start the maintenance scheduler."""

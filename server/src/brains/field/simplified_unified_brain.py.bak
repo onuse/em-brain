@@ -318,9 +318,8 @@ class SimplifiedUnifiedBrain:
             with ErrorContext("validating sensory input"):
                 # Debug: Check if sensory_input contains tensors
                 if self.brain_cycles == 6 and not self.quiet_mode:
-                    # print(f"[DEBUG Cycle 6] sensory_input types: {[type(v).__name__ for v in sensory_input[:5]]}")
-                    # print(f"[DEBUG Cycle 6] sensory_input values: {sensory_input[:5]}")
-                    pass
+                    print(f"[DEBUG Cycle 6] sensory_input types: {[type(v).__name__ for v in sensory_input[:5]]}")
+                    print(f"[DEBUG Cycle 6] sensory_input values: {sensory_input[:5]}")
                 
                 # Allow variable length for different robot configurations
                 validate_list_input(sensory_input, len(sensory_input), "sensory_input", -10.0, 10.0)
@@ -354,10 +353,9 @@ class SimplifiedUnifiedBrain:
             
             # 2. Update prediction tracking
             if self.brain_cycles % 50 == 0 and not self.quiet_mode:
-                # print(f"[DEBUG Cycle {self.brain_cycles}] _predicted_sensory is None: {self._predicted_sensory is None}")
+                print(f"[DEBUG Cycle {self.brain_cycles}] _predicted_sensory is None: {self._predicted_sensory is None}")
                 if self._predicted_sensory is not None:
-                    # print(f"[DEBUG Cycle {self.brain_cycles}] _predicted_sensory shape: {self._predicted_sensory.shape}")
-                    pass
+                    print(f"[DEBUG Cycle {self.brain_cycles}] _predicted_sensory shape: {self._predicted_sensory.shape}")
             
             if self._predicted_sensory is not None and experience.raw_input_stream is not None:
                 # Compare predicted vs actual sensory input
@@ -372,9 +370,8 @@ class SimplifiedUnifiedBrain:
                 # Debug logging for size mismatch
                 if actual_sensory.shape[0] != self._predicted_sensory.shape[0]:
                     if not self.quiet_mode and self.brain_cycles % 10 == 0:
-                        # print(f"[DEBUG] Size mismatch: actual_sensory={actual_sensory.shape[0]}, predicted={self._predicted_sensory.shape[0]}")
-                        # print(f"[DEBUG] raw_input_stream={experience.raw_input_stream.shape[0]}, sensory_dim={self.sensory_dim}")
-                        pass
+                        print(f"[DEBUG] Size mismatch: actual_sensory={actual_sensory.shape[0]}, predicted={self._predicted_sensory.shape[0]}")
+                        print(f"[DEBUG] raw_input_stream={experience.raw_input_stream.shape[0]}, sensory_dim={self.sensory_dim}")
                 
                 if actual_sensory.shape[0] == self._predicted_sensory.shape[0]:
                     sensory_error = torch.mean(torch.abs(actual_sensory - self._predicted_sensory)).item()
@@ -382,10 +379,9 @@ class SimplifiedUnifiedBrain:
                     
                     # Debug: Show prediction quality
                     if self.brain_cycles % 50 == 0 and not self.quiet_mode:
-                        # print(f"[DEBUG Cycle {self.brain_cycles}] Sensory prediction error: {sensory_error:.3f}")
-                        # print(f"[DEBUG Cycle {self.brain_cycles}] Actual sensory (first 5): {actual_sensory[:5].tolist()}")
-                        # print(f"[DEBUG Cycle {self.brain_cycles}] Predicted sensory (first 5): {self._predicted_sensory[:5].tolist()}")
-                        pass
+                        print(f"[DEBUG Cycle {self.brain_cycles}] Sensory prediction error: {sensory_error:.3f}")
+                        print(f"[DEBUG Cycle {self.brain_cycles}] Actual sensory (first 5): {actual_sensory[:5].tolist()}")
+                        print(f"[DEBUG Cycle {self.brain_cycles}] Predicted sensory (first 5): {self._predicted_sensory[:5].tolist()}")
                 else:
                     # Fallback if dimensions still don't match
                     min_dim = min(actual_sensory.shape[0], self._predicted_sensory.shape[0])
@@ -476,11 +472,10 @@ class SimplifiedUnifiedBrain:
             
             # Debug cycle 17
             if self.brain_cycles == 17 and not self.quiet_mode:
-                # print(f"[DEBUG Cycle 17] reward value: {reward}, type: {type(reward).__name__}")
-                # print(f"[DEBUG Cycle 17] sensory_input length: {len(sensory_input)}, sensory_dim: {self.sensory_dim}")
+                print(f"[DEBUG Cycle 17] reward value: {reward}, type: {type(reward).__name__}")
+                print(f"[DEBUG Cycle 17] sensory_input length: {len(sensory_input)}, sensory_dim: {self.sensory_dim}")
                 if len(sensory_input) > 0:
-                    # print(f"[DEBUG Cycle 17] last sensory value: {sensory_input[-1]}, type: {type(sensory_input[-1]).__name__}")
-                    pass
+                    print(f"[DEBUG Cycle 17] last sensory value: {sensory_input[-1]}, type: {type(sensory_input[-1]).__name__}")
             
             # Compute field state (information, novelty, etc.)
             field_state = self.field_dynamics.compute_field_state(self.unified_field)
@@ -497,10 +492,9 @@ class SimplifiedUnifiedBrain:
             
             # Debug confidence values
             if self.brain_cycles % 100 == 0 and not self.quiet_mode:
-                # print(f"[DEBUG] Confidence: current={self._current_prediction_confidence:.3f}, " +
-                #       f"smoothed={self.field_dynamics.smoothed_confidence:.3f}, " +
-                #       f"error={error_scalar:.3f}")
-                pass
+                print(f"[DEBUG] Confidence: current={self._current_prediction_confidence:.3f}, " +
+                      f"smoothed={self.field_dynamics.smoothed_confidence:.3f}, " +
+                      f"error={error_scalar:.3f}")
             
             # Get unified modulation parameters
             try:

@@ -209,7 +209,7 @@ class PerformancePressureConstants:
     """Constants for natural performance pressure emergence (Evolution system)."""
     
     # Performance Monitoring (Biological: metabolic efficiency pressure)
-    PERFORMANCE_DEGRADATION_THRESHOLD = 0.2  # 20% slowdown triggers concern
+    PERFORMANCE_DEGRADATION_THRESHOLD = 5  # 500% slowdown triggers concern
     CONSOLIDATION_PRESSURE_THRESHOLD = 0.1   # Triggers natural "sleep" cycles
     TENSOR_FRAGMENTATION_THRESHOLD = 0.05    # GPU memory efficiency pressure
     MAX_CONSECUTIVE_BAD_CYCLES = 10          # Before rollback recommendation
