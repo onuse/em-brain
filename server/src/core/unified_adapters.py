@@ -1,8 +1,8 @@
 """
-Simplified Adapters for Direct Brain-Robot Communication
+Unified Field Brain Adapters
 
-Clean adapters that work directly with the simplified brain's
-motor commands without workarounds or padding.
+Direct adapters for the unified field brain that handle
+normalization without complex mappings.
 """
 
 import torch
@@ -10,10 +10,10 @@ from typing import List
 from .interfaces import ISensoryAdapter, IMotorAdapter, Robot
 
 
-class SimplifiedSensoryAdapter(ISensoryAdapter):
+class UnifiedSensoryAdapter(ISensoryAdapter):
     """
-    Direct sensory adapter for simplified brain.
-    No complex field space mapping - just normalization.
+    Direct sensory adapter for unified field brain.
+    Simple normalization to [-1, 1] range.
     """
     
     def __init__(self, robot: Robot):
@@ -46,10 +46,10 @@ class SimplifiedSensoryAdapter(ISensoryAdapter):
         return self.sensory_dim
 
 
-class SimplifiedMotorAdapter(IMotorAdapter):
+class UnifiedMotorAdapter(IMotorAdapter):
     """
-    Direct motor adapter for simplified brain.
-    No field space extraction - motor commands are already in correct format.
+    Direct motor adapter for unified field brain.
+    Maps field gradients to motor commands.
     """
     
     def __init__(self, robot: Robot):
@@ -89,13 +89,13 @@ class SimplifiedMotorAdapter(IMotorAdapter):
         return self.motor_dim
 
 
-class SimplifiedAdapterFactory:
+class UnifiedAdapterFactory:
     """Factory for creating simplified adapters."""
     
     def create_sensory_adapter(self, robot: Robot, field_dimensions: int = None) -> ISensoryAdapter:
         """Create simplified sensory adapter."""
-        return SimplifiedSensoryAdapter(robot)
+        return UnifiedSensoryAdapter(robot)
     
     def create_motor_adapter(self, robot: Robot, field_dimensions: int = None) -> IMotorAdapter:
         """Create simplified motor adapter."""
-        return SimplifiedMotorAdapter(robot)
+        return UnifiedMotorAdapter(robot)

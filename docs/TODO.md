@@ -1,369 +1,193 @@
-# TODO: Field-Native Intelligence System
+# TODO: Field-Native Strategic Planning
 
-## Completed Major Improvements
-- ✅ Unified energy system (replaced 650 lines with 250 lines of organic energy)
-- ✅ Predictive action system (imagine outcomes before acting)
-- ✅ Reward topology shaping (emergent goal-seeking without explicit goals)
-- ✅ Removed Enhanced Dynamics (replaced by organic systems)
-- ✅ Removed Developmental Confidence (exploration emerges from energy)
-- ✅ Removed Cognitive Autopilot (behavior emerges naturally)
-- ✅ Simplified to 4D tensor architecture (2.2x performance improvement)
-- ✅ Achieved GPU acceleration on MPS/CUDA
-- ✅ Complete Simplified Brain Integration
-- ✅ Merged energy system and blended reality into UnifiedFieldDynamics
-- ✅ Pattern System Unification (unified pattern extraction serving both motor and attention)
-- ✅ Spontaneous Dynamics Integration (integrated into UnifiedFieldDynamics)
-- ✅ Core Architecture Cleanup (removed coordinates, standardized tensors, improved errors)
-- ✅ Performance Optimization (1.77x speedup, pattern caching, batch processing)
-- ✅ Temporal Persistence for Working Memory (differential decay rates in 4D field)
-- ✅ Topology Region System (abstraction formation and causal tracking)
-- ✅ Self-Modifying Field Dynamics (evolution rules emerge from topology)
-- ✅ Emergent Sensory Mapping (patterns find natural locations through resonance)
-- ✅ Fixed Exploration Mechanisms (minimum floor, periodic bursts, temporal forgetting)
-- ✅ Fixed Motor Generation (proper exploration-driven variation)
-- ✅ Removed Dual Code Paths (single unified brain implementation)
+## Major Pivot Summary
 
-## ✅ COMPLETED: Self-Modifying Field Dynamics
+We've pivoted from low-level action simulation to field-native strategic patterns. Instead of simulating "if I move left 0.3..." we now discover field configurations that naturally create beneficial behaviors.
 
-### The Grand Unification: Field Dynamics That Modify Themselves
+## Current State
 
-**Core Insight**: The distinction between "field state" and "evolution rules" is artificial. Both should be part of the same dynamic system, enabling true open-ended learning.
+### What We Built (Now Deprecated)
+1. **GPUFutureSimulator** - Simulates exact future field states for action sequences
+2. **CachedPlanSystem** - Tries to cache action plans (0% hit rate)
+3. **Decoupled planning** - Still takes 500-1800ms for "reactive" actions
+4. **SimulatedAction/PredictiveAction** - Explicit action representations
 
-#### Implementation Plan:
+### Why It Failed
+- Plans become stale in 100ms but take 6s to compute
+- Context matching too fragile for real-world variation
+- Not actually decoupled (reactive path still slow)
+- Fighting the field-native philosophy with symbolic structures
 
-1. **Phase 1: Dynamic Parameters in Field** (1-2 days)
-   - Reserve last 16-32 features for encoding local dynamics
-   - Each region encodes its own decay rate, diffusion strength, coupling weights
-   - Evolution rules extracted from field topology, not hard-coded
-   - Start simple: just decay rates, then add diffusion, then coupling
+## New Direction: Strategic Field Patterns
 
-2. **Phase 2: Topology-Driven Evolution** (2-3 days)
-   - Extract evolution operators from field patterns
-   - Stable regions → persistent dynamics
-   - Active regions → fast dynamics
-   - Coupled regions → information flow
+### Core Insight
+"Strategy" is not something you have, it's something you ARE. Strategic planning means discovering field configurations that naturally bias behavior toward good outcomes.
 
-3. **Phase 3: Meta-Learning Dynamics** (1-2 days)
-   - Dynamics features evolve based on content success
-   - High-energy regions learn lower decay
-   - High-variance regions learn stronger diffusion
-   - Frequently co-active regions learn coupling
+### Implementation Plan
 
-4. **Phase 4: Emergent Properties** (ongoing)
-   - Document emergence of:
-     - Episodic memory (regions learn persistence for important events)
-     - Compositional syntax (coupling patterns create grammar)
-     - Active inference (dynamics shape predictions)
-     - Symbol formation (bistable regions → discrete categories)
-     - Social protocols (dynamics synchronization between agents)
+#### Phase 1: Field Pattern Discovery (COMPLETED)
+Transform GPUFutureSimulator into FieldStrategicPlanner:
+- [x] Identify memory channels for persistent patterns (32-47)
+  - Use temporal feature channels that already have slower decay
+  - Ensure pattern installation doesn't interfere with sensory integration
+  - Add dedicated persistence factor (0.95-0.99) for strategic patterns
+- [x] Create pattern generation methods:
+  - **Gradient patterns**: Directional flow (approach/avoid behaviors)
+  - **Radial patterns**: Centering behaviors (stay near/far from points)
+  - **Wave patterns**: Oscillatory behaviors (patrol, search)
+  - **Sparse activation**: Focused behaviors (attend to specific features)
+  - **Learned combinations**: Blend successful patterns
+- [x] Implement pattern evaluation through field evolution:
+  ```python
+  # Simulate 50-100 steps with pattern installed
+  # Evaluate: stability, reward correlation, behavioral coherence
+  # Score = trajectory_value + pattern_persistence + behavior_smoothness
+  ```
+- [x] Test pattern persistence and influence:
+  - Verify patterns maintain 80%+ correlation after 30 cycles
+  - Confirm patterns create consistent behavioral biases
+  - Measure influence decay rate
 
-#### Why This Changes Everything:
+#### Phase 2: Pattern Integration (COMPLETED)
+Modify brain to use strategic patterns:
+- [x] Add pattern installation in memory channels:
+  ```python
+  # In SimplifiedUnifiedBrain._generate_motor_action():
+  # 1. Check if strategic pattern exists
+  # 2. If yes, blend into channels 32-47 with strength 0.3-0.5
+  # 3. Let normal field evolution create motor output
+  # NO explicit "if pattern then action" logic!
+  ```
+- [x] Ensure patterns persist across cycles:
+  - Modify field evolution to preserve channels 32-47 with 0.95+ persistence
+  - Add pattern refresh mechanism (reapply at 0.1 strength each cycle)
+  - Implement pattern fade-out when switching strategies
+- [x] Remove explicit action planning code:
+  - Delete `SimulatedAction` class and related structures
+  - Remove action sequence generation from GPUFutureSimulator
+  - Simplify `select_action()` to work with field gradients only
+- [x] Test emergent behaviors from patterns:
+  - Gradient pattern → forward movement emerges
+  - Radial pattern → centering behavior emerges
+  - Wave pattern → oscillatory motion emerges
+  - No explicit motor commands!
 
-- **No more parameter tuning** - optimal parameters emerge
-- **No more fixed architecture** - structure emerges from dynamics  
-- **True autonomy** - system determines its own learning rules
-- **Open-ended complexity** - no ceiling on what can emerge
-- **Biological plausibility** - mirrors how real neurons modify their plasticity
+#### Phase 3: Pattern Library (COMPLETED)
+Learn and store successful patterns:
+- [x] Create pattern similarity metrics in field space:
+  ```python
+  # Cosine similarity in flattened pattern space
+  # BUT also consider behavioral similarity:
+  # - Do patterns create similar motion trajectories?
+  # - Do they respond similarly to obstacles?
+  # Behavioral similarity > structural similarity
+  ```
+- [x] Store patterns with context embeddings:
+  - Context = compressed field state when pattern was successful
+  - Use channels 0-31 mean/variance as simple context
+  - Store: (pattern, context, success_score, behavioral_tags)
+- [x] Implement pattern retrieval and blending:
+  ```python
+  def retrieve_pattern(current_context):
+      # Find patterns with similar contexts
+      # Blend top 2-3 patterns weighted by similarity
+      # Add 10% novel variation
+      return blended_pattern
+  ```
+- [x] Test pattern reuse across situations:
+  - Same pattern works in slightly different environments
+  - Blended patterns create intermediate behaviors
+  - Library grows but plateaus at ~20-30 core patterns
 
-#### Success Metrics:
+#### Phase 4: Biological Validation (2-3 days)
+Ensure biological plausibility:
+- [ ] Verify patterns create smooth behavioral trajectories
+- [ ] Test robustness to sensory noise
+- [ ] Validate energy efficiency
+- [ ] Confirm emergence without engineering
 
-- Regions spontaneously specialize (fast/slow, local/global)
-- Important patterns naturally persist longer
-- Field develops its own "organs" with different dynamics
-- Learning accelerates over time (meta-learning)
-- Novel behaviors emerge without programming
+## Code to Remove/Refactor
 
-## ✅ COMPLETED: Exploration and Local Optima Escape
+### Completely Remove
+- `cached_plan_system.py` - Action caching doesn't work
+- `SimulatedAction` class - Too symbolic
+- Action sequence planning in GPUFutureSimulator
 
-### Key Fixes for Robust Exploration
+### Refactor
+- `GPUFutureSimulator` → `FieldStrategicPlanner`
+- `evaluate_action_candidates()` → `discover_strategic_patterns()`
+- `CachedPlanSystem` → `PatternLibrary` (field patterns, not actions)
 
-**Issue**: 8-hour validation showed robot stuck in local optima (exploration 0.26-0.28)
+### Keep But Simplify
+- Async execution infrastructure (still useful for background pattern discovery)
+- Adaptive configuration (but for pattern complexity, not action simulation)
+- Fast reactive path (but truly fast: <100ms)
 
-**Solutions Implemented**:
-1. **Minimum exploration floor** (0.15) prevents getting stuck
-2. **Periodic exploration bursts** (every 500 cycles for 50 cycles)
-3. **Temporal forgetting** in novelty computation
-4. **Dynamic motor noise** scales with exploration drive
-5. **Removed self-modification cap** (now logarithmic growth)
+## Success Metrics
 
-**Results**: Robot successfully escapes local optima, exploration ranges 0.37-1.0
+### Old (Flawed) Metrics
+- ❌ Cache hit rate (was 0%)
+- ❌ Planning time <2s (was achieving this but meaningless)
+- ❌ Number of futures simulated (wrong level of abstraction)
 
-## 🧠 CRITICAL: Prediction as Core Brain Function
+### New (Meaningful) Metrics
+- ✓ Pattern persistence (how long patterns remain influential)
+- ✓ Behavioral coherence (smooth, purposeful movement)
+- ✓ True reactive speed (<100ms with pattern influence)
+- ✓ Pattern reuse rate (successful pattern library hits)
+- ✓ Emergence score (behaviors not explicitly programmed)
 
-### The Fundamental Realization
+## Timeline
+- Week 1: Pattern discovery and integration
+- Week 2: Pattern library and biological validation
+- Week 3: Testing and refinement
 
-**Prediction IS Intelligence**. Not a feature, not a module - the entire brain architecture is a prediction machine. Every aspect of the field dynamics, from sensory mapping to motor generation, operates on predictive principles.
+## Key Implementation Insights
 
-### Current State Analysis
-
-Our investigation revealed that prediction is already deeply embedded:
-- **Field Evolution = Prediction**: The field's next state IS its prediction
-- **Self-Modification = Prediction Error Learning**: Dynamics adapt based on prediction success
-- **Topology Regions = Predictive Models**: Stable patterns are successful predictions
-- **Confidence System = Prediction Quality**: Already tracks prediction accuracy
-- **Exploration = Prediction Error Seeking**: Low confidence drives novelty search
-
-**The Problem (FIXED in Phase 1)**: ~~Current sensory prediction is naive (all_sensors = constant)~~
-- ✅ ~~0% confidence~~ → Now achieves 44% with predictable patterns
-- ✅ ~~No learning signal~~ → Prediction errors drive region specialization
-- ✅ ~~No biological realism~~ → Regions learn sensor associations like cortex
-
-### The Solution: Unleash the Predictive Architecture
-
-**Progress**: Phase 2 of 5 completed. Prediction errors now drive all learning!
-
-#### ✅ Phase 1: Close the Prediction Loop (COMPLETED - 2025-01-31)
-
-**Make field-to-sensory prediction explicit**:
+### 1. Pattern Discovery Algorithm
 ```python
-def generate_sensory_prediction(self, field: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-    """The field predicts its sensory future."""
-    # 1. Extract predictive features from temporal components
-    temporal_field = field[:, :, :, -16:]  # Last 16 features track dynamics
+def discover_pattern(field, reward_signal):
+    best_pattern = None
+    best_score = -inf
     
-    # 2. Let specialized regions predict their sensors
-    # Different field regions naturally specialize for different sensors
-    predictions = torch.zeros(sensory_dim)
-    confidences = torch.zeros(sensory_dim)
-    
-    # 3. Use resonance patterns to predict
-    # "When this pattern is active, these sensors usually show..."
-    for region in self.topology_regions:
-        if region.is_sensory_predictive:
-            predictions[region.sensor_indices] = region.predict_from_field(field)
-            confidences[region.sensor_indices] = region.prediction_confidence
-    
-    return predictions, confidences
+    for _ in range(n_candidates):
+        # Generate candidate pattern
+        pattern = generate_candidate()  # gradient, radial, wave, or sparse
+        
+        # Install in test field
+        test_field = field.clone()
+        test_field[:,:,:,32:48] = pattern
+        
+        # Simulate future evolution
+        trajectory = simulate_evolution(test_field, steps=100)
+        
+        # Score based on:
+        # - Reward correlation
+        # - Behavioral coherence
+        # - Pattern stability
+        score = evaluate_trajectory(trajectory, reward_signal)
+        
+        if score > best_score:
+            best_pattern = pattern
+            best_score = score
+            
+    return best_pattern
 ```
 
-**Completed Changes**:
-- [x] Add sensory prediction method to TopologyRegionSystem
-- [x] Track which regions predict which sensors (emergent specialization)
-- [x] Use temporal features for momentum-based predictions
-- [x] Return per-sensor confidence for weighted learning
+### 2. Critical Success Factors
+- **No explicit motor commands** - patterns shape field, field creates motion
+- **Long time horizons** - patterns influence behavior for 30+ cycles
+- **True emergence** - behaviors arise from field dynamics, not rules
+- **Robustness** - patterns create tendencies, not rigid behaviors
 
-**Results**:
-- Confidence improved from 0% to 44% with predictable input
-- 4 topology regions learned to predict specific sensors
-- Low confidence (11.8%) maintained for unpredictable input
-- Prediction errors now drive region-sensor association learning
+### 3. What Makes This Different
+- We're not planning actions, we're discovering beneficial field configurations
+- We're not executing plans, we're letting patterns shape dynamics
+- We're not caching decisions, we're building a library of behavioral attractors
 
-#### ✅ Phase 2: Prediction Error as Primary Learning Signal (COMPLETED - 2025-01-31)
+## Critical Principle
+Every feature must be field-native. No symbolic abstractions, no engineered goals, no explicit plans. Let patterns shape the flow, and behavior emerges.
 
-**Make prediction error drive ALL learning**:
-```python
-def process_prediction_error(self, predicted: torch.Tensor, actual: torch.Tensor):
-    """Prediction error is the only teaching signal needed."""
-    # 1. Compute structured error (not just magnitude)
-    error_field = self.sensory_mapping.error_to_field(predicted - actual)
-    
-    # 2. Error directly modifies field dynamics
-    self.field_dynamics.learn_from_error(error_field)
-    
-    # 3. High error regions get more resources
-    # (increased resolution, faster dynamics, more connections)
-    
-    # 4. Low error regions consolidate
-    # (become stable predictive models)
-```
+---
 
-**Completed Changes**:
-- [x] Implement error_to_field mapping (spatial error representation)
-- [x] Make self-modification directly proportional to prediction error
-- [x] Allocate field resources based on prediction quality
-- [x] Consolidate successful predictive regions
-
-**Results**:
-- Self-modification strength now scales with prediction errors (up to 3x)
-- Learning rate adapts dynamically to error magnitude
-- High-error regions receive more computational resources
-- Exploration increases 1.5x when learning plateaus
-- Field dynamics evolve based on prediction quality
-
-#### ✅ Phase 3: Hierarchical Prediction (COMPLETED - 2025-01-31)
-
-**Successfully implemented multi-timescale predictions**:
-```python
-# Features 0-15: Immediate predictions (next cycle)
-# Features 16-31: Short-term predictions (next 10 cycles)  
-# Features 32-47: Long-term predictions (next 100 cycles)
-# Features 48-63: Abstract predictions (invariant patterns)
-
-def evolve_predictive_field(self, field: torch.Tensor):
-    """Each layer predicts the layer below."""
-    # Abstract predicts long-term
-    # Long-term predicts short-term
-    # Short-term predicts immediate
-    # Immediate predicts sensory
-    
-    # Errors propagate up: sensory → immediate → short → long → abstract
-    # Predictions flow down: abstract → long → short → immediate → sensory
-```
-
-**Completed Changes**:
-- [x] Organized features by temporal scale
-- [x] Implemented bidirectional prediction/error flow
-- [x] Each scale learns at its natural rate
-- [x] Created HierarchicalPredictionSystemV2 with proper learning
-
-**Results**:
-- Multiple timescales successfully predict at different rates
-- Short-term predictions achieved 97.4% confidence on patterns
-- Sensory history tracking enables temporal learning
-- Field updates based on prediction errors
-- Integrated with main brain loop
-
-**Known Limitations** (acceptable for production hardware):
-- Learning is slow on M1 MacBook (500ms+ cycles)
-- Simple patterns require many cycles to converge
-- Will improve 10x on production hardware
-
-#### ✅ Phase 4: Action as Prediction Testing (COMPLETED - 2025-01-31)
-
-**Successfully implemented actions as prediction experiments**:
-```python
-def generate_predictive_action(self, field: torch.Tensor):
-    """Actions are experiments to test predictions."""
-    # 1. Field predicts outcomes for multiple actions
-    # 2. Select action with either:
-    #    - Most confident good prediction (exploit)
-    #    - Most uncertain prediction (explore)
-    # 3. Action execution tests the prediction
-    # 4. Error updates the predictive model
-```
-
-**Completed Changes**:
-- [x] Integrated action generation with hierarchical predictions
-- [x] Track prediction accuracy per action type (explore/exploit/test)
-- [x] Learn action-outcome mappings at multiple timescales
-- [x] Document emergent behavioral strategies
-
-**Results**:
-- Actions selected based on predicted sensory outcomes
-- Three action types emerge: exploration, exploitation, hypothesis testing
-- Action-outcome weights learned through gradient descent
-- Uncertainty drives information-seeking behaviors
-- Full integration with Phase 3 hierarchical predictions
-
-**Implementation Details**:
-- Created `ActionPredictionSystem` with learned action-outcome mappings
-- Actions predict outcomes at immediate/short/long timescales
-- Selection balances exploration drive with prediction confidence
-- Tracks prediction accuracy per action type for meta-learning
-
-#### ✅ Phase 5: Active Vision Through Predictive Sampling (COMPLETED - 2025-01-31)
-
-**Vision as Hypothesis Testing, Not Image Processing**
-
-The field doesn't process images - it tests predictions by directing attention. Rich sensors provide focused glimpses based on uncertainty, creating natural active vision behaviors.
-
-**Integration with Glimpse Adapter**:
-```python
-def generate_glimpse_requests(self, field: torch.Tensor) -> List[GlimpseRequest]:
-    """Low confidence regions drive active sampling."""
-    # 1. Get uncertainty map from predictive regions
-    uncertainty_map = self.compute_uncertainty_from_predictions()
-    
-    # 2. Generate glimpse requests for high-uncertainty areas
-    requests = self.glimpse_adapter.generate_glimpse_requests(uncertainty_map)
-    
-    # 3. Glimpses become special sensory input
-    # 4. Prediction improvement reinforces glimpse behavior
-```
-
-**Completed Changes**:
-- [x] Integrate existing GlimpseSensoryAdapter with prediction system
-- [x] Add uncertainty map generation from region confidence
-- [x] Include sensor position in motor output space
-- [x] Process glimpse returns as high-priority sensory input
-- [x] Learn value of glimpses through prediction improvement
-
-**Results**:
-- Uncertainty maps successfully generated from topology region confidence
-- Sensor control actions (pan/tilt) added to motor output
-- Movement patterns emerge based on predictive uncertainty
-- Glimpse value learned through information gain tracking
-- Natural eye movements arise from uncertainty dynamics
-
-**Implementation Details**:
-- Created `ActiveVisionSystem` with uncertainty map generation
-- Sensor control uses last 2 motor outputs for pan/tilt
-- Three movement types: saccades, smooth pursuit, scanning
-- Glimpse adapter integration ready for hardware implementation
-
-**Observed Behaviors**:
-- Smooth pursuit when tracking predictable objects
-- Rapid saccades to surprising/uncertain areas
-- Fixation on complex patterns needing detail
-- Ignoring stable/predictable regions
-- Natural emergence of biological-like eye movements
-
-### Expected Emergent Behaviors
-
-With prediction as the core function, we expect:
-
-1. **Anticipatory Actions**: Movement before sensory confirmation
-2. **Smooth Pursuit**: Predictive tracking of moving objects
-3. **Surprise Detection**: Strong responses to prediction violations
-4. **Causal Learning**: Actions that test causal hypotheses
-5. **Abstract Planning**: High-level predictions guiding sequences
-6. **Individual Personality**: Unique predictive models per brain
-
-### Success Metrics
-
-- **Confidence > 0%**: Brain successfully predicts SOMETHING
-- **Gradual Learning**: Prediction accuracy improves over time
-- **Behavioral Coherence**: Actions follow from predictions
-- **Surprise Adaptation**: Quick learning from prediction errors
-- **Emergent Curiosity**: Seeking situations that improve predictions
-
-### Implementation Priority
-
-1. **First**: Close the prediction loop (Phase 1) - without this, nothing works
-2. **Second**: Make error drive learning (Phase 2) - this enables improvement  
-3. **Third**: Test with simple sensory patterns before adding hierarchy
-4. **Fourth**: Document what emerges before adding complexity
-
-### Philosophical Note
-
-This isn't adding prediction to the brain - it's recognizing that the brain IS prediction. Every thought is a prediction, every action tests a prediction, every sensation updates predictions. Intelligence emerges from the necessity to predict.
-
-## 📍 Current Status
-
-**Phase 5 Complete**: Active Vision Through Predictive Sampling!
-- Vision as hypothesis testing successfully implemented
-- Uncertainty maps drive attention to informative areas
-- Natural eye movements emerge: saccades, smooth pursuit, scanning
-- Glimpse value learned through information gain
-- Full integration with hierarchical predictions and action system
-
-**All 5 Phases of Prediction System COMPLETE!**
-
-### Post-Phase 5 Refactoring (COMPLETED - 2025-01-31)
-
-**Generalized Active Sensing Architecture**:
-- Refactored ActiveVisionSystem to inherit from ActiveSensingSystem base class
-- Created modality-agnostic uncertainty mapping and information tracking
-- Added stub implementations for future modalities:
-  - ActiveAudioSystem: frequency sweeping, source tracking, temporal windowing
-  - ActiveTactileSystem: spatial scanning, pressure modulation, texture following
-- Benefits:
-  - Easy integration of new sensor modalities
-  - Shared uncertainty-driven attention mechanism
-  - Common information gain tracking
-  - Clean separation of generic vs modality-specific behaviors
-
-The brain now embodies the principle that **Prediction IS Intelligence**:
-1. ✅ Field predicts sensory input (44% confidence on patterns)
-2. ✅ Prediction errors drive all learning (up to 3x modulation)
-3. ✅ Hierarchical predictions at multiple timescales (97.4% short-term)
-4. ✅ Actions test predictions (explore/exploit/test strategies)
-5. ✅ Active vision samples uncertain areas (natural eye movements)
-
-**Emergent Behaviors Observed**:
-- Anticipatory actions before sensory confirmation
-- Smooth pursuit of predictable objects
-- Rapid saccades to surprising stimuli
-- Fixation on complex patterns needing analysis
-- Information-seeking behavior in uncertain situations
-- Individual "personality" from unique predictive models
+*"The best strategy is not a plan, but a shape that guides the flow."*

@@ -66,11 +66,11 @@ def run_terminal_demo():
     print("TERMINAL DEMONSTRATION")
     print("="*60)
     
-    from src.brains.field.simplified_unified_brain import SimplifiedUnifiedBrain
+    from src.brains.field.unified_field_brain import UnifiedFieldBrain
     import numpy as np
     
     print("\n1. Creating brain...")
-    brain = SimplifiedUnifiedBrain(
+    brain = UnifiedFieldBrain(
         sensory_dim=8,
         motor_dim=3,
         spatial_resolution=32,
@@ -107,7 +107,7 @@ def run_visual_demo():
     try:
         import pygame
         import numpy as np
-        from src.brains.field.simplified_unified_brain import SimplifiedUnifiedBrain
+        from src.brains.field.unified_field_brain import UnifiedFieldBrain
         
         # Initialize pygame
         pygame.init()
@@ -118,7 +118,7 @@ def run_visual_demo():
         font = pygame.font.Font(None, 24)
         
         # Create brain
-        brain = SimplifiedUnifiedBrain(
+        brain = UnifiedFieldBrain(
             sensory_dim=8,
             motor_dim=2,  # 2D movement
             spatial_resolution=32,

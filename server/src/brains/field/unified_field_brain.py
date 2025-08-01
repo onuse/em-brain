@@ -1,8 +1,8 @@
 """
-Simplified Unified Field Brain
+Unified Field Brain
 
-Radical simplification with 4D tensor architecture for GPU optimization.
-All cognitive properties emerge from unified field dynamics.
+4D tensor architecture where all cognitive properties emerge from field dynamics.
+Strategic patterns shape behavior through field gradients.
 """
 
 import torch
@@ -30,8 +30,8 @@ from .reward_topology_shaping import RewardTopologyShaper
 from .consolidation_system import ConsolidationSystem
 from .topology_region_system import TopologyRegionSystem
 from .predictive_field_system import PredictiveFieldSystem
-from .action_prediction_system import ActionPredictionSystem
 from .active_vision_system import ActiveVisionSystem
+from .field_strategic_planner import FieldStrategicPlanner, StrategicPattern
 from .active_audio_system import ActiveAudioSystem
 from .active_tactile_system import ActiveTactileSystem
 from ...utils.tensor_ops import create_randn, field_information, field_stats, apply_diffusion
@@ -42,15 +42,15 @@ from ...utils.error_handling import (
 from .pattern_cache_pool import PatternCachePool
 
 
-class SimplifiedUnifiedBrain:
+class UnifiedFieldBrain:
     """
-    Simplified brain with 4D tensor architecture.
+    Unified field brain with 4D tensor architecture.
     
-    Major simplifications:
-    - Fixed 4D tensor shape for GPU optimization
-    - No complex dimension mappings
-    - All properties emerge from field dynamics
-    - Direct tensor operations without abstraction layers
+    Core principles:
+    - Single 4D tensor field [D, H, W, C]
+    - All cognition emerges from field dynamics
+    - Strategic patterns shape behavior through gradients
+    - No symbolic representations or explicit plans
     """
     
     def __init__(self,
@@ -74,6 +74,10 @@ class SimplifiedUnifiedBrain:
         brain_config = self.cognitive_config.brain_config
         self.quiet_mode = quiet_mode
         
+        # Store dimensions
+        self.sensory_dim = sensory_dim
+        self.motor_dim = motor_dim
+        
         # Fixed 4D tensor shape for GPU optimization
         self.tensor_shape = [spatial_resolution, spatial_resolution, spatial_resolution, 64]
         self.spatial_resolution = spatial_resolution
@@ -90,7 +94,7 @@ class SimplifiedUnifiedBrain:
             self.device = device
             
         if not quiet_mode:
-            print(f"🧠 Simplified Unified Brain")
+            print(f"🧠 Unified Field Brain")
             print(f"   Tensor shape: {self.tensor_shape} (4D)")
             print(f"   Device: {self.device}")
             print(f"   Memory: {self._calculate_memory_usage():.1f}MB")
@@ -104,7 +108,6 @@ class SimplifiedUnifiedBrain:
         self.field_decay_rate = brain_config.field_decay_rate
         self.field_diffusion_rate = brain_config.field_diffusion_rate
         self.spontaneous_rate = brain_config.spontaneous_rate
-        self.sensory_dim = sensory_dim
         
         # Initialize core systems
         self._initialize_core_systems(motor_dim)
@@ -127,8 +130,6 @@ class SimplifiedUnifiedBrain:
         self._last_imprint_strength = 0.0
         self._last_activated_regions = []
         self.modulation = {}  # Will be filled by unified field dynamics
-        self._last_action = None
-        self._last_predicted_action = None
         
         # Memory systems
         self.working_memory = deque(maxlen=brain_config.working_memory_limit)
@@ -228,13 +229,6 @@ class SimplifiedUnifiedBrain:
             device=self.device
         )
         
-        # Action-prediction integration system (Phase 4)
-        self.action_prediction = ActionPredictionSystem(
-            motor_dim=motor_dim,  # Use full motor dimensions
-            sensory_dim=self.sensory_dim,
-            device=self.device
-        )
-        self.use_action_prediction = False  # Will be enabled when ready
         
         # Active sensing systems (Phase 5)
         # Vision is the primary implementation
@@ -250,6 +244,12 @@ class SimplifiedUnifiedBrain:
         self.active_audio = None  # Created when needed
         self.active_tactile = None  # Created when needed
         
+        # Strategic Planning: Field patterns that shape behavior
+        self.strategic_planner = None
+        self.use_strategic_planning = False
+        self.current_strategic_pattern = None
+        self._last_reward_signal = 0.0
+        
     def enable_hierarchical_prediction(self, enable: bool = True):
         """
         Enable Phase 3: Hierarchical prediction at multiple timescales.
@@ -262,20 +262,33 @@ class SimplifiedUnifiedBrain:
             status = "enabled" if enable else "disabled"
             print(f"🧠 Hierarchical prediction {status}")
     
-    def enable_action_prediction(self, enable: bool = True):
+    def enable_strategic_planning(self, enable: bool = True):
         """
-        Enable Phase 4: Action as prediction testing.
+        Enable field-native strategic planning through pattern discovery.
         
-        When enabled, actions are selected based on predicted outcomes
-        at multiple timescales. Every action tests a hypothesis.
+        Instead of simulating action sequences, discovers field patterns that
+        create beneficial behavioral attractors through natural dynamics.
+        
+        Args:
+            enable: Whether to enable strategic planning
         """
-        self.use_action_prediction = enable
-        # Action prediction requires hierarchical prediction
-        if enable and not self.predictive_field.use_hierarchical:
-            self.enable_hierarchical_prediction(True)
-        if not self.quiet_mode:
-            status = "enabled" if enable else "disabled"
-            print(f"🧠 Action-prediction integration {status}")
+        self.use_strategic_planning = enable
+        
+        if enable and self.strategic_planner is None:
+            # Create the strategic planner
+            self.strategic_planner = FieldStrategicPlanner(
+                field_shape=self.tensor_shape,
+                sensory_dim=self.sensory_dim,
+                motor_dim=self.motor_cortex.motor_dim - 1,
+                device=self.device
+            )
+                
+            if not self.quiet_mode:
+                print(f"🧠 Strategic planning enabled (field-native patterns)")
+        elif not enable:
+            self.use_strategic_planning = False
+            if not self.quiet_mode:
+                print("🧠 Strategic planning disabled")
     
     def enable_active_vision(self, enable: bool = True, glimpse_adapter=None):
         """
@@ -295,13 +308,11 @@ class SimplifiedUnifiedBrain:
         if enable:
             if not self.predictive_field.use_hierarchical:
                 self.enable_hierarchical_prediction(True)
-            if not self.use_action_prediction:
-                self.enable_action_prediction(True)
         
         if not self.quiet_mode:
             status = "enabled" if enable else "disabled"
             print(f"🧠 Active vision {status}")
-        
+    
     @torch.no_grad()  # Disable gradient computation for performance
     def process_robot_cycle(self, sensory_input: List[float], glimpse_data: Optional[Dict[str, torch.Tensor]] = None) -> Tuple[List[float], Dict[str, Any]]:
         """
@@ -318,8 +329,9 @@ class SimplifiedUnifiedBrain:
             with ErrorContext("validating sensory input"):
                 # Debug: Check if sensory_input contains tensors
                 if self.brain_cycles == 6 and not self.quiet_mode:
-                    print(f"[DEBUG Cycle 6] sensory_input types: {[type(v).__name__ for v in sensory_input[:5]]}")
-                    print(f"[DEBUG Cycle 6] sensory_input values: {sensory_input[:5]}")
+                    # print(f"[DEBUG Cycle 6] sensory_input types: {[type(v).__name__ for v in sensory_input[:5]]}")
+                    # print(f"[DEBUG Cycle 6] sensory_input values: {sensory_input[:5]}")
+                    pass
                 
                 # Allow variable length for different robot configurations
                 validate_list_input(sensory_input, len(sensory_input), "sensory_input", -10.0, 10.0)
@@ -353,9 +365,10 @@ class SimplifiedUnifiedBrain:
             
             # 2. Update prediction tracking
             if self.brain_cycles % 50 == 0 and not self.quiet_mode:
-                print(f"[DEBUG Cycle {self.brain_cycles}] _predicted_sensory is None: {self._predicted_sensory is None}")
+                # print(f"[DEBUG Cycle {self.brain_cycles}] _predicted_sensory is None: {self._predicted_sensory is None}")
                 if self._predicted_sensory is not None:
-                    print(f"[DEBUG Cycle {self.brain_cycles}] _predicted_sensory shape: {self._predicted_sensory.shape}")
+                    # print(f"[DEBUG Cycle {self.brain_cycles}] _predicted_sensory shape: {self._predicted_sensory.shape}")
+                    pass
             
             if self._predicted_sensory is not None and experience.raw_input_stream is not None:
                 # Compare predicted vs actual sensory input
@@ -370,8 +383,9 @@ class SimplifiedUnifiedBrain:
                 # Debug logging for size mismatch
                 if actual_sensory.shape[0] != self._predicted_sensory.shape[0]:
                     if not self.quiet_mode and self.brain_cycles % 10 == 0:
-                        print(f"[DEBUG] Size mismatch: actual_sensory={actual_sensory.shape[0]}, predicted={self._predicted_sensory.shape[0]}")
-                        print(f"[DEBUG] raw_input_stream={experience.raw_input_stream.shape[0]}, sensory_dim={self.sensory_dim}")
+                        # print(f"[DEBUG] Size mismatch: actual_sensory={actual_sensory.shape[0]}, predicted={self._predicted_sensory.shape[0]}")
+                        # print(f"[DEBUG] raw_input_stream={experience.raw_input_stream.shape[0]}, sensory_dim={self.sensory_dim}")
+                        pass
                 
                 if actual_sensory.shape[0] == self._predicted_sensory.shape[0]:
                     sensory_error = torch.mean(torch.abs(actual_sensory - self._predicted_sensory)).item()
@@ -379,9 +393,10 @@ class SimplifiedUnifiedBrain:
                     
                     # Debug: Show prediction quality
                     if self.brain_cycles % 50 == 0 and not self.quiet_mode:
-                        print(f"[DEBUG Cycle {self.brain_cycles}] Sensory prediction error: {sensory_error:.3f}")
-                        print(f"[DEBUG Cycle {self.brain_cycles}] Actual sensory (first 5): {actual_sensory[:5].tolist()}")
-                        print(f"[DEBUG Cycle {self.brain_cycles}] Predicted sensory (first 5): {self._predicted_sensory[:5].tolist()}")
+                        # print(f"[DEBUG Cycle {self.brain_cycles}] Sensory prediction error: {sensory_error:.3f}")
+                        # print(f"[DEBUG Cycle {self.brain_cycles}] Actual sensory (first 5): {actual_sensory[:5].tolist()}")
+                        # print(f"[DEBUG Cycle {self.brain_cycles}] Predicted sensory (first 5): {self._predicted_sensory[:5].tolist()}")
+                        pass
                 else:
                     # Fallback if dimensions still don't match
                     min_dim = min(actual_sensory.shape[0], self._predicted_sensory.shape[0])
@@ -408,15 +423,6 @@ class SimplifiedUnifiedBrain:
                     (1.0 - momentum) * raw_confidence
                 )
                 
-                # Phase 4: Update action-outcome mapping if enabled
-                if self.use_action_prediction and self._last_action is not None:
-                    # Ensure sensory dimension matches
-                    sensory_for_action = actual_sensory[:self.action_prediction.sensory_dim]
-                    self.action_prediction.update_action_outcome_mapping(
-                        action=self._last_action,
-                        actual_outcome=sensory_for_action,
-                        predicted_action=self._last_predicted_action
-                    )
                 
                 # Process prediction error to improve region-sensor associations
                 if hasattr(self, '_last_activated_regions') and self._last_activated_regions:
@@ -472,10 +478,11 @@ class SimplifiedUnifiedBrain:
             
             # Debug cycle 17
             if self.brain_cycles == 17 and not self.quiet_mode:
-                print(f"[DEBUG Cycle 17] reward value: {reward}, type: {type(reward).__name__}")
-                print(f"[DEBUG Cycle 17] sensory_input length: {len(sensory_input)}, sensory_dim: {self.sensory_dim}")
+                # print(f"[DEBUG Cycle 17] reward value: {reward}, type: {type(reward).__name__}")
+                # print(f"[DEBUG Cycle 17] sensory_input length: {len(sensory_input)}, sensory_dim: {self.sensory_dim}")
                 if len(sensory_input) > 0:
-                    print(f"[DEBUG Cycle 17] last sensory value: {sensory_input[-1]}, type: {type(sensory_input[-1]).__name__}")
+                    # print(f"[DEBUG Cycle 17] last sensory value: {sensory_input[-1]}, type: {type(sensory_input[-1]).__name__}")
+                    pass
             
             # Compute field state (information, novelty, etc.)
             field_state = self.field_dynamics.compute_field_state(self.unified_field)
@@ -492,9 +499,10 @@ class SimplifiedUnifiedBrain:
             
             # Debug confidence values
             if self.brain_cycles % 100 == 0 and not self.quiet_mode:
-                print(f"[DEBUG] Confidence: current={self._current_prediction_confidence:.3f}, " +
-                      f"smoothed={self.field_dynamics.smoothed_confidence:.3f}, " +
-                      f"error={error_scalar:.3f}")
+                # print(f"[DEBUG] Confidence: current={self._current_prediction_confidence:.3f}, " +
+                #       f"smoothed={self.field_dynamics.smoothed_confidence:.3f}, " +
+                #       f"error={error_scalar:.3f}")
+                pass
             
             # Get unified modulation parameters
             try:
@@ -525,7 +533,33 @@ class SimplifiedUnifiedBrain:
                 if hasattr(self.motor_cortex, 'inject_reward_feedback'):
                     self.motor_cortex.inject_reward_feedback(reward)
             
-            # 7. Evolve field
+            # Store reward signal for strategic planning
+            self._last_reward_signal = reward.item() if torch.is_tensor(reward) else reward
+            
+            # 7. Strategic pattern discovery (background)
+            if self.use_strategic_planning and self.strategic_planner is not None:
+                # Every 20 cycles or when reward changes significantly
+                should_discover = (
+                    self.brain_cycles % 20 == 0 or
+                    abs(self._last_reward_signal) > 0.5 or
+                    self.current_strategic_pattern is None
+                )
+                
+                if should_discover:
+                    # Start background pattern discovery
+                    def on_pattern_discovered(pattern):
+                        if pattern and pattern.score > 0:
+                            self.current_strategic_pattern = pattern
+                            if not self.quiet_mode:
+                                print(f"🧠 New strategic pattern discovered (score: {pattern.score:.2f})")
+                    
+                    self.strategic_planner.discover_async(
+                        self.unified_field,
+                        self._last_reward_signal,
+                        callback=on_pattern_discovered
+                    )
+            
+            # 8. Evolve field
             self._evolve_field()
             
             # Generate prediction for next cycle
@@ -724,7 +758,24 @@ class SimplifiedUnifiedBrain:
         if hierarchical_update is not None:
             self.unified_field += hierarchical_update
         
-        # 5. Log state
+        # 5. Apply strategic pattern if present
+        if self.use_strategic_planning and self.current_strategic_pattern is not None:
+            # Install pattern in memory channels (32-47) with gentle influence
+            pattern = self.current_strategic_pattern.pattern
+            current_pattern = self.unified_field[:, :, :, 32:48]
+            
+            # Blend pattern with existing field (persistent but not overwhelming)
+            self.unified_field[:, :, :, 32:48] = (
+                current_pattern * 0.95 +  # High persistence
+                pattern * 0.05  # Gentle refresh
+            )
+            
+            # Pattern creates gradients that influence other channels
+            pattern_energy = self.unified_field[:, :, :, 32:48].mean(dim=-1, keepdim=True)
+            gradient_influence = torch.tanh(pattern_energy) * 0.02
+            self.unified_field[:, :, :, :32] += gradient_influence.expand(-1, -1, -1, 32)
+        
+        # 6. Log state
         if self.brain_cycles % 100 == 0 and not self.quiet_mode:
             state_desc = self.field_dynamics.get_state_description()
             print(state_desc)
@@ -746,82 +797,80 @@ class SimplifiedUnifiedBrain:
     
     @safe_tensor_op
     def _generate_motor_action(self) -> List[float]:
-        """Generate motor action - with Phase 4 action-prediction integration."""
+        """Generate motor action from field gradients and strategic patterns."""
         exploration_drive = self.modulation.get('exploration_drive', 0.5)
         
-        if self.use_action_prediction:
-            # Phase 4: Actions as prediction testing
-            # Get current hierarchical predictions
-            if hasattr(self.predictive_field, 'hierarchical_system') and hasattr(self.predictive_field, '_last_hierarchical_prediction'):
-                hierarchical_pred = self.predictive_field._last_hierarchical_prediction
-                current_predictions = {
-                    'immediate': hierarchical_pred.immediate,
-                    'short_term': hierarchical_pred.short_term,
-                    'long_term': hierarchical_pred.long_term
-                }
-            else:
-                current_predictions = {}
-            
-            # Generate action candidates based on predictions
-            candidates = self.action_prediction.generate_action_candidates(
-                current_predictions=current_predictions,
-                n_candidates=5
-            )
-            
-            # Select best action based on predictions and exploration
-            motor_tensor, selected_action = self.action_prediction.select_action(
-                candidates=candidates,
-                hierarchical_predictions=self.predictive_field._last_hierarchical_prediction if hasattr(self.predictive_field, '_last_hierarchical_prediction') else None,
-                exploration_drive=exploration_drive
-            )
-            
-            # Store for next cycle's learning
-            self._last_action = motor_tensor
-            self._last_predicted_action = selected_action
-            
-            # Phase 5: Add sensor control if active vision is enabled
-            if self.use_active_vision:
-                # Generate uncertainty map from topology regions
-                uncertainty_map = self.active_vision.generate_uncertainty_map(
-                    topology_regions=self._last_activated_regions if hasattr(self, '_last_activated_regions') else [],
-                    field=self.unified_field
-                )
-                
-                # Generate sensor control actions
-                sensor_control = self.active_vision.generate_attention_control(
-                    uncertainty_map=uncertainty_map,
-                    current_predictions=current_predictions,
-                    exploration_drive=exploration_drive
-                )
-                
-                # Return only motor commands - sensor control should be handled separately
-                # TODO: Implement proper sensor control mechanism
-                return motor_tensor.tolist()
-            else:
-                # Convert to list and return
-                return motor_tensor.tolist()
+        # Extract motor tendencies from field gradients
+        # Strategic patterns in channels 32-47 create gradients that influence behavior
+        motor_tendencies = self._extract_motor_tendencies_from_field()
         
+        # Add exploration noise
+        if exploration_drive > 0:
+            noise = torch.randn(self.motor_dim, device=self.device) * exploration_drive * 0.3
+            motor_tendencies = motor_tendencies + noise
+        
+        # Apply activation function and scale
+        motor_commands = torch.tanh(motor_tendencies)
+        
+        # Store for learning
+        self._last_action = motor_commands
+        
+        return motor_commands.tolist()
+    
+    def _extract_motor_tendencies_from_field(self) -> torch.Tensor:
+        """Extract motor tendencies from field gradients created by strategic patterns."""
+        # Get field activation in content channels
+        content_field = self.unified_field[:, :, :, :32]
+        
+        # Compute spatial gradients (movement tendencies)
+        gradients = []
+        
+        # X-axis gradient (forward/backward)
+        if content_field.shape[0] > 1:
+            # Positive gradient means higher activation ahead, so move forward
+            x_grad = (content_field[-1, :, :].mean() - content_field[0, :, :].mean()).item()
         else:
-            # Original pattern-based motor generation
-            exploration_params = {
-                'exploration_drive': exploration_drive,
-                'motor_noise': self.modulation.get('motor_noise', 0.2)
-            }
+            x_grad = 0.0
             
-            # Get attention state from current attention processing
-            attention_state = getattr(self, '_last_attention_state', None)
+        # Y-axis gradient (left/right)
+        if content_field.shape[1] > 1:
+            # Positive gradient means higher activation to the right
+            y_grad = (content_field[:, -1, :].mean() - content_field[:, 0, :].mean()).item()
+        else:
+            y_grad = 0.0
             
-            # Generate motor action using unified pattern system
-            motor_commands = self.pattern_motor.generate_motor_action(
-                field=self.unified_field,
-                spontaneous_activity=None,
-                attention_state=attention_state,
-                exploration_params=exploration_params
-            )
+        # Z-axis gradient (up/down - less important for ground robots)
+        if content_field.shape[2] > 1:
+            z_grad = (content_field[:, :, -1].mean() - content_field[:, :, 0].mean()).item()
+        else:
+            z_grad = 0.0
+        
+        # Pattern influence strength
+        if self.current_strategic_pattern is not None:
+            pattern_field = self.unified_field[:, :, :, 32:48]
+            pattern_strength = pattern_field.abs().mean().item()
+        else:
+            pattern_strength = 0.0
+        
+        # Create motor vector based on field gradients
+        motor_tendencies = torch.zeros(self.motor_dim, device=self.device)
+        
+        # Map gradients to motor dimensions (robot-specific)
+        if self.motor_dim >= 2:
+            motor_tendencies[0] = x_grad * 2.0  # Forward/backward
+            motor_tendencies[1] = y_grad * 2.0  # Turn left/right
             
-            # Return pattern-based motor commands directly
-            # (Phase 4 action prediction supersedes this approach)
-            return motor_commands.tolist()
+        if self.motor_dim >= 3:
+            motor_tendencies[2] = pattern_strength  # Speed modulation
+            
+        if self.motor_dim >= 4:
+            motor_tendencies[3] = z_grad * 0.5  # Vertical component (if applicable)
+        
+        # Additional motor dimensions get small random activations
+        for i in range(4, self.motor_dim):
+            motor_tendencies[i] = torch.randn(1, device=self.device).item() * 0.1
+        
+        return motor_tendencies
     
     def _create_brain_state(self) -> Dict[str, Any]:
         """Create brain state for telemetry."""
@@ -879,11 +928,11 @@ class SimplifiedUnifiedBrain:
             'device': str(self.device),
             'predictive_phases': {
                 'phase_3_hierarchical': hasattr(self.predictive_field, 'use_hierarchical_timescales') and self.predictive_field.use_hierarchical_timescales,
-                'phase_4_action_prediction': self.use_action_prediction,
+                'strategic_planning': self.use_strategic_planning,
                 'phase_5_active_vision': self.use_active_vision,
                 'enabled_count': sum([
                     hasattr(self.predictive_field, 'use_hierarchical_timescales') and self.predictive_field.use_hierarchical_timescales,
-                    self.use_action_prediction,
+                    self.use_strategic_planning,
                     self.use_active_vision
                 ])
             },
@@ -892,13 +941,11 @@ class SimplifiedUnifiedBrain:
             'timestamp': time.time()
         }
         
-        # Add action prediction statistics if enabled
-        if self.use_action_prediction:
-            brain_state['action_prediction'] = self.action_prediction.get_action_statistics()
         
         # Add active sensing statistics if enabled
         if self.use_active_vision:
             brain_state['active_vision'] = self.active_vision.get_attention_statistics()
+        
         
         return brain_state
     

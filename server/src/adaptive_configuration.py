@@ -62,10 +62,23 @@ class AdaptiveConfiguration:
     working_memory_limit: int = 100
     similarity_search_limit: int = 1000
     
+    # Planning parameters (adaptive)
+    n_futures: int = 8
+    planning_horizon: int = 10
+    cache_size: int = 5
+    reactive_only_threshold_ms: int = 100  # Use reactive if cycle must be under this
+    
+    # Hardware performance metrics
+    field_evolution_ms: float = 0.0
+    future_simulation_ms_per_unit: float = 0.0
+    memory_bandwidth_gbs: float = 0.0
+    
     # Overrides
     force_spatial_resolution: Optional[int] = None
     force_device: Optional[str] = None
     disable_adaptation: bool = False
+    force_n_futures: Optional[int] = None
+    force_planning_horizon: Optional[int] = None
 
 
 class AdaptiveConfigurationManager:
@@ -136,6 +149,8 @@ class AdaptiveConfigurationManager:
                 self.config.force_spatial_resolution = overrides.get('force_spatial_resolution')
                 self.config.force_device = overrides.get('force_device')
                 self.config.disable_adaptation = overrides.get('disable_adaptation', False)
+                self.config.force_n_futures = overrides.get('force_n_futures')
+                self.config.force_planning_horizon = overrides.get('force_planning_horizon')
     
     def _detect_hardware(self):
         """Detect hardware capabilities."""
@@ -183,6 +198,11 @@ class AdaptiveConfigurationManager:
         else:  # CPU
             self.config.working_memory_limit = int(200 * memory_factor)
             self.config.similarity_search_limit = int(5000 * memory_factor)
+        
+        # Benchmark hardware for planning parameters
+        if TORCH_AVAILABLE:
+            self._benchmark_hardware()
+            self._optimize_planning_parameters()
     
     def _calculate_optimal_resolution(self) -> int:
         """Calculate optimal spatial resolution based on hardware."""
@@ -228,6 +248,135 @@ class AdaptiveConfigurationManager:
         else:
             return 3
     
+    def _benchmark_hardware(self):
+        """Benchmark hardware capabilities for planning."""
+        device = self.get_device()
+        if device is None:
+            return
+        
+        try:
+            # 1. Benchmark field evolution
+            field_shape = (32, 32, 32, 64)  # Standard field size
+            field = torch.randn(*field_shape, device=device)
+            
+            # Time field evolution operations
+            start = time.perf_counter()
+            for _ in range(10):
+                # Simulate typical field operations
+                evolved = field * 0.995  # Decay
+                evolved = torch.tanh(evolved * 1.1)  # Nonlinearity
+            
+            if device.type == 'cuda':
+                torch.cuda.synchronize()
+            
+            self.config.field_evolution_ms = (time.perf_counter() - start) * 100  # ms per evolution
+            
+            # 2. Benchmark future simulation
+            # Test simulation of one future for one timestep
+            start = time.perf_counter()
+            for _ in range(5):
+                # Simulate convolution-based evolution
+                field_3d = field.mean(dim=-1).unsqueeze(0).unsqueeze(0)
+                if field_3d.shape[2] >= 3:  # Only if field is large enough
+                    kernel = torch.ones(1, 1, 3, 3, 3, device=device) * 0.05
+                    _ = torch.nn.functional.conv3d(field_3d, kernel, padding=1)
+            
+            if device.type == 'cuda':
+                torch.cuda.synchronize()
+                
+            # Time per future per timestep
+            self.config.future_simulation_ms_per_unit = (time.perf_counter() - start) * 40  # ms per future-timestep
+            
+            # 3. Estimate memory bandwidth
+            data_size_mb = field.numel() * 4 / (1024**2)  # float32 = 4 bytes
+            transfers_per_second = 1000 / self.config.field_evolution_ms
+            self.config.memory_bandwidth_gbs = (data_size_mb * transfers_per_second) / 1024
+            
+        except Exception as e:
+            # Fallback to conservative estimates
+            if not self.suppress_output:
+                print(f"Hardware benchmark failed: {e}")
+            self.config.field_evolution_ms = 50.0
+            self.config.future_simulation_ms_per_unit = 100.0
+            self.config.memory_bandwidth_gbs = 10.0
+    
+    def _optimize_planning_parameters(self):
+        """Optimize planning parameters based on hardware benchmarks."""
+        # Skip if forced
+        if self.config.force_n_futures is not None:
+            self.config.n_futures = self.config.force_n_futures
+        if self.config.force_planning_horizon is not None:
+            self.config.planning_horizon = self.config.force_planning_horizon
+            
+        if self.config.force_n_futures is not None and self.config.force_planning_horizon is not None:
+            return
+        
+        # Target: 2000ms cycles with 50% for planning
+        planning_budget_ms = 1000
+        
+        # Base cost of a cycle (non-planning operations)
+        base_cost_ms = self.config.field_evolution_ms * 5  # Rough estimate
+        
+        # Available time for future simulation
+        available_ms = planning_budget_ms - base_cost_ms
+        
+        if available_ms <= 0:
+            # Hardware too slow for planning
+            self.config.n_futures = 2
+            self.config.planning_horizon = 3
+            return
+        
+        # Find optimal n_futures and horizon combination
+        best_score = 0
+        best_n_futures = 4
+        best_horizon = 5
+        
+        # Test different combinations
+        future_options = [2, 4, 8, 16, 32, 64, 128]
+        horizon_options = [3, 5, 10, 20, 50]
+        
+        for n_futures in future_options:
+            for horizon in horizon_options:
+                # Estimate time for this configuration
+                # Each action candidate gets n_futures * horizon simulations
+                time_per_candidate = n_futures * horizon * self.config.future_simulation_ms_per_unit
+                total_time = time_per_candidate * 5  # Assume 5 action candidates
+                
+                if total_time <= available_ms:
+                    # Quality score: logarithmic benefit of more futures/horizon
+                    quality = np.log(n_futures + 1) * np.log(horizon + 1)
+                    
+                    # Prefer balanced configurations
+                    balance_penalty = abs(np.log(n_futures) - np.log(horizon)) * 0.1
+                    score = quality - balance_penalty
+                    
+                    if score > best_score:
+                        best_score = score
+                        best_n_futures = n_futures
+                        best_horizon = horizon
+        
+        # Apply if not forced
+        if self.config.force_n_futures is None:
+            self.config.n_futures = best_n_futures
+        if self.config.force_planning_horizon is None:
+            self.config.planning_horizon = best_horizon
+        
+        # Adjust cache size based on memory
+        if self.config.system_memory_gb > 16:
+            self.config.cache_size = 20
+        elif self.config.system_memory_gb > 8:
+            self.config.cache_size = 10
+        else:
+            self.config.cache_size = 5
+        
+        # Set reactive threshold based on hardware speed
+        if self.config.field_evolution_ms < 10:
+            self.config.reactive_only_threshold_ms = 50  # Fast hardware
+        elif self.config.field_evolution_ms < 30:
+            self.config.reactive_only_threshold_ms = 100  # Medium
+        else:
+            self.config.reactive_only_threshold_ms = 200  # Slow hardware
+    
     def get_device(self) -> torch.device:
         """Get PyTorch device."""
         if not TORCH_AVAILABLE:
@@ -248,7 +397,12 @@ class AdaptiveConfigurationManager:
             'hierarchical_processing': self.config.hierarchical_processing,
             'attention_super_resolution': self.config.attention_super_resolution,
             'working_memory_limit': self.config.working_memory_limit,
-            'similarity_search_limit': self.config.similarity_search_limit
+            'similarity_search_limit': self.config.similarity_search_limit,
+            # Planning parameters
+            'n_futures': self.config.n_futures,
+            'planning_horizon': self.config.planning_horizon,
+            'cache_size': self.config.cache_size,
+            'reactive_only_threshold_ms': self.config.reactive_only_threshold_ms
         }
     
     def get_full_config(self) -> Dict[str, Any]:
@@ -308,6 +462,17 @@ class AdaptiveConfigurationManager:
             if self.config.attention_guidance: print("   - Attention Guidance")
             if self.config.hierarchical_processing: print("   - Hierarchical Processing")
             if self.config.attention_super_resolution: print("   - Super Resolution")
+            
+            if not self.config.disable_adaptation and self.config.field_evolution_ms > 0:
+                print(f"\n🚀 Adaptive Planning:")
+                print(f"   Futures: {self.config.n_futures}")
+                print(f"   Horizon: {self.config.planning_horizon} steps")
+                print(f"   Cache size: {self.config.cache_size} plans")
+                print(f"   Field evolution: {self.config.field_evolution_ms:.1f}ms")
+                print(f"   Simulation cost: {self.config.future_simulation_ms_per_unit:.1f}ms/unit")
+                estimated_planning_time = (self.config.n_futures * self.config.planning_horizon * 
+                                         self.config.future_simulation_ms_per_unit * 5 / 1000)
+                print(f"   Est. planning time: {estimated_planning_time:.1f}s")
             
             print("="*60 + "\n")
 

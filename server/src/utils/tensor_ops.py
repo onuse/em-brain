@@ -55,7 +55,17 @@ def safe_var(tensor: torch.Tensor,
     """Compute variance with edge case handling."""
     if tensor.numel() <= 1:
         return torch.tensor(0.0, dtype=tensor.dtype, device=tensor.device)
-    return torch.var(tensor, dim=dim, keepdim=keepdim)
+    
+    result = torch.var(tensor, dim=dim, keepdim=keepdim)
+    
+    # NaN protection
+    if torch.isnan(result).any():
+        if keepdim or dim is None:
+            result[torch.isnan(result)] = 0.0
+        else:
+            result = torch.tensor(0.0, dtype=tensor.dtype, device=tensor.device)
+    
+    return result
 
 
 def safe_normalize(tensor: torch.Tensor, 
@@ -92,7 +102,11 @@ def field_energy(field: torch.Tensor) -> float:
 
 def field_information(field: torch.Tensor) -> float:
     """Compute field information content (mean absolute value)."""
-    return float(torch.mean(torch.abs(field)))
+    result = float(torch.mean(torch.abs(field)))
+    # NaN protection
+    if torch.isnan(torch.tensor(result)) or result != result:
+        return 0.5  # Default neutral value
+    return result
 
 
 def field_stats(field: torch.Tensor) -> dict:

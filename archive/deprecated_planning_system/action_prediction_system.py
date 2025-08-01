@@ -14,7 +14,7 @@ about how the world works.
 
 import torch
 import torch.nn.functional as F
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional, Tuple, Union
 from dataclasses import dataclass
 from collections import deque
 import numpy as np
@@ -132,7 +132,7 @@ class ActionPredictionSystem:
         return candidates[:n_candidates]
     
     def select_action(self,
-                     candidates: List[PredictiveAction],
+                     candidates: list,  # Can be PredictiveAction or SimulatedAction
                      hierarchical_predictions: Any,
                      exploration_drive: float = 0.5) -> Tuple[torch.Tensor, PredictiveAction]:
         """
@@ -153,16 +153,24 @@ class ActionPredictionSystem:
         # Score each candidate
         scores = []
         for candidate in candidates:
-            # Base score from predicted outcome desirability
-            outcome_score = self._score_predicted_outcome(candidate)
-            
-            # Confidence bonus - prefer actions we're confident about
-            confidence_score = (candidate.immediate_confidence * 0.5 +
-                              candidate.short_term_confidence * 0.3 +
-                              candidate.long_term_confidence * 0.2)
-            
-            # Information gain bonus - prefer actions that reduce uncertainty
-            info_score = candidate.uncertainty_reduction
+            # Check if this is a SimulatedAction (has richer predictions)
+            if hasattr(candidate, 'simulated_outcome'):
+                # Use rich simulation results
+                from .gpu_future_simulator import SimulatedAction
+                outcome_score = self._score_simulated_outcome(candidate)
+                confidence_score = candidate.simulation_confidence
+                info_score = candidate.surprise_potential  # High surprise = high info gain
+                
+                # Extract the original PredictiveAction for compatibility
+                base_candidate = candidate.original
+            else:
+                # Standard PredictiveAction
+                outcome_score = self._score_predicted_outcome(candidate)
+                confidence_score = (candidate.immediate_confidence * 0.5 +
+                                  candidate.short_term_confidence * 0.3 +
+                                  candidate.long_term_confidence * 0.2)
+                info_score = candidate.uncertainty_reduction
+                base_candidate = candidate
             
             # Combine scores based on exploration drive
             if exploration_drive > 0.7:
@@ -181,14 +189,127 @@ class ActionPredictionSystem:
         best_idx = np.argmax(scores)
         selected = candidates[best_idx]
         
+        # Extract motor values and base candidate
+        if hasattr(selected, 'simulated_outcome'):
+            motor_values = selected.original.motor_values
+            base_action = selected.original
+        else:
+            motor_values = selected.motor_values
+            base_action = selected
+        
         # Add noise based on exploration drive
-        noise = torch.randn_like(selected.motor_values) * exploration_drive * 0.2
-        final_motor = selected.motor_values + noise
+        noise = torch.randn_like(motor_values) * exploration_drive * 0.2
+        final_motor = motor_values + noise
         
         # Clamp to valid range
         final_motor = torch.clamp(final_motor, -1.0, 1.0)
         
-        return final_motor, selected
+        return final_motor, base_action
+    
+    def select_from_cache_or_reactive(self,
+                                    cached_action: Optional[Union['PredictiveAction', 'SimulatedAction']],
+                                    current_predictions: Dict[str, torch.Tensor],
+                                    exploration_drive: float = 0.5,
+                                    confidence_threshold: float = 0.3) -> Tuple[torch.Tensor, Optional[Union['PredictiveAction', 'SimulatedAction']]]:
+        """
+        Select action from cache or generate reactive action if cache miss.
+        
+        This is the fast path for decoupled planning - use cached plan if good,
+        otherwise fall back to simple reactive behavior.
+        
+        Args:
+            cached_action: Action from plan cache (may be None)
+            current_predictions: Current sensory predictions
+            exploration_drive: How much to explore vs exploit
+            confidence_threshold: Minimum confidence to use cached action
+            
+        Returns:
+            Motor values and the action (cached or newly generated)
+        """
+        # First check if we have a valid cached action
+        if cached_action is not None:
+            # Check confidence of cached action
+            if hasattr(cached_action, 'simulation_confidence'):
+                # Rich simulated action
+                confidence = cached_action.simulation_confidence
+            elif hasattr(cached_action, 'immediate_confidence'):
+                # Simple predictive action
+                confidence = cached_action.immediate_confidence
+            else:
+                confidence = 0.5  # Default
+            
+            if confidence >= confidence_threshold:
+                # Use cached action
+                if hasattr(cached_action, 'original'):
+                    # SimulatedAction - extract motor values
+                    motor_values = cached_action.original.motor_values
+                else:
+                    # PredictiveAction
+                    motor_values = cached_action.motor_values
+                
+                # Add small noise for variability
+                noise = torch.randn_like(motor_values) * exploration_drive * 0.1
+                final_motor = torch.clamp(motor_values + noise, -1.0, 1.0)
+                
+                return final_motor, cached_action
+        
+        # No valid cache - generate reactive action
+        # This is much simpler than full planning
+        reactive_action = self._generate_reactive_action(
+            current_predictions,
+            exploration_drive
+        )
+        
+        return reactive_action, None
+    
+    def _generate_reactive_action(self,
+                                 current_predictions: Dict[str, torch.Tensor],
+                                 exploration_drive: float) -> torch.Tensor:
+        """
+        Generate simple reactive action without deep planning.
+        
+        This is the fallback when no cached plan is available.
+        Uses simple heuristics and immediate predictions only.
+        
+        Args:
+            current_predictions: Current sensory predictions
+            exploration_drive: Exploration parameter
+            
+        Returns:
+            Motor values tensor
+        """
+        # Base action from current state
+        if 'immediate' in current_predictions and current_predictions['immediate'] is not None:
+            # React to immediate predictions
+            immediate_pred = current_predictions['immediate']
+            
+            # Simple reactive rule: move away from high activation
+            if immediate_pred.shape[0] >= self.sensory_dim:
+                sensory_activation = immediate_pred[:self.sensory_dim]
+            else:
+                # Pad if needed
+                sensory_activation = torch.zeros(self.sensory_dim, device=self.device)
+                sensory_activation[:immediate_pred.shape[0]] = immediate_pred
+            
+            # Transform sensory activation to motor response
+            # This uses learned mapping but without deep simulation
+            motor_response = torch.tanh(
+                torch.matmul(sensory_activation, self.immediate_action_weights.T)
+            )
+            
+            # Scale by inverse of activation (move away from strong signals)
+            activation_strength = torch.mean(torch.abs(sensory_activation))
+            motor_response *= (1.0 - activation_strength.clamp(0, 1))
+        else:
+            # No predictions - random exploration
+            motor_response = torch.zeros(self.motor_dim, device=self.device)
+        
+        # Add exploration noise
+        noise = torch.randn(self.motor_dim, device=self.device) * (0.3 + exploration_drive * 0.4)
+        final_motor = motor_response + noise
+        
+        # Clamp to valid range
+        return torch.clamp(final_motor, -1.0, 1.0)
     
     def update_action_outcome_mapping(self,
                                     action: torch.Tensor,
@@ -338,6 +459,25 @@ class ActionPredictionSystem:
         action = action * exploration_weights
         
         return torch.clamp(action, -1.0, 1.0)
+    
+    def _score_simulated_outcome(self, candidate) -> float:
+        """
+        Score a simulated action based on rich GPU simulation results.
+        
+        This uses the variance, stability, and convergence from multiple
+        simulated futures to assess action quality.
+        """
+        # Low variance = consistent outcomes = good
+        variance_score = 1.0 / (1.0 + candidate.outcome_variance)
+        
+        # High stability = predictable dynamics = good
+        stability_score = candidate.outcome_stability
+        
+        # Fast convergence = futures agree quickly = good
+        convergence_score = 1.0 - (candidate.convergence_time / 20.0)  # Normalize by horizon
+        
+        # Combine factors
+        return variance_score * 0.4 + stability_score * 0.4 + convergence_score * 0.2
     
     def _score_predicted_outcome(self, candidate: PredictiveAction) -> float:
         """Score how desirable a predicted outcome is."""

@@ -61,7 +61,7 @@ class MinimalBrainClient:
         try:
             # Create socket connection
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.socket.settimeout(10.0)  # 10 second connection timeout
+            self.socket.settimeout(30.0)  # 30 second connection timeout
             
             timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             print(f"[{timestamp}] 🔌 Connecting to brain server at {self.server_host}:{self.server_port}...")

@@ -164,9 +164,18 @@ class EvolvedFieldDynamics:
         # 7. Update self-modification strength based on prediction errors
         self._update_self_modification_strength()
         
-        # Combine and return
+        # Combine evolved field
+        evolved_field = torch.cat([new_content, new_dynamics], dim=-1)
+        
+        # NaN protection - replace any NaN values with small random values
+        if torch.isnan(evolved_field).any():
+            nan_mask = torch.isnan(evolved_field)
+            evolved_field[nan_mask] = torch.randn_like(evolved_field[nan_mask]) * 0.01
+            print(f"Warning: NaN detected in evolved field at cycle {self.evolution_count}, replaced with small random values")
+        
+        # Return
         self.evolution_count += 1
-        return torch.cat([new_content, new_dynamics], dim=-1)
+        return evolved_field
     
     def _apply_differential_decay(self, content: torch.Tensor, 
                                  decay_rates: torch.Tensor, 
@@ -551,6 +560,14 @@ class EvolvedFieldDynamics:
         information = field_state.get('smoothed_information', field_state.get('smoothed_energy', 0.5))
         novelty = self._last_novelty
         confidence = self.smoothed_confidence
+        
+        # NaN protection
+        if np.isnan(information):
+            information = 0.5
+        if np.isnan(confidence):
+            confidence = 0.5
+        if np.isnan(novelty):
+            novelty = 0.0
         
         if not has_sensory_input:
             self.cycles_without_input += 1

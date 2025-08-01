@@ -31,7 +31,7 @@ The field encodes its own evolution rules, enabling true meta-learning:
 - **Spatial dimensions** (32³): Topological organization
 - **Feature dimension** (64): 
   - 0-31: Content features (patterns and representations)
-  - 32-47: Temporal features (dynamics and sequences)
+  - 32-47: Memory channels (strategic patterns, temporal sequences)
   - 48-63: Evolution parameters (self-modification rules)
 - **Total Parameters**: ~2M for rich dynamics in compact form
 
@@ -107,9 +107,9 @@ All operations work with patterns, not coordinates:
 #### Memory and Consolidation
 Long-term structure emerges from field dynamics:
 - **Topology Regions**: Stable configurations become memories
-- **Causal Tracking**: Temporal sequences create relationships
+- **Strategic Patterns**: Behavioral strategies stored in channels 32-47
+- **Pattern Library**: Successful patterns accumulate and blend
 - **Consolidation**: Important patterns strengthen during rest
-- **Dream Generation**: Novel combinations explore possibilities
 
 #### Reward and Motivation
 Goals emerge from field topology:
@@ -127,10 +127,16 @@ Goals emerge from field topology:
 4. Immediate prediction error computed
 
 ### Field → Motor
-1. Pattern extraction identifies salient features
-2. Action candidates generated (exploit/explore/test)
-3. Outcomes previewed through field simulation
-4. Best action selected and executed
+1. Strategic patterns create field gradients
+2. Motor tendencies emerge from spatial gradients
+3. Exploration adds variation to base tendencies
+4. Commands normalized for robot actuators
+
+### Strategic Planning
+1. Beneficial field configurations discovered through simulation
+2. Patterns stored with behavioral signatures in memory channels
+3. Similar contexts resonate with stored patterns
+4. Motor behavior emerges from pattern-induced gradients
 
 ### Field → Field (Self-Modification)
 1. Prediction errors create error gradients

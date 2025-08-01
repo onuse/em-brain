@@ -1,7 +1,7 @@
 """
-Simplified Brain Factory
+Unified Field Brain Factory
 
-Creates simplified 4D tensor brains for GPU optimization.
+Creates unified field brains where all cognition emerges from field dynamics.
 """
 
 import time
@@ -9,17 +9,17 @@ from typing import Dict, Any, Optional
 import torch
 
 from ..core.interfaces import IBrainFactory, IBrain
-from ..brains.field.simplified_unified_brain import SimplifiedUnifiedBrain
+from ..brains.field.unified_field_brain import UnifiedFieldBrain
 from .simple_dimension_calculator import SimpleDimensionCalculator
 from ..parameters.cognitive_config import get_cognitive_config
 
 
-class SimplifiedBrainWrapper(IBrain):
+class UnifiedBrainWrapper(IBrain):
     """
-    Wrapper around SimplifiedUnifiedBrain that implements IBrain interface.
+    Wrapper around UnifiedFieldBrain that implements IBrain interface.
     """
     
-    def __init__(self, brain: SimplifiedUnifiedBrain):
+    def __init__(self, brain: UnifiedFieldBrain):
         self.brain = brain
         self.creation_time = time.time()
         self.total_cycles = 0
@@ -101,7 +101,7 @@ class SimplifiedBrainWrapper(IBrain):
             self.brain.brain_cycles = state['brain_cycles']
 
 
-class SimplifiedBrainFactory(IBrainFactory):
+class UnifiedBrainFactory(IBrainFactory):
     """
     Factory for creating simplified 4D tensor brains.
     """
@@ -117,11 +117,11 @@ class SimplifiedBrainFactory(IBrainFactory):
         
         if not self.brain_config.get('quiet_mode', False):
             print("\n" + "="*60)
-            print("🧠 SIMPLIFIED BRAIN FACTORY")
+            print("🧠 UNIFIED FIELD BRAIN FACTORY")
             print("="*60)
             print("✅ 4D Tensor Architecture")
-            print("✅ GPU Optimized")
-            print("✅ All properties emerge from unified field")
+            print("✅ Field-Native Cognition")
+            print("✅ Strategic Patterns Shape Behavior")
             print("="*60 + "\n")
     
     def create(self, 
@@ -150,8 +150,8 @@ class SimplifiedBrainFactory(IBrainFactory):
             sensory_dim, motor_dim
         )
         
-        # Create simplified brain
-        brain = SimplifiedUnifiedBrain(
+        # Create unified field brain
+        brain = UnifiedFieldBrain(
             sensory_dim=sensory_dim,
             motor_dim=motor_dim,
             spatial_resolution=spatial_resolution,
@@ -159,22 +159,22 @@ class SimplifiedBrainFactory(IBrainFactory):
             quiet_mode=self.brain_config.get('quiet_mode', False)
         )
         
-        # Enable all predictive processing phases
-        brain.enable_hierarchical_prediction(True)  # Phase 3
-        brain.enable_action_prediction(True)        # Phase 4
-        brain.enable_active_vision(True)           # Phase 5
+        # Enable core features
+        brain.enable_hierarchical_prediction(True)  # Hierarchical timescales
+        brain.enable_strategic_planning(True)       # Field-native patterns
+        brain.enable_active_vision(True)           # Active sensing
         
         # Wrap in interface
-        return SimplifiedBrainWrapper(brain)
+        return UnifiedBrainWrapper(brain)
     
     def get_brain_types(self) -> list:
         """Get available brain types."""
-        return ['simplified_field']
+        return ['unified_field']
     
     def get_configuration(self) -> Dict[str, Any]:
         """Get factory configuration."""
         return {
-            'type': 'simplified',
+            'type': 'unified_field',
             'tensor_architecture': '4D',
             'gpu_optimized': True,
             'spatial_resolution': self.brain_config.get('field_spatial_resolution', 32)

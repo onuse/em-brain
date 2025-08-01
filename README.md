@@ -54,22 +54,24 @@ The field encodes its own evolution rules:
 - **Topology Regions**: Stable patterns form memory
 - **Consolidation System**: Strengthens important patterns
 - **Emergent Sensory Mapping**: Patterns self-organize
-- **Reward Topology**: Goals shape field landscape
+- **Strategic Patterns**: Field configurations that bias behavior
 
 #### Active Behaviors
 - **Active Sensing**: Uncertainty-driven attention
-- **Motor Cortex**: Pattern-to-action translation
-- **Exploration**: Emerges from low confidence
-- **Dream States**: Novel pattern combinations
+- **Motor Commands**: Emerge from field gradients
+- **Pattern Library**: Learns successful behavioral strategies
+- **Exploration**: Novel pattern variations and discovery
 
 ### Information Flow
 
 ```
 Sensory Input → Field Dynamics → Pattern Recognition
        ↓              ↓                    ↓
-Prediction Error ← Predictions → Action Selection
+Prediction Error ← Predictions → Strategic Patterns
        ↓              ↓                    ↓
-Field Updates ← Self-Modification → Motor Output
+Field Updates ← Self-Modification → Motor Gradients
+       ↓              ↓                    ↓
+Pattern Library ← Behavioral Learning → Motor Output
 ```
 
 ## Implementation Status

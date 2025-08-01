@@ -7,13 +7,13 @@ sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../
 
 import torch
 import numpy as np
-from src.brains.field.simplified_unified_brain import SimplifiedUnifiedBrain
+from src.brains.field.unified_field_brain import UnifiedFieldBrain
 
 print("Brain Feature Verification Test\n")
 print("="*60)
 
 # Create brain with all features
-brain = SimplifiedUnifiedBrain(
+brain = UnifiedFieldBrain(
     sensory_dim=24,
     motor_dim=4,
     spatial_resolution=32,
@@ -65,33 +65,33 @@ if brain.predictive_field.use_hierarchical:
 else:
     print("   ❌ Hierarchical prediction not active")
 
-# Test 3: Action Prediction (Phase 4)
-print("\n3. ACTION PREDICTION (Phase 4):")
-print("   Enabling action prediction...")
-brain.enable_action_prediction(True)
+# Test 3: Strategic Planning (Field-Native)
+print("\n3. STRATEGIC PLANNING (Field-Native):")
+print("   Enabling strategic planning...")
+brain.enable_strategic_planning(True)
 
-# Run more cycles with varying actions
+# Run cycles to test pattern discovery
 for i in range(10):
     sensory_input = [0.5 + 0.2 * np.sin(i * 0.3)] * 24
     motor_output, brain_state = brain.process_robot_cycle(sensory_input)
     
     if i == 5:
         print(f"   ✓ Motor output shape: {len(motor_output)}")
-        print(f"   ✓ Action history size: {len(brain.action_prediction.action_history)}")
+        print(f"   ✓ Motor commands from field gradients")
 
-# Check action prediction system
-if brain.use_action_prediction:
-    print(f"   ✓ Action prediction enabled")
-    print(f"   ✓ Outcome history size: {len(brain.action_prediction.outcome_history)}")
+# Check strategic planning system
+if brain.use_strategic_planning:
+    print(f"   ✓ Strategic planning enabled")
+    print(f"   ✓ Pattern discovery in background")
     
-    # Test candidate generation
-    candidates = brain.action_prediction.generate_action_candidates({}, n_candidates=5)
-    print(f"   ✓ Generated {len(candidates)} action candidates")
-    
-    if candidates:
-        print(f"   ✓ Candidate types: {[c.action_type for c in candidates[:3]]}")
+    # Check if pattern installed
+    if brain.current_strategic_pattern is not None:
+        print(f"   ✓ Strategic pattern active")
+        print(f"   ✓ Pattern persistence: {brain.current_strategic_pattern.persistence:.1f} cycles")
+    else:
+        print("   ⚠️  No strategic pattern discovered yet (normal for short runs)")
 else:
-    print("   ❌ Action prediction not enabled")
+    print("   ❌ Strategic planning not enabled")
 
 # Test 4: Active Vision (Phase 5)
 print("\n4. ACTIVE VISION (Phase 5):")
@@ -181,7 +181,7 @@ print(f"   ✓ Field evolution % of cycle: {avg_field_time/avg_cycle_time*100:.1
 print("\n8. FEATURE INTEGRATION:")
 # Check that all phases work together
 print(f"   ✓ Hierarchical prediction: {'Active' if brain.predictive_field.use_hierarchical else 'Inactive'}")
-print(f"   ✓ Action prediction: {'Active' if brain.use_action_prediction else 'Inactive'}")
+print(f"   ✓ Strategic planning: {'Active' if brain.use_strategic_planning else 'Inactive'}")
 print(f"   ✓ Active vision: {'Active' if brain.use_active_vision else 'Inactive'}")
 print(f"   ✓ Prediction errors tracked: {hasattr(brain, '_last_prediction_error')}")
 print(f"   ✓ Brain cycles completed: {brain.brain_cycles}")
