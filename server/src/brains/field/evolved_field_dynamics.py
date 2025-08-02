@@ -535,7 +535,7 @@ class EvolvedFieldDynamics:
         
         # Calculate novelty with minimum floor
         base_novelty = 1.0 - max_similarity
-        novelty = max(0.1, base_novelty + temporal_bonus)  # Never less than 0.1
+        novelty = max(0.0, base_novelty + temporal_bonus)  # Allow true zero novelty
         
         self._last_novelty = novelty
         
@@ -591,7 +591,7 @@ class EvolvedFieldDynamics:
         is_dreaming = self.cycles_without_input > 100
         # Normalize information with higher threshold to prevent quick saturation
         # Most field states should fall in 0.1-1.5 range, normalize to 0-1
-        norm_information = np.clip(information / 3.0, 0.0, 1.0)
+        norm_information = np.clip(information / 1.5, 0.0, 1.0)
         
         internal_drive = (norm_information + confidence) / 2.0
         if is_dreaming:
@@ -614,7 +614,7 @@ class EvolvedFieldDynamics:
             improvement_pressure = min(0.5, self.learning_plateau_cycles / 200.0)
         
         # Metabolic baseline - even resting brains explore a little
-        metabolic_baseline = 0.1
+        metabolic_baseline = 0.3
         
         # Combine all exploration pressures
         exploration_drive = base_exploration + improvement_pressure + metabolic_baseline

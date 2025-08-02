@@ -624,20 +624,24 @@ class UnifiedFieldBrain:
                     uncertainty_after=uncertainty_after
                 )
             
-            # 8. Detect and update topology regions
+            # 8. Generate motor action (moved before topology detection to pass it along)
+            motor_output = self._generate_motor_action()
+            
+            # 9. Detect and update topology regions
             # Only run every 5 cycles for performance
             if self.brain_cycles % 5 == 0:
                 activated_regions = self.topology_region_system.detect_topology_regions(
                     self.unified_field,
-                    current_patterns=self.pattern_system.extract_patterns(self.unified_field, n_patterns=5)
+                    current_patterns=self.pattern_system.extract_patterns(self.unified_field, n_patterns=5),
+                    motor_action=motor_output  # Pass motor action for behavioral tracking
                 )
             else:
                 activated_regions = self._last_activated_regions
             
-            # 9. Generate motor action
-            motor_output = self._generate_motor_action()
+            # 10. Echo motor actions back into field (behavioral self-awareness)
+            self._echo_motor_to_field(motor_output)
             
-            # 10. Update state
+            # 11. Update state
             self.brain_cycles += 1
             self._last_cycle_time = time.perf_counter() - cycle_start
             self._last_activated_regions = activated_regions
@@ -778,14 +782,14 @@ class UnifiedFieldBrain:
             # Blend pattern with existing field (persistent but not overwhelming)
             # Increased refresh from 0.05 to 0.15 for more active patterns
             self.unified_field[:, :, :, 32:48] = (
-                current_pattern * 0.85 +  # Still persistent
-                pattern * 0.15  # More active refresh
+                current_pattern * 0.7 +  # Still persistent but more dynamic
+                pattern * 0.3  # Stronger active refresh
             )
             
             # Pattern creates gradients that influence other channels
             # Increased influence from 0.02 to 0.1 for stronger behavioral effect
             pattern_energy = self.unified_field[:, :, :, 32:48].mean(dim=-1, keepdim=True)
-            gradient_influence = torch.tanh(pattern_energy) * 0.1
+            gradient_influence = torch.tanh(pattern_energy) * 0.2
             self.unified_field[:, :, :, :32] += gradient_influence.expand(-1, -1, -1, 32)
         
         # 6. Log state
@@ -829,6 +833,41 @@ class UnifiedFieldBrain:
         self._last_action = motor_commands
         
         return motor_commands.tolist()
+    
+    def _motor_to_spatial_pattern(self, motor_action: List[float]) -> torch.Tensor:
+        """Convert motor action to spatial pattern for behavioral self-awareness."""
+        # Create a spatial pattern that encodes the motor action
+        pattern = torch.zeros(self.spatial_resolution, self.spatial_resolution, 
+                            self.spatial_resolution, device=self.device)
+        
+        if len(motor_action) >= 2:
+            # Encode forward/backward in depth gradient
+            forward = motor_action[0]
+            pattern[:, :, :] += forward * torch.linspace(-1, 1, self.spatial_resolution, 
+                                                        device=self.device).unsqueeze(0).unsqueeze(0)
+            
+            # Encode left/right in width gradient
+            turn = motor_action[1] if len(motor_action) > 1 else 0
+            pattern += turn * torch.linspace(-1, 1, self.spatial_resolution, 
+                                           device=self.device).unsqueeze(0).unsqueeze(2)
+        
+        return pattern
+    
+    def _echo_motor_to_field(self, motor_action: List[float]):
+        """Echo motor actions into field channels 62-63 for behavioral awareness."""
+        # Decay previous motor echo
+        self.unified_field[:, :, :, 62] *= 0.95
+        self.unified_field[:, :, :, 63] *= 0.95
+        
+        # Create spatial pattern from motor action
+        motor_pattern = self._motor_to_spatial_pattern(motor_action)
+        
+        # Add current motor pattern to channel 62
+        self.unified_field[:, :, :, 62] += motor_pattern * 0.3
+        
+        # Store motor magnitude in channel 63 for monotony detection
+        motor_magnitude = sum(abs(m) for m in motor_action) / len(motor_action)
+        self.unified_field[:, :, :, 63] += motor_magnitude * 0.2
     
     def _extract_motor_tendencies_from_field(self) -> torch.Tensor:
         """Extract motor tendencies from field gradients created by strategic patterns."""

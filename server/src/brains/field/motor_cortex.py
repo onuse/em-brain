@@ -34,7 +34,7 @@ class MotorCortex:
     def __init__(self, 
                  motor_dim: int,
                  device: torch.device,
-                 activation_threshold: float = 0.1,
+                 activation_threshold: float = 0.05,
                  confidence_threshold: float = 0.05,  # Lower threshold for more exploration
                  max_amplification: float = 3.0,
                  quiet_mode: bool = False):

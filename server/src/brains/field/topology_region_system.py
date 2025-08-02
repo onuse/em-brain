@@ -61,12 +61,47 @@ class TopologyRegion:
     prediction_confidence: float = 0.0
     prediction_momentum: torch.Tensor = None  # Temporal momentum for predictions
     
-    def update_activation(self, strength: float):
+    # Behavioral tracking for habituation
+    motor_sequence: deque = field(default_factory=lambda: deque(maxlen=20))
+    behavioral_monotony: float = 0.0  # How repetitive the behavior is
+    
+    def update_activation(self, strength: float, motor_action: Optional[List[float]] = None):
         """Update region activation statistics."""
         self.last_activation = time.time()
         self.activation_count += 1
         self.total_strength += strength
         self.importance *= 1.1  # Boost importance on activation
+        
+        # Track motor actions for behavioral habituation
+        if motor_action is not None and len(motor_action) >= 2:
+            # Simplify motor action to categorical representation
+            # Forward/backward dominant vs turning dominant
+            forward_mag = abs(motor_action[0])
+            turn_mag = abs(motor_action[1]) if len(motor_action) > 1 else 0
+            
+            if forward_mag > turn_mag * 1.5:
+                action_type = 'forward' if motor_action[0] > 0 else 'backward'
+            elif turn_mag > forward_mag * 1.5:
+                action_type = 'turn_right' if motor_action[1] > 0 else 'turn_left'
+            else:
+                action_type = 'mixed'
+            
+            self.motor_sequence.append(action_type)
+            
+            # Calculate behavioral monotony
+            if len(self.motor_sequence) >= 10:
+                # Count how often the same action appears
+                action_counts = {}
+                for action in self.motor_sequence:
+                    action_counts[action] = action_counts.get(action, 0) + 1
+                
+                # Monotony is high when one action dominates
+                max_count = max(action_counts.values())
+                self.behavioral_monotony = max_count / len(self.motor_sequence)
+                
+                # Reduce importance if behavior is too monotonous
+                if self.behavioral_monotony > 0.7:  # 70% same action
+                    self.importance *= 0.9  # Devalue this pattern
         
     def add_causal_link(self, predecessor_id: Optional[str], successor_id: Optional[str], strength: float = 0.1):
         """Add causal relationship to another region."""
@@ -194,13 +229,15 @@ class TopologyRegionSystem:
         
     def detect_topology_regions(self, 
                                field: torch.Tensor,
-                               current_patterns: Optional[List] = None) -> List[str]:
+                               current_patterns: Optional[List] = None,
+                               motor_action: Optional[List[float]] = None) -> List[str]:
         """
         Detect stable topology regions in current field state.
         
         Args:
             field: Current 4D field tensor
             current_patterns: Optional pre-extracted patterns
+            motor_action: Current motor output for behavioral tracking
             
         Returns:
             List of activated region IDs
@@ -222,7 +259,7 @@ class TopologyRegionSystem:
             if matched_region:
                 # Update existing region
                 region = self.regions[matched_region]
-                region.update_activation(region_data['strength'])
+                region.update_activation(region_data['strength'], motor_action)
                 
                 # Update pattern with momentum
                 region.activation_pattern = (

@@ -189,7 +189,7 @@ class FieldStrategicPlanner:
                         pos = torch.tensor([i, j, k], device=self.device, dtype=torch.float32)
                         # Project position onto direction
                         projection = torch.dot(pos, direction)
-                        pattern[i, j, k, :8] = projection / self.field_shape[0]
+                        pattern[i, j, k, :8] = projection / self.field_shape[0] * 2.0
                         
         elif pattern_type == 1:
             # Radial pattern - creates centering/avoiding behavior
@@ -360,6 +360,36 @@ class FieldStrategicPlanner:
                             pattern[x:x_end, y:y_end, z:z_end, i*3:(i+1)*3] += block_value
             
             pattern += base_pattern
+            
+        elif dominant_tension == 'monotony':
+            # Create disruption pattern to break behavioral loops
+            # Strong, chaotic patterns that force new motor outputs
+            disruption_strength = tensions['monotony']
+            
+            # Random bursts in different channels
+            for burst in range(5):
+                channel_start = torch.randint(0, 12, (1,)).item()
+                burst_center = [
+                    torch.randint(0, self.field_shape[0], (1,)).item(),
+                    torch.randint(0, self.field_shape[1], (1,)).item(),
+                    torch.randint(0, self.field_shape[2], (1,)).item()
+                ]
+                
+                # Create disruptive burst
+                for dx in range(-3, 4):
+                    for dy in range(-3, 4):
+                        for dz in range(-3, 4):
+                            x = burst_center[0] + dx
+                            y = burst_center[1] + dy
+                            z = burst_center[2] + dz
+                            
+                            if (0 <= x < self.field_shape[0] and 
+                                0 <= y < self.field_shape[1] and 
+                                0 <= z < self.field_shape[2]):
+                                
+                                distance = abs(dx) + abs(dy) + abs(dz)
+                                intensity = (1.0 - distance / 9.0) * disruption_strength
+                                pattern[x, y, z, channel_start:channel_start+4] += torch.randn(4, device=self.device) * intensity
         
         # Normalize pattern to reasonable range
         pattern = torch.tanh(pattern)
@@ -848,14 +878,24 @@ class FieldStrategicPlanner:
         pattern_variance = field[:, :, :, self.pattern_channels].std().item()
         novelty_tension = max(0.0, 1.0 - pattern_variance * 3.0)  # Low variance = high tension
         
+        # Behavioral monotony tension: High when motor patterns are repetitive
+        # Channels 62-63 contain motor echo
+        if field.shape[-1] > 63:
+            motor_variance = field[:, :, :, 62:64].std().item()
+            # Low variance in motor channels = high monotony
+            monotony_tension = max(0.0, 1.0 - motor_variance * 10.0)
+        else:
+            monotony_tension = 0.5  # Default if channels not available
+        
         return {
             'information': information_tension,
             'learning': learning_tension,
             'confidence': confidence_tension,
             'prediction': prediction_tension,
             'novelty': novelty_tension,
+            'monotony': monotony_tension,
             'total': (information_tension + learning_tension + confidence_tension + 
-                     prediction_tension + novelty_tension) / 5.0
+                     prediction_tension + novelty_tension + monotony_tension) / 6.0
         }
     
     def _evaluate_pattern_tension_based(self,
@@ -921,13 +961,17 @@ class FieldStrategicPlanner:
         # Prediction tension relief (improves accuracy)
         prediction_relief = max(0, initial_tensions['prediction'] - final_tensions['prediction'])
         
+        # Monotony tension relief (breaks behavioral loops)
+        monotony_relief = max(0, initial_tensions.get('monotony', 0) - final_tensions.get('monotony', 0))
+        
         # Total score combines cumulative relief with specific achievements
         total_score = (
             cumulative_relief * 10.0 +  # General tension reduction
             info_relief * 3.0 +         # Exploration bonus
             learning_relief * 3.0 +     # Learning velocity bonus
             confidence_relief * 2.0 +   # Uncertainty reduction bonus
-            prediction_relief * 2.0     # Accuracy improvement bonus
+            prediction_relief * 2.0 +   # Accuracy improvement bonus
+            monotony_relief * 4.0       # High bonus for breaking loops
         )
         
         # Add behavioral coherence bonus

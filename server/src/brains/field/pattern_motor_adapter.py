@@ -155,16 +155,16 @@ class PatternMotorAdapter:
         """Convert pattern features to motor tendencies."""
         tendencies = {}
         
-        # Movement from oscillation
-        tendencies['forward'] = pattern.oscillation * self.mapping.oscillation_forward
+        # Movement from oscillation (with baseline to ensure some movement)
+        tendencies['forward'] = pattern.oscillation * self.mapping.oscillation_forward + 0.2
         tendencies['lateral'] = pattern.oscillation * self.mapping.oscillation_lateral
         
         # Rotation from flow
         tendencies['turn'] = pattern.flow_divergence * self.mapping.divergence_turn
         tendencies['spin'] = pattern.flow_curl * self.mapping.curl_spin
         
-        # Speed from energy
-        tendencies['speed'] = pattern.energy * self.mapping.energy_speed
+        # Speed from energy (with baseline to prevent complete stillness)
+        tendencies['speed'] = pattern.energy * self.mapping.energy_speed + 0.3
         tendencies['urgency'] = pattern.variance * self.mapping.variance_urgency
         
         # Confidence and exploration
