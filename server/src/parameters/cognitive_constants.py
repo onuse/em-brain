@@ -200,6 +200,10 @@ class StabilityConstants:
     MAX_EXPERIENCES_PER_SECOND = 100  # Prevents memory overflow
     MIN_SIMILARITY_FOR_STORAGE = 0.0  # Always store (no filtering)
     EXPERIENCE_REDUNDANCY_THRESHOLD = 0.99  # Near-identical experience filtering
+    
+    # Field Dynamics Stability (Prevents information decay pathologies)
+    FIELD_DECAY_MULTIPLIER = 0.999  # Per-cycle decay multiplier for field information
+    GLOBAL_DECAY_RATE = 0.999       # Global decay rate for field dynamics
 
 # =============================================================================
 # EVOLUTION PHASE 2 DNA: Biologically-Inspired Efficiency Mechanisms

@@ -143,6 +143,10 @@ class UnifiedFieldBrain:
     def _initialize_core_systems(self, motor_dim: int):
         """Initialize all core brain systems."""
         # Evolved field dynamics - THE core system
+        # Get decay multiplier from cognitive constants
+        from ...parameters.cognitive_constants import StabilityConstants
+        decay_multiplier = StabilityConstants.FIELD_DECAY_MULTIPLIER
+        
         self.field_dynamics = EvolvedFieldDynamics(
             field_shape=self.unified_field.shape,
             pattern_memory_size=100,
@@ -151,6 +155,7 @@ class UnifiedFieldBrain:
             initial_resting_potential=self.cognitive_config.brain_config.resting_potential,
             temporal_features=16,  # For working memory
             dynamics_features=16,  # For self-modifying dynamics
+            decay_multiplier=decay_multiplier,
             device=self.device
         )
         

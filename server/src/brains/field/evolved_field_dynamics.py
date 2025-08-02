@@ -46,6 +46,7 @@ class EvolvedFieldDynamics:
                  initial_resting_potential: float = 0.01,
                  temporal_features: int = 16,
                  dynamics_features: int = 16,
+                 decay_multiplier: float = 0.995,
                  device: torch.device = torch.device('cpu')):
         """Initialize evolved field dynamics."""
         self.device = device
@@ -59,6 +60,7 @@ class EvolvedFieldDynamics:
         
         # Temporal persistence configuration (for working memory)
         self.spatial_features = self.content_features - temporal_features
+        self.decay_multiplier = decay_multiplier
         
         # Pattern memory for novelty detection
         self.pattern_memory = deque(maxlen=pattern_memory_size * 2)  # Increased size
@@ -204,11 +206,11 @@ class EvolvedFieldDynamics:
         for scale in range(min(4, decay_rates.shape[-1])):
             scale_features = slice(scale, None, 4)
             if scale < new_spatial.shape[-1]:
-                scale_decay = decay_rates[:, :, :, scale].unsqueeze(-1) * global_decay * 0.95
+                scale_decay = decay_rates[:, :, :, scale].unsqueeze(-1) * global_decay * self.decay_multiplier
                 new_spatial[:, :, :, scale_features] *= scale_decay
         
         # Slower decay for temporal features (working memory)
-        temporal_decay = torch.mean(decay_rates, dim=-1, keepdim=True) * global_decay * 0.995
+        temporal_decay = torch.mean(decay_rates, dim=-1, keepdim=True) * global_decay * self.decay_multiplier
         new_temporal = temporal_content * temporal_decay
         
         # Temporal momentum for predictive dynamics

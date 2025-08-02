@@ -340,7 +340,7 @@ class BiologicalEmbodiedLearningExperiment:
                 
                 # Get brain prediction via robot socket (acts like real robot)
                 # Use 10s timeout for slow hardware (some cycles may take >1s)
-                prediction = self.robot_client.get_action(brain_sensory_input, timeout=10.0)
+                prediction = self.robot_client.get_action(brain_sensory_input, timeout=30.0)
                 
                 if prediction is None:
                     print("   ⚠️ No response from brain")

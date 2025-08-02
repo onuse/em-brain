@@ -115,14 +115,7 @@ class UnifiedBrainFactory(IBrainFactory):
         # Check if we should use simplified brain
         self.use_simplified = self.brain_config.get('use_simplified_brain', True)
         
-        if not self.brain_config.get('quiet_mode', False):
-            print("\n" + "="*60)
-            print("🧠 UNIFIED FIELD BRAIN FACTORY")
-            print("="*60)
-            print("✅ 4D Tensor Architecture")
-            print("✅ Field-Native Cognition")
-            print("✅ Strategic Patterns Shape Behavior")
-            print("="*60 + "\n")
+        # Quiet initialization - details shown at server ready
     
     def create(self, 
                field_dimensions: Optional[int] = None,
@@ -143,7 +136,10 @@ class UnifiedBrainFactory(IBrainFactory):
         """
         # Use provided resolution or default
         if spatial_resolution is None:
-            spatial_resolution = self.brain_config.get('field_spatial_resolution', 32)
+            # Check both naming conventions for compatibility
+            spatial_resolution = (self.brain_config.get('spatial_resolution') or 
+                                self.brain_config.get('field_spatial_resolution') or 
+                                32)
             
         # Get tensor shape
         tensor_shape, conceptual_dims = self.calculator.calculate_tensor_shape(

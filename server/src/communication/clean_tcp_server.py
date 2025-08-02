@@ -53,8 +53,7 @@ class CleanTCPServer:
         self.start_time = None
         self.total_connections = 0
         
-        print(f"🌐 Clean TCP Server initialized")
-        print(f"   Host: {host}:{port}")
+        # Silent initialization - details shown at server ready
     
     def start(self):
         """Start the TCP server."""

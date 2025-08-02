@@ -44,7 +44,6 @@ class DynamicBrainServer:
     
     def __init__(self, config_file: str = "settings.json"):
         print("\n🧠 Initializing Dynamic Brain Server...")
-        print("=" * 50)
         
         # Load configuration
         self.config_manager = AdaptiveConfigurationManager(config_file)
@@ -53,8 +52,11 @@ class DynamicBrainServer:
         # Configure GPU memory management
         configure_gpu_memory(self.config)
         
+        # Display hardware detection results with final spatial resolution
+        self.config_manager.print_summary()
+        
         # Initialize components in dependency order
-        print("\n📦 Initializing components...")
+        print("   📦 Initializing components...")
         self._initialize_components()
         
         # Server state
@@ -110,7 +112,7 @@ class DynamicBrainServer:
             }
         )
         
-        print("   ✓ All components initialized")
+        # Components initialized silently
     
     def _display_system_info(self):
         """Display consolidated system information."""
@@ -160,10 +162,45 @@ class DynamicBrainServer:
         device = self.config_manager.get_device()
         spatial_res = self.config_manager.config.spatial_resolution
         
-        print(f"💻 System: {platform.system()} | Python {platform.python_version()} | "
-              f"{psutil.cpu_count()} cores | {mem.total/(1024**3):.1f}GB RAM | {device}")
-        print(f"🧠 Brain: Simplified 4D Field | {spatial_res}³ spatial | GPU optimized")
-        print(f"🌐 Server: {host}:{port} | Monitoring: {monitoring_port}")
+        # Hardware line
+        print(f"💻 Hardware: {device.type.upper()} | {psutil.cpu_count()} cores | "
+              f"{mem.total/(1024**3):.1f}GB RAM", end="")
+        if self.config_manager.config.gpu_memory_gb > 0:
+            print(f" | {self.config_manager.config.gpu_memory_gb:.1f}GB GPU")
+        else:
+            print()
+        
+        # Brain configuration line
+        print(f"🧠 Brain: 4D Field [{spatial_res}³×64] | ", end="")
+        if self.brain_pool.brain is None:
+            print("Dimensions: <pending robot connection>")
+        else:
+            dims = self.brain_pool.locked_dimensions
+            if dims:
+                print(f"Dimensions: {dims['sensory_dim']}→{dims['motor_dim']} (locked)")
+            else:
+                print("Dimensions: <initializing>")
+        
+        # Field dynamics parameters
+        from src.parameters.cognitive_constants import StabilityConstants
+        decay_multiplier = StabilityConstants.FIELD_DECAY_MULTIPLIER
+        global_decay = StabilityConstants.GLOBAL_DECAY_RATE
+        print(f"⚡ Dynamics: Decay multiplier={decay_multiplier} | Global decay={global_decay}")
+        
+        # Network line
+        print(f"🌐 Network: {host}:{port} (main) | {monitoring_port} (monitoring)")
+        
+        # Features line
+        features = []
+        if self.config_manager.config.enhanced_dynamics:
+            features.append("enhanced dynamics")
+        if self.config_manager.config.attention_guidance:
+            features.append("attention")
+        if self.config_manager.config.hierarchical_processing:
+            features.append("hierarchical")
+        if features:
+            print(f"✨ Features: {', '.join(features)}")
+        
         print("=" * 70)
         
         try:

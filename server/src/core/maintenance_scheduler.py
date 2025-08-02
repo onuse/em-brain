@@ -63,7 +63,7 @@ class MaintenanceScheduler:
             daemon=True
         )
         self.maintenance_thread.start()
-        print("🔧 Maintenance scheduler started")
+        # Started silently
         
     def stop(self):
         """Stop the maintenance scheduler."""

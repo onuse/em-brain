@@ -80,7 +80,14 @@ class SingleBrainPool(IBrainPool):
         
         # Calculate optimal field dimensions for these sensors/motors
         field_dims = self._calculate_field_dimensions(sensory_dim, motor_dim)
-        spatial_res = 4  # Standard resolution for all brains
+        
+        # Get spatial resolution from adaptive configuration
+        # This respects the hardware-aware settings from AdaptiveConfiguration
+        config = getattr(self.brain_factory, 'cognitive_config', None)
+        if config and hasattr(config, 'adaptive_config'):
+            spatial_res = config.adaptive_config.spatial_resolution or 32
+        else:
+            spatial_res = 32  # Default resolution if config not available
         
         # Create the brain
         self.brain = self.brain_factory.create(

@@ -432,49 +432,14 @@ class AdaptiveConfigurationManager:
         }
     
     def print_summary(self):
-        """Print configuration summary."""
+        """Print configuration summary - simplified version."""
         if not self.suppress_output:
-            print("\n" + "="*60)
-            print("🔧 ADAPTIVE CONFIGURATION")
-            print("="*60)
-            
-            print(f"\n💻 Hardware:")
-            print(f"   Device: {self.config.device_type.upper()}")
-            print(f"   CPU cores: {self.config.cpu_cores}")
-            print(f"   RAM: {self.config.system_memory_gb:.1f}GB")
+            # Just a brief status during initialization
+            print(f"   📊 Hardware detected: {self.config.device_type.upper()} | "
+                  f"{self.config.cpu_cores} cores | {self.config.system_memory_gb:.1f}GB RAM")
             if self.config.gpu_memory_gb > 0:
-                print(f"   GPU memory: {self.config.gpu_memory_gb:.1f}GB")
-            
-            print(f"\n🧠 Brain Configuration:")
-            print(f"   Type: {self.config.brain_type}")
-            # Handle dynamic dimensions gracefully
-            if self.config.sensory_dim is not None and self.config.motor_dim is not None:
-                print(f"   Sensory/Motor: {self.config.sensory_dim}D → {self.config.motor_dim}D")
-            else:
-                print(f"   Sensory/Motor: Dynamic (determined by robot)")
-            print(f"   Spatial resolution: {self.config.spatial_resolution}³")
-            
-            if self.config.force_spatial_resolution is not None:
-                print(f"   ⚠️  Resolution forced to {self.config.force_spatial_resolution}³")
-            
-            print(f"\n✅ Features:")
-            if self.config.enhanced_dynamics: print("   - Enhanced Dynamics")
-            if self.config.attention_guidance: print("   - Attention Guidance")
-            if self.config.hierarchical_processing: print("   - Hierarchical Processing")
-            if self.config.attention_super_resolution: print("   - Super Resolution")
-            
-            if not self.config.disable_adaptation and self.config.field_evolution_ms > 0:
-                print(f"\n🚀 Adaptive Planning:")
-                print(f"   Futures: {self.config.n_futures}")
-                print(f"   Horizon: {self.config.planning_horizon} steps")
-                print(f"   Cache size: {self.config.cache_size} plans")
-                print(f"   Field evolution: {self.config.field_evolution_ms:.1f}ms")
-                print(f"   Simulation cost: {self.config.future_simulation_ms_per_unit:.1f}ms/unit")
-                estimated_planning_time = (self.config.n_futures * self.config.planning_horizon * 
-                                         self.config.future_simulation_ms_per_unit * 5 / 1000)
-                print(f"   Est. planning time: {estimated_planning_time:.1f}s")
-            
-            print("="*60 + "\n")
+                print(f"   🎮 GPU memory: {self.config.gpu_memory_gb:.1f}GB")
+            print(f"   🧠 Adaptive spatial resolution: {self.config.spatial_resolution}³")
 
 
 # The ONE global configuration instance
@@ -485,8 +450,7 @@ def load_adaptive_configuration(settings_file: str = "settings.json", suppress_o
     """Load configuration - This is the ONLY way to get configuration."""
     global _config_manager
     _config_manager = AdaptiveConfigurationManager(settings_file, suppress_output)
-    if not suppress_output:
-        _config_manager.print_summary()
+    # Don't print summary here - let the server print final values after initialization
     return _config_manager.get_full_config()
 
 

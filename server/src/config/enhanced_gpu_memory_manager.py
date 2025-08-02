@@ -82,17 +82,7 @@ class EnhancedGPUMemoryManager:
                 if not quiet:
                     print(f"⚠️  Could not set CUDA memory fraction: {e}")
         
-        if not quiet:
-            # Only print if not in quiet mode
-            print(f"🖥️  Enhanced GPU Memory Manager configured:")
-            print(f"   Device: {self._device}")
-            print(f"   Memory limit: {self._memory_limit_mb}MB" if self._memory_limit_mb > 0 else "   Memory limit: unlimited")
-            
-            if self._device.type == 'mps':
-                print(f"   ⚠️  MPS Limitations:")
-                print(f"      - Max dimensions: {self.MPS_MAX_DIMENSIONS}")
-                print(f"      - Performance threshold: {self.MPS_PERFORMANCE_THRESHOLD}D")
-                print(f"      - Float64 disabled (using float32)")
+        # Quiet initialization - device info shown at server ready
     
     def _detect_best_device(self, tensor_dimensions: Optional[int] = None) -> torch.device:
         """

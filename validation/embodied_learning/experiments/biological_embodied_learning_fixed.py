@@ -72,7 +72,7 @@ class FixedBiologicalEmbodiedLearning(BiologicalEmbodiedLearning):
                 brain_sensory_input = add_reward_signal(sensory_input, self.environment)
                 
                 # Send to brain and get prediction
-                prediction = self.robot_client.get_action(brain_sensory_input, timeout=10.0)
+                prediction = self.robot_client.get_action(brain_sensory_input, timeout=30.0)
                 
                 if prediction is None:
                     print("   ⚠️ No response from brain")

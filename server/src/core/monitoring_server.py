@@ -48,9 +48,7 @@ class DynamicMonitoringServer:
         self.clients = {}
         self.client_counter = 0
         
-        print(f"📊 Dynamic Monitoring Server initialized")
-        print(f"   Host: {host}:{port}")
-        print(f"   Purpose: Statistics, validation, third-party UI access")
+        # Silent initialization
     
     def start(self):
         """Start the monitoring server in a background thread."""
@@ -62,7 +60,7 @@ class DynamicMonitoringServer:
         self.server_thread = threading.Thread(target=self._run_server, daemon=True)
         self.server_thread.start()
         
-        print(f"✅ Monitoring server started on {self.host}:{self.port}")
+        # Started silently
     
     def stop(self):
         """Stop the monitoring server."""

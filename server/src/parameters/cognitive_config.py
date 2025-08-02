@@ -277,8 +277,7 @@ def get_cognitive_config(quiet: bool = False) -> CognitiveConfigManager:
     global _cognitive_config
     if _cognitive_config is None:
         _cognitive_config = CognitiveConfigManager()
-        if _cognitive_config.validate_config() and not quiet:
-            print("✅ Cognitive configuration validated")
+        _cognitive_config.validate_config()
     return _cognitive_config
 
 
