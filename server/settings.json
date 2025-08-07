@@ -1,20 +1,19 @@
 {
   "brain": {
-    "type": "field",
+    "type": "pure",
     "sensory_dim": null,
     "motor_dim": null,
     "spatial_resolution": null,
-    "features": {
-      "enhanced_dynamics": true,
-      "attention_guidance": true,
-      "hierarchical_processing": true,
-      "attention_super_resolution": false
-    }
+    "aggressive_learning": true,
+    "scale_config": "auto",
+    "_comment": "PureFieldBrain with hierarchical scaling - auto-selects scale based on hardware"
   },
   
-  "memory": {
-    "persistent_memory_path": "./robot_memory",
-    "enable_persistence": true
+  "persistence": {
+    "memory_path": "./brain_memory",
+    "save_interval": 100,
+    "auto_save": true,
+    "_comment": "Save every 100 cycles for quick testing feedback"
   },
   
   "network": {
@@ -24,9 +23,12 @@
   },
   
   "logging": {
+    "enabled": true,
     "log_directory": "./logs",
     "log_level": "info",
-    "enable_async_logging": true
+    "enable_async_logging": true,
+    "show_learning_milestones": true,
+    "_comment": "Info level shows learning progress, debug shows detailed metrics"
   },
   
   "overrides": {

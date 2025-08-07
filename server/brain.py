@@ -181,11 +181,8 @@ class DynamicBrainServer:
             else:
                 print("Dimensions: <initializing>")
         
-        # Field dynamics parameters
-        from src.parameters.cognitive_constants import StabilityConstants
-        decay_multiplier = StabilityConstants.FIELD_DECAY_MULTIPLIER
-        global_decay = StabilityConstants.GLOBAL_DECAY_RATE
-        print(f"⚡ Dynamics: Decay multiplier={decay_multiplier} | Global decay={global_decay}")
+        # Field dynamics parameters (show PureFieldBrain's aggressive settings)
+        print(f"⚡ Dynamics: Aggressive learning enabled | Auto-scaling by hardware")
         
         # Network line
         print(f"🌐 Network: {host}:{port} (main) | {monitoring_port} (monitoring)")

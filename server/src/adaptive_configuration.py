@@ -26,7 +26,7 @@ class AdaptiveConfiguration:
     """The complete brain configuration with hardware adaptation."""
     
     # Core settings (from settings.json)
-    brain_type: str = "field"
+    brain_type: str = "field"  # Legacy: overall brain architecture type
     sensory_dim: int = 24
     motor_dim: int = 4
     spatial_resolution: Optional[int] = None
@@ -115,7 +115,9 @@ class AdaptiveConfigurationManager:
                 
                 # Brain settings
                 brain = data.get('brain', {})
-                self.config.brain_type = brain.get('type', 'field')
+                self.config.brain_type = brain.get('type', 'field')  # Legacy: 'field' type
+                # Standardized on PureFieldBrain - no more brain type options
+                
                 self.config.sensory_dim = brain.get('sensory_dim', 24)
                 self.config.motor_dim = brain.get('motor_dim', 4)
                 self.config.spatial_resolution = brain.get('spatial_resolution')

@@ -1,0 +1,205 @@
+{
+  "analysis_type": "static_code_analysis",
+  "brains_analyzed": 3,
+  "results": [
+    {
+      "name": "unified",
+      "complexity": {
+        "total_lines": 1079,
+        "code_lines": 707,
+        "comment_lines": 191,
+        "blank_lines": 181,
+        "imports": 30,
+        "classes": 1,
+        "functions": 0,
+        "methods": 21,
+        "torch_operations": 35,
+        "tensor_operations": 19,
+        "gpu_operations": 67,
+        "if_statements": 86,
+        "for_loops": 52,
+        "while_loops": 0,
+        "try_blocks": 2,
+        "math_operations": 243,
+        "complexity_score": 31.77
+      },
+      "dependencies": {
+        "standard_library": [
+          "import time",
+          "import logging",
+          "from typing import List, Dict, Any, Tuple, Optional",
+          "from dataclasses import dataclass",
+          "from collections import deque"
+        ],
+        "third_party": [
+          "import torch",
+          "import numpy as np",
+          "import traceback"
+        ],
+        "local_imports": [
+          "from .field_types import UnifiedFieldExperience",
+          "from ...parameters.cognitive_config import get_cognitive_config",
+          "from .unified_pattern_system import UnifiedPatternSystem",
+          "from .pattern_motor_adapter import PatternMotorAdapter",
+          "from .pattern_attention_adapter import PatternAttentionAdapter",
+          "from .motor_cortex import MotorCortex",
+          "from .adaptive_motor_cortex import AdaptiveMotorCortex",
+          "from .field_constants import TOPOLOGY_REGIONS_MAX",
+          "from .evolved_field_dynamics import EvolvedFieldDynamics",
+          "from .emergent_sensory_mapping import EmergentSensoryMapping",
+          "from .reward_topology_shaping import RewardTopologyShaper",
+          "from .consolidation_system import ConsolidationSystem",
+          "from .topology_region_system import TopologyRegionSystem",
+          "from .predictive_field_system import PredictiveFieldSystem",
+          "from .active_vision_system import ActiveVisionSystem",
+          "from .field_strategic_planner import FieldStrategicPlanner, StrategicPattern",
+          "from .active_audio_system import ActiveAudioSystem",
+          "from .active_tactile_system import ActiveTactileSystem",
+          "from ...utils.tensor_ops import create_randn, field_information, field_stats, apply_diffusion",
+          "from ...utils.error_handling import (",
+          "from .pattern_cache_pool import PatternCachePool",
+          "from ...parameters.cognitive_constants import StabilityConstants"
+        ],
+        "dependency_count": 30
+      },
+      "field_ops": {
+        "field_operations": 26,
+        "convolution_operations": 0,
+        "activation_functions": 2,
+        "gradient_operations": 38,
+        "diffusion_operations": 22,
+        "learning_references": 186,
+        "reward_references": 38,
+        "subsystems": [
+          "MotorCortex",
+          "SensoryMapping",
+          "PatternSystem",
+          "StrategicPlanner"
+        ],
+        "subsystem_count": 4,
+        "field_sophistication": 66
+      },
+      "predictions": {
+        "predicted_performance": 0.6823,
+        "predicted_memory_efficiency": 0.46,
+        "predicted_learning_capability": 1.0,
+        "predicted_stability": 0.0,
+        "predicted_gpu_efficiency": 0.8411500000000001,
+        "predicted_deployment_score": 0.09669
+      }
+    },
+    {
+      "name": "minimal",
+      "complexity": {
+        "total_lines": 278,
+        "code_lines": 166,
+        "comment_lines": 58,
+        "blank_lines": 54,
+        "imports": 7,
+        "classes": 1,
+        "functions": 0,
+        "methods": 4,
+        "torch_operations": 31,
+        "tensor_operations": 14,
+        "gpu_operations": 39,
+        "if_statements": 15,
+        "for_loops": 10,
+        "while_loops": 1,
+        "try_blocks": 0,
+        "math_operations": 120,
+        "complexity_score": 7.81
+      },
+      "dependencies": {
+        "standard_library": [
+          "import time",
+          "import logging",
+          "from typing import List, Dict, Any, Tuple, Optional",
+          "from collections import deque"
+        ],
+        "third_party": [
+          "import torch",
+          "import torch.nn.functional as F",
+          "import numpy as np"
+        ],
+        "local_imports": [],
+        "dependency_count": 7
+      },
+      "field_ops": {
+        "field_operations": 31,
+        "convolution_operations": 1,
+        "activation_functions": 4,
+        "gradient_operations": 9,
+        "diffusion_operations": 5,
+        "learning_references": 41,
+        "reward_references": 9,
+        "subsystems": [],
+        "subsystem_count": 0,
+        "field_sophistication": 45
+      },
+      "predictions": {
+        "predicted_performance": 0.9218999999999999,
+        "predicted_memory_efficiency": 0.55,
+        "predicted_learning_capability": 1.0,
+        "predicted_stability": 0.48,
+        "predicted_gpu_efficiency": 0.96095,
+        "predicted_deployment_score": 0.73057
+      }
+    },
+    {
+      "name": "pure",
+      "complexity": {
+        "total_lines": 407,
+        "code_lines": 287,
+        "comment_lines": 54,
+        "blank_lines": 66,
+        "imports": 6,
+        "classes": 1,
+        "functions": 1,
+        "methods": 11,
+        "torch_operations": 47,
+        "tensor_operations": 22,
+        "gpu_operations": 53,
+        "if_statements": 19,
+        "for_loops": 13,
+        "while_loops": 0,
+        "try_blocks": 0,
+        "math_operations": 144,
+        "complexity_score": 11.42
+      },
+      "dependencies": {
+        "standard_library": [
+          "from typing import Optional, Dict, Any, Tuple",
+          "import math",
+          "import time"
+        ],
+        "third_party": [
+          "import torch",
+          "import torch.nn as nn",
+          "import torch.nn.functional as F"
+        ],
+        "local_imports": [],
+        "dependency_count": 6
+      },
+      "field_ops": {
+        "field_operations": 33,
+        "convolution_operations": 2,
+        "activation_functions": 2,
+        "gradient_operations": 15,
+        "diffusion_operations": 14,
+        "learning_references": 51,
+        "reward_references": 4,
+        "subsystems": [],
+        "subsystem_count": 0,
+        "field_sophistication": 52
+      },
+      "predictions": {
+        "predicted_performance": 0.8858,
+        "predicted_memory_efficiency": 0.31,
+        "predicted_learning_capability": 1.0,
+        "predicted_stability": 0.36,
+        "predicted_gpu_efficiency": 0.9429,
+        "predicted_deployment_score": 0.63574
+      }
+    }
+  ]
+}

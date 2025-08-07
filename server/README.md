@@ -1,6 +1,7 @@
 # Brain Server
 
-A field-native intelligence system that creates adaptive brains on-demand based on robot capabilities.
+A PureFieldBrain intelligence system - the ultimate synthesis for real intelligence research.
+Standardized on pure field dynamics without architectural complexity.
 
 ## Quick Start
 
@@ -55,23 +56,23 @@ server/
 
 ## Architecture Overview
 
-The Dynamic Brain Architecture creates brains on-demand:
+The PureFieldBrain system creates real intelligence:
 
 1. **Robot connects** with capabilities (sensors, motors)
-2. **System calculates** optimal brain dimensions
-3. **Brain is created** with field dimensions matching robot complexity
-4. **Session manages** the robot-brain interaction
-5. **Adapters translate** between robot and brain spaces
+2. **PureFieldBrain** is instantiated with optimal parameters
+3. **Pure field dynamics** process all sensory input through emergent computation
+4. **Behavior emerges** from field gradients and energy landscapes
+5. **No architectural complexity** - just pure field intelligence
 
 ## Key Features
 
-- **Dynamic Dimensioning**: Brains adapt to robot capabilities
-- **Resource Efficient**: Only creates brains when needed
-- **Real-time Monitoring**: Connect to port 9998 for stats
-- **Automatic Maintenance**: Keeps brains healthy over time
-- **Robust Persistence**: Incremental saves with recovery
-- **Professional Logging**: Async logging with session tracking
-- **Error Handling**: Standardized error codes and tracking
+- **Pure Field Intelligence**: Single tensor field with learnable evolution rules
+- **GPU-Optimized**: Native CUDA/Metal support for real-time field computation
+- **Emergent Behavior**: Intelligence emerges from field dynamics, not programming
+- **Biologically-Inspired**: Aggressive parameters and metabolic state modeling
+- **Real Intelligence Focus**: No more options or complexity - just the path to AGI
+- **Professional Monitoring**: Connect to port 9998 for real-time field metrics
+- **Robust Persistence**: PureFieldBrain state management with recovery
 
 ## Configuration
 
@@ -81,12 +82,13 @@ Edit `settings.json` to configure:
 {
   "brain": {
     "type": "field",
-    "spatial_resolution": null,  // Auto-determined
+    "spatial_resolution": null,  // Auto-determined based on hardware
     "features": {
       "enhanced_dynamics": true,
       "attention_guidance": true,
       "hierarchical_processing": true
     }
+    // Standardized on PureFieldBrain - no brain type options
   },
   "network": {
     "host": "0.0.0.0",

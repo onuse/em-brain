@@ -1,0 +1,88 @@
+{
+  "analysis_type": "comprehensive_brain_comparison",
+  "timestamp": 1754597082.670271,
+  "brains_analyzed": 3,
+  "winner": "minimal",
+  "results": [
+    {
+      "name": "minimal",
+      "lines_of_code": 166,
+      "complexity_score": 7.8,
+      "subsystem_count": 0,
+      "torch_operations": 31,
+      "dependencies": 7,
+      "predicted_performance_hz": 45.88,
+      "predicted_memory_mb": 34.24,
+      "predicted_stability": 0.9266,
+      "deployment_score": 0.8206333333333333,
+      "pros": [
+        "Extremely simple (7.8/100 complexity)",
+        "No subsystems - monolithic design",
+        "Fast execution (predicted 40+ Hz)",
+        "Low memory footprint",
+        "Only 7 dependencies",
+        "Easy to understand and debug",
+        "166 lines of code - minimal attack surface"
+      ],
+      "cons": [
+        "May lack sophistication for complex tasks",
+        "Limited behavioral repertoire",
+        "Less learning capability",
+        "Aggressive parameters may need tuning"
+      ]
+    },
+    {
+      "name": "pure",
+      "lines_of_code": 287,
+      "complexity_score": 11.4,
+      "subsystem_count": 0,
+      "torch_operations": 47,
+      "dependencies": 6,
+      "predicted_performance_hz": 43.26,
+      "predicted_memory_mb": 37.120000000000005,
+      "predicted_stability": 0.9158,
+      "deployment_score": 0.8032333333333332,
+      "pros": [
+        "Single tensor operation design",
+        "GPU-optimized architecture",
+        "Modern unified approach",
+        "No subsystem complexity",
+        "Biological channel allocation",
+        "Learnable evolution kernel",
+        "Good balance of features and simplicity"
+      ],
+      "cons": [
+        "Newer, less battle-tested",
+        "Higher torch operations (47)",
+        "Medium complexity (11.4/100)",
+        "Requires more GPU memory",
+        "Single point of failure in evolution kernel"
+      ]
+    },
+    {
+      "name": "unified",
+      "lines_of_code": 707,
+      "complexity_score": 31.8,
+      "subsystem_count": 4,
+      "torch_operations": 35,
+      "dependencies": 30,
+      "predicted_performance_hz": 11.46,
+      "predicted_memory_mb": 85.44,
+      "predicted_stability": 0.7746,
+      "deployment_score": 0.5783,
+      "pros": [
+        "Rich subsystem architecture",
+        "Well-tested and battle-proven",
+        "Handles complex behaviors",
+        "Full feature set"
+      ],
+      "cons": [
+        "High complexity (31.8/100)",
+        "4 subsystems create coordination overhead",
+        "High memory usage (~95MB predicted)",
+        "30 dependencies create maintenance burden",
+        "Slower performance due to subsystem interactions"
+      ]
+    }
+  ]
+}
