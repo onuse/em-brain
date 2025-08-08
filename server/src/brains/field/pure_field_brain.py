@@ -42,6 +42,13 @@ class ScaleConfig:
 
 # Predefined scaling configurations
 SCALE_CONFIGS = {
+    'hardware_constrained': ScaleConfig(
+        name='hardware_constrained',
+        levels=[(6, 64)],  # 6³×64 for hardware constraints
+        meta_channels=16,
+        cross_scale_ratio=0.0,
+        emergence_threshold=50_000
+    ),
     'tiny': ScaleConfig(
         name='tiny',
         levels=[(16, 32)],
@@ -247,9 +254,11 @@ class PureFieldBrain(nn.Module):
         first_channels = scale_config.levels[0][1]
         last_channels = scale_config.levels[-1][1] if len(scale_config.levels) > 1 else first_channels
         
-        self.input_projection = nn.Parameter(
-            torch.randn(input_dim, first_channels, device=device) * 0.1
-        )
+        # Input projection: maps from variable sensory input to first level channels
+        # Handle dynamic input dimension by using a linear layer instead of fixed matrix
+        self.input_projection = nn.Linear(input_dim, first_channels, device=device, bias=False)
+        
+        # Output projection: maps from processing channels to motor outputs
         self.output_projection = nn.Parameter(
             torch.randn(last_channels, output_dim, device=device) * 0.1
         )
@@ -304,6 +313,11 @@ class PureFieldBrain(nn.Module):
             'learning_events': 0
         }
         
+        # Compatibility attributes for legacy code
+        self.field = self.levels[0].field  # Primary field reference
+        self.unified_field = self.field  # Alias for compatibility
+        self.tensor_shape = tuple(list(self.field.shape))  # For telemetry
+        
         # Log configuration
         import logging
         self.logger = logging.getLogger(__name__)
@@ -326,12 +340,15 @@ class PureFieldBrain(nn.Module):
             
         if sensory_input.dim() == 0:
             sensory_input = sensory_input.unsqueeze(0)
-        if sensory_input.shape[0] != self.input_dim:
-            # Pad or truncate
-            if sensory_input.shape[0] < self.input_dim:
-                sensory_input = F.pad(sensory_input, (0, self.input_dim - sensory_input.shape[0]))
-            else:
-                sensory_input = sensory_input[:self.input_dim]
+        
+        # Handle variable input dimensions dynamically
+        actual_input_dim = sensory_input.shape[0]
+        if actual_input_dim != self.input_dim:
+            # Recreate input projection with correct dimensions if needed
+            first_channels = self.scale_config.levels[0][1]
+            if not hasattr(self, '_dynamic_input_projection') or self._last_input_dim != actual_input_dim:
+                self._dynamic_input_projection = nn.Linear(actual_input_dim, first_channels, device=self.device, bias=False)
+                self._last_input_dim = actual_input_dim
         
         # Everything in one fused operation
         with torch.cuda.amp.autocast(enabled=(self.device == 'cuda')):
@@ -348,6 +365,10 @@ class PureFieldBrain(nn.Module):
             # 4. Apply nonlinearity at each level
             for level in self.levels:
                 level.field = torch.tanh(level.field)
+            
+            # Update compatibility references
+            self.field = self.levels[0].field  # Keep primary field updated
+            self.unified_field = self.field
             
             # 5. Extract motor from appropriate level
             motor_output = self._extract_motor_hierarchical()
@@ -463,9 +484,12 @@ class PureFieldBrain(nn.Module):
         Inject sensory input into the first hierarchical level.
         Let resonance patterns emerge naturally.
         """
-        # Project input to first level's channels
+        # Project input to first level's channels using the appropriate projection
         first_level = self.levels[0]
-        sensory_channels = sensory_input @ self.input_projection
+        if hasattr(self, '_dynamic_input_projection') and self._last_input_dim != self.input_dim:
+            sensory_channels = self._dynamic_input_projection(sensory_input)
+        else:
+            sensory_channels = self.input_projection(sensory_input)
         
         # Create spatial pattern through resonance
         field_perturbation = torch.zeros_like(first_level.field)
@@ -652,9 +676,17 @@ class PureFieldBrain(nn.Module):
         # Update each level based on error
         if self.training and self.last_prediction_error > 0.01:
             for i, level in enumerate(self.levels):
-                # Compute error field for this level
-                error_field = error.view(1, 1, 1, -1) @ self.input_projection.T
-                error_field = error_field.view(1, 1, 1, 1, level.channels)
+                # Compute error field for this level using appropriate projection
+                if hasattr(self, '_dynamic_input_projection') and hasattr(self, '_last_input_dim'):
+                    # Ensure error has correct dimensions for projection
+                    if error.shape[0] == self._last_input_dim:
+                        error_proj = self._dynamic_input_projection(error)
+                    else:
+                        error_proj = self.input_projection(error)
+                else:
+                    error_proj = self.input_projection(error)
+                
+                error_field = error_proj.view(1, 1, 1, -1)
                 
                 # Scale learning by level (finer levels learn faster)
                 level_scale = 1.0 / (i + 1)
@@ -679,8 +711,10 @@ class PureFieldBrain(nn.Module):
             'cycle_count': self.cycle_count,
             'levels': [],
             'cross_scale_connections': [],
-            'input_projection': self.input_projection.detach().cpu().numpy(),
+            'input_projection': self.input_projection.weight.detach().cpu().numpy() if hasattr(self.input_projection, 'weight') else self.input_projection.detach().cpu().numpy(),
             'output_projection': self.output_projection.detach().cpu().numpy(),
+            'input_dim': self.input_dim,
+            'output_dim': self.output_dim,
             'params': {
                 'learning_rate': self.learning_rate,
                 'decay_rate': self.decay_rate,
@@ -712,8 +746,20 @@ class PureFieldBrain(nn.Module):
     def load_state_dict(self, state: Dict[str, Any]):
         """Load hierarchical state"""
         self.cycle_count = state.get('cycle_count', 0)
-        self.input_projection.data = torch.tensor(state['input_projection'], device=self.device)
+        
+        # Handle different input projection formats
+        if hasattr(self.input_projection, 'weight'):
+            self.input_projection.weight.data = torch.tensor(state['input_projection'], device=self.device)
+        else:
+            self.input_projection.data = torch.tensor(state['input_projection'], device=self.device)
+            
         self.output_projection.data = torch.tensor(state['output_projection'], device=self.device)
+        
+        # Update input/output dimensions if changed
+        if 'input_dim' in state and state['input_dim'] != self.input_dim:
+            self.input_dim = state['input_dim']
+        if 'output_dim' in state and state['output_dim'] != self.output_dim:
+            self.output_dim = state['output_dim']
         
         # Load each level
         for i, level_state in enumerate(state.get('levels', [])):
@@ -736,6 +782,12 @@ class PureFieldBrain(nn.Module):
         # Load emergence metrics
         if 'emergence_metrics' in state:
             self.emergence_metrics.update(state['emergence_metrics'])
+        
+        # Update compatibility attributes after loading
+        if len(self.levels) > 0:
+            self.field = self.levels[0].field
+            self.unified_field = self.field
+            self.tensor_shape = tuple(list(self.field.shape))
     
     @property
     def metrics(self) -> Dict[str, float]:
@@ -777,6 +829,12 @@ class PureFieldBrain(nn.Module):
             'hierarchical_depth': len(self.levels),
             'total_parameters': self.scale_config.total_params
         }
+        
+        # Update compatibility attributes after reset
+        if len(self.levels) > 0:
+            self.field = self.levels[0].field
+            self.unified_field = self.field
+            self.tensor_shape = tuple(list(self.field.shape))
         
     def __repr__(self) -> str:
         levels_desc = ", ".join([f"{size}³×{ch}" for size, ch in self.scale_config.levels])

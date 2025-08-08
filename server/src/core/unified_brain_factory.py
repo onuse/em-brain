@@ -179,9 +179,15 @@ class PureFieldBrainFactory(IBrainFactory):
         quiet_mode = self.brain_config.get('quiet_mode', False)
         
         # Create PureFieldBrain - the ultimate synthesis
-        # Choose scale based on available resources
+        # Choose scale based on available resources and spatial resolution
         import torch
-        if torch.cuda.is_available():
+        
+        # Use hardware constrained config for small spatial resolutions (6 or less)
+        if spatial_resolution <= 6:
+            scale_config = SCALE_CONFIGS.get('hardware_constrained')
+            if not quiet_mode:
+                logger.info(f"🎯 Using HARDWARE_CONSTRAINED scale config ({spatial_resolution}³×64) - optimized for hardware limits")
+        elif torch.cuda.is_available():
             # GPU available - use medium scale for good balance
             scale_config = SCALE_CONFIGS.get('medium')
             if not quiet_mode:
