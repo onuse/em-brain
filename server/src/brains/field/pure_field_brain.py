@@ -527,10 +527,13 @@ class PureFieldBrain(nn.Module):
             field = level.field
             
             # Compute field gradients at this level
+            # Use the appropriate number of channels for this level
+            num_channels = min(level.channels, level.channels - level.meta_channels if self.emergent_dynamics else level.channels)
+            
             if field.shape[0] > 1:
-                grad_x = field[1:, :, :, :32] - field[:-1, :, :, :32]
-                grad_y = field[:, 1:, :, :32] - field[:, :-1, :, :32]
-                grad_z = field[:, :, 1:, :32] - field[:, :, :-1, :32]
+                grad_x = field[1:, :, :, :num_channels] - field[:-1, :, :, :num_channels]
+                grad_y = field[:, 1:, :, :num_channels] - field[:, :-1, :, :num_channels]
+                grad_z = field[:, :, 1:, :num_channels] - field[:, :, :-1, :num_channels]
                 
                 # Pool gradients
                 grad_magnitude = (
@@ -540,7 +543,7 @@ class PureFieldBrain(nn.Module):
                 ) / 3.0
             else:
                 # For very small fields, use the field directly
-                grad_magnitude = field[:, :, :, :32].abs().mean(dim=(0, 1, 2))
+                grad_magnitude = field[:, :, :, :num_channels].abs().mean(dim=(0, 1, 2))
             
             # Weight by hierarchical level (coarse = strategic, fine = tactical)
             level_weight = 1.0 / (i + 1) if i < len(self.levels) - 1 else 2.0
@@ -563,7 +566,18 @@ class PureFieldBrain(nn.Module):
             elif combined.shape[0] < last_channels:
                 combined = F.pad(combined, (0, last_channels - combined.shape[0]))
         
-        motor_raw = combined[:self.output_projection.shape[0]] @ self.output_projection.T
+        # Fix: output_projection is [channels_in, output_dim], so we need the first dimension
+        channels_available = combined.shape[0]
+        channels_needed = self.output_projection.shape[0]
+        
+        # Ensure combined has the right number of channels
+        if channels_available > channels_needed:
+            combined = combined[:channels_needed]
+        elif channels_available < channels_needed:
+            combined = F.pad(combined, (0, channels_needed - channels_available))
+        
+        # Now project to motor space: [channels] @ [channels, output_dim] = [output_dim]
+        motor_raw = combined @ self.output_projection
         
         # Dynamic threshold based on meta-state
         if self.emergent_dynamics and self.levels[0].meta_channels > 0:
