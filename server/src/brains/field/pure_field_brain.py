@@ -294,6 +294,8 @@ class PureFieldBrain(nn.Module):
         
         # Tracking
         self.cycle_count = 0
+        self.brain_cycles = 0  # Compatibility alias for monitoring
+        self.experience_count = 0  # For telemetry compatibility
         self.last_prediction_error = 0.0
         self.emergence_metrics = {
             'cross_scale_coherence': 0.0,
@@ -313,10 +315,21 @@ class PureFieldBrain(nn.Module):
             'learning_events': 0
         }
         
-        # Compatibility attributes for legacy code
+        # Compatibility attributes for legacy code and telemetry
         self.field = self.levels[0].field  # Primary field reference
         self.unified_field = self.field  # Alias for compatibility
         self.tensor_shape = tuple(list(self.field.shape))  # For telemetry
+        self.total_dimensions = sum(self.tensor_shape)
+        
+        # Additional telemetry compatibility
+        self.working_memory = []
+        self.memory_regions = []
+        self.experiences = []
+        self._current_prediction_confidence = 0.5
+        self._last_prediction_error = 0.0
+        self._prediction_confidence_history = []
+        self.enhanced_dynamics = None  # We use emergent_dynamics instead
+        self.blended_reality = None  # Not used in PureFieldBrain
         
         # Log configuration
         import logging
@@ -331,6 +344,8 @@ class PureFieldBrain(nn.Module):
         Complexity emerges from multi-resolution dynamics.
         """
         self.cycle_count += 1
+        self.brain_cycles += 1  # Keep compatibility alias in sync
+        self.experience_count += 1
         
         # Ensure input is on device and correct shape
         if not torch.is_tensor(sensory_input):
@@ -850,6 +865,30 @@ class PureFieldBrain(nn.Module):
             self.unified_field = self.field
             self.tensor_shape = tuple(list(self.field.shape))
         
+    def get_brain_state(self) -> Dict[str, Any]:
+        """Get brain state for telemetry (compatibility method)"""
+        return {
+            'brain_cycles': self.brain_cycles,
+            'cycle_count': self.cycle_count,
+            'field_energy': float(torch.norm(self.field).item()) if torch.is_tensor(self.field) else 0.0,
+            'field_information': float(self.field.abs().mean().item()) if torch.is_tensor(self.field) else 0.0,
+            'max_activation': float(self.field.abs().max().item()) if torch.is_tensor(self.field) else 0.0,
+            'stability_index': 0.9,  # PureFieldBrain is inherently stable
+            'cognitive_mode': 'emergent',
+            'active_constraints': 0,
+            'cycle_time_ms': 0.0,
+            'prediction_confidence': self._current_prediction_confidence,
+            'prediction_error': self._last_prediction_error
+        }
+    
+    def _create_brain_state(self) -> Dict[str, Any]:
+        """Alternative method name for compatibility"""
+        return self.get_brain_state()
+    
+    def process(self, sensory_input: torch.Tensor, reward: float = 0.0) -> torch.Tensor:
+        """Compatibility alias for forward()"""
+        return self.forward(sensory_input, reward)
+    
     def __repr__(self) -> str:
         levels_desc = ", ".join([f"{size}³×{ch}" for size, ch in self.scale_config.levels])
         return (f"PureFieldBrain("
