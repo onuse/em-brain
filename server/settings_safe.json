@@ -1,0 +1,57 @@
+{
+  "brain": {
+    "type": "pure",
+    "sensory_dim": null,
+    "motor_dim": null,
+    "spatial_resolution": null,
+    "aggressive_learning": false,
+    "scale_config": "hardware_constrained",
+    "learning_rate_override": 0.02,
+    "exploration_rate_override": 0.03,
+    "gradient_scale_override": 0.02,
+    "_comment": "Safe mode configuration with 10x reduced parameters for initial robot testing"
+  },
+  
+  "safety": {
+    "motor_smoothing": true,
+    "motor_max_change": 0.1,
+    "watchdog_timeout_ms": 1000,
+    "auto_stop_on_nan": true,
+    "require_heartbeat": true,
+    "_comment": "Safety features for initial deployment"
+  },
+  
+  "persistence": {
+    "memory_path": "./brain_memory_safe",
+    "save_interval": 50,
+    "auto_save": true,
+    "max_memory_mb": 100,
+    "_comment": "Separate memory path for safe mode testing"
+  },
+  
+  "network": {
+    "host": "0.0.0.0",
+    "port": 9999,
+    "monitoring_port": 9998,
+    "connection_timeout_ms": 5000,
+    "require_handshake": true
+  },
+  
+  "logging": {
+    "enabled": true,
+    "log_directory": "./logs",
+    "log_level": "debug",
+    "enable_async_logging": true,
+    "show_learning_milestones": true,
+    "log_all_actions": true,
+    "log_safety_events": true,
+    "_comment": "Verbose logging for safety monitoring"
+  },
+  
+  "overrides": {
+    "force_spatial_resolution": 6,
+    "force_device": "cpu",
+    "disable_adaptation": true,
+    "enforce_safety_limits": true
+  }
+}

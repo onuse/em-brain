@@ -252,38 +252,45 @@ public:
 ### Dynamic Vector Dimensions
 The protocol supports dynamic sensory and action vector sizes, negotiated during handshake. The brain adapts to different robot configurations automatically.
 
-### Example: PiCar-X Sensory Input Vector (16 dimensions)
-```
-Index | Description | Range | Units
-------|-------------|-------|-------
-0     | Ultrasonic distance | 0-4 | meters (HC-SR04)
-1     | Grayscale right | 0-1 | normalized (A0 pin)
-2     | Grayscale center | 0-1 | normalized (A1 pin)
-3     | Grayscale left | 0-1 | normalized (A2 pin)
-4     | Left motor speed | -1 to 1 | normalized current speed
-5     | Right motor speed | -1 to 1 | normalized current speed
-6     | Camera pan angle | -90 to 90 | degrees
-7     | Camera tilt angle | -35 to 65 | degrees
-8     | Steering angle | -30 to 30 | degrees
-9     | Battery voltage | 0-8.4 | volts (2x 18650)
-10    | Line detected | 0-1 | binary status
-11    | Cliff detected | 0-1 | binary status
-12    | CPU temperature | 0-100 | celsius
-13    | Memory usage | 0-1 | normalized
-14    | Timestamp | 0-1000000 | milliseconds
-15    | Reserved | 0-1 | future use
-```
+### Sensory Input Vector Format
 
-### Example: PiCar-X Action Output Vector (5 dimensions)
+The protocol supports dynamic sensory vector dimensions, negotiated during handshake. Robots send normalized float32 values representing their sensor readings.
+
+**Common patterns for sensory vectors:**
+- Spatial sensors (position, distance, orientation)
+- Motion sensors (velocity, acceleration, motor states)
+- Environmental sensors (light, sound, temperature)
+- System sensors (battery, health, status)
+- Derived/computed values (gradients, patterns, predictions)
+
+**Example sensory vector (N dimensions):**
 ```
-Index | Description    | Range    | Units
-------|----------------|----------|--------
-0     | Left motor     | -100 to 100 | percent speed
-1     | Right motor    | -100 to 100 | percent speed
-2     | Steering servo | -30 to 30 | degrees
-3     | Camera pan     | -90 to 90 | degrees
-4     | Camera tilt    | -35 to 65 | degrees
+[sensor_0, sensor_1, ..., sensor_N-1]
 ```
+Each value typically normalized to [0, 1] or [-1, 1] range for optimal brain processing.
+
+### Action Output Vector Format
+
+The brain outputs normalized action values that robots interpret based on their actuator configuration, negotiated during handshake.
+
+**Common patterns for action vectors:**
+- Locomotion controls (wheels, legs, propellers)
+- Manipulation controls (arms, grippers, tools)
+- Sensory controls (camera orientation, sensor focus)
+- Communication outputs (lights, sounds, signals)
+
+**Example action vector (M dimensions):**
+```
+[action_0, action_1, ..., action_M-1]
+```
+Each value typically in range [-1, 1] representing bidirectional control signals.
+
+## Robot-Specific Implementations
+
+Each robot type should document its specific mapping between hardware and the protocol:
+
+- **PiCar-X**: See `client_picarx/PICARX_PROTOCOL_MAPPING.md`
+- **Other robots**: Create similar mapping documentation
 
 ### Robot Profile Configuration
 Robots can define their sensory/action mappings in a profile JSON file:

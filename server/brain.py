@@ -42,8 +42,13 @@ class DynamicBrainServer:
     structure adapts to each robot's capabilities.
     """
     
-    def __init__(self, config_file: str = "settings.json"):
+    def __init__(self, config_file: str = "settings.json", safe_mode: bool = False):
         print("\n🧠 Initializing Dynamic Brain Server...")
+        
+        # Use safe configuration if requested
+        if safe_mode:
+            config_file = "settings_safe.json"
+            print("⚠️  SAFE MODE ENABLED - Using conservative parameters")
         
         # Load configuration
         self.config_manager = AdaptiveConfigurationManager(config_file)
@@ -282,11 +287,29 @@ def main():
         action='store_true',
         help='Run in test mode (exits after initialization)'
     )
+    parser.add_argument(
+        '--safe-mode', '-s',
+        action='store_true',
+        help='Run in safe mode with conservative parameters for initial robot testing'
+    )
+    parser.add_argument(
+        '--aggressive', '-a',
+        action='store_true',
+        help='Run with aggressive learning parameters (use after validation)'
+    )
     
     args = parser.parse_args()
     
-    # Create server
-    server = DynamicBrainServer(config_file=args.config)
+    # Determine configuration
+    if args.safe_mode and args.aggressive:
+        print("❌ Cannot use both --safe-mode and --aggressive")
+        return 1
+    
+    # Create server with appropriate mode
+    server = DynamicBrainServer(
+        config_file=args.config if not args.safe_mode else args.config,
+        safe_mode=args.safe_mode
+    )
     
     # Test mode - just verify initialization
     if args.test:

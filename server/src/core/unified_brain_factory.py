@@ -198,13 +198,37 @@ class PureFieldBrainFactory(IBrainFactory):
             if not quiet_mode:
                 logger.info(f"⚡ Using SMALL scale config on CPU - optimized for performance")
         
+        # Check for safe mode overrides
+        aggressive_mode = self.brain_config.get('aggressive_learning', True)
+        
+        # Apply safe mode overrides if present
+        if 'learning_rate_override' in self.brain_config:
+            # Safe mode overrides will be applied in PureFieldBrain
+            aggressive_mode = False  # Disable aggressive mode when overrides present
+        
         brain = PureFieldBrain(
             input_dim=sensory_dim,
             output_dim=motor_dim,
             scale_config=scale_config,
             device=None,  # Auto-select best device
-            aggressive=True  # Use aggressive parameters for real intelligence
+            aggressive=aggressive_mode
         )
+        
+        # Apply safe mode parameter overrides directly
+        if 'learning_rate_override' in self.brain_config:
+            brain.learning_rate = self.brain_config['learning_rate_override']
+            if not quiet_mode:
+                logger.info(f"⚠️  Safe mode: learning_rate overridden to {brain.learning_rate}")
+        
+        if 'exploration_rate_override' in self.brain_config:
+            brain.exploration_rate = self.brain_config['exploration_rate_override']
+            if not quiet_mode:
+                logger.info(f"⚠️  Safe mode: exploration_rate overridden to {brain.exploration_rate}")
+        
+        if 'gradient_scale_override' in self.brain_config:
+            brain.gradient_scale = self.brain_config['gradient_scale_override']
+            if not quiet_mode:
+                logger.info(f"⚠️  Safe mode: gradient_scale overridden to {brain.gradient_scale}")
         
         if not quiet_mode:
             logger.info("🧠 PureFieldBrain initialized - The ultimate synthesis for real intelligence")

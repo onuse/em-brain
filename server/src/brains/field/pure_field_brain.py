@@ -266,8 +266,9 @@ class PureFieldBrain(nn.Module):
         # Aggressive parameters (scale-aware)
         if aggressive:
             # Scale learning rate with emergence threshold
-            scale_factor = min(2.0, math.log10(scale_config.total_params / 1_000_000))
-            self.learning_rate = 0.2 * scale_factor
+            # Fix: Ensure learning rate is always positive
+            scale_factor = max(0.1, min(2.0, math.log10(max(1, scale_config.total_params) / 1_000_000)))
+            self.learning_rate = max(0.01, 0.2 * scale_factor)  # Always at least 0.01
             self.decay_rate = 0.98
             self.diffusion_rate = 0.1
             self.noise_scale = 0.05
@@ -355,6 +356,14 @@ class PureFieldBrain(nn.Module):
             
         if sensory_input.dim() == 0:
             sensory_input = sensory_input.unsqueeze(0)
+            
+        # SAFETY: Sanitize input - remove NaN/Inf and clamp to reasonable range
+        if torch.isnan(sensory_input).any() or torch.isinf(sensory_input).any():
+            self.logger.warning("NaN/Inf detected in sensory input, replacing with zeros")
+            sensory_input = torch.nan_to_num(sensory_input, nan=0.0, posinf=1.0, neginf=-1.0)
+        
+        # Clamp inputs to reasonable range
+        sensory_input = torch.clamp(sensory_input, min=-10.0, max=10.0)
         
         # Handle variable input dimensions dynamically
         actual_input_dim = sensory_input.shape[0]
@@ -608,7 +617,10 @@ class PureFieldBrain(nn.Module):
             torch.zeros_like(motor_raw)
         )
         
-        return motor_output[:self.output_dim]
+        # SAFETY: Clamp motor outputs to safe range
+        motor_output = torch.clamp(motor_output[:self.output_dim], min=-1.0, max=1.0)
+        
+        return motor_output
     
     def _update_emergence_metrics(self):
         """
@@ -668,13 +680,14 @@ class PureFieldBrain(nn.Module):
             
             # Sensory resonance (how well field responds to input)
             field_flat = first_field.view(-1, first_field.shape[-1])
-            sensory_proj = sensory_input @ self.input_projection
+            # Fix: input_projection is nn.Linear, use it properly
+            sensory_proj = self.input_projection(sensory_input)
             resonance = F.cosine_similarity(
                 field_flat.mean(dim=0),
                 sensory_proj,
                 dim=0
             )
-            self._practical_metrics['sensory_resonance'] = resonance.item()
+            self._practical_metrics['sensory_resonance'] = float(resonance.item() if torch.is_tensor(resonance) else resonance)
             
             # Log significant events
             if self.cycle_count % 100 == 0:
