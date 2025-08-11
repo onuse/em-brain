@@ -375,7 +375,7 @@ class PureFieldBrain(nn.Module):
                 self._last_input_dim = actual_input_dim
         
         # Everything in one fused operation
-        with torch.cuda.amp.autocast(enabled=(self.device == 'cuda')):
+        with torch.amp.autocast(device_type=self.device, enabled=(self.device == 'cuda')):
             
             # 1. Inject sensory into first level
             sensory_field = self._inject_sensory_hierarchical(sensory_input)

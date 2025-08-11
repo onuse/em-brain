@@ -24,7 +24,7 @@ class SensorConfig:
     
     # Dimensions
     picarx_sensor_count: int = 16
-    brain_input_dimensions: int = 24
+    brain_input_dimensions: int = 16  # Match actual sensor count - no padding!
     
     # Normalization ranges
     ultrasonic_max_distance: float = 2.0  # meters
@@ -40,6 +40,32 @@ class SensorConfig:
     distance_gradient_window: float = 0.5  # seconds for gradient calculation
     line_quality_threshold: float = 0.3    # Minimum for line following
     exploration_variance_scale: float = 10.0  # Scaling for exploration metric
+    
+    # Normalization constants
+    spatial_distance_scale: float = 2.0    # Max distance for spatial normalization
+    motor_range_half: float = 1.0          # Motor range (-1 to 1)
+    steering_range: float = 60.0           # Total steering range for normalization
+    camera_pan_range: float = 180.0        # Total camera pan range
+    camera_tilt_range: float = 100.0       # Total camera tilt range  
+    steering_offset: float = 30.0          # Steering angle offset
+    camera_pan_offset: float = 90.0        # Camera pan offset
+    camera_tilt_offset: float = 35.0       # Camera tilt offset
+    
+    # Thresholds for sensor processing
+    neutral_value: float = 0.5             # Neutral sensor value
+    line_detection_strength: float = 0.6   # Strong line signal threshold
+    forward_speed_threshold: float = 0.1   # Minimum forward speed threshold
+    straight_steering_threshold: float = 5.0  # Threshold for "going straight"
+    distance_change_scale: float = 1.0     # Scale for distance change normalization
+    distance_change_offset: float = 0.5    # Offset for distance change
+    steering_effort_scale: float = 30.0    # Scale for steering effort calculation
+    
+    # System health thresholds
+    low_battery_threshold: float = 6.5     # Low battery voltage threshold
+    high_temp_threshold: float = 60.0      # High temperature threshold
+    health_battery_penalty: float = 0.3    # Health penalty for low battery
+    health_temp_penalty: float = 0.2       # Health penalty for high temperature
+    health_cliff_penalty: float = 0.5      # Health penalty for cliff detection
 
 
 @dataclass
@@ -67,6 +93,45 @@ class MotorConfig:
     max_acceleration: float = 100.0       # Max speed change per second (%)
     max_deceleration: float = 200.0       # Max braking per second (%)
     emergency_deceleration: float = 500.0 # Emergency stop rate (%)
+    
+    # Motor control parameters
+    turn_speed_reduction_base: float = 0.5  # Base speed when turning
+    turn_speed_reduction_factor: float = 0.5  # Additional reduction based on turn
+    camera_pan_range: float = 45.0        # Camera pan control range (±degrees)
+    camera_tilt_range: float = 30.0       # Camera tilt control range (degrees)
+
+
+@dataclass
+class RewardConfig:
+    """Reward signal calculation configuration."""
+    
+    # Baseline reward
+    neutral_baseline: float = 0.5         # Neutral reward value
+    
+    # Distance-based rewards/penalties
+    collision_penalty: float = 0.4        # Penalty for being too close
+    near_obstacle_penalty: float = 0.2    # Penalty for getting close to obstacles
+    collision_cooldown_penalty: float = 0.1  # Ongoing penalty during cooldown
+    forward_movement_reward: float = 0.2  # Reward for safe forward movement
+    
+    # Line following rewards
+    line_detection_reward: float = 0.15   # Reward for detecting line
+    line_score_accumulation: float = 0.1  # Line score increment
+    line_score_decay: float = 0.9         # Line score decay factor
+    line_score_weight: float = 0.1        # Weight for line following score
+    
+    # Exploration rewards
+    exploration_reward: float = 0.05      # Reward for exploration behavior
+    exploration_cooldown: int = 10        # Cooldown cycles for exploration bonus
+    exploration_steering_threshold: float = 10.0  # Min steering change for exploration
+    
+    # System health penalties
+    low_battery_penalty: float = 0.1      # Penalty for low battery
+    high_temperature_penalty: float = 0.05  # Penalty for high CPU temperature
+    cliff_detection_penalty: float = 0.3  # Penalty for cliff detection
+    
+    # Timers and counters
+    collision_cooldown_cycles: int = 20   # Cycles to maintain collision penalty
 
 
 @dataclass
@@ -154,6 +219,7 @@ class BrainstemConfig:
     sensors: SensorConfig = field(default_factory=SensorConfig)
     motors: MotorConfig = field(default_factory=MotorConfig)
     safety: SafetyConfig = field(default_factory=SafetyConfig)
+    rewards: RewardConfig = field(default_factory=RewardConfig)
     network: NetworkConfig = field(default_factory=NetworkConfig)
     threading: ThreadingConfig = field(default_factory=ThreadingConfig)
     
@@ -186,6 +252,8 @@ class BrainstemConfig:
             config.motors = MotorConfig(**data['motors'])
         if 'safety' in data:
             config.safety = SafetyConfig(**data['safety'])
+        if 'rewards' in data:
+            config.rewards = RewardConfig(**data['rewards'])
         if 'network' in data:
             config.network = NetworkConfig(**data['network'])
         if 'threading' in data:
@@ -230,6 +298,7 @@ class BrainstemConfig:
             'sensors': asdict(self.sensors),
             'motors': asdict(self.motors),
             'safety': asdict(self.safety),
+            'rewards': asdict(self.rewards),
             'network': asdict(self.network),
             'threading': asdict(self.threading),
             'robot_id': self.robot_id,

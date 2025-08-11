@@ -1,0 +1,142 @@
+# Brainstem Configuration
+# All thresholds and parameters for the PiCar-X brainstem system
+# NO MAGIC NUMBERS - Everything configurable!
+
+# System Configuration
+system:
+  update_rate_hz: 20.0  # Main control loop frequency
+  tcp_port: 9999       # Brain server TCP port
+  sensory_dims: 24     # Number of sensory channels to brain
+  action_dims: 4       # Number of action channels from brain
+  max_vector_size: 1024 # Maximum vector size for protocol
+
+# Connection Settings
+connection:
+  timeout_seconds: 5.0      # Connection timeout
+  retry_attempts: 3         # Connection retry attempts
+  communication_timeout: 30.0  # Communication timeout (seconds)
+  socket_timeout: 0.05      # Socket timeout (50ms)
+  slow_cycle_multiplier: 1.5  # Warning threshold for slow cycles
+
+# Distance/Proximity Thresholds (meters)
+distance:
+  emergency_stop: 0.05      # Immediate stop distance (5cm)
+  critical: 0.1            # Critical collision distance (10cm)
+  min_safe: 0.2           # Minimum safe distance (20cm)
+  obstacle_close: 0.2     # Close obstacle threshold
+  obstacle_moderate: 0.4  # Moderate obstacle threshold
+  normal_behavior: 0.5    # Normal behavior threshold
+  max_sensing_range: 2.0  # Maximum sensor range for normalization
+
+# Speed/Motor Configuration
+motor:
+  max_speed: 50.0          # Maximum motor speed (percent)
+  emergency_reverse: -20.0  # Emergency reverse speed
+  slow_reverse: -10.0      # Slow reverse speed
+  slow_forward: 20.0       # Slow forward speed
+  normal_forward: 30.0     # Normal forward speed
+  smoothing_factor: 0.3    # Motor command smoothing (0-1)
+
+# Steering/Angle Limits (degrees)
+steering:
+  max_angle: 25.0          # Maximum steering angle
+  turn_away_angle: 15.0    # Emergency turn angle
+  gentle_turn: 10.0        # Gentle turn angle
+  straight_threshold: 5    # Threshold for "straight" detection
+  normalization_range: 60  # Full steering range for normalization
+
+# Camera Control Limits
+camera:
+  pan_min: -90            # Minimum pan angle (degrees)
+  pan_max: 90             # Maximum pan angle
+  pan_range: 45           # Typical operating range (±45)
+  tilt_min: -35           # Minimum tilt angle
+  tilt_max: 65            # Maximum tilt angle
+  tilt_range: 30          # Typical operating range
+  tilt_down_angle: -20.0  # Tilt angle for looking down
+  pan_normalization: 180  # Full pan range for normalization
+  tilt_normalization: 100 # Full tilt range for normalization
+
+# Battery/Power Configuration
+battery:
+  max_voltage: 8.4        # Maximum battery voltage
+  normal_voltage: 7.4     # Normal operating voltage
+  low_threshold: 6.5      # Low battery warning threshold
+  critical_threshold: 6.2 # Critical battery threshold
+  shutdown_threshold: 6.0 # Shutdown threshold
+  low_speed_factor: 0.5   # Speed reduction when battery low
+
+# Temperature Limits (Celsius)
+temperature:
+  max_operating: 70       # Maximum CPU temperature
+  warning_threshold: 60   # Temperature warning threshold
+  high_speed_factor: 0.3  # Speed reduction when hot
+  normalization_max: 100.0 # Temperature normalization
+
+# Line Following Parameters
+line_following:
+  strong_signal: 0.6      # Strong line detection threshold
+  min_signal: 0.3        # Minimum line signal
+  reward_bonus: 0.15     # Reward for following line
+  score_increment: 0.1   # Score increment per cycle
+  score_decay: 0.9       # Score decay factor
+  score_reward_mult: 0.1 # Score reward multiplier
+
+# Cliff Detection
+cliff:
+  detection_threshold: 1.0  # Cliff detection distance
+  reverse_speed: -20.0     # Speed when cliff detected
+  penalty: 0.3            # Reward penalty for cliff
+
+# Reward System Parameters
+reward:
+  baseline: 0.5           # Neutral reward value
+  collision_penalty: 0.4  # Penalty for being too close
+  close_penalty: 0.2     # Penalty for getting close
+  cooldown_penalty: 0.1  # Penalty during cooldown
+  forward_mult: 0.2      # Multiplier for forward movement
+  exploration_bonus: 0.05 # Bonus for exploration
+  low_battery_penalty: 0.1  # Penalty for low battery
+  high_temp_penalty: 0.05   # Penalty for high temperature
+  
+# Timing Parameters
+timing:
+  collision_cooldown: 20  # Cycles after collision
+  exploration_timer: 10   # Cycles for exploration bonus
+  exploration_threshold: 10 # Threshold for exploration detection
+  sensor_variance_mult: 10  # Multiplier for sensor variance
+
+# Normalization Constants
+normalization:
+  motor_range: 2.0        # Motor value range (-1 to 1)
+  grayscale_max: 1000.0   # Maximum grayscale value
+  distance_cm_to_m: 100.0 # Centimeters to meters
+  percent_scale: 100.0    # Percentage scaling
+
+# Safety Profiles (can be selected at runtime)
+profiles:
+  default:
+    description: "Standard safety settings"
+    overrides: {}
+    
+  aggressive:
+    description: "More aggressive, less safety margin"
+    overrides:
+      distance.min_safe: 0.15
+      motor.max_speed: 70.0
+      steering.max_angle: 30.0
+      
+  cautious:
+    description: "Conservative safety settings"
+    overrides:
+      distance.min_safe: 0.3
+      distance.emergency_stop: 0.1
+      motor.max_speed: 30.0
+      motor.normal_forward: 20.0
+      
+  testing:
+    description: "Safe testing parameters"
+    overrides:
+      motor.max_speed: 20.0
+      motor.normal_forward: 10.0
+      distance.min_safe: 0.5

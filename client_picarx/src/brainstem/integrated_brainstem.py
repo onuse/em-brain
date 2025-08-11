@@ -16,21 +16,28 @@ from dataclasses import dataclass
 
 try:
     from .brain_client import BrainServerClient, BrainServerConfig, MockBrainServerClient
-    from .sensor_motor_adapter import PiCarXBrainAdapter
+    from .sensor_motor_adapter_fixed import PiCarXBrainAdapter  # Use fixed adapter
+    from ..config.brainstem_config import BrainstemConfig, get_config
 except ImportError:
     # For standalone testing
     from brain_client import BrainServerClient, BrainServerConfig, MockBrainServerClient
     from sensor_motor_adapter import PiCarXBrainAdapter
+    import sys
+    from pathlib import Path
+    sys.path.append(str(Path(__file__).parent.parent))
+    from config.brainstem_config import BrainstemConfig, get_config
 
 
 @dataclass
-class BrainstemConfig:
-    """Configuration for integrated brainstem."""
+class IntegratedBrainstemConfig:
+    """Configuration wrapper for integrated brainstem."""
     brain_server_config: BrainServerConfig
     use_mock_brain: bool = False
-    enable_local_reflexes: bool = True
-    safety_override: bool = True
-    update_rate_hz: float = 20.0
+    brainstem_config: BrainstemConfig = None
+    
+    def __post_init__(self):
+        if self.brainstem_config is None:
+            self.brainstem_config = get_config()
 
 
 class IntegratedBrainstem:
@@ -45,9 +52,10 @@ class IntegratedBrainstem:
     - Fallback behaviors
     """
     
-    def __init__(self, config: BrainstemConfig):
+    def __init__(self, config: IntegratedBrainstemConfig):
         """Initialize integrated brainstem."""
         self.config = config
+        self.bsc = config.brainstem_config  # Shorthand for brainstem config
         
         # Initialize components
         self.adapter = PiCarXBrainAdapter()
@@ -73,9 +81,10 @@ class IntegratedBrainstem:
         self.update_thread = None
         
         print("🧠 Integrated Brainstem initialized")
-        print(f"   Update rate: {config.update_rate_hz}Hz")
+        print(f"   Update rate: {self.bsc.threading.motor_update_rate}Hz")
         print(f"   Mock brain: {config.use_mock_brain}")
-        print(f"   Local reflexes: {config.enable_local_reflexes}")
+        print(f"   Safe mode: {self.bsc.safe_mode}")
+        print(f"   Profile: {self.bsc.robot_id}")
     
     def connect(self) -> bool:
         """Connect to brain server."""
@@ -106,7 +115,7 @@ class IntegratedBrainstem:
         brain_input = self.adapter.sensors_to_brain_input(raw_sensor_data)
         
         # Check for immediate safety reflexes
-        if self.config.enable_local_reflexes:
+        if self.bsc.safe_mode:
             reflex_commands = self._check_reflexes(raw_sensor_data)
             if reflex_commands:
                 self.reflex_active = True
@@ -119,11 +128,10 @@ class IntegratedBrainstem:
         # Send to brain if connected
         motor_commands = None
         if self.brain_client.is_connected():
-            # Prepare sensor package for brain
+            # Prepare sensor package for brain (NO REWARD!)
             sensor_package = {
                 'raw_sensors': raw_sensor_data,
-                'normalized_sensors': brain_input[:24],  # Don't send reward
-                'reward': brain_input[24],
+                'normalized_sensors': brain_input,  # All 16 channels
                 'cycle': self.cycle_count,
                 'reflex_active': self.reflex_active
             }
@@ -155,7 +163,7 @@ class IntegratedBrainstem:
             motor_commands = self._generate_fallback_behavior(raw_sensor_data)
         
         # Apply safety overrides
-        if self.config.safety_override:
+        if self.bsc.safe_mode:
             motor_commands = self._apply_safety_limits(motor_commands, raw_sensor_data)
         
         # Store and return
@@ -163,8 +171,9 @@ class IntegratedBrainstem:
         
         # Track timing
         cycle_time = time.time() - cycle_start
-        if cycle_time > 1.0 / self.config.update_rate_hz:
-            print(f"⚠️  Slow cycle: {cycle_time*1000:.1f}ms")
+        expected_cycle_time = self.bsc.threading.motor_update_rate
+        if cycle_time > expected_cycle_time * 1.5:  # 50% slower than expected
+            print(f"⚠️  Slow cycle: {cycle_time*1000:.1f}ms (expected <{expected_cycle_time*1000:.1f}ms)")
         
         return motor_commands
     
@@ -176,7 +185,7 @@ class IntegratedBrainstem:
         """
         # Emergency stop for imminent collision
         distance = sensor_data[0]
-        if distance < 0.05:  # 5cm - immediate stop!
+        if distance < self.bsc.safety.emergency_stop_distance:
             return {
                 'left_motor': 0.0,
                 'right_motor': 0.0,
@@ -186,13 +195,13 @@ class IntegratedBrainstem:
             }
         
         # Cliff detection - stop and reverse
-        if sensor_data[11] > 0:  # Cliff detected
+        if sensor_data[11] > self.bsc.safety.cliff_detection_threshold:
             return {
-                'left_motor': -20.0,
-                'right_motor': -20.0,
+                'left_motor': self.bsc.motors.max_motor_speed * -0.4,  # 40% reverse
+                'right_motor': self.bsc.motors.max_motor_speed * -0.4,
                 'steering_servo': 0.0,
                 'camera_pan_servo': 0.0,
-                'camera_tilt_servo': -20.0  # Look down
+                'camera_tilt_servo': self.bsc.motors.camera_tilt_min / 2  # Look down
             }
         
         # No reflex needed
@@ -210,20 +219,21 @@ class IntegratedBrainstem:
         grayscale_right = sensor_data[1]
         
         # Base speed depends on distance
-        if distance < 0.2:
-            base_speed = -10.0  # Reverse
-            steering = 15.0 if sensor_data[8] >= 0 else -15.0  # Turn away
-        elif distance < 0.5:
-            base_speed = 20.0  # Slow forward
+        if distance < self.bsc.safety.min_safe_distance:
+            base_speed = self.bsc.motors.max_motor_speed * -0.2  # 20% reverse
+            steering = self.bsc.motors.max_steering_angle * 0.6 if sensor_data[8] >= 0 else -self.bsc.motors.max_steering_angle * 0.6
+        elif distance < self.bsc.safety.min_safe_distance * 2.5:
+            base_speed = self.bsc.motors.max_motor_speed * 0.4  # 40% forward
             # Simple line following
-            if grayscale_center > 0.6:
+            line_threshold = self.bsc.sensors.grayscale_threshold * 2  # Higher threshold for line
+            if grayscale_center > line_threshold:
                 steering = 0.0  # On line
             elif grayscale_left > grayscale_right:
-                steering = -10.0  # Turn left
+                steering = -self.bsc.motors.max_steering_angle * 0.4  # Gentle left
             else:
-                steering = 10.0  # Turn right
+                steering = self.bsc.motors.max_steering_angle * 0.4  # Gentle right
         else:
-            base_speed = 30.0  # Normal speed
+            base_speed = self.bsc.motors.max_motor_speed * 0.6  # 60% normal speed
             steering = 0.0
         
         return {
@@ -238,14 +248,14 @@ class IntegratedBrainstem:
                            sensor_data: List[float]) -> Dict[str, float]:
         """Apply safety limits to motor commands."""
         # Reduce speed if battery is low
-        if sensor_data[9] < 6.2:
-            speed_factor = 0.5
+        if sensor_data[9] < self.bsc.sensors.battery_min:
+            speed_factor = self.bsc.safety.low_battery_speed_factor
             commands['left_motor'] *= speed_factor
             commands['right_motor'] *= speed_factor
         
         # Limit speed based on CPU temperature
-        if sensor_data[12] > 70:
-            speed_factor = 0.3
+        if sensor_data[12] > self.bsc.sensors.cpu_temp_critical:
+            speed_factor = self.bsc.safety.high_temp_speed_factor
             commands['left_motor'] *= speed_factor
             commands['right_motor'] *= speed_factor
         
@@ -283,11 +293,10 @@ def test_integrated_brainstem():
     print("=" * 50)
     
     # Configure for mock brain
-    config = BrainstemConfig(
+    config = IntegratedBrainstemConfig(
         brain_server_config=BrainServerConfig(),
         use_mock_brain=True,
-        enable_local_reflexes=True,
-        safety_override=True
+        brainstem_config=get_config(profile="testing")  # Use testing profile
     )
     
     brainstem = IntegratedBrainstem(config)

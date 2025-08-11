@@ -13,6 +13,15 @@ import numpy as np
 from typing import List, Dict, Any, Tuple
 import time
 
+try:
+    from ..config.brainstem_config import BrainstemConfig, get_config
+except ImportError:
+    # Handle relative import when running as main script
+    import sys
+    from pathlib import Path
+    sys.path.append(str(Path(__file__).parent.parent))
+    from config.brainstem_config import BrainstemConfig, get_config
+
 
 class PiCarXBrainAdapter:
     """
@@ -26,11 +35,12 @@ class PiCarXBrainAdapter:
     5. Apply safety limits and smoothing
     """
     
-    def __init__(self):
+    def __init__(self, config: BrainstemConfig = None):
         """Initialize the adapter."""
+        self.config = config or get_config()
+        
         # Motor smoothing
-        self.motor_smoothing_factor = 0.3
-        self.prev_motor_commands = [0.0] * 5
+        self.prev_motor_commands = [0.0] * self.config.motors.picarx_motor_count
         
         # Reward calculation state
         self.prev_distance = None
@@ -38,12 +48,7 @@ class PiCarXBrainAdapter:
         self.exploration_bonus_timer = 0
         self.line_following_score = 0.0
         
-        # Safety parameters
-        self.min_safe_distance = 0.2  # meters
-        self.max_motor_speed = 50.0   # percent
-        self.max_steering_angle = 25.0  # degrees
-        
-        print("🔧 PiCar-X Brain Adapter initialized")
+        print("🔧 PiCar-X Brain Adapter initialized with configuration")
     
     def sensors_to_brain_input(self, sensor_data: List[float]) -> List[float]:
         """
@@ -55,18 +60,20 @@ class PiCarXBrainAdapter:
         Returns:
             List of 24 normalized values for brain input
         """
-        if len(sensor_data) != 16:
-            print(f"⚠️  Expected 16 sensors, got {len(sensor_data)}")
-            sensor_data = sensor_data[:16] + [0.5] * (16 - len(sensor_data))
+        if len(sensor_data) != self.config.sensors.picarx_sensor_count:
+            print(f"⚠️  Expected {self.config.sensors.picarx_sensor_count} sensors, got {len(sensor_data)}")
+            sensor_data = (sensor_data[:self.config.sensors.picarx_sensor_count] + 
+                          [self.config.sensors.neutral_value] * 
+                          (self.config.sensors.picarx_sensor_count - len(sensor_data)))
         
-        brain_input = [0.5] * 25  # 24 sensors + 1 reward
+        brain_input = [self.config.sensors.neutral_value] * (self.config.sensors.brain_input_dimensions + 1)  # sensors + reward
         
         # === Spatial sensors (0-5) ===
         # Use ultrasonic for rough position estimation
         distance = sensor_data[0]  # meters
-        brain_input[0] = 1.0 - min(distance / 2.0, 1.0)  # X: closer = higher
-        brain_input[1] = 0.5  # Y: neutral (no lateral distance sensor)
-        brain_input[2] = 0.5  # Z: neutral (no vertical sensor)
+        brain_input[0] = 1.0 - min(distance / self.config.sensors.spatial_distance_scale, 1.0)  # X: closer = higher
+        brain_input[1] = self.config.sensors.neutral_value  # Y: neutral (no lateral distance sensor)
+        brain_input[2] = self.config.sensors.neutral_value  # Z: neutral (no vertical sensor)
         
         # Grayscale sensors for additional spatial info
         brain_input[3] = sensor_data[1]  # Right grayscale (already normalized)
@@ -74,26 +81,26 @@ class PiCarXBrainAdapter:
         brain_input[5] = sensor_data[3]  # Left grayscale
         
         # === Motion sensors (6-11) ===
-        brain_input[6] = (sensor_data[4] + 1.0) / 2.0  # Left motor (-1,1) → (0,1)
-        brain_input[7] = (sensor_data[5] + 1.0) / 2.0  # Right motor
-        brain_input[8] = (sensor_data[8] + 30) / 60    # Steering angle normalized
-        brain_input[9] = (sensor_data[6] + 90) / 180   # Camera pan normalized
-        brain_input[10] = (sensor_data[7] + 35) / 100  # Camera tilt normalized
-        brain_input[11] = sensor_data[9] / 8.4         # Battery voltage normalized
+        brain_input[6] = (sensor_data[4] + self.config.sensors.motor_range_half) / (2 * self.config.sensors.motor_range_half)  # Left motor
+        brain_input[7] = (sensor_data[5] + self.config.sensors.motor_range_half) / (2 * self.config.sensors.motor_range_half)  # Right motor
+        brain_input[8] = (sensor_data[8] + self.config.sensors.steering_offset) / self.config.sensors.steering_range    # Steering angle normalized
+        brain_input[9] = (sensor_data[6] + self.config.sensors.camera_pan_offset) / self.config.sensors.camera_pan_range   # Camera pan normalized
+        brain_input[10] = (sensor_data[7] + self.config.sensors.camera_tilt_offset) / self.config.sensors.camera_tilt_range  # Camera tilt normalized
+        brain_input[11] = sensor_data[9] / self.config.sensors.battery_max         # Battery voltage normalized
         
         # === Status sensors (12-17) ===
         brain_input[12] = sensor_data[10]  # Line detected
         brain_input[13] = sensor_data[11]  # Cliff detected
-        brain_input[14] = sensor_data[12] / 100.0  # CPU temperature
+        brain_input[14] = sensor_data[12] / self.config.sensors.cpu_temp_critical  # CPU temperature normalized
         brain_input[15] = sensor_data[13]  # Memory usage
         
         # Angular velocity estimate from motor differential
-        angular_vel = (sensor_data[5] - sensor_data[4]) / 2.0
-        brain_input[16] = (angular_vel + 1.0) / 2.0
+        angular_vel = (sensor_data[5] - sensor_data[4]) / (2 * self.config.sensors.motor_range_half)
+        brain_input[16] = (angular_vel + self.config.sensors.motor_range_half) / (2 * self.config.sensors.motor_range_half)
         
         # Forward velocity estimate
-        forward_vel = (sensor_data[4] + sensor_data[5]) / 2.0
-        brain_input[17] = (forward_vel + 1.0) / 2.0
+        forward_vel = (sensor_data[4] + sensor_data[5]) / (2 * self.config.sensors.motor_range_half)
+        brain_input[17] = (forward_vel + self.config.sensors.motor_range_half) / (2 * self.config.sensors.motor_range_half)
         
         # === Derived sensors (18-23) ===
         # Create richer sensory experience with derived values
@@ -101,38 +108,38 @@ class PiCarXBrainAdapter:
         # Obstacle gradient (how fast distance is changing)
         if self.prev_distance is not None:
             distance_change = distance - self.prev_distance
-            brain_input[18] = (distance_change + 0.5) / 1.0  # Normalized change
+            brain_input[18] = (distance_change + self.config.sensors.distance_change_offset) / self.config.sensors.distance_change_scale
         self.prev_distance = distance
         
         # Line following quality
         center_strength = sensor_data[2]
         side_strength = (sensor_data[1] + sensor_data[3]) / 2.0
-        line_quality = center_strength - side_strength if center_strength > 0.3 else 0
-        brain_input[19] = min(max(line_quality + 0.5, 0), 1)
+        line_quality = center_strength - side_strength if center_strength > self.config.sensors.line_quality_threshold else 0
+        brain_input[19] = min(max(line_quality + self.config.sensors.neutral_value, 0), 1)
         
         # Steering effort (how hard we're turning)
-        brain_input[20] = abs(sensor_data[8]) / 30.0
+        brain_input[20] = abs(sensor_data[8]) / self.config.sensors.steering_effort_scale
         
         # Speed magnitude
         speed_mag = abs(forward_vel)
-        brain_input[21] = min(speed_mag, 1.0)
+        brain_input[21] = min(speed_mag, self.config.sensors.motor_range_half)
         
         # Exploration indicator (variety in sensor readings)
         sensor_variance = np.var(sensor_data[:4])
-        brain_input[22] = min(sensor_variance * 10, 1.0)
+        brain_input[22] = min(sensor_variance * self.config.sensors.exploration_variance_scale, self.config.sensors.motor_range_half)
         
         # System health indicator
-        health = 1.0
-        if sensor_data[9] < 6.5:  # Low battery
-            health -= 0.3
-        if sensor_data[12] > 60:  # High temperature
-            health -= 0.2
+        health = self.config.sensors.motor_range_half
+        if sensor_data[9] < self.config.sensors.low_battery_threshold:  # Low battery
+            health -= self.config.sensors.health_battery_penalty
+        if sensor_data[12] > self.config.sensors.high_temp_threshold:  # High temperature
+            health -= self.config.sensors.health_temp_penalty
         if sensor_data[11] > 0:   # Cliff detected
-            health -= 0.5
+            health -= self.config.sensors.health_cliff_penalty
         brain_input[23] = max(health, 0.0)
         
-        # === Reward signal (24) ===
-        brain_input[24] = self._calculate_reward(sensor_data)
+        # === Reward signal (final index) ===
+        brain_input[self.config.sensors.brain_input_dimensions] = self._calculate_reward(sensor_data)
         
         return brain_input
     
@@ -146,8 +153,8 @@ class PiCarXBrainAdapter:
         Returns:
             Dictionary with motor commands
         """
-        if len(brain_output) < 4:
-            brain_output = brain_output + [0.0] * (4 - len(brain_output))
+        if len(brain_output) < self.config.motors.brain_output_dimensions:
+            brain_output = brain_output + [0.0] * (self.config.motors.brain_output_dimensions - len(brain_output))
         
         # Brain outputs:
         # 0: Forward/backward
@@ -156,20 +163,20 @@ class PiCarXBrainAdapter:
         # 3: Additional control (we'll use for camera tilt)
         
         # Convert to differential drive
-        forward = brain_output[0] * self.max_motor_speed
-        steering = brain_output[1] * self.max_steering_angle
+        forward = brain_output[0] * self.config.motors.max_motor_speed
+        steering = brain_output[1] * self.config.motors.max_steering_angle
         
-        # Safety: reduce speed when turning sharply
-        turn_factor = 1.0 - abs(steering) / (self.max_steering_angle * 2)
-        forward *= (0.5 + 0.5 * turn_factor)
+        # Safety: reduce speed when turning sharply  
+        turn_factor = self.config.sensors.motor_range_half - abs(steering) / (self.config.motors.max_steering_angle * 2)
+        forward *= (self.config.motors.turn_speed_reduction_base + self.config.motors.turn_speed_reduction_factor * turn_factor)
         
         # Differential drive calculation
-        if abs(steering) < 5:  # Going straight
+        if abs(steering) < self.config.sensors.straight_steering_threshold:  # Going straight
             left_motor = forward
             right_motor = forward
         else:
             # Differential steering
-            turn_radius_factor = 1.0 - abs(steering) / self.max_steering_angle
+            turn_radius_factor = self.config.sensors.motor_range_half - abs(steering) / self.config.motors.max_steering_angle
             if steering > 0:  # Turning right
                 left_motor = forward
                 right_motor = forward * turn_radius_factor
@@ -178,8 +185,8 @@ class PiCarXBrainAdapter:
                 right_motor = forward
         
         # Camera controls
-        camera_pan = brain_output[2] * 45  # ±45 degrees
-        camera_tilt = brain_output[3] * 30  # Reduced range for tilt
+        camera_pan = brain_output[2] * self.config.motors.camera_pan_range
+        camera_tilt = brain_output[3] * self.config.motors.camera_tilt_range
         
         # Apply smoothing
         motor_commands = [
@@ -190,26 +197,26 @@ class PiCarXBrainAdapter:
             camera_tilt
         ]
         
-        for i in range(5):
-            motor_commands[i] = (self.motor_smoothing_factor * self.prev_motor_commands[i] + 
-                               (1 - self.motor_smoothing_factor) * motor_commands[i])
+        for i in range(self.config.motors.picarx_motor_count):
+            motor_commands[i] = (self.config.motors.motor_smoothing_alpha * self.prev_motor_commands[i] + 
+                               (1 - self.config.motors.motor_smoothing_alpha) * motor_commands[i])
         
         self.prev_motor_commands = motor_commands.copy()
         
         # Safety limits
-        if self.prev_distance and self.prev_distance < self.min_safe_distance:
+        if self.prev_distance and self.prev_distance < self.config.safety.min_safe_distance:
             # Emergency brake
-            if motor_commands[0] > 0 and motor_commands[1] > 0:
-                safety_factor = self.prev_distance / self.min_safe_distance
+            if motor_commands[0] > 0.0 and motor_commands[1] > 0.0:
+                safety_factor = self.prev_distance / self.config.safety.min_safe_distance
                 motor_commands[0] *= safety_factor
                 motor_commands[1] *= safety_factor
         
         return {
-            'left_motor': np.clip(motor_commands[0], -self.max_motor_speed, self.max_motor_speed),
-            'right_motor': np.clip(motor_commands[1], -self.max_motor_speed, self.max_motor_speed),
-            'steering_servo': np.clip(motor_commands[2], -self.max_steering_angle, self.max_steering_angle),
-            'camera_pan_servo': np.clip(motor_commands[3], -90, 90),
-            'camera_tilt_servo': np.clip(motor_commands[4], -35, 65)
+            'left_motor': np.clip(motor_commands[0], -self.config.motors.max_motor_speed, self.config.motors.max_motor_speed),
+            'right_motor': np.clip(motor_commands[1], -self.config.motors.max_motor_speed, self.config.motors.max_motor_speed),
+            'steering_servo': np.clip(motor_commands[2], -self.config.motors.max_steering_angle, self.config.motors.max_steering_angle),
+            'camera_pan_servo': np.clip(motor_commands[3], self.config.motors.camera_pan_min, self.config.motors.camera_pan_max),
+            'camera_tilt_servo': np.clip(motor_commands[4], self.config.motors.camera_tilt_min, self.config.motors.camera_tilt_max)
         }
     
     def _calculate_reward(self, sensor_data: List[float]) -> float:
@@ -226,54 +233,54 @@ class PiCarXBrainAdapter:
         - Getting stuck
         - System issues (low battery, high temp)
         """
-        reward = 0.5  # Neutral baseline
+        reward = self.config.rewards.neutral_baseline  # Neutral baseline
         
         # Distance-based rewards
         distance = sensor_data[0]
-        if distance < 0.1:
-            reward -= 0.4  # Too close!
-            self.collision_cooldown = 20
-        elif distance < self.min_safe_distance:
-            reward -= 0.2  # Getting close
+        if distance < self.config.safety.emergency_stop_distance:
+            reward -= self.config.rewards.collision_penalty
+            self.collision_cooldown = self.config.rewards.collision_cooldown_cycles
+        elif distance < self.config.safety.min_safe_distance:
+            reward -= self.config.rewards.near_obstacle_penalty
         elif self.collision_cooldown > 0:
             self.collision_cooldown -= 1
-            reward -= 0.1
+            reward -= self.config.rewards.collision_cooldown_penalty
         else:
             # Reward forward movement at safe distance
-            forward_speed = (sensor_data[4] + sensor_data[5]) / 2.0
-            if forward_speed > 0.1:
-                reward += 0.2 * min(forward_speed, 1.0)
+            forward_speed = (sensor_data[4] + sensor_data[5]) / (2 * self.config.sensors.motor_range_half)
+            if forward_speed > self.config.sensors.forward_speed_threshold:
+                reward += self.config.rewards.forward_movement_reward * min(forward_speed, self.config.sensors.motor_range_half)
         
         # Line following reward
         center_line = sensor_data[2]
-        if center_line > 0.6:  # Strong line signal
-            reward += 0.15
-            self.line_following_score = min(self.line_following_score + 0.1, 1.0)
+        if center_line > self.config.sensors.line_detection_strength:  # Strong line signal
+            reward += self.config.rewards.line_detection_reward
+            self.line_following_score = min(self.line_following_score + self.config.rewards.line_score_accumulation, self.config.sensors.motor_range_half)
         else:
-            self.line_following_score *= 0.9
+            self.line_following_score *= self.config.rewards.line_score_decay
         
-        reward += 0.1 * self.line_following_score
+        reward += self.config.rewards.line_score_weight * self.line_following_score
         
         # Exploration bonus
         if self.exploration_bonus_timer <= 0:
             # Reward changes in position/orientation
             steering_change = abs(sensor_data[8])
-            if steering_change > 10:
-                reward += 0.05
-                self.exploration_bonus_timer = 10
+            if steering_change > self.config.rewards.exploration_steering_threshold:
+                reward += self.config.rewards.exploration_reward
+                self.exploration_bonus_timer = self.config.rewards.exploration_cooldown
         else:
             self.exploration_bonus_timer -= 1
         
         # System health penalties
-        if sensor_data[9] < 6.5:  # Low battery
-            reward -= 0.1
-        if sensor_data[12] > 60:  # CPU too hot
-            reward -= 0.05
-        if sensor_data[11] > 0:  # Cliff detected
-            reward -= 0.3
+        if sensor_data[9] < self.config.sensors.low_battery_threshold:  # Low battery
+            reward -= self.config.rewards.low_battery_penalty
+        if sensor_data[12] > self.config.sensors.high_temp_threshold:  # CPU too hot
+            reward -= self.config.rewards.high_temperature_penalty
+        if sensor_data[11] > 0.0:  # Cliff detected
+            reward -= self.config.rewards.cliff_detection_penalty
         
         # Ensure reward is in [0, 1]
-        return np.clip(reward, 0.0, 1.0)
+        return np.clip(reward, 0.0, self.config.sensors.motor_range_half)
     
     def get_debug_info(self) -> Dict[str, Any]:
         """Get debug information about the adapter state."""
@@ -291,7 +298,9 @@ def test_adapter():
     print("🧪 Testing PiCar-X Brain Adapter")
     print("=" * 50)
     
-    adapter = PiCarXBrainAdapter()
+    # Test with default configuration
+    config = get_config("testing")  # Use testing profile for safety
+    adapter = PiCarXBrainAdapter(config)
     
     # Test sensor conversion
     mock_sensors = [
@@ -317,7 +326,8 @@ def test_adapter():
     print(f"\nSensor data → Brain input:")
     print(f"  Original sensors: {len(mock_sensors)} channels")
     print(f"  Brain input: {len(brain_input)} channels")
-    print(f"  Reward signal: {brain_input[24]:.3f}")
+    print(f"  Reward signal: {brain_input[config.sensors.brain_input_dimensions]:.3f}")
+    print(f"  Configuration: {config.motors.max_motor_speed}% max speed, {config.safety.min_safe_distance}m safe distance")
     
     # Test motor conversion
     mock_brain_output = [0.5, 0.2, 0.0, 0.0]  # Forward with slight right turn

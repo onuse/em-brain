@@ -14,16 +14,44 @@ import threading
 from typing import Dict, Optional, Any, List, Tuple
 from dataclasses import dataclass
 
+try:
+    from ..config.brainstem_config import BrainstemConfig, get_config
+except ImportError:
+    import sys
+    from pathlib import Path
+    sys.path.append(str(Path(__file__).parent.parent))
+    from config.brainstem_config import BrainstemConfig, get_config
+
 
 @dataclass
 class BrainServerConfig:
     """Configuration for brain server connection."""
-    host: str = "localhost"
-    port: int = 9999  # TCP binary protocol port
-    timeout: float = 5.0
-    retry_attempts: int = 3
-    sensory_dimensions: int = 24
-    action_dimensions: int = 4
+    host: str = None
+    port: int = None
+    timeout: float = None
+    retry_attempts: int = None
+    sensory_dimensions: int = None
+    action_dimensions: int = None
+    brainstem_config: BrainstemConfig = None
+    
+    def __post_init__(self):
+        """Initialize from brainstem configuration."""
+        if self.brainstem_config is None:
+            self.brainstem_config = get_config()
+        
+        # Use values from config if not explicitly set
+        if self.host is None:
+            self.host = self.brainstem_config.network.brain_host
+        if self.port is None:
+            self.port = self.brainstem_config.network.brain_port
+        if self.timeout is None:
+            self.timeout = self.brainstem_config.network.connection_timeout
+        if self.retry_attempts is None:
+            self.retry_attempts = self.brainstem_config.network.max_reconnect_attempts
+        if self.sensory_dimensions is None:
+            self.sensory_dimensions = self.brainstem_config.sensors.brain_input_dimensions
+        if self.action_dimensions is None:
+            self.action_dimensions = self.brainstem_config.motors.brain_output_dimensions
 
 
 class MessageProtocol:
@@ -35,8 +63,9 @@ class MessageProtocol:
     MSG_HANDSHAKE = 2
     MSG_ERROR = 255
     
-    def __init__(self):
-        self.max_vector_size = 1024
+    def __init__(self, config: BrainstemConfig = None):
+        self.config = config or get_config()
+        self.max_vector_size = self.config.network.max_vector_size
     
     def encode_sensory_input(self, sensory_vector: List[float]) -> bytes:
         """Encode sensory input vector for transmission."""
@@ -124,7 +153,8 @@ class BrainServerClient:
     def __init__(self, config: BrainServerConfig):
         """Initialize brain server client."""
         self.config = config
-        self.protocol = MessageProtocol()
+        self.bsc = config.brainstem_config  # Shorthand
+        self.protocol = MessageProtocol(self.bsc)
         self.socket = None
         
         # Connection state
@@ -153,11 +183,19 @@ class BrainServerClient:
                 print(f"Connecting to brain server {self.config.host}:{self.config.port}...")
                 self.socket.connect((self.config.host, self.config.port))
                 
+                # Enable TCP_NODELAY for low latency if configured
+                if self.bsc.network.tcp_nodelay:
+                    self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+                
+                # Enable keepalive if configured  
+                if self.bsc.network.socket_keepalive:
+                    self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+                
                 # Send handshake
                 handshake_vector = [
                     1.0,  # Robot version
-                    float(self.config.sensory_dimensions),  # Sensory vector size
-                    float(self.config.action_dimensions),   # Action vector size
+                    float(self.bsc.sensors.brain_input_dimensions),  # Sensory vector size
+                    float(self.bsc.motors.brain_output_dimensions),   # Action vector size
                     1.0,  # Hardware type (1.0 = PiCar-X)
                     3.0   # Capabilities (1=visual, 2=audio)
                 ]
@@ -309,10 +347,11 @@ class BrainServerClient:
     def is_connected(self) -> bool:
         """Check if connected to brain server."""
         with self._lock:
-            # Consider disconnected if no communication for 30 seconds
-            if self.connected and time.time() - self.last_communication_time > 30.0:
+            # Consider disconnected if no communication for configured timeout
+            timeout_threshold = self.bsc.network.connection_timeout * 6  # 6x connection timeout
+            if self.connected and time.time() - self.last_communication_time > timeout_threshold:
                 self.connected = False
-                print("⚠️ Brain server connection timeout")
+                print(f"⚠️ Brain server connection timeout (>{timeout_threshold:.1f}s)")
                 if self.socket:
                     self.socket.close()
                     self.socket = None
