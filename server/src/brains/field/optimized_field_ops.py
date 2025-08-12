@@ -180,18 +180,31 @@ class OptimizedFieldOps:
     
     def _create_sobel_kernels_3d(self):
         """Create 3D Sobel kernels for gradient computation"""
-        # Sobel kernel for X direction
+        # Sobel kernel for X direction (detects changes along first spatial dimension)
+        # In conv3d, dimensions are [out_channels, in_channels, D, H, W]
+        # where D is our X, H is our Y, W is our Z
         sobel_x = torch.tensor([
-            [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]],
+            # Varies along D (first spatial dim)
+            [[-1, -2, -1], [-2, -4, -2], [-1, -2, -1]],  # D=0
+            [[0, 0, 0], [0, 0, 0], [0, 0, 0]],           # D=1
+            [[1, 2, 1], [2, 4, 2], [1, 2, 1]]            # D=2
+        ], dtype=torch.float32, device=self.device).view(1, 1, 3, 3, 3) / 32.0
+        
+        # Sobel kernel for Y direction (detects changes along second spatial dimension)
+        sobel_y = torch.tensor([
+            # Varies along H (second spatial dim)
+            [[-1, -2, -1], [0, 0, 0], [1, 2, 1]],        # H varies
+            [[-2, -4, -2], [0, 0, 0], [2, 4, 2]],
+            [[-1, -2, -1], [0, 0, 0], [1, 2, 1]]
+        ], dtype=torch.float32, device=self.device).view(1, 1, 3, 3, 3) / 32.0
+        
+        # Sobel kernel for Z direction (detects changes along third spatial dimension)
+        sobel_z = torch.tensor([
+            # Varies along W (third spatial dim)
+            [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]],        # W varies
             [[-2, 0, 2], [-4, 0, 4], [-2, 0, 2]],
             [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]]
         ], dtype=torch.float32, device=self.device).view(1, 1, 3, 3, 3) / 32.0
-        
-        # Sobel kernel for Y direction (transpose of X)
-        sobel_y = sobel_x.permute(0, 1, 2, 4, 3)
-        
-        # Sobel kernel for Z direction (another transpose)
-        sobel_z = sobel_x.permute(0, 1, 4, 3, 2)
         
         self._kernel_cache['sobel_3d'] = (sobel_x, sobel_y, sobel_z)
     
