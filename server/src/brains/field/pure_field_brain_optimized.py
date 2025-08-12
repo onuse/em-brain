@@ -57,13 +57,12 @@ class MemoryOptimizedField(HierarchicalField):
             # Modulate kernel in-place
             kernel = kernel * (1.0 + meta_modulation.mean() * 0.1)
         
-        # Convolution into output buffer
-        torch.nn.functional.conv3d(
+        # Convolution (can't use out parameter, so we assign)
+        self.conv_output_buffer = F.conv3d(
             self.conv_input_buffer,
             kernel,
             padding=1,
-            groups=1,
-            out=self.conv_output_buffer
+            groups=1
         )
         
         # Apply diffusion in-place
