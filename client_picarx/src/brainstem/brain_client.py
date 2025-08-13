@@ -26,12 +26,12 @@ except ImportError:
 @dataclass
 class BrainServerConfig:
     """Configuration for brain server connection."""
-    host: str = None
-    port: int = None
-    timeout: float = None
-    retry_attempts: int = None
-    sensory_dimensions: int = None
-    action_dimensions: int = None
+    host: str = "localhost"
+    port: int = 9999  # Standard brain server port
+    timeout: float = 5.0
+    retry_attempts: int = 3
+    sensory_dimensions: int = 24
+    action_dimensions: int = 4
     brainstem_config: BrainstemConfig = None
     
     def __post_init__(self):

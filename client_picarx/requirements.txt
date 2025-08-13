@@ -10,9 +10,9 @@ pygame>=2.1.0
 pyaudio>=0.2.11
 
 # Hardware interfaces (conditionally imported on robot)
-# RPi.GPIO>=0.7.1  # Uncomment when deploying to Raspberry Pi
-# adafruit-circuitpython-motor>=3.4.0  # Motor control
-# adafruit-circuitpython-servokit>=1.3.0  # Servo control
+RPi.GPIO>=0.7.1  # Uncomment when deploying to Raspberry Pi
+adafruit-circuitpython-motor>=3.4.0  # Motor control
+adafruit-circuitpython-servokit>=1.3.0  # Servo control
 
 # Computer vision
 opencv-python>=4.5.0

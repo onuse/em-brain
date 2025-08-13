@@ -43,7 +43,7 @@ except ImportError:
     print("⚠️  PiCar-X library not available - using mock hardware")
 
 # Import our brainstem components
-sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 from brainstem.integrated_brainstem import IntegratedBrainstem, BrainstemConfig
 from brainstem.brain_client import BrainServerConfig
 
@@ -53,7 +53,7 @@ class RobotConfig:
     """Configuration for the PiCar-X robot."""
     # Brain server settings
     brain_host: str = "localhost"
-    brain_port: int = 5555
+    brain_port: int = 9999  # Standard brain server port
     use_brain: bool = True
     
     # Hardware settings
@@ -241,22 +241,26 @@ class PiCarXRobot:
     
     def _init_brainstem(self):
         """Initialize the brainstem for brain communication."""
+        from brainstem.integrated_brainstem import IntegratedBrainstemConfig
+        
         brain_config = BrainServerConfig(
             host=self.config.brain_host,
             port=self.config.brain_port,
-            robot_id="picarx_01",
             timeout=0.05  # 50ms timeout for 20Hz operation
         )
         
-        brainstem_config = BrainstemConfig(
+        # Get default brainstem config
+        from config.brainstem_config import get_config
+        brainstem_config = get_config()
+        
+        # Create integrated config
+        integrated_config = IntegratedBrainstemConfig(
             brain_server_config=brain_config,
-            use_mock_brain=False,
-            enable_local_reflexes=True,
-            safety_override=self.config.enable_safety,
-            update_rate_hz=self.config.control_rate_hz
+            brainstem_config=brainstem_config,
+            use_mock_brain=False
         )
         
-        self.brainstem = IntegratedBrainstem(brainstem_config)
+        self.brainstem = IntegratedBrainstem(integrated_config)
         
         # Try to connect to brain
         if self.brainstem.connect():
@@ -617,8 +621,8 @@ def main():
     # Brain settings
     parser.add_argument('--brain-host', default='localhost',
                       help='Brain server hostname/IP (default: localhost)')
-    parser.add_argument('--brain-port', type=int, default=5555,
-                      help='Brain server port (default: 5555)')
+    parser.add_argument('--brain-port', type=int, default=9999,
+                      help='Brain server port (default: 9999)')
     parser.add_argument('--no-brain', action='store_true',
                       help='Run in autonomous mode without brain')
     

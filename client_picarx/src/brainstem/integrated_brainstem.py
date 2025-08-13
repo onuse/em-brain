@@ -14,16 +14,20 @@ import threading
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 
+import sys
+from pathlib import Path
+
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 try:
-    from .brain_client import BrainServerClient, BrainServerConfig, MockBrainServerClient
-    from .sensor_motor_adapter_fixed import PiCarXBrainAdapter  # Use fixed adapter
-    from ..config.brainstem_config import BrainstemConfig, get_config
+    from brainstem.brain_client import BrainServerClient, BrainServerConfig, MockBrainServerClient
+    from brainstem.sensor_motor_adapter_fixed import PiCarXBrainAdapter  # Use fixed adapter
+    from config.brainstem_config import BrainstemConfig, get_config
 except ImportError:
-    # For standalone testing
-    from brain_client import BrainServerClient, BrainServerConfig, MockBrainServerClient
-    from sensor_motor_adapter import PiCarXBrainAdapter
-    import sys
-    from pathlib import Path
+    # Fallback to relative imports
+    from .brain_client import BrainServerClient, BrainServerConfig, MockBrainServerClient
+    from .sensor_motor_adapter_fixed import PiCarXBrainAdapter
     sys.path.append(str(Path(__file__).parent.parent))
     from config.brainstem_config import BrainstemConfig, get_config
 

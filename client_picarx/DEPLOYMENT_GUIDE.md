@@ -56,6 +56,7 @@ This guide walks you through deploying the brainstem software to your Raspberry 
 ---
 
 ## 🔌 Step 2: Initial Pi Setup
+https://docs.sunfounder.com/projects/picar-x-v20/en/latest/python/python_start/install_all_modules.html
 
 1. **Insert SD card** into Pi and power on
 2. **Wait 2-3 minutes** for first boot
@@ -150,7 +151,7 @@ cd client_picarx
 ```bash
 # On the Pi
 cd ~
-git clone <your-repo-url> em-brain
+git clone https://github.com/onuse/em-brain
 cd em-brain/client_picarx
 ```
 
@@ -186,7 +187,7 @@ nano ~/client_picarx/config/client_settings.json
 Set your brain server details:
 ```json
 {
-  "brain_host": "192.168.1.100",  // Your brain server IP
+  "brain_host": "192.168.1.231",  // Your brain server IP
   "brain_port": 9999,
   "robot_profile": "default",
   "safe_mode": true
@@ -196,7 +197,7 @@ Set your brain server details:
 Or use environment variables:
 ```bash
 # Add to ~/.bashrc
-export BRAIN_HOST=192.168.1.100
+export BRAIN_HOST=192.168.1.231
 export BRAIN_PORT=9999
 export SAFE_MODE=true
 ```
