@@ -1,193 +1,115 @@
-# PiCar-X Brain Client
+# PiCar-X Robot Client
 
-## 🧠 Embodied Intelligence for Artificial Life
+Bare-metal brainstem implementation for the PiCar-X robot that connects to the unified field brain server.
 
-This is the robotic brainstem that connects the SunFounder PiCar-X robot to an emergent field-based brain. The system enables true artificial life experiments where intelligence emerges from experience, not programming.
+## Key Features
 
-## ✨ Key Features
+- **Direct Hardware Control**: No SunFounder libraries - pure I2C/GPIO via smbus
+- **High-Resolution Vision**: 640×480 minimum (307,200 pixels) - real vision
+- **Full Sensor Suite**: Camera, microphone, ultrasonic, grayscale, battery
+- **Safety Reflexes**: Hardware reflexes work even without brain
+- **Dynamic Adaptation**: Brain auto-adapts to any resolution via handshake
 
-- **No Reward Signals** - Brain discovers good/bad through pure experience
-- **Event-Driven Architecture** - Biological-inspired parallel processing
-- **Safety Reflexes** - Work even without brain connection
-- **16-Channel Sensory Input** - Full environmental awareness
-- **5-Channel Motor Control** - Precise movement and camera control
-- **Graceful Degradation** - Continues operating with failures
-- **Zero Magic Numbers** - Everything configurable
-
-## 🏗️ Architecture
-
-The brainstem uses a nucleus-based architecture inspired by biological nervous systems:
-
-```
-Robot Hardware ←→ Brainstem Nuclei ←→ Event Bus ←→ Brain Server
-                        ↓
-                  Safety Reflexes
-                 (Always Active)
-```
-
-See [Architecture Documentation](docs/architecture/BRAINSTEM_ARCHITECTURE.md) for details.
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Raspberry Pi Zero 2 WH (or better)
-- SunFounder PiCar-X robot kit
-- Python 3.7+
-- Brain server running (see [server README](../server/README.md))
-
-### Installation
+## Quick Start
 
 ```bash
-# Clone repository
-git clone <repository-url>
-cd client_picarx
+# Deploy to Raspberry Pi
+export PI_HOST=pi@192.168.1.231
+./deploy.sh
 
-# Install dependencies
-pip install -r requirements.txt
-
-# Configure brain server connection
-export BRAIN_HOST=<brain-server-ip>
-export BRAIN_PORT=9999
+# On the Pi
+cd ~/picarx_robot
+sudo python3 picarx_robot.py --brain-host <SERVER_IP>
 ```
 
-### Running
+## Architecture
+
+```
+PiCar-X Hardware
+    ↓
+Bare Metal HAL (I2C @ 0x40, GPIO pins)
+    ↓
+Brainstem (safety reflexes + sensor fusion)
+    ↓
+Brain Client (TCP binary protocol)
+    ↓
+Brain Server (307,200 inputs → 64 channels)
+```
+
+## Configuration
+
+Edit `config/robot_config.json`:
+```json
+{
+  "vision": {
+    "resolution": [640, 480],  // Or [1280,720], [1920,1080]
+    "format": "grayscale"      // Or "rgb" for 3× bandwidth
+  },
+  "brain": {
+    "host": "192.168.1.100",   // Your brain server IP
+    "port": 9999
+  }
+}
+```
+
+## Hardware Mapping
+
+- **PCA9685 @ 0x40**: All servos and motor PWM
+  - Channel 0: Camera pan (±90°)
+  - Channel 1: Camera tilt (-35° to +65°)
+  - Channel 2: Steering (±30°)
+  - Channel 4: Left motor PWM
+  - Channel 5: Right motor PWM
+- **GPIO 23/24**: Motor direction pins
+- **I2C ADC**: Grayscale sensors, battery voltage
+- **Camera**: PiCamera2 (640×480+ resolution)
+- **Audio**: I2S microphone/speaker
+
+## Vision Philosophy
+
+We send **full resolution** (640×480 minimum) to force intelligence:
+- 307,200 pixels → Brain compresses to 64 channels (4,800:1 ratio)
+- Brain learns feature extraction, not pixel memorization
+- Computational pressure drives emergence of visual intelligence
+- See [`docs/BRAIN_HIGH_BANDWIDTH_ANALYSIS.md`](docs/BRAIN_HIGH_BANDWIDTH_ANALYSIS.md)
+
+## Safety Features
+
+Brainstem reflexes (work without brain):
+- Collision stop: Ultrasonic < 10cm
+- Cliff detection: Grayscale threshold
+- Battery protection: Warning 6.5V, critical 6.0V
+- Emergency stop: On disconnect
+- Safe mode: Limited speed for testing
+
+## Network Protocol
+
+Binary TCP on port 9999:
+- **Handshake**: Dynamic dimension negotiation
+- **Input**: 307,200+ float32 values (vision + sensors)
+- **Output**: 6 float32 motor commands
+- **Bandwidth**: ~25 MB/s at 640×480, 20Hz
+
+## Documentation
+
+- [`docs/BRAIN_HIGH_BANDWIDTH_ANALYSIS.md`](docs/BRAIN_HIGH_BANDWIDTH_ANALYSIS.md) - Brain's vision handling
+- [`docs/HIGH_RESOLUTION_VISION.md`](docs/HIGH_RESOLUTION_VISION.md) - Vision configuration
+- [`docs/BARE_METAL_COMPARISON.md`](docs/BARE_METAL_COMPARISON.md) - Hardware details
+- [`docs/QUICK_REFERENCE.md`](docs/QUICK_REFERENCE.md) - Command reference
+
+## Testing
 
 ```bash
-# Start brainstem
-python picarx_robot.py --brain-host $BRAIN_HOST
+# Test without brain (reflexes only)
+sudo python3 picarx_robot.py --test-mode
 
-# Or use a profile (cautious/default/aggressive)
-python picarx_robot.py --profile cautious
+# Test vision module
+python3 -m src.hardware.configurable_vision --test
+
+# Full integration test
+sudo python3 picarx_robot.py --brain-host 192.168.1.100
 ```
-
-## 📁 Project Structure
-
-```
-client_picarx/
-├── src/
-│   ├── brainstem/
-│   │   ├── integrated_brainstem_async.py  # Main conductor
-│   │   ├── event_bus.py                   # Async messaging
-│   │   ├── nuclei.py                      # Specialized components
-│   │   ├── brain_client.py                # TCP protocol
-│   │   └── sensor_motor_adapter_fixed.py  # 16→4 mapping
-│   ├── config/
-│   │   └── brainstem_config.py           # All configuration
-│   └── hardware/
-│       └── interfaces/                    # Hardware abstraction
-├── tests/
-│   ├── unit/                              # Component tests
-│   ├── behavioral/                        # Emergence tests
-│   └── TESTING_STRATEGY.md               # Test philosophy
-├── tools/
-│   └── profile_brainstem_simple.py       # Performance profiling
-└── docs/
-    ├── architecture/                      # System design
-    └── installation/                      # Setup guides
-```
-
-## 🔧 Configuration
-
-All parameters in `src/config/brainstem_config.py`:
-
-```python
-# Key settings (no magic numbers!)
-min_safe_distance = 0.2      # meters
-max_motor_speed = 50.0        # percent
-sensor_dimensions = 16        # actual robot sensors
-motor_dimensions = 4          # brain output channels
-```
-
-Environment variables:
-- `BRAIN_HOST` - Brain server IP
-- `BRAIN_PORT` - TCP port (default: 9999)
-- `ROBOT_PROFILE` - cautious/default/aggressive
-- `SAFE_MODE` - Enable safety limits
-
-## 📊 Performance
-
-Measured on development hardware:
-- **Brainstem overhead**: < 0.1ms (negligible)
-- **Sustainable rate**: 1,456 Hz
-- **Production estimate**: ~14,500 Hz (10x faster hardware)
-
-The system is more than fast enough for real-time robotics!
-
-## 🧪 Testing
-
-```bash
-# Run all tests
-pytest tests/
-
-# Behavioral tests (most important!)
-python tests/behavioral/field_brain_behavioral_test.py
-
-# Safety-critical tests
-python tests/behavioral/safety_critical_tests.py
-
-# Performance profiling
-python tools/profile_brainstem_simple.py
-```
-
-## 🛡️ Safety Features
-
-Built-in reflexes that work WITHOUT brain:
-- Emergency stop (< 5cm obstacles)
-- Cliff detection and avoidance
-- Battery protection
-- Temperature throttling
-- Fallback behaviors
-
-## 📚 Documentation
-
-- [Architecture](docs/architecture/BRAINSTEM_ARCHITECTURE.md) - System design
-- [Installation Guide](docs/installation/README.md) - Detailed setup
-- [Protocol Mapping](PICARX_PROTOCOL_MAPPING.md) - Sensor/motor details
-- [Testing Strategy](tests/TESTING_STRATEGY.md) - Test philosophy
-
-## 🚦 Status
-
-**Production Ready!** ✅
-
-Recent achievements:
-- Removed reward signals (pure emergence)
-- Fixed 16-channel sensor mapping
-- Event-driven architecture complete
-- Sub-millisecond overhead achieved
-- Comprehensive safety system
-
-## 🔮 Future Enhancements
-
-- [ ] Visual cortex nucleus (camera processing)
-- [ ] Vocal expression system (emotional sounds)
-- [ ] Multi-robot coordination
-- [ ] Environmental mapping
-
-## 📝 Philosophy
-
-> "The brainstem doesn't teach the brain what's good or bad - it lets the brain discover meaning through embodied experience."
-
-This system enables true artificial life where:
-- Intelligence emerges from simple rules
-- Learning happens through experience
-- Behaviors surprise us
-- The robot develops its own goals
-
-## 🤝 Contributing
-
-We welcome contributions! Key areas:
-- New sensory modalities
-- Additional safety features
-- Performance optimizations
-- Behavioral experiments
-
-## 📄 License
-
-[Your License Here]
 
 ---
 
-**Version**: 2.0  
-**Last Updated**: 2025-01-11  
-**Status**: Ready for artificial life! 🚀🧠🤖
+**"Test the infrastructure, let the intelligence emerge."**

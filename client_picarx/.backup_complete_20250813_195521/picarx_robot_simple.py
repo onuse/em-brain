@@ -27,12 +27,12 @@ from typing import Optional
 # Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
-from brainstem.brainstem import Brainstem
+from brainstem.clean_brainstem import CleanBrainstem
 from hardware.bare_metal_hal import create_hal
 from hardware.picarx_hardware_limits import *
 
 
-class PiCarXRobot:
+class SimplePiCarXRobot:
     """
     Simple, clean robot controller.
     
@@ -55,10 +55,10 @@ class PiCarXRobot:
         # Initialize components
         if use_brain:
             print(f"📡 Connecting to brain at {brain_host}:{brain_port}")
-            self.brainstem = Brainstem(brain_host, brain_port)
+            self.brainstem = CleanBrainstem(brain_host, brain_port)
         else:
             print("🧠 Running in reflex-only mode (no brain)")
-            self.brainstem = Brainstem()  # Will work without brain
+            self.brainstem = CleanBrainstem()  # Will work without brain
         
         self.running = False
         self.cycle_count = 0
@@ -258,7 +258,7 @@ def main():
     # Run requested mode
     if args.calibrate:
         # Calibration mode
-        robot = PiCarXRobot(use_brain=False, mock_hardware=args.mock)
+        robot = SimplePiCarXRobot(use_brain=False, mock_hardware=args.mock)
         robot.calibrate_servos()
         
     elif args.test:
@@ -266,7 +266,7 @@ def main():
         print("\n🧪 HARDWARE TEST MODE")
         print("-" * 40)
         
-        robot = PiCarXRobot(use_brain=False, mock_hardware=args.mock)
+        robot = SimplePiCarXRobot(use_brain=False, mock_hardware=args.mock)
         
         print("\nTesting sensors...")
         for i in range(5):
@@ -293,7 +293,7 @@ def main():
         
     else:
         # Normal operation
-        robot = PiCarXRobot(
+        robot = SimplePiCarXRobot(
             brain_host=args.brain_host,
             brain_port=args.brain_port,
             use_brain=not args.no_brain,

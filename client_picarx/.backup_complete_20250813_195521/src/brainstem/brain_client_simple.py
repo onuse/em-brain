@@ -39,7 +39,7 @@ class BrainClient:
         self.connected = False
         
     def connect(self) -> bool:
-        """Connect to brain server and perform handshake."""
+        """Connect to brain server."""
         try:
             # Create socket
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -47,74 +47,14 @@ class BrainClient:
             
             # Connect
             self.socket.connect((self.config.host, self.config.port))
+            self.connected = True
             
-            # Perform handshake to negotiate dimensions
-            if self._handshake():
-                self.connected = True
-                print(f"✅ Connected to brain at {self.config.host}:{self.config.port}")
-                print(f"   Negotiated: {self.config.sensory_dimensions} inputs, {self.config.action_dimensions} outputs")
-                return True
-            else:
-                print("❌ Handshake failed")
-                self.socket.close()
-                return False
-                
+            print(f"✅ Connected to brain at {self.config.host}:{self.config.port}")
+            return True
+            
         except Exception as e:
             print(f"❌ Connection failed: {e}")
             self.connected = False
-            return False
-    
-    def _handshake(self) -> bool:
-        """Perform handshake with brain server."""
-        try:
-            # Prepare handshake data
-            # [robot_version, sensory_size, action_size, hardware_type, capabilities_mask]
-            capabilities = 0
-            capabilities |= 1  # Visual (we have camera support)
-            capabilities |= 2  # Audio (we have mic/speaker)
-            
-            handshake_data = [
-                1.0,  # Robot version
-                float(self.config.sensory_dimensions),  # We can send up to 26 channels
-                float(self.config.action_dimensions),   # We expect 6 outputs
-                1.0,  # Hardware type (1.0 = PiCar-X)
-                float(capabilities)  # Capabilities mask
-            ]
-            
-            # Send handshake
-            header = struct.pack('<cII', b'H', 5, 0)  # 'H' for handshake
-            body = struct.pack('<5f', *handshake_data)
-            self.socket.sendall(header + body)
-            
-            # Receive brain's handshake response
-            response_header = self.socket.recv(9)
-            if len(response_header) < 9:
-                return False
-                
-            msg_type, dim, _ = struct.unpack('<cII', response_header)
-            
-            if msg_type == b'H' and dim == 5:
-                # Read brain's handshake
-                body_data = self.socket.recv(20)  # 5 floats
-                if len(body_data) == 20:
-                    brain_handshake = struct.unpack('<5f', body_data)
-                    brain_version = brain_handshake[0]
-                    accepted_sensory = int(brain_handshake[1])
-                    accepted_action = int(brain_handshake[2])
-                    gpu_available = brain_handshake[3] > 0
-                    brain_capabilities = int(brain_handshake[4])
-                    
-                    # Update our config with negotiated dimensions
-                    self.config.sensory_dimensions = accepted_sensory
-                    self.config.action_dimensions = accepted_action
-                    
-                    print(f"🤝 Handshake complete: Brain v{brain_version}, GPU={'✓' if gpu_available else '✗'}")
-                    return True
-                    
-            return False
-            
-        except Exception as e:
-            print(f"Handshake error: {e}")
             return False
     
     def process_sensors(self, sensor_data: List[float]) -> Optional[Dict[str, Any]]:

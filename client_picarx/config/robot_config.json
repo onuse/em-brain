@@ -1,0 +1,61 @@
+{
+  "brain": {
+    "host": "192.168.1.231",
+    "port": 9999,
+    "timeout": 0.05
+  },
+  
+  "vision": {
+    "enabled": true,
+    "resolution": [640, 480],
+    "fps": 30,
+    "format": "grayscale",
+    "comment": "640x480 = 307,200 pixels. Use 'grayscale' or 'rgb'. Higher resolutions: [1280,720], [1920,1080]"
+  },
+  
+  "audio": {
+    "enabled": true,
+    "sample_rate": 16000,
+    "channels": 1,
+    "fft_bins": 256
+  },
+  
+  "sensors": {
+    "grayscale": {
+      "enabled": true,
+      "channels": [0, 1, 2],
+      "adc_bits": 12
+    },
+    "ultrasonic": {
+      "enabled": true,
+      "max_range_cm": 400,
+      "gpio_trigger": 23,
+      "gpio_echo": 24
+    },
+    "battery": {
+      "enabled": true,
+      "adc_channel": 6,
+      "warning_voltage": 6.5,
+      "critical_voltage": 6.0
+    }
+  },
+  
+  "safety": {
+    "collision_distance_cm": 10,
+    "cliff_threshold_adc": 3500,
+    "max_speed": 0.8,
+    "emergency_stop_on_disconnect": true
+  },
+  
+  "performance": {
+    "control_loop_hz": 20,
+    "vision_processing": "gpu",
+    "comment": "At 640x480 grayscale, we send 307,200 values/frame = 6.1MB/s at 20Hz"
+  },
+  
+  "debug": {
+    "verbose_logging": false,
+    "save_vision_samples": false,
+    "telemetry_enabled": true
+  }
+}

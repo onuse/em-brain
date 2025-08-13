@@ -1,30 +1,28 @@
-# PiCar-X Brain Client Dependencies
-# Hardware and robot-specific libraries
+# PiCar-X Robot Requirements
+# 
+# NOTE: We do NOT need any SunFounder libraries!
+# We control hardware directly via standard Raspberry Pi interfaces.
 
-# Core dependencies
-numpy>=1.21.0
-requests>=2.25.0
+# Core requirements
+numpy>=1.19.0
 
-# Audio/vocal synthesis
-pygame>=2.1.0
-pyaudio>=0.2.11
+# Camera support (optional but recommended)
+# Option 1: Raspberry Pi Camera
+picamera2>=0.3.0  # For Raspberry Pi Camera Module
 
-# Hardware interfaces (conditionally imported on robot)
-RPi.GPIO>=0.7.1  # Uncomment when deploying to Raspberry Pi
-adafruit-circuitpython-motor>=3.4.0  # Motor control
-adafruit-circuitpython-servokit>=1.3.0  # Servo control
+# Option 2: USB camera  
+opencv-python>=4.5.0  # For USB cameras or advanced vision
 
-# Computer vision
-opencv-python>=4.5.0
+# Audio support (optional but recommended)
+pyaudio>=0.2.11  # For microphone and speaker
+sounddevice>=0.4.0  # Alternative audio interface
 
-# Configuration and utilities
-PyYAML>=6.0
-python-dotenv>=0.19.0
+# Pre-installed on Raspberry Pi OS:
+# - RPi.GPIO (GPIO control)
+# - smbus (I2C communication)
+# - python3 standard library
 
-# Development and testing
-pytest>=7.0.0
-pytest-asyncio>=0.20.0
-pytest-mock>=3.6.0
-
-# Optional: Performance monitoring
-psutil>=5.8.0
+# Installation on Raspberry Pi:
+# sudo apt-get update
+# sudo apt-get install python3-numpy python3-opencv python3-pyaudio
+# sudo apt-get install libatlas-base-dev  # For numpy optimization
