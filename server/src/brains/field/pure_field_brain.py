@@ -772,7 +772,7 @@ class PureFieldBrain(nn.Module):
         # Save each level
         for level in self.levels:
             level_state = {
-                'field': level.field.cpu().numpy(),
+                'field': level.field.detach().cpu().numpy(),
                 'evolution_kernel': level.evolution_kernel.detach().cpu().numpy(),
             }
             if level.meta_kernel is not None:

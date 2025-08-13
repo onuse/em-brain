@@ -42,7 +42,7 @@ This guide walks you through deploying the brainstem software to your Raspberry 
    ```
    ☑ Enable SSH
    ☑ Set username and password
-     Username: pi
+     Username: jonas
      Password: [choose secure password]
    ☑ Configure WiFi
      SSID: [your network]
@@ -63,7 +63,7 @@ This guide walks you through deploying the brainstem software to your Raspberry 
    ```bash
    # From your computer, scan network:
    # On Linux/Mac:
-   arp -a | grep raspberry
+   arp -a | grep brain
    # Or use your router's admin panel
    ```
 
@@ -76,7 +76,7 @@ This guide walks you through deploying the brainstem software to your Raspberry 
 5. **Update the system**:
    ```bash
    sudo apt update && sudo apt upgrade -y
-   sudo apt install -y git python3-pip python3-venv
+   sudo apt install -y git python3-pip python3-venv python3-setuptools python3-smbus
    ```
 
 6. **Enable required interfaces**:
@@ -96,19 +96,31 @@ The PiCar-X needs specific drivers for its hardware:
 ```bash
 # Install SunFounder robot-hat library
 cd ~
-git clone https://github.com/sunfounder/robot-hat.git
+git clone -b v2.0 https://github.com/sunfounder/robot-hat.git
 cd robot-hat
 sudo python3 setup.py install
+(The "setup.py" installation method is planned to be abandoned.
+Please execute "install.py" to install.))
+
+# Install the vilib camera module.
+cd ~/
+git clone -b picamera2 https://github.com/sunfounder/vilib.git
+cd vilib
+sudo python3 install.py
 
 # Install PiCar-X library
 cd ~
-git clone -b v2.0 https://github.com/sunfounder/picar-x.git
+git clone -b v2.0 https://github.com/sunfounder/picar-x.git --depth 1
 cd picar-x
 sudo python3 setup.py install
 
-# Run calibration (do this with robot on blocks!)
+# Finally, you need to run the script i2samp.sh to install the components required by the i2s amplifier, otherwise the picar-x will have no sound.
 cd ~/picar-x
-python3 calibration.py
+sudo bash i2samp.sh
+
+# Run calibration (do this with robot on blocks!)
+cd ~/picar-x/example/calibration
+sudo python3 calibration.py
 ```
 
 ---

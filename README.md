@@ -1,15 +1,14 @@
-# Field-Native Intelligence System
+# Em-Brain: Emergent Field Intelligence
 
-A continuous field-based artificial brain that combines predictive processing with self-modifying dynamics to create emergent intelligence. This system implements field dynamics as the substrate for cognition, where prediction serves as a fundamental organizing principle alongside other emergent properties.
+A pure field-based artificial life system where intelligence emerges from continuous tensor dynamics without reward signals or external goals. The brain discovers meaning through experience as patterns self-organize within a unified 4D field.
 
-## Core Approach
+## Philosophy
 
-This project explores continuous field dynamics as an alternative to discrete AI approaches. Intelligence emerges from the topology and evolution of a 4D tensor field, where multiple cognitive principles work together:
+**No Reward Signals**: The brain discovers what is good or bad through pure experience. Like a river finding its path to the sea, behaviors emerge from intrinsic field dynamics rather than external optimization targets.
 
-- **Predictive Processing**: The brain continuously predicts future states and learns from errors
-- **Self-Modifying Dynamics**: Evolution rules are encoded within the field itself
-- **Emergent Organization**: Structure and function arise from field interactions
-- **Continuous Adaptation**: No fixed parameters - everything evolves through experience
+**Everything is a Field**: Sensory input, memory, motor output, and even the learning rules themselves exist as patterns within a single continuous tensor field. There are no separate modules - just regions of specialized dynamics that emerge through experience.
+
+**Test Infrastructure, Not Intelligence**: The system includes comprehensive tests for mathematical properties and safety guarantees, but deliberately avoids testing for specific behaviors. Intelligence should surprise us.
 
 ## Key Innovations
 
@@ -28,11 +27,12 @@ The field encodes its own evolution rules:
 - **Meta-Learning**: The system learns how to learn better
 - **Open-Ended Evolution**: No ceiling on emergent complexity
 
-### 3. Unified Field Architecture
-- **4D Tensor**: [32, 32, 32, 64] continuous field
-- **No Semantic Encoding**: Properties emerge from dynamics
-- **GPU Optimized**: Efficient tensor operations
-- **Pattern-Based**: All processing through pattern matching
+### 3. Hierarchical Scaling
+The PureFieldBrain scales from tiny embedded systems to massive research configurations:
+- **hardware_constrained** (6³×64): ~131K parameters for Raspberry Pi
+- **small** (16³×96): ~2.5M parameters for CPU development  
+- **medium** (32³×128): ~20M parameters for GPU experiments
+- **massive** (64³×256): ~402M parameters for future research
 
 ### 4. Autonomous Operation Through Intrinsic Drives
 - **No External Rewards**: Behavior emerges from field tensions
@@ -90,61 +90,72 @@ Field Updates ← Self-Modification → Motor Gradients
 Pattern Library ← Behavioral Learning → Motor Output
 ```
 
-## Implementation Status
+## Technical Specifications
 
-### ✅ Fully Implemented
-- Complete predictive processing pipeline (5 phases)
-- Self-modifying field dynamics with regional specialization
-- Pattern-based cognition without coordinates
-- Active vision with emergent eye movements
-- Modality-agnostic sensing framework
-- Cross-session persistence
-- GPU acceleration (CUDA/MPS/CPU)
+### Architecture
+- **Core Implementation**: PureFieldBrain with hierarchical scaling
+- **GPU Optimizations**: Grouped convolutions, batched operations, pre-allocated buffers
+- **Communication**: Binary TCP protocol on port 9999
+- **No Reward Signals**: Brain discovers value through experience
 
-### 🚧 In Development
-- Hardware integration (cameras, microphones)
-- Multi-brain communication
-- Persistence compression
-- Additional sensory modalities
+### Performance
+- **Cycle Time Target**: <1ms on GPU (hardware_constrained config)
+- **Optimization Gains**: 18x speedup for diffusion, 113x for buffer operations  
+- **Memory**: Scales with configuration (131KB to 402MB+)
+- **Zero Allocations**: Pre-allocated buffers in hot paths
 
-### 📊 Performance
-- **Cycle Time**: ~250ms on M1 MacBook
-- **Memory**: ~8MB field tensor
-- **Scaling**: Fixed computation per cycle
-- **Efficiency**: ~4% GPU utilization
+### Testing Framework
+- **Unit Tests**: Mathematical properties, tensor operations
+- **Integration Tests**: Component communication, protocol integrity
+- **Safety Tests**: Motor bounds, NaN handling, memory stability
+- **Behavioral Tests**: Emergence validation (not specific outcomes)
 
 ## Quick Start
 
 ```bash
-# Install dependencies
-pip install numpy torch
-pip install pygame  # Optional: for visual demo
+# Install minimal dependencies
+pip install numpy torch psutil
 
-# Run interactive demo (visual robot simulation)
-python3 demo.py
+# Install full dependencies (includes demos and robot client)
+pip install -r server/requirements.txt
+pip install -r client_picarx/requirements.txt
 
-# Other demo modes
-python3 demo.py --mode terminal  # Terminal-only demo
-python3 demo.py --mode server    # Start brain server
+# Start brain server (safe mode for robot)
+python3 server/brain.py --safe-mode
 
-# Start brain server directly
-python3 server/brain.py
+# Start robot client (on Raspberry Pi)
+cd client_picarx
+python3 picarx_robot.py --brain-host <SERVER-IP>
+
+# Run behavioral tests
+python3 server/tools/testing/behavioral_test_fast.py
+
+# Run unit tests
+python3 tests/unit/test_mathematical_properties.py
+python3 tests/unit/test_core_infrastructure.py
 ```
 
 ## Project Structure
 
 ```
-brain/
-├── server/src/brains/field/    # Core implementation
-│   ├── simplified_unified_brain.py     # Main brain
-│   ├── evolved_field_dynamics.py       # Self-modification
-│   ├── predictive_field_system.py      # Predictions
-│   ├── action_prediction_system.py     # Action selection
-│   ├── active_sensing_system.py        # Attention
-│   └── topology_region_system.py       # Memory
-├── tests/                      # Test suite
-├── docs/                       # Documentation
-└── tools/                      # Development utilities
+em-brain/
+├── server/
+│   ├── src/brains/field/
+│   │   ├── pure_field_brain.py         # Core brain implementation
+│   │   └── optimized_field_ops.py      # GPU-optimized operations
+│   ├── brain.py                        # Main server entry point
+│   └── tools/testing/                  # Behavioral test framework
+├── client_picarx/
+│   ├── picarx_robot.py                 # Robot client
+│   └── src/brainstem/                  # Hardware interface (under refactor)
+├── tests/
+│   ├── unit/                           # Infrastructure tests
+│   └── brain_test_suite.py             # Comprehensive test framework
+├── docs/
+│   ├── ARCHITECTURE.md                 # Detailed system design
+│   ├── TODO.md                         # Development roadmap
+│   └── COMM_PROTOCOL.md                # Protocol specification
+└── demos/                               # Simulation and visualization
 ```
 
 ## Design Philosophy
@@ -167,20 +178,22 @@ brain/
 - Unique "personality" per brain
 - Open-ended development
 
-## Research Foundation
+## Key Concepts
 
-Built on established principles:
-- **Free Energy Principle**: Minimize surprise through prediction
-- **Embodied Cognition**: Intelligence through interaction
-- **Complex Systems**: Emergence from simple rules
-- **Self-Organization**: Order from dynamics
+### Intrinsic Drives
+The field operates through tensions that create natural behavior:
+- **Information Tension**: Low energy → exploration drive
+- **Learning Tension**: Stagnation → novelty seeking  
+- **Confidence Tension**: Uncertainty → systematic resolution
+- **Prediction Tension**: Errors → adaptive correction
 
-## Future Directions
+These aren't rewards but emergent properties of the field seeking equilibrium.
 
-- Multi-brain networks with emergent communication
-- Abstract reasoning through hierarchical predictions
-- Long-term episodic memory
-- Language emergence from prediction alignment
+### Biological Inspiration
+- **Excitation-Inhibition Balance**: Natural dynamics prevent runaway activation
+- **Sparse Coding**: Efficient representation through selective activation
+- **Oscillatory Dynamics**: Rhythmic patterns enable temporal processing
+- **Metabolic Constraints**: Energy limitations shape computation
 
 ---
 

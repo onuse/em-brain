@@ -2,7 +2,7 @@
 
 ## Core Paradigm
 
-This architecture implements continuous field-based intelligence where cognition emerges from the topology and dynamics of a 4D tensor field. The system combines predictive processing with self-modifying dynamics to create a truly autonomous artificial brain.
+This architecture implements continuous field-based intelligence where cognition emerges from the topology and dynamics of a 4D tensor field. The system operates through pure field dynamics without reward signals, creating truly autonomous artificial life.
 
 ## Fundamental Principles
 
@@ -27,13 +27,20 @@ The field encodes its own evolution rules, enabling true meta-learning:
 
 ### 4D Tensor Field
 
-**Structure**: [32, 32, 32, 64] continuous tensor
-- **Spatial dimensions** (32³): Topological organization
-- **Feature dimension** (64): 
-  - 0-31: Content features (patterns and representations)
-  - 32-47: Memory channels (strategic patterns, temporal sequences)
-  - 48-63: Evolution parameters (self-modification rules)
-- **Total Parameters**: ~2M for rich dynamics in compact form
+The PureFieldBrain uses hierarchical scaling configurations:
+
+**Scaling Configurations**:
+- **hardware_constrained**: 6³×64 (~131K params) - Raspberry Pi deployment
+- **tiny**: 8³×64 (~311K params) - Minimal testing
+- **small**: 16³×96 (~2.5M params) - CPU development  
+- **medium**: 32³×128 (~20M params) - GPU development
+- **large**: 48³×192 (~101M params) - Advanced research
+- **massive**: 64³×256 (~402M params) - Future scaling
+
+**Channel Organization** (consistent across scales):
+- **0-31**: Content features (sensory patterns, representations)
+- **32-47**: Memory channels (strategic patterns, temporal sequences)
+- **48-63**: Evolution parameters (self-modification rules)
 
 ### Processing Pipeline
 
@@ -188,21 +195,22 @@ These arise without explicit programming:
 
 ### Computational Efficiency
 - **GPU Native**: All operations use tensor primitives
-- **Fixed Memory**: No growth over time
+- **Optimized Operations**: Grouped convolutions, batched gradients, pre-allocated buffers
+- **Fixed Memory**: No allocations in hot paths
 - **Parallel Processing**: Field updates naturally parallel
 - **Sparse Activation**: Only relevant regions compute
 
 ### Scalability
 - **Robot Agnostic**: Adapts to any configuration
 - **Modality Flexible**: Same principles for all senses
-- **Size Adaptable**: Field dimensions can scale
+- **Hierarchical Scaling**: From 131K to 402M+ parameters
 - **Multi-Brain Ready**: Could network multiple brains
 
-### Resource Usage
-- **Memory**: ~8MB for field tensor
-- **Computation**: ~250ms per cycle
-- **GPU Usage**: ~4% on modern hardware
-- **CPU Fallback**: Maintains functionality
+### Performance Metrics
+- **Cycle Time**: <1ms target on GPU (hardware_constrained config)
+- **Memory**: Scales with configuration (131KB to 402MB+)
+- **Optimization Gains**: 18x speedup for diffusion, 113x for buffer operations
+- **CPU Fallback**: Maintains functionality with reduced performance
 
 ## Implementation Details
 
@@ -213,13 +221,14 @@ These arise without explicit programming:
 4. Dimensions locked to first robot
 
 ### Communication Protocol
+Binary TCP protocol on port 9999 with dynamic dimension negotiation:
 ```
 Handshake:
 Robot → Brain: [version, sensory_dim, motor_dim, hardware]
 Brain → Robot: [version, field_dims, capabilities]
 
-Runtime:
-Robot → Brain: [sensor_data, reward]
+Runtime (9-byte header + float32 vectors):
+Robot → Brain: [sensor_data] (no rewards - brain discovers value)
 Brain → Robot: [motor_data, brain_state]
 ```
 
@@ -249,19 +258,29 @@ Brain → Robot: [motor_data, brain_state]
 - **Agency**: Actions become experiments
 - **Learning Signal**: Errors drive all updates
 
-## Future Architecture
+## Testing Philosophy
 
-### Planned Enhancements
-- **Multi-Brain Networks**: Emergent communication
-- **Hardware Integration**: Real sensors and motors
-- **Abstract Reasoning**: Higher-order predictions
-- **Language**: Prediction alignment protocols
+### Infrastructure Over Intelligence
+The testing framework validates that the plumbing works correctly while allowing intelligence to emerge freely:
 
-### Research Directions
-- **Consciousness**: Global field coherence
-- **Creativity**: Controlled hallucination
-- **Social Cognition**: Mutual prediction
-- **Transfer Learning**: Field transplantation
+**Test Pyramid**:
+- **Unit Tests (40%)**: Core infrastructure, tensor operations, safety boundaries
+- **Integration Tests (30%)**: Component communication, protocol integrity
+- **System Tests (20%)**: End-to-end functionality, robot integration
+- **Behavioral Tests (10%)**: Emergence validation, not specific outcomes
+
+**Critical Safety Tests**:
+- **Motor bounds**: Hard limits on actuator commands
+- **NaN/Inf handling**: Numerical stability guarantees
+- **Memory stability**: No leaks over extended operation
+- **Thread safety**: Concurrent operation without races
+
+### Mathematical Properties
+Tests verify mathematical correctness without constraining emergence:
+- **Operation linearity**: Convolutions and gradients maintain mathematical properties
+- **Energy conservation**: Diffusion approximately preserves total field energy
+- **Numerical stability**: Operations handle extreme values gracefully
+- **Optimization equivalence**: Fast paths produce identical results
 
 ---
 
