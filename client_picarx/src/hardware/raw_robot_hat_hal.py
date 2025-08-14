@@ -135,10 +135,8 @@ class RawRobotHatHAL:
                 self.gpio_available = True
             else:
                 # Use robot-hat Pin if GPIO not available
-                self.left_dir_pin = Pin("D4")
-                self.right_dir_pin = Pin("D5")
-                self.left_dir_pin.mode(Pin.OUT)
-                self.right_dir_pin.mode(Pin.OUT)
+                self.left_dir_pin = Pin("D4", mode=Pin.OUT)
+                self.right_dir_pin = Pin("D5", mode=Pin.OUT)
                 self.gpio_available = False
             
             # Initialize ADC channels for raw reading
@@ -159,7 +157,7 @@ class RawRobotHatHAL:
             print(f"   Motor PWM: {self.PWM_CHANNELS['left_motor']}, {self.PWM_CHANNELS['right_motor']}")
             print(f"   Servo PWM: Raw control on P0, P1, P2")
             print(f"   ADC: Raw 12-bit values (0-4095)")
-            print(f"   GPIO: {'Direct' if self.gpio_available else 'Via robot-hat'}")
+            print(f"   GPIO: Via robot-hat")
             
         except Exception as e:
             print(f"❌ Hardware init failed: {e}")

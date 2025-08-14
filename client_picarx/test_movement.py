@@ -138,11 +138,9 @@ def test_motors():
         left_motor.freq(1000)
         right_motor.freq(1000)
         
-        # Direction pins
-        left_dir = Pin("D4")
-        right_dir = Pin("D5")
-        left_dir.mode(Pin.OUT)
-        right_dir.mode(Pin.OUT)
+        # Direction pins - mode is set in constructor
+        left_dir = Pin("D4", mode=Pin.OUT)
+        right_dir = Pin("D5", mode=Pin.OUT)
         
         # Test sequence
         tests = [
