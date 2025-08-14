@@ -129,10 +129,10 @@ class Brainstem:
         # Hardware layer
         self.hal = create_hal()
         
-        # Brain connection (use config values if not overridden)
+        # Brain connection (use config values if not explicitly overridden)
         brain_config = self.config.get("brain", {})
-        self.brain_host = brain_host or brain_config.get("host", "localhost")
-        self.brain_port = brain_port or brain_config.get("port", 9999)
+        self.brain_host = brain_host if brain_host is not None else brain_config.get("host", "localhost") 
+        self.brain_port = brain_port if brain_port is not None else brain_config.get("port", 9999)
         self.brain_client = None
         self.last_connect_attempt = 0
         self.reconnect_interval = 5.0  # Try reconnecting every 5 seconds

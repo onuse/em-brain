@@ -362,28 +362,24 @@ class RawRobotHatHAL:
         }
     
     def _init_vision_audio(self):
-        """Initialize vision and audio if available."""
-        # Try vision
+        """Initialize vision and audio using singletons to prevent conflicts."""
+        # Use singletons to prevent multiple initializations
         try:
-            from hardware.configurable_vision import ConfigurableVision
-            self.vision = ConfigurableVision()
-            print(f"   Vision: {self.vision.pixels:,} pixels")
-        except:
+            from hardware.vision_singleton import VisionSingleton, AudioSingleton
+            
+            # Get or create vision singleton
+            self.vision = VisionSingleton.get_instance()
+            if self.vision:
+                print(f"   Vision: {self.vision.pixels:,} pixels")
+            
+            # Get or create audio singleton  
+            self.audio = AudioSingleton.get_instance()
+            if self.audio:
+                print(f"   Audio: Ready")
+                
+        except Exception as e:
+            print(f"   Vision/Audio init error: {e}")
             self.vision = None
-        
-        # Try audio
-        try:
-            from hardware.audio_module import AudioModule
-            for rate in [44100, 48000, 16000, 8000]:
-                try:
-                    self.audio = AudioModule(sample_rate=rate)
-                    print(f"   Audio: {rate}Hz")
-                    break
-                except:
-                    continue
-            else:
-                self.audio = None
-        except:
             self.audio = None
     
     def _get_vision_data(self) -> List[float]:
@@ -429,6 +425,15 @@ class RawRobotHatHAL:
         self.emergency_stop()
         if self.gpio_available and GPIO_AVAILABLE:
             GPIO.cleanup()
+        
+        # Clean up singletons
+        try:
+            from hardware.vision_singleton import VisionSingleton, AudioSingleton
+            VisionSingleton.cleanup()
+            AudioSingleton.cleanup()
+        except:
+            pass
+            
         print("🔧 Hardware cleanup complete")
 
 

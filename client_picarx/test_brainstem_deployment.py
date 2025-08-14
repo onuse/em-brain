@@ -114,9 +114,8 @@ def test_create_brainstem():
     from src.brainstem.brainstem import Brainstem
     
     # Create with monitoring disabled for test
+    # Don't override config values - pass None or don't pass at all
     brainstem = Brainstem(
-        brain_host="localhost",
-        brain_port=9999,
         enable_monitor=False  # Don't start monitor in test
     )
     
