@@ -70,9 +70,10 @@ class RawRobotHatHAL:
     """
     
     # Pin mappings (from PiCar-X documentation)
+    # NOTE: Motors are swapped! P13/D4 is RIGHT, P12/D5 is LEFT
     MOTOR_PINS = {
-        'left_dir': 23,      # GPIO23 (D4 in robot-hat)
-        'right_dir': 24,     # GPIO24 (D5 in robot-hat)
+        'left_dir': 24,      # GPIO24 (D5 in robot-hat) - Actually LEFT motor
+        'right_dir': 23,     # GPIO23 (D4 in robot-hat) - Actually RIGHT motor
     }
     
     ULTRASONIC_PINS = {
@@ -81,12 +82,13 @@ class RawRobotHatHAL:
     }
     
     # PWM channels (robot-hat channel names)
+    # NOTE: Motors are swapped! P13 is RIGHT, P12 is LEFT
     PWM_CHANNELS = {
         'steering': 'P2',
         'camera_pan': 'P0',
         'camera_tilt': 'P1',
-        'left_motor': 'P12',
-        'right_motor': 'P13',
+        'left_motor': 'P12',   # Actually LEFT motor
+        'right_motor': 'P13',  # Actually RIGHT motor
     }
     
     # ADC channels
@@ -128,8 +130,9 @@ class RawRobotHatHAL:
                 pwm.freq(50)
             
             # Motor direction pins using robot-hat Pin class
-            self.left_dir_pin = Pin("D4", mode=Pin.OUT)
-            self.right_dir_pin = Pin("D5", mode=Pin.OUT)
+            # NOTE: Swapped - D5 is LEFT, D4 is RIGHT
+            self.left_dir_pin = Pin("D5", mode=Pin.OUT)
+            self.right_dir_pin = Pin("D4", mode=Pin.OUT)
             self.gpio_available = False  # Always use robot-hat
             
             # Initialize ADC channels for raw reading
@@ -217,26 +220,41 @@ class RawRobotHatHAL:
         Brain specifies exact duty cycles (-1 to +1).
         Negative values mean reverse.
         No speed curves or abstractions.
+        
+        NOTE: PiCar-X uses inverted direction logic:
+        - Direction pin HIGH = REVERSE
+        - Direction pin LOW = FORWARD
+        
+        Also, one motor needs to be reversed for forward/backward
+        to work correctly (differential drive).
         """
         if self.mock_mode:
             return
         
         try:
-            # Set motor directions
-            if self.gpio_available:
-                # Direct GPIO control
-                GPIO.output(self.MOTOR_PINS['left_dir'], 
-                           GPIO.HIGH if command.left_pwm_duty >= 0 else GPIO.LOW)
-                GPIO.output(self.MOTOR_PINS['right_dir'],
-                           GPIO.HIGH if command.right_pwm_duty >= 0 else GPIO.LOW)
-            else:
-                # Via robot-hat pins
-                self.left_dir_pin.value(1 if command.left_pwm_duty >= 0 else 0)
-                self.right_dir_pin.value(1 if command.right_pwm_duty >= 0 else 0)
+            # PiCar-X direction logic is inverted:
+            # LOW (0) = forward, HIGH (1) = reverse
+            # Also, right motor needs to be inverted for differential drive
+            
+            # LEFT motor: normal direction
+            left_forward = command.left_pwm_duty >= 0
+            self.left_dir_pin.value(0 if left_forward else 1)  # Inverted logic
+            
+            # RIGHT motor: inverted for differential drive
+            # When we want robot to go forward, right motor goes "backward"
+            right_forward = command.right_pwm_duty >= 0
+            # Invert the right motor direction for differential drive
+            self.right_dir_pin.value(1 if right_forward else 0)  # Inverted + reversed
             
             # Set PWM duty cycle (0-100% for robot-hat)
             left_percent = abs(command.left_pwm_duty) * 100
             right_percent = abs(command.right_pwm_duty) * 100
+            
+            # Apply speed scaling like PiCar-X does
+            if left_percent > 0:
+                left_percent = int(left_percent / 2) + 50  # Scale to 50-100%
+            if right_percent > 0:
+                right_percent = int(right_percent / 2) + 50  # Scale to 50-100%
             
             self.left_motor_pwm.pulse_width_percent(left_percent)
             self.right_motor_pwm.pulse_width_percent(right_percent)
