@@ -385,7 +385,7 @@ class RawRobotHatHAL:
         """Initialize vision and audio using singletons to prevent conflicts."""
         # Use singletons to prevent multiple initializations
         try:
-            from hardware.vision_singleton import VisionSingleton, AudioSingleton
+            from src.hardware.vision_singleton import VisionSingleton, AudioSingleton
             
             # Get or create vision singleton
             self.vision = VisionSingleton.get_instance()
@@ -448,7 +448,7 @@ class RawRobotHatHAL:
         
         # Clean up singletons
         try:
-            from hardware.vision_singleton import VisionSingleton, AudioSingleton
+            from src.hardware.vision_singleton import VisionSingleton, AudioSingleton
             VisionSingleton.cleanup()
             AudioSingleton.cleanup()
         except:
