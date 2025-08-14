@@ -184,9 +184,8 @@ def test_full_cycle():
     from src.hardware.bare_metal_hal import RawSensorData, RawMotorCommand, RawServoCommand
     
     # Create brainstem without monitor or brain connection
+    # Don't pass brain_host/port - let it use config values
     brainstem = Brainstem(
-        brain_host="localhost",
-        brain_port=9999,
         enable_monitor=False
     )
     

@@ -525,24 +525,43 @@ def main():
     """Run the clean brainstem."""
     import argparse
     
+    # Load config first to get defaults
+    config = load_robot_config()
+    brain_config = config.get("brain", {})
+    
     parser = argparse.ArgumentParser(description='Clean PiCar-X Brainstem')
-    parser.add_argument('--brain-host', default='localhost', help='Brain server host')
-    parser.add_argument('--brain-port', type=int, default=9999, help='Brain server port')
-    parser.add_argument('--rate', type=float, default=20.0, help='Control rate Hz')
+    parser.add_argument('--brain-host', 
+                       default=None,  # None means use config
+                       help=f'Brain server host (default: {brain_config.get("host", "localhost")} from config)')
+    parser.add_argument('--brain-port', 
+                       type=int, 
+                       default=None,  # None means use config
+                       help=f'Brain server port (default: {brain_config.get("port", 9999)} from config)')
+    parser.add_argument('--rate', 
+                       type=float, 
+                       default=None,  # None means use config
+                       help=f'Control rate Hz (default: {config.get("performance", {}).get("control_loop_hz", 20.0)} from config)')
     
     args = parser.parse_args()
+    
+    # Use config values if args are None
+    brain_host = args.brain_host or brain_config.get('host', 'localhost')
+    brain_port = args.brain_port or brain_config.get('port', 9999)
+    rate = args.rate or config.get('performance', {}).get('control_loop_hz', 20.0)
     
     print("=" * 60)
     print("🧠 CLEAN PICARX BRAINSTEM")
     print("=" * 60)
-    print(f"Brain: {args.brain_host}:{args.brain_port}")
-    print(f"Rate: {args.rate}Hz")
+    print(f"Brain: {brain_host}:{brain_port}")
+    print(f"Rate: {rate}Hz")
+    print(f"Config: robot_config.json")
     print("=" * 60)
     
+    # Pass None to Brainstem to let it use config values
     brainstem = Brainstem(args.brain_host, args.brain_port)
     
     try:
-        brainstem.run(args.rate)
+        brainstem.run(rate)
     except KeyboardInterrupt:
         print("\n⚠️ Interrupted by user")
     finally:
