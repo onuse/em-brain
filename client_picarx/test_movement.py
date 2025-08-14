@@ -142,15 +142,58 @@ def test_motors():
         left_dir = Pin("D4", mode=Pin.OUT)
         right_dir = Pin("D5", mode=Pin.OUT)
         
-        # Test sequence
+        print("\n   Note: One motor might be wired reversed.")
+        print("   Watch carefully which wheel goes which direction.\n")
+        
+        # Test each motor individually first
+        print("   === INDIVIDUAL MOTOR TEST ===")
+        
+        print("   LEFT motor only - FORWARD (5 seconds)...")
+        left_dir.value(1)  # Forward
+        right_dir.value(1)
+        left_motor.pulse_width_percent(30)
+        right_motor.pulse_width_percent(0)  # Right off
+        time.sleep(5)
+        
+        print("   LEFT motor only - REVERSE (5 seconds)...")
+        left_dir.value(0)  # Reverse
+        left_motor.pulse_width_percent(30)
+        right_motor.pulse_width_percent(0)
+        time.sleep(5)
+        
+        print("   Stopping left motor...")
+        left_motor.pulse_width_percent(0)
+        time.sleep(2)
+        
+        print("   RIGHT motor only - FORWARD (5 seconds)...")
+        left_dir.value(1)
+        right_dir.value(1)  # Forward
+        left_motor.pulse_width_percent(0)  # Left off
+        right_motor.pulse_width_percent(30)
+        time.sleep(5)
+        
+        print("   RIGHT motor only - REVERSE (5 seconds)...")
+        right_dir.value(0)  # Reverse  
+        left_motor.pulse_width_percent(0)
+        right_motor.pulse_width_percent(30)
+        time.sleep(5)
+        
+        print("   Stopping right motor...")
+        right_motor.pulse_width_percent(0)
+        time.sleep(2)
+        
+        # Now test both together
+        print("\n   === COMBINED MOTOR TEST ===")
+        
+        # Test sequence with longer durations
         tests = [
-            ("Forward slow", 1, 1, 20),
-            ("Forward medium", 1, 1, 40),
+            ("Both FORWARD slow", 1, 1, 20),
+            ("Both FORWARD medium", 1, 1, 40),
             ("Stop", 1, 1, 0),
-            ("Turn left", 1, 1, 20, 10),  # Left slower
-            ("Turn right", 1, 1, 10, 20),  # Right slower
+            ("Turn left (left slower)", 1, 1, 10, 30),
+            ("Turn right (right slower)", 1, 1, 30, 10),
             ("Stop", 1, 1, 0),
-            ("Reverse slow", 0, 0, 20),
+            ("Both REVERSE slow", 0, 0, 20),
             ("Stop", 1, 1, 0),
         ]
         
@@ -161,12 +204,14 @@ def test_motors():
             else:
                 desc, l_dir, r_dir, l_speed, r_speed = test
             
-            print(f"   {desc}...")
+            print(f"   {desc} (5 seconds)...")
+            print(f"      L: dir={l_dir}, speed={l_speed}%")
+            print(f"      R: dir={r_dir}, speed={r_speed}%")
             left_dir.value(l_dir)
             right_dir.value(r_dir)
             left_motor.pulse_width_percent(l_speed)
             right_motor.pulse_width_percent(r_speed)
-            time.sleep(1)
+            time.sleep(5)  # 5 seconds per test
         
         # Stop motors
         left_motor.pulse_width_percent(0)

@@ -127,17 +127,10 @@ class RawRobotHatHAL:
             for pwm in [self.steering_pwm, self.pan_pwm, self.tilt_pwm]:
                 pwm.freq(50)
             
-            # Motor direction pins (using GPIO directly for clarity)
-            if GPIO_AVAILABLE:
-                GPIO.setmode(GPIO.BCM)
-                GPIO.setup(self.MOTOR_PINS['left_dir'], GPIO.OUT)
-                GPIO.setup(self.MOTOR_PINS['right_dir'], GPIO.OUT)
-                self.gpio_available = True
-            else:
-                # Use robot-hat Pin if GPIO not available
-                self.left_dir_pin = Pin("D4", mode=Pin.OUT)
-                self.right_dir_pin = Pin("D5", mode=Pin.OUT)
-                self.gpio_available = False
+            # Motor direction pins using robot-hat Pin class
+            self.left_dir_pin = Pin("D4", mode=Pin.OUT)
+            self.right_dir_pin = Pin("D5", mode=Pin.OUT)
+            self.gpio_available = False  # Always use robot-hat
             
             # Initialize ADC channels for raw reading
             self.adc_channels = {
@@ -145,9 +138,10 @@ class RawRobotHatHAL:
                 for name, channel in self.ADC_CHANNELS.items()
             }
             
-            # Ultrasonic sensor (we'll extract raw timing)
-            trig = Pin("D2")
-            echo = Pin("D3")
+            # Ultrasonic sensor (Ultrasonic class will set modes)
+            # Just pass Pin objects, Ultrasonic recreates them internally
+            trig = Pin("D2")  # No mode needed, Ultrasonic sets it
+            echo = Pin("D3")  # No mode needed, Ultrasonic sets it
             self.ultrasonic = Ultrasonic(trig, echo)
             
             # Vision and audio (if available)
