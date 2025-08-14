@@ -321,7 +321,8 @@ class Brainstem:
         """
         
         # Collision check (ultrasonic)
-        distance_cm = sensors.gpio_ultrasonic_us / 58.0  # µs to cm
+        us_per_cm = self.config.get("sensors", {}).get("ultrasonic", {}).get("us_per_cm", 58.0)
+        distance_cm = sensors.gpio_ultrasonic_us / us_per_cm
         if distance_cm < self.safety.collision_distance_cm:
             print(f"⚠️ REFLEX: Collision imminent ({distance_cm:.1f}cm)")
             self.hal.emergency_stop()
@@ -340,7 +341,10 @@ class Brainstem:
             return False
         
         # Battery critical
-        battery_v = (sensors.analog_battery_raw / 4095.0) * 10.0  # Rough conversion
+        battery_config = self.config.get("sensors", {}).get("battery", {})
+        max_adc = battery_config.get("max_adc_value", 4095)
+        voltage_mult = battery_config.get("adc_to_voltage_multiplier", 10.0)
+        battery_v = (sensors.analog_battery_raw / max_adc) * voltage_mult
         if battery_v < self.safety.battery_critical_v:
             print(f"🔋 REFLEX: Critical battery ({battery_v:.1f}V)")
             self.hal.emergency_stop()

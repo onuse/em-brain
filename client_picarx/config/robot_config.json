@@ -24,19 +24,23 @@
     "grayscale": {
       "enabled": true,
       "channels": [0, 1, 2],
-      "adc_bits": 12
+      "adc_bits": 12,
+      "max_adc_value": 4095
     },
     "ultrasonic": {
       "enabled": true,
       "max_range_cm": 400,
       "gpio_trigger": 23,
-      "gpio_echo": 24
+      "gpio_echo": 24,
+      "us_per_cm": 58.0
     },
     "battery": {
       "enabled": true,
       "adc_channel": 6,
       "warning_voltage": 6.5,
-      "critical_voltage": 6.0
+      "critical_voltage": 6.0,
+      "adc_to_voltage_multiplier": 10.0,
+      "max_adc_value": 4095
     }
   },
   
