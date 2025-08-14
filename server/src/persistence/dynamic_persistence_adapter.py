@@ -103,8 +103,9 @@ class DynamicPersistenceAdapter:
             }
         
         # Field state (convert to numpy for serialization)
-        state.unified_field = brain.unified_field.cpu().numpy()
-        state.field_energy = float(torch.mean(torch.abs(brain.unified_field)))
+        # Need to detach from computation graph before converting to numpy
+        state.unified_field = brain.unified_field.detach().cpu().numpy()
+        state.field_energy = float(torch.mean(torch.abs(brain.unified_field)).item())
         print(f"💾 Saving unified field: shape {state.unified_field.shape}, mean energy {state.field_energy:.6f}")
         
         # Memory and topology
@@ -151,7 +152,7 @@ class DynamicPersistenceAdapter:
             state.last_imprint_strength = brain._last_imprint_strength
         
         # Blended reality
-        if hasattr(brain, 'blended_reality'):
+        if hasattr(brain, 'blended_reality') and brain.blended_reality is not None:
             state.blended_reality_state = brain.blended_reality.get_blend_state()
         
         # Count total experiences
