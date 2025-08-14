@@ -443,7 +443,7 @@ class RawRobotHatHAL:
     def cleanup(self):
         """Clean shutdown."""
         self.emergency_stop()
-        if self.gpio_available and GPIO_AVAILABLE:
+        if hasattr(self, 'gpio_available') and self.gpio_available and GPIO_AVAILABLE:
             GPIO.cleanup()
         
         # Clean up singletons

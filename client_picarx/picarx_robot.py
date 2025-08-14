@@ -277,8 +277,9 @@ def main():
             time.sleep(0.5)
         
         print("\nTesting motors (forward)...")
+        from src.hardware.raw_robot_hat_hal import RawMotorCommand
         robot.brainstem.hal.execute_motor_command(
-            robot.brainstem.hal.RawMotorCommand(0.3, True, 0.3, True)
+            RawMotorCommand(0.3, 0.3)  # left_pwm_duty, right_pwm_duty
         )
         time.sleep(1)
         robot.brainstem.hal.emergency_stop()

@@ -445,10 +445,10 @@ class Brainstem:
             # Update motor state metrics
             if self.monitor:
                 self.monitor.update_motors(
-                    left=motor_cmd.left,
-                    right=motor_cmd.right,
-                    steering=servo_cmd.steering_deg,
-                    camera=servo_cmd.camera_pan_deg
+                    left=motor_cmd.left_pwm_duty,
+                    right=motor_cmd.right_pwm_duty,
+                    steering=servo_cmd.steering_pw,  # Using raw pulse width
+                    camera=servo_cmd.camera_pan_pw   # Using raw pulse width
                 )
                 self.monitor.update_timing(
                     sensor_ms=sensor_time,
