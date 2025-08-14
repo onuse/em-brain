@@ -120,7 +120,7 @@ class Brainstem:
     """
     
     def __init__(self, brain_host: str = None, brain_port: int = None, config_path: str = None, 
-                 enable_monitor: bool = True):
+                 enable_monitor: bool = True, enable_brain: bool = True):
         """Initialize clean brainstem with configuration."""
         
         # Load configuration
@@ -136,7 +136,8 @@ class Brainstem:
         self.brain_client = None
         self.last_connect_attempt = 0
         self.reconnect_interval = 5.0  # Try reconnecting every 5 seconds
-        self._init_brain_connection(self.brain_host, self.brain_port)
+        if enable_brain:
+            self._init_brain_connection(self.brain_host, self.brain_port)
         
         # Safety config from JSON
         self.safety = SafetyConfig.from_config(self.config)

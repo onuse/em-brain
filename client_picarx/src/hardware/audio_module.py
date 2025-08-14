@@ -17,7 +17,10 @@ from typing import List, Optional, Tuple
 from dataclasses import dataclass
 
 try:
+    import os
     import pyaudio
+    # Suppress ALSA errors
+    os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
     AUDIO_AVAILABLE = True
 except ImportError:
     AUDIO_AVAILABLE = False
@@ -89,7 +92,16 @@ class AudioModule:
     def _init_audio(self):
         """Initialize PyAudio for input and output."""
         try:
+            # Suppress error output during initialization
+            import sys
+            import io
+            old_stderr = sys.stderr
+            sys.stderr = io.StringIO()
+            
             self.audio = pyaudio.PyAudio()
+            
+            # Restore stderr
+            sys.stderr = old_stderr
             
             # Find default devices
             input_device = None
@@ -139,7 +151,7 @@ class AudioModule:
     
     def _audio_input_callback(self, in_data, frame_count, time_info, status):
         """Callback for audio input stream."""
-        if status:
+        if status and status != 2:  # 2 is normal input overflow, ignore it
             print(f"Audio input status: {status}")
         
         # Convert bytes to numpy array
