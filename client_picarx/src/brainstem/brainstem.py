@@ -6,19 +6,21 @@ This is the ONLY brainstem file you need. It:
 1. Uses bare metal HAL for hardware control
 2. Connects to brain server via TCP
 3. Implements minimal safety reflexes
-4. No magic numbers - uses PiCar-X verified limits
+4. Loads all settings from robot_config.json
+5. Provides telemetry monitoring on port 9997
 
 Everything else in the brainstem folder can be deleted.
 """
 
 import time
+import json
 import numpy as np
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from dataclasses import dataclass
+from pathlib import Path
 
 # Hardware components
 import sys
-from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from hardware.bare_metal_hal import (
@@ -36,14 +38,64 @@ except ImportError:
     except ImportError:
         from .brain_client import BrainClient, BrainServerConfig
 
+# Import monitoring
+try:
+    from brainstem.brainstem_monitor import BrainstemMonitor
+except ImportError:
+    try:
+        from brainstem_monitor import BrainstemMonitor
+    except ImportError:
+        from .brainstem_monitor import BrainstemMonitor
+
+
+def load_robot_config() -> Dict[str, Any]:
+    """Load robot configuration from JSON file."""
+    config_path = Path(__file__).parent.parent.parent / "config" / "robot_config.json"
+    
+    if config_path.exists():
+        with open(config_path, 'r') as f:
+            return json.load(f)
+    else:
+        print(f"⚠️ Config file not found at {config_path}, using defaults")
+        return {
+            "safety": {
+                "collision_distance_cm": 3.0,
+                "cliff_threshold_adc": 3500,
+                "max_speed": 0.8
+            },
+            "sensors": {
+                "battery": {"critical_voltage": 6.0}
+            },
+            "brain": {
+                "host": "localhost",
+                "port": 9999,
+                "timeout": 0.05
+            }
+        }
+
 
 @dataclass
 class SafetyConfig:
-    """Safety thresholds for reflexes."""
-    collision_distance_cm: float = 10.0    # Stop if closer than 10cm
-    cliff_threshold_adc: int = 3500        # High ADC = no ground
-    battery_critical_v: float = 6.0        # Shutdown if below 6V
-    max_temp_c: float = 80.0              # Shutdown if CPU too hot
+    """Safety thresholds for reflexes - loaded from config."""
+    collision_distance_cm: float = 3.0
+    cliff_threshold_adc: int = 3500
+    battery_critical_v: float = 6.0
+    max_temp_c: float = 80.0
+    max_speed: float = 0.8
+    
+    @classmethod
+    def from_config(cls, config: Dict[str, Any]) -> 'SafetyConfig':
+        """Create SafetyConfig from robot configuration."""
+        safety = config.get("safety", {})
+        sensors = config.get("sensors", {})
+        
+        return cls(
+            collision_distance_cm=safety.get("collision_distance_cm", 3.0),
+            cliff_threshold_adc=safety.get("cliff_threshold_adc", 3500),
+            battery_critical_v=sensors.get("battery", {}).get("critical_voltage", 6.0),
+            max_temp_c=80.0,  # Not in config yet, using default
+            max_speed=safety.get("max_speed", 0.8)
+        )
 
 
 class Brainstem:
@@ -57,31 +109,50 @@ class Brainstem:
     4. That's it!
     """
     
-    def __init__(self, brain_host: str = "localhost", brain_port: int = 9999):
-        """Initialize clean brainstem."""
+    def __init__(self, brain_host: str = None, brain_port: int = None, config_path: str = None, 
+                 enable_monitor: bool = True):
+        """Initialize clean brainstem with configuration."""
+        
+        # Load configuration
+        self.config = load_robot_config() if not config_path else json.load(open(config_path))
         
         # Hardware layer
         self.hal = create_hal()
         
-        # Brain connection
-        self.brain_host = brain_host
-        self.brain_port = brain_port
+        # Brain connection (use config values if not overridden)
+        brain_config = self.config.get("brain", {})
+        self.brain_host = brain_host or brain_config.get("host", "localhost")
+        self.brain_port = brain_port or brain_config.get("port", 9999)
         self.brain_client = None
         self.last_connect_attempt = 0
         self.reconnect_interval = 5.0  # Try reconnecting every 5 seconds
-        self._init_brain_connection(brain_host, brain_port)
+        self._init_brain_connection(self.brain_host, self.brain_port)
         
-        # Safety config
-        self.safety = SafetyConfig()
+        # Safety config from JSON
+        self.safety = SafetyConfig.from_config(self.config)
+        
+        # Performance settings
+        perf_config = self.config.get("performance", {})
+        self.control_loop_hz = perf_config.get("control_loop_hz", 20)
         
         # State
         self.running = False
         self.cycle_count = 0
         self.reflex_active = False
         
+        # Monitoring
+        self.monitor = None
+        if enable_monitor:
+            monitor_port = self.config.get("debug", {}).get("monitor_port", 9997)
+            self.monitor = BrainstemMonitor(port=monitor_port)
+            self.monitor.start()
+        
         print("🧠 Clean brainstem initialized")
-        print(f"   Brain: {brain_host}:{brain_port}")
-        print(f"   Safety: collision<{self.safety.collision_distance_cm}cm")
+        print(f"   Config: Loaded from robot_config.json")
+        print(f"   Brain: {self.brain_host}:{self.brain_port}")
+        print(f"   Monitor: Port {monitor_port if enable_monitor else 'disabled'}")
+        print(f"   Safety: collision<{self.safety.collision_distance_cm}cm, battery>{self.safety.battery_critical_v}V")
+        print(f"   Performance: {self.control_loop_hz}Hz control loop")
     
     def _init_brain_connection(self, host: str, port: int):
         """Initialize brain server connection."""
@@ -255,6 +326,8 @@ class Brainstem:
             print(f"⚠️ REFLEX: Collision imminent ({distance_cm:.1f}cm)")
             self.hal.emergency_stop()
             self.reflex_active = True
+            if self.monitor:
+                self.monitor.trigger_reflex('collision')
             return False
         
         # Cliff detection (high grayscale = no ground)
@@ -262,6 +335,8 @@ class Brainstem:
             print("⚠️ REFLEX: Cliff detected")
             self.hal.emergency_stop()
             self.reflex_active = True
+            if self.monitor:
+                self.monitor.trigger_reflex('cliff')
             return False
         
         # Battery critical
@@ -270,26 +345,41 @@ class Brainstem:
             print(f"🔋 REFLEX: Critical battery ({battery_v:.1f}V)")
             self.hal.emergency_stop()
             self.reflex_active = True
+            if self.monitor:
+                self.monitor.trigger_reflex('battery')
             return False
         
         # Clear reflex if we're safe again
         if self.reflex_active and distance_cm > self.safety.collision_distance_cm * 2:
             self.reflex_active = False
+            if self.monitor:
+                self.monitor.clear_reflex()
             print("✅ Reflex cleared")
+        
+        # Update sensor metrics
+        if self.monitor:
+            self.monitor.update_sensors(
+                distance_cm=distance_cm,
+                battery_v=battery_v,
+                grayscale=list(sensors.i2c_grayscale)
+            )
         
         return True
     
     def run_cycle(self) -> bool:
         """
-        Run one brainstem cycle.
+        Run one brainstem cycle with telemetry.
         
         Returns False if should stop.
         """
+        cycle_start = time.perf_counter()
         self.cycle_count += 1
         
         try:
-            # Read sensors
+            # Read sensors (with timing)
+            sensor_start = time.perf_counter()
             raw_sensors = self.hal.read_raw_sensors()
+            sensor_time = (time.perf_counter() - sensor_start) * 1000
             
             # Check safety
             if not self.check_safety(raw_sensors):
@@ -300,41 +390,80 @@ class Brainstem:
             
             # Get brain output (or use defaults)
             brain_output = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # 6 outputs
+            comm_time = 0
             
             if self.brain_client:
+                comm_start = time.perf_counter()
                 response = self.brain_client.process_sensors(brain_input)
+                comm_time = (time.perf_counter() - comm_start) * 1000
+                
                 if response and 'motor_commands' in response:
                     brain_output = response['motor_commands']
+                    if self.monitor:
+                        self.monitor.update_connection(connected=True, timeout=False)
                 elif response is None and not self.brain_client.connected:
                     # Lost connection, try to reconnect
                     self._try_reconnect()
+                    if self.monitor:
+                        self.monitor.update_connection(connected=False, timeout=True)
             elif time.time() - self.last_connect_attempt > self.reconnect_interval:
                 # No client and enough time has passed, try reconnecting
                 self._try_reconnect()
+                if self.monitor:
+                    self.monitor.update_connection(connected=False)
             
-            # Convert to hardware commands
+            # Convert to hardware commands (with timing)
+            action_start = time.perf_counter()
             motor_cmd, servo_cmd = self.brain_to_hardware_commands(brain_output)
             
             # Execute (unless reflex is active)
             if not self.reflex_active:
                 self.hal.execute_motor_command(motor_cmd)
                 self.hal.execute_servo_command(servo_cmd)
+            action_time = (time.perf_counter() - action_start) * 1000
+            
+            # Update motor state metrics
+            if self.monitor:
+                self.monitor.update_motors(
+                    left=motor_cmd.left,
+                    right=motor_cmd.right,
+                    steering=servo_cmd.steering_deg,
+                    camera=servo_cmd.camera_pan_deg
+                )
+                self.monitor.update_timing(
+                    sensor_ms=sensor_time,
+                    comm_ms=comm_time,
+                    action_ms=action_time
+                )
             
             # Status every 100 cycles
             if self.cycle_count % 100 == 0:
                 distance_cm = raw_sensors.gpio_ultrasonic_us / 58.0
                 print(f"Cycle {self.cycle_count}: distance={distance_cm:.1f}cm, "
                       f"brain={'✓' if self.brain_client else '✗'}")
+                
+                # Print telemetry summary occasionally
+                if self.monitor and self.cycle_count % 500 == 0:
+                    print(self.monitor.get_summary())
+            
+            # Update cycle time metric
+            cycle_time = (time.perf_counter() - cycle_start) * 1000
+            if self.monitor:
+                self.monitor.update_cycle_time(cycle_time)
             
             return True
             
         except Exception as e:
             print(f"❌ Cycle error: {e}")
             self.hal.emergency_stop()
+            if self.monitor:
+                self.monitor.trigger_reflex('emergency')
             return True
     
-    def run(self, rate_hz: float = 20.0):
-        """Run brainstem at specified rate."""
+    def run(self, rate_hz: float = None):
+        """Run brainstem at configured rate."""
+        # Use config rate if not specified
+        rate_hz = rate_hz or self.control_loop_hz
         print(f"🚀 Starting brainstem at {rate_hz}Hz")
         
         self.running = True
@@ -354,7 +483,7 @@ class Brainstem:
         self.shutdown()
     
     def shutdown(self):
-        """Clean shutdown."""
+        """Clean shutdown with telemetry summary."""
         print("🛑 Shutting down brainstem...")
         
         self.running = False
@@ -362,6 +491,12 @@ class Brainstem:
         
         if self.brain_client:
             self.brain_client.disconnect()
+        
+        # Print final telemetry summary
+        if self.monitor:
+            print("\n📊 Final Telemetry Report:")
+            print(self.monitor.get_summary())
+            self.monitor.stop()
         
         self.hal.cleanup()
         print("✅ Shutdown complete")

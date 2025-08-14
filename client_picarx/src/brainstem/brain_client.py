@@ -3,13 +3,13 @@
 Simple Brain Client
 
 Minimal TCP client for brain server communication.
-No external dependencies, just what's needed.
+Using the same MessageProtocol as the server.
 """
 
 import socket
 import struct
 import time
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
 from dataclasses import dataclass
 
 
@@ -23,13 +23,99 @@ class BrainServerConfig:
     action_dimensions: int = 4
 
 
+class MessageProtocol:
+    """Message protocol matching server's protocol.py"""
+    
+    # Message types
+    MSG_SENSORY_INPUT = 0
+    MSG_ACTION_OUTPUT = 1  
+    MSG_HANDSHAKE = 2
+    MSG_ERROR = 255
+    
+    def __init__(self):
+        self.max_vector_size = 1024
+    
+    def encode_sensory_input(self, sensory_vector: List[float]) -> bytes:
+        """Encode sensory input vector for transmission."""
+        return self._encode_vector(sensory_vector, self.MSG_SENSORY_INPUT)
+    
+    def encode_handshake(self, capabilities: List[float]) -> bytes:
+        """Encode handshake message with robot capabilities."""
+        return self._encode_vector(capabilities, self.MSG_HANDSHAKE)
+    
+    def _encode_vector(self, vector: List[float], msg_type: int) -> bytes:
+        """Encode a vector with message header."""
+        if len(vector) > self.max_vector_size:
+            raise ValueError(f"Vector too large: {len(vector)} > {self.max_vector_size}")
+        
+        # Convert to float32 for consistent precision
+        vector_data = struct.pack(f'{len(vector)}f', *vector)
+        
+        # Message length = type(1) + vector_length(4) + vector_data
+        message_length = 1 + 4 + len(vector_data)
+        
+        # Pack message: length + type + vector_length + vector_data
+        header = struct.pack('!IBI', message_length, msg_type, len(vector))
+        
+        return header + vector_data
+    
+    def decode_message(self, data: bytes) -> Tuple[int, List[float]]:
+        """Decode received message."""
+        if len(data) < 9:  # Minimum message size
+            raise ValueError("Message too short")
+        
+        # Unpack header
+        message_length, msg_type, vector_length = struct.unpack('!IBI', data[:9])
+        
+        # Validate message
+        expected_length = 1 + 4 + (vector_length * 4)
+        if message_length != expected_length:
+            raise ValueError(f"Invalid message length: {message_length} != {expected_length}")
+        
+        if vector_length > self.max_vector_size:
+            raise ValueError(f"Vector too large: {vector_length}")
+        
+        # Extract vector data
+        vector_data = data[9:9 + (vector_length * 4)]
+        if len(vector_data) != vector_length * 4:
+            raise ValueError("Incomplete vector data")
+        
+        # Unpack vector
+        vector = list(struct.unpack(f'{vector_length}f', vector_data))
+        
+        return msg_type, vector
+    
+    def receive_message(self, sock: socket.socket, timeout: float = 5.0) -> Tuple[int, List[float]]:
+        """Receive and decode a complete message from socket."""
+        sock.settimeout(timeout)
+        
+        # First read the message length (4 bytes)
+        length_data = sock.recv(4)
+        if len(length_data) < 4:
+            raise ValueError("Failed to read message length")
+        
+        message_length = struct.unpack('!I', length_data)[0]
+        
+        # Read the rest of the message
+        remaining = message_length
+        message_data = b''
+        while remaining > 0:
+            chunk = sock.recv(min(remaining, 4096))
+            if not chunk:
+                raise ValueError("Connection closed while reading message")
+            message_data += chunk
+            remaining -= len(chunk)
+        
+        # Decode the complete message
+        full_data = length_data + message_data
+        return self.decode_message(full_data)
+
+
 class BrainClient:
     """
     Simple TCP client for brain server.
     
-    Protocol:
-    - Send: 9-byte header + sensor data (float32)
-    - Receive: 9-byte header + motor commands (float32)
+    Uses MessageProtocol for communication with server.
     """
     
     def __init__(self, config: BrainServerConfig = None):
@@ -37,6 +123,7 @@ class BrainClient:
         self.config = config or BrainServerConfig()
         self.socket = None
         self.connected = False
+        self.protocol = MessageProtocol()
         
     def connect(self) -> bool:
         """Connect to brain server and perform handshake."""
@@ -75,42 +162,33 @@ class BrainClient:
             
             handshake_data = [
                 1.0,  # Robot version
-                float(self.config.sensory_dimensions),  # We can send up to 26 channels
-                float(self.config.action_dimensions),   # We expect 6 outputs
+                float(self.config.sensory_dimensions),  # Sensory dimensions
+                float(self.config.action_dimensions),   # Action dimensions
                 1.0,  # Hardware type (1.0 = PiCar-X)
                 float(capabilities)  # Capabilities mask
             ]
             
-            # Send handshake
-            header = struct.pack('<cII', b'H', 5, 0)  # 'H' for handshake
-            body = struct.pack('<5f', *handshake_data)
-            self.socket.sendall(header + body)
+            # Send handshake using MessageProtocol
+            message = self.protocol.encode_handshake(handshake_data)
+            self.socket.sendall(message)
             
             # Receive brain's handshake response
-            response_header = self.socket.recv(9)
-            if len(response_header) < 9:
-                return False
-                
-            msg_type, dim, _ = struct.unpack('<cII', response_header)
+            msg_type, brain_handshake = self.protocol.receive_message(self.socket, timeout=5.0)
             
-            if msg_type == b'H' and dim == 5:
-                # Read brain's handshake
-                body_data = self.socket.recv(20)  # 5 floats
-                if len(body_data) == 20:
-                    brain_handshake = struct.unpack('<5f', body_data)
-                    brain_version = brain_handshake[0]
-                    accepted_sensory = int(brain_handshake[1])
-                    accepted_action = int(brain_handshake[2])
-                    gpu_available = brain_handshake[3] > 0
-                    brain_capabilities = int(brain_handshake[4])
-                    
-                    # Update our config with negotiated dimensions
-                    self.config.sensory_dimensions = accepted_sensory
-                    self.config.action_dimensions = accepted_action
-                    
-                    print(f"🤝 Handshake complete: Brain v{brain_version}, GPU={'✓' if gpu_available else '✗'}")
-                    return True
-                    
+            if msg_type == MessageProtocol.MSG_HANDSHAKE and len(brain_handshake) >= 5:
+                brain_version = brain_handshake[0]
+                accepted_sensory = int(brain_handshake[1])
+                accepted_action = int(brain_handshake[2])
+                gpu_available = brain_handshake[3] > 0
+                brain_capabilities = int(brain_handshake[4]) if len(brain_handshake) > 4 else 0
+                
+                # Update our config with negotiated dimensions
+                self.config.sensory_dimensions = accepted_sensory
+                self.config.action_dimensions = accepted_action
+                
+                print(f"🤝 Handshake complete: Brain v{brain_version:.1f}, GPU={'✓' if gpu_available else '✗'}")
+                return True
+                
             return False
             
         except Exception as e:
@@ -133,28 +211,15 @@ class BrainClient:
             elif len(sensor_data) > self.config.sensory_dimensions:
                 sensor_data = sensor_data[:self.config.sensory_dimensions]
             
-            # Pack sensor data
-            header = struct.pack('<cII', b'S', self.config.sensory_dimensions, 0)
-            body = struct.pack(f'<{self.config.sensory_dimensions}f', *sensor_data)
+            # Send sensor data using MessageProtocol
+            message = self.protocol.encode_sensory_input(sensor_data)
+            self.socket.sendall(message)
             
-            # Send
-            self.socket.sendall(header + body)
+            # Receive motor commands
+            msg_type, motor_commands = self.protocol.receive_message(self.socket, timeout=self.config.timeout)
             
-            # Receive response
-            response_header = self.socket.recv(9)
-            if len(response_header) < 9:
-                return None
-            
-            msg_type, dim, _ = struct.unpack('<cII', response_header)
-            
-            if msg_type == b'M' and dim > 0:
-                # Receive motor commands
-                body_size = dim * 4  # float32
-                body_data = self.socket.recv(body_size)
-                
-                if len(body_data) == body_size:
-                    motor_commands = list(struct.unpack(f'<{dim}f', body_data))
-                    return {'motor_commands': motor_commands}
+            if msg_type == MessageProtocol.MSG_ACTION_OUTPUT:
+                return {'motor_commands': motor_commands}
             
             return None
             

@@ -1,0 +1,19 @@
+{
+  "steering": {
+    "center_offset": 0,
+    "comment": "Adjust if wheels aren't straight at 0°. Positive = turn right"
+  },
+  "camera_pan": {
+    "center_offset": 0,
+    "comment": "Adjust if camera isn't centered. Positive = turn right"
+  },
+  "camera_tilt": {
+    "center_offset": 0,
+    "comment": "Adjust if camera isn't level. Positive = tilt up"
+  },
+  "notes": [
+    "Offsets are in degrees, added to commanded position",
+    "To calibrate: Set all to 0°, measure actual position, set offset to compensate",
+    "Example: If steering at 0° actually points left by 5°, set center_offset to 5"
+  ]
+}

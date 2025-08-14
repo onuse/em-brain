@@ -8,6 +8,9 @@ hardware limits they use. We'll respect these for safety.
 Reference: https://github.com/sunfounder/picar-x/blob/v2.0/picarx/picarx.py
 """
 
+import json
+from pathlib import Path
+
 # Motor limits (from PiCar-X SDK)
 MOTOR_SPEED_MIN = -100  # Full reverse
 MOTOR_SPEED_MAX = 100   # Full forward
@@ -41,27 +44,51 @@ SERVO_SAFE_MAX = 2000   # +90 degrees typically
 # 180° range = 1000µs range → 5.56µs per degree
 US_PER_DEGREE = 1000.0 / 180.0
 
+# Load calibration offsets
+def load_calibration():
+    """Load servo calibration offsets from config file."""
+    config_path = Path(__file__).parent.parent.parent / "config" / "servo_calibration.json"
+    if config_path.exists():
+        with open(config_path, 'r') as f:
+            return json.load(f)
+    return {
+        "steering": {"center_offset": 0},
+        "camera_pan": {"center_offset": 0},
+        "camera_tilt": {"center_offset": 0}
+    }
+
+CALIBRATION = load_calibration()
+
 def degrees_to_microseconds(degrees: float, center: float = SERVO_PULSE_CENTER) -> int:
     """Convert degrees to servo microseconds."""
     return int(center + (degrees * US_PER_DEGREE))
 
 def steering_to_microseconds(steering_degrees: float) -> int:
-    """Convert steering angle to servo pulse."""
+    """Convert steering angle to servo pulse with calibration."""
+    # Apply calibration offset
+    offset = CALIBRATION.get('steering', {}).get('center_offset', 0)
+    steering_degrees = steering_degrees + offset
+    
     # Clamp to limits
     steering_degrees = max(STEERING_MIN, min(STEERING_MAX, steering_degrees))
     
-    # For steering, we need to account for mechanical linkage
-    # -30° to +30° steering maps to wider servo range
-    # Assuming 1:1 for now (can be calibrated)
     return degrees_to_microseconds(steering_degrees)
 
 def camera_pan_to_microseconds(pan_degrees: float) -> int:
-    """Convert camera pan angle to servo pulse."""
+    """Convert camera pan angle to servo pulse with calibration."""
+    # Apply calibration offset
+    offset = CALIBRATION.get('camera_pan', {}).get('center_offset', 0)
+    pan_degrees = pan_degrees + offset
+    
     pan_degrees = max(CAMERA_PAN_MIN, min(CAMERA_PAN_MAX, pan_degrees))
     return degrees_to_microseconds(pan_degrees)
 
 def camera_tilt_to_microseconds(tilt_degrees: float) -> int:
-    """Convert camera tilt angle to servo pulse."""
+    """Convert camera tilt angle to servo pulse with calibration."""
+    # Apply calibration offset
+    offset = CALIBRATION.get('camera_tilt', {}).get('center_offset', 0)
+    tilt_degrees = tilt_degrees + offset
+    
     tilt_degrees = max(CAMERA_TILT_MIN, min(CAMERA_TILT_MAX, tilt_degrees))
     return degrees_to_microseconds(tilt_degrees)
 
