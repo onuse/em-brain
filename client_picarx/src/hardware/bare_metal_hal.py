@@ -26,7 +26,17 @@ except ImportError:
     GPIO_AVAILABLE = False
     print("⚠️ GPIO not available - using mock hardware")
 
-# No external servo libraries needed - we control PCA9685 directly via I2C
+try:
+    # Use local robot_hat library for PWM/Servo control
+    import sys
+    import os
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../robot_hat'))
+    from robot_hat import PWM, Servo, ADC, Ultrasonic, Pin
+    ROBOT_HAT_AVAILABLE = True
+    print("✓ Using robot-hat library for PWM/Servo control")
+except ImportError:
+    ROBOT_HAT_AVAILABLE = False
+    print("⚠️ robot-hat library not available")
 
 
 @dataclass
@@ -80,28 +90,33 @@ class BareMetalHAL:
         'echo': 22,          # GPIO22 (D3)
     }
     
-    # I2C addresses (from robot-hat)
+    # I2C addresses (robot-hat uses 0x14 for its microcontroller)
     I2C_ADDRESSES = {
-        'adc': 0x14,         # ADC for analog sensors
-        'pca9685': 0x40,    # PCA9685 servo/PWM controller
+        'robot_hat_mcu': 0x14,  # Robot HAT microcontroller (handles PWM/ADC)
     }
     
-    # PCA9685 channel assignments
-    PCA9685_CHANNELS = {
-        'camera_pan': 0,     # P0
-        'camera_tilt': 1,    # P1
-        'steering': 2,       # P2
-        'left_motor': 4,     # Using channel 4 for motor PWM
-        'right_motor': 5,    # Using channel 5 for motor PWM
+    # Robot HAT PWM channel assignments
+    PWM_CHANNELS = {
+        'camera_pan': 'P0',     # Servo channel P0
+        'camera_tilt': 'P1',    # Servo channel P1
+        'steering': 'P2',       # Servo channel P2  
+        'left_motor': 'P12',    # Motor PWM channel P12
+        'right_motor': 'P13',   # Motor PWM channel P13
     }
     
     def __init__(self):
         """Initialize bare metal hardware interfaces."""
         self.running = False
-        self.i2c_bus = None
-        self.pca9685_available = False
-        self.left_pwm = None
-        self.right_pwm = None
+        self.robot_hat_available = ROBOT_HAT_AVAILABLE
+        
+        # Robot HAT components (will be initialized)
+        self.left_motor_pwm = None
+        self.right_motor_pwm = None
+        self.steering_servo = None
+        self.camera_pan_servo = None
+        self.camera_tilt_servo = None
+        self.ultrasonic = None
+        self.grayscale_sensors = None
         
         # Raw state tracking (no abstraction)
         self.last_sensor_read_ns = 0
@@ -150,42 +165,54 @@ class BareMetalHAL:
         GPIO.output(self.ULTRASONIC_PINS['trigger'], GPIO.LOW)
         
     def _init_i2c(self):
-        """Initialize I2C bus for sensors."""
-        try:
-            import smbus
-            self.i2c_bus = smbus.SMBus(1)  # I2C bus 1 on Pi
-            
-            # Test I2C by reading from ADC
-            test = self.i2c_bus.read_byte(self.I2C_ADDRESSES['adc'])
-            print(f"   I2C ADC test read: 0x{test:02x}")
-        except Exception as e:
-            print(f"   I2C init failed: {e}")
+        """Initialize I2C bus for sensors (handled by robot-hat)."""
+        # Robot-hat handles I2C internally
+        if ROBOT_HAT_AVAILABLE:
+            print("   I2C handled by robot-hat library")
+        else:
+            print("   I2C not available (no robot-hat)")
             
     def _init_pwm(self):
-        """Initialize PCA9685 PWM controller for motors and servos."""
-        # Note: We're using PCA9685 for all PWM (motors + servos)
-        # This gives us hardware timing and 12-bit resolution
-        
-        # Initialize I2C PWM controller (PCA9685)
-        if self.i2c_bus:
-            try:
-                # PCA9685 initialization
-                self.pca9685_addr = self.I2C_ADDRESSES['pca9685']
-                
-                # Reset PCA9685
-                self.i2c_bus.write_byte_data(self.pca9685_addr, 0x00, 0x00)  # MODE1 register
-                time.sleep(0.01)
-                
-                # Set PWM frequency to 50Hz for servos
-                self._set_pca9685_frequency(50)
-                
-                print("   PCA9685 servo controller initialized")
-                self.pca9685_available = True
-            except Exception as e:
-                print(f"   Servo controller not found: {e}")
-                self.pca9685_available = False
-        else:
-            self.pca9685_available = False
+        """Initialize PWM/Servo control using robot-hat library."""
+        if not ROBOT_HAT_AVAILABLE:
+            print("   ⚠️ PWM not available (robot-hat library missing)")
+            return
+            
+        try:
+            # Initialize motor PWM channels
+            self.left_motor_pwm = PWM(self.PWM_CHANNELS['left_motor'])
+            self.right_motor_pwm = PWM(self.PWM_CHANNELS['right_motor'])
+            
+            # Set motor PWM frequency (1000Hz for motors)
+            self.left_motor_pwm.freq(1000)
+            self.right_motor_pwm.freq(1000)
+            
+            # Initialize servo channels
+            self.steering_servo = Servo(self.PWM_CHANNELS['steering'])
+            self.camera_pan_servo = Servo(self.PWM_CHANNELS['camera_pan'])
+            self.camera_tilt_servo = Servo(self.PWM_CHANNELS['camera_tilt'])
+            
+            # Center all servos
+            self.steering_servo.angle(0)
+            self.camera_pan_servo.angle(0)
+            self.camera_tilt_servo.angle(0)
+            
+            # Initialize ultrasonic sensor
+            trig_pin = Pin("D2")
+            echo_pin = Pin("D3")
+            self.ultrasonic = Ultrasonic(trig_pin, echo_pin)
+            
+            # Initialize ADC for grayscale sensors
+            self.grayscale_sensors = [ADC("A0"), ADC("A1"), ADC("A2")]
+            self.battery_adc = ADC("A4")
+            
+            print("   ✓ Robot HAT PWM/Servo initialized")
+            print(f"     Motors: {self.PWM_CHANNELS['left_motor']}, {self.PWM_CHANNELS['right_motor']}")
+            print(f"     Servos: {self.PWM_CHANNELS['steering']}, {self.PWM_CHANNELS['camera_pan']}, {self.PWM_CHANNELS['camera_tilt']}")
+            
+        except Exception as e:
+            print(f"   ⚠️ Robot HAT init failed: {e}")
+            self.robot_hat_available = False
     
     def _init_vision_audio(self):
         """Initialize vision and audio modules if available."""
@@ -201,8 +228,14 @@ class BareMetalHAL:
         # Try to import and initialize audio
         try:
             from hardware.audio_module import AudioModule
-            self.audio = AudioModule(sample_rate=16000)
-            print("   Audio module initialized")
+            # Try common sample rates until one works
+            for rate in [44100, 48000, 16000, 8000]:
+                try:
+                    self.audio = AudioModule(sample_rate=rate)
+                    print(f"   Audio module initialized at {rate}Hz")
+                    break
+                except:
+                    continue
         except Exception as e:
             print(f"   Audio not available: {e}")
             self.audio = None

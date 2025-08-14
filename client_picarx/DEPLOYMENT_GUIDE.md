@@ -54,13 +54,46 @@ nano config/robot_config.json
 # Change brain host to your server:
 {
   "brain": {
-    "host": "192.168.1.100",  # Your brain server IP
+    "host": "192.168.1.231",  # Your brain server IP
     "port": 9999
   }
 }
 ```
 
 That's it! Much cleaner than copying files.
+
+## Audio Setup (Optional but Recommended)
+
+### Install Audio Support
+```bash
+# Install PyAudio for microphone support
+sudo apt-get update
+sudo apt-get install python3-pyaudio portaudio19-dev
+
+# Test audio devices
+python3 -c "
+import pyaudio
+p = pyaudio.PyAudio()
+print(f'Found {p.get_device_count()} audio devices:')
+for i in range(p.get_device_count()):
+    info = p.get_device_info_by_index(i)
+    print(f'  {i}: {info[\"name\"]} ({info[\"maxInputChannels\"]} in, {info[\"maxOutputChannels\"]} out)')
+"
+
+# If you have a USB microphone, it should appear in the list
+```
+
+### What the Brain Receives from Audio
+The microphone provides 7 real-time features to the brain:
+1. **Volume** - Overall sound level
+2. **Bass** (20-250 Hz) - Rumbles, motors
+3. **Mid-Low** (250-1000 Hz) - Voice fundamentals  
+4. **Mid-High** (1-4 kHz) - Voice harmonics
+5. **Treble** (4-8 kHz) - Sharp sounds
+6. **Pitch** - Dominant frequency
+7. **Onset** - Sudden changes (claps, impacts)
+
+The brain learns what these patterns mean through experience!
 
 ## Testing Deployment
 

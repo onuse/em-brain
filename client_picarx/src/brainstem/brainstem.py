@@ -23,10 +23,20 @@ from pathlib import Path
 import sys
 sys.path.append(str(Path(__file__).parent.parent))
 
-from hardware.bare_metal_hal import (
-    BareMetalHAL, create_hal,
-    RawMotorCommand, RawServoCommand, RawSensorData
-)
+# Try new raw HAL first, fallback to bare metal HAL
+try:
+    from hardware.raw_robot_hat_hal import (
+        RawRobotHatHAL, create_hal,
+        RawMotorCommand, RawServoCommand, RawSensorData
+    )
+    print("Using raw_robot_hat_hal (with local robot-hat library)")
+except ImportError:
+    from hardware.bare_metal_hal import (
+        BareMetalHAL, create_hal,
+        RawMotorCommand, RawServoCommand, RawSensorData
+    )
+    print("Fallback to bare_metal_hal")
+    
 from hardware.picarx_hardware_limits import *
 
 # Import brain client with fallback handling
@@ -275,15 +285,19 @@ class Brainstem:
         left = max(-1.0, min(1.0, left))
         right = max(-1.0, min(1.0, right))
         
-        # Power curve for better low-speed control
-        left_pwm = abs(left) ** 1.5
-        right_pwm = abs(right) ** 1.5
+        # Apply power curve for better low-speed control
+        # Then apply safety speed limit
+        left_motor = (abs(left) ** 1.5) * (1 if left >= 0 else -1)
+        right_motor = (abs(right) ** 1.5) * (1 if right >= 0 else -1)
         
+        # Apply safety limits
+        left_motor = left_motor * self.safety.max_speed
+        right_motor = right_motor * self.safety.max_speed
+        
+        # New raw HAL uses signed duty cycles (-1 to +1)
         motor_cmd = RawMotorCommand(
-            left_pwm_duty=left_pwm,
-            left_direction=left >= 0,
-            right_pwm_duty=right_pwm,
-            right_direction=right >= 0
+            left_pwm_duty=left_motor,   # Signed: negative = reverse
+            right_pwm_duty=right_motor  # Signed: negative = reverse
         )
         
         # Servos: use verified PiCar-X limits
@@ -297,10 +311,11 @@ class Brainstem:
         camera_deg = camera * CAMERA_PAN_MAX  # ±90°
         camera_us = camera_pan_to_microseconds(camera_deg)
         
+        # Use correct field names for raw HAL (pw = pulse width)
         servo_cmd = RawServoCommand(
-            steering_us=steering_us,
-            camera_pan_us=camera_us,
-            camera_tilt_us=SERVO_PULSE_CENTER  # Keep centered
+            steering_pw=steering_us,      # Raw pulse width in microseconds
+            camera_pan_pw=camera_us,       # Raw pulse width in microseconds
+            camera_tilt_pw=SERVO_PULSE_CENTER  # Keep centered
         )
         
         # Audio output (channels 4-5)
