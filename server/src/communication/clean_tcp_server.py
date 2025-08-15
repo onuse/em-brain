@@ -162,14 +162,18 @@ class CleanTCPServer:
                         response = protocol.encode_handshake(response_data)
                         
                     elif msg_type == protocol.MSG_SENSORY_INPUT:
+                        print(f"   Processing {len(vector_data)} sensory values...")
                         response_data = self.connection_handler.handle_sensory_input(client_id, vector_data)
+                        print(f"   Got {len(response_data)} motor commands")
                         response = protocol.encode_action_output(response_data)
+                        print(f"   Encoded response: {len(response)} bytes")
                         
                     else:
                         # Unknown message type
                         response = protocol.encode_error(1.0)  # Unknown message type error
                     
                     # Send response
+                    print(f"   Sending response to {client_id}...")
                     if not protocol.send_message(client_socket, response):
                         print(f"💔 Failed to send response to {client_id}")
                         break

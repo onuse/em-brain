@@ -7,10 +7,10 @@
   
   "vision": {
     "enabled": true,
-    "resolution": [640, 480],
+    "resolution": [64, 48],
     "fps": 30,
     "format": "grayscale",
-    "comment": "Supported resolutions: [640,480]=307k pixels, [1280,720]=921k pixels (HD), [1920,1080]=2M pixels (Full HD), [3840,2160]=8.3M pixels (4K). Protocol supports up to 10M values total. Higher res = more GPU memory needed!"
+    "comment": "Using 64x48 (3072 pixels) = 12KB messages that fit in 16KB TCP buffers. No fragmentation! Will migrate to UDP streams later."
   },
   
   "audio": {

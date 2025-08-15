@@ -1,0 +1,39 @@
+{
+    "robot_type": "picarx",
+    "robot_id": "picarx_01",
+    
+    "vision": {
+        "enabled": true,
+        "resolution": [64, 48],
+        "fps": 30,
+        "format": "grayscale"
+    },
+    
+    "brain_server": {
+        "host": "localhost",
+        "port": 9999
+    },
+    
+    "hardware": {
+        "use_mock": false,
+        "ultrasonic_pins": {
+            "trigger": 27,
+            "echo": 22
+        },
+        "servo_pins": {
+            "camera_pan": 11,
+            "camera_tilt": 14
+        }
+    },
+    
+    "safety": {
+        "min_obstacle_distance": 30.0,
+        "max_drive_speed": 1.0,
+        "max_steer_angle": 30.0
+    },
+    
+    "telemetry": {
+        "enabled": true,
+        "port": 9997
+    }
+}

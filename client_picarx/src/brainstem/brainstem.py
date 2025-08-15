@@ -187,7 +187,7 @@ class Brainstem:
             config = BrainServerConfig(
                 host=host, 
                 port=port, 
-                timeout=0.05,
+                timeout=2.0,  # Increased for large vision data (was 0.05)
                 sensory_dimensions=sensory_dims,
                 action_dimensions=action_dims
             )
