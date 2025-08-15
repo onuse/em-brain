@@ -45,10 +45,11 @@
   },
   
   "safety": {
-    "collision_distance_cm": 3,
+    "collision_distance_cm": 2,
     "cliff_threshold_adc": 3500,
     "max_speed": 0.8,
-    "emergency_stop_on_disconnect": true
+    "emergency_stop_on_disconnect": true,
+    "ignore_ultrasonic_below_us": 29
   },
   
   "performance": {

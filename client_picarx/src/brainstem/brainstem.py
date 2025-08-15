@@ -370,7 +370,17 @@ class Brainstem:
         
         # Collision check (ultrasonic)
         us_per_cm = self.config.get("sensors", {}).get("ultrasonic", {}).get("us_per_cm", 58.0)
-        distance_cm = sensors.gpio_ultrasonic_us / us_per_cm
+        
+        # Check for invalid readings (sensor error)
+        min_valid_us = self.config.get("safety", {}).get("ignore_ultrasonic_below_us")
+        if sensors.gpio_ultrasonic_us < min_valid_us:  
+            # Sensor not reading properly - skip collision check
+            if self.cycle_count % 50 == 0:  # Don't spam
+                print(f"⚠️  Ultrasonic sensor error (reading: {sensors.gpio_ultrasonic_us}µs < {min_valid_us}µs)")
+            distance_cm = 999  # Assume far away when sensor fails
+        else:
+            distance_cm = sensors.gpio_ultrasonic_us / us_per_cm
+        
         if distance_cm < self.safety.collision_distance_cm:
             print(f"⚠️ REFLEX: Collision imminent ({distance_cm:.1f}cm)")
             self.hal.emergency_stop()
