@@ -27,7 +27,7 @@ Biology doesn't wait for perfect synchronization. Your eyes don't stop working i
 │ │  (Messy!)   │ │                    │ │ (Messy OK!) │ │
 │ │             │ │                    │ │             │ │
 │ │ IMU    ─────┼─┼──UDP (lossy ok!)───┼─┤► processes  │ │
-│ │ Video  ─────┼─┼──UDP (H.264 stream)─┼─┤► whatever   │ │
+│ │ Video  ─────┼─┼──UDP (MJPEG stream)─┼─┤► whatever   │ │
 │ │ Sonar  ─────┼─┼──UDP (drops ok!)───┼─┤► arrives    │ │
 │ │ Battery─────┼─┼──UDP (late ok!)────┼─┤► whenever   │ │
 │ │             │ │                    │ │             │ │
@@ -62,7 +62,7 @@ Uses existing protocol - IT ALREADY WORKS!
 ```
 Robot just starts blasting sensor data at these ports:
 - UDP:10001 → IMU data (whenever it feels like it)
-- UDP:10002 → Video stream (H.264, continuous @ 30fps)  
+- UDP:10002 → Video stream (MJPEG @ 15fps, frame-independent)  
 - UDP:10003 → Ultrasonic (sporadically)
 - UDP:10004 → Battery status (rarely)
 
@@ -132,12 +132,13 @@ while True:
 ```
 
 ### Phase 2: Add More Sensors (1 day each)
-- UDP:10002 → Video (H.264 stream, 1920x1080 @ 30fps!)
+- UDP:10002 → Video (MJPEG, 640x480 @ 15fps, ~30KB per frame)
 - UDP:10003 → Ultrasonic (just distance float)
 - UDP:10004 → Battery (just voltage float)
 
-**Key point**: With UDP, vision can be FULL HD (2 megapixels) or even 4K (8 megapixels)! 
-No more 64x48 compromises. TCP buffers were the constraint, not the brain's capacity.
+**Key point**: MJPEG gives us frame independence - each JPEG stands alone!
+Perfect for UDP (lose a frame? next one still decodes!). Pi Zero 2 W 
+has hardware JPEG but no H.264 encoder, so MJPEG is the natural choice.
 
 ### Phase 3: Brain Learning (ongoing)
 Brain learns to handle:
