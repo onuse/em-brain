@@ -81,7 +81,14 @@ class BackwardCompatibleProtocol:
                 
                 message_length = first_word
                 
-                # Validate length
+                # Validate length - OLD protocol messages for 307,212 values would be:
+                # 1 (type) + 4 (vector_length) + 307212*4 (data) = 1,228,853 bytes
+                MAX_OLD_MESSAGE = 1_500_000  # 1.5MB reasonable for 307K values
+                
+                if message_length > MAX_OLD_MESSAGE:
+                    # This is likely corrupt data
+                    raise ValueError(f"Message too large: {message_length} bytes (max {MAX_OLD_MESSAGE})")
+                
                 if message_length > (self.max_vector_size * 4 + 5):
                     raise ValueError(f"Message too large: {message_length}")
                 

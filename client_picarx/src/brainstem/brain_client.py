@@ -218,9 +218,19 @@ class BrainClient:
     def connect(self) -> bool:
         """Connect to brain server and perform handshake."""
         try:
-            # Create socket
+            # Close any existing socket first
+            if self.socket:
+                try:
+                    self.socket.close()
+                except:
+                    pass
+                self.socket = None
+            
+            # Create fresh socket
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.settimeout(self.config.timeout)
+            # Disable Nagle's algorithm for real-time communication
+            self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
             
             # Connect
             self.socket.connect((self.config.host, self.config.port))
@@ -327,6 +337,13 @@ class BrainClient:
         except Exception as e:
             print(f"❌ Communication error: {e}")
             self.connected = False
+            # IMPORTANT: Close the socket to prevent corruption
+            if self.socket:
+                try:
+                    self.socket.close()
+                except:
+                    pass
+                self.socket = None
             return None
     
     def disconnect(self):
