@@ -346,31 +346,52 @@ class RawRobotHatHAL:
     def _get_vision_data(self) -> List[float]:
         """Get vision data from singleton (if available)."""
         try:
-            from src.hardware.vision_singleton import VisionSingleton
+            # Try multiple import paths to handle different execution contexts
+            try:
+                from hardware.vision_singleton import VisionSingleton
+            except ImportError:
+                from src.hardware.vision_singleton import VisionSingleton
+            
             vision_instance = VisionSingleton.get_instance()
             if vision_instance and hasattr(vision_instance, 'get_flattened_frame'):
                 # Get latest frame (already normalized 0-1)
-                return vision_instance.get_flattened_frame()
+                frame_data = vision_instance.get_flattened_frame()
+                if self.debug and len(frame_data) > 0:
+                    print(f"   Vision: Got {len(frame_data)} pixels")
+                return frame_data
         except Exception as e:
             if self.debug:
                 print(f"Vision data error: {e}")
         
-        # Return empty list if vision not available
-        return []
+        # CRITICAL: Always return 307,200 values for 640x480 resolution
+        # This ensures the brain always gets the expected input size
+        if self.debug:
+            print("   Vision: Using mock data (307,200 gray pixels)")
+        return [0.5] * 307200  # Neutral gray for all pixels
     
     def _get_audio_features(self) -> List[float]:
         """Get audio features from singleton (if available)."""
         try:
-            from src.hardware.vision_singleton import AudioSingleton
+            # Try multiple import paths to handle different execution contexts
+            try:
+                from hardware.vision_singleton import AudioSingleton
+            except ImportError:
+                from src.hardware.vision_singleton import AudioSingleton
+            
             audio_instance = AudioSingleton.get_instance()
             if audio_instance and hasattr(audio_instance, 'get_audio_features'):
                 # Get latest audio features
-                return audio_instance.get_audio_features()
+                features = audio_instance.get_audio_features()
+                if self.debug and len(features) > 0:
+                    print(f"   Audio: Got {len(features)} features")
+                return features
         except Exception as e:
             if self.debug:
                 print(f"Audio features error: {e}")
         
         # Return default audio features if not available
+        if self.debug:
+            print("   Audio: Using default (silence)")
         return [0.0] * 7  # 7 audio channels expected
     
     def emergency_stop(self):

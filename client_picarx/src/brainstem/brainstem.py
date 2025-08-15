@@ -406,6 +406,12 @@ class Brainstem:
             # Convert to brain format
             brain_input = self.sensors_to_brain_format(raw_sensors)
             
+            # Debug logging for vision issue
+            if self.cycle_count % 100 == 0:  # Every 100 cycles (~5 seconds at 20Hz)
+                print(f"📊 Sensor data: basic={len(raw_sensors.i2c_grayscale)+2}, " +
+                      f"vision={len(raw_sensors.vision_data)}, audio={len(raw_sensors.audio_features)}, " +
+                      f"total={len(brain_input)}")
+            
             # Get brain output (or use defaults)
             brain_output = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # 6 outputs
             comm_time = 0
