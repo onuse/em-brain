@@ -29,8 +29,14 @@ class MessageProtocol:
     MSG_HANDSHAKE = 2
     MSG_ERROR = 255
     
-    def __init__(self):
-        self.max_vector_size = 1024  # Safety limit
+    def __init__(self, max_vector_size: int = None):
+        # Support up to 4K resolution (3840×2160 = 8,294,400 pixels)
+        # Plus some overhead for other sensors
+        # This allows ~32MB messages (8.3M * 4 bytes)
+        # Can be overridden for specific use cases
+        if max_vector_size is None:
+            max_vector_size = 10_000_000  # 10 million values (~40MB max)
+        self.max_vector_size = max_vector_size
     
     def encode_sensory_input(self, sensory_vector: List[float]) -> bytes:
         """Encode sensory input vector for transmission."""

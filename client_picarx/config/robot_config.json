@@ -10,7 +10,7 @@
     "resolution": [640, 480],
     "fps": 30,
     "format": "grayscale",
-    "comment": "640x480 = 307,200 pixels. Use 'grayscale' or 'rgb'. Higher resolutions: [1280,720], [1920,1080]"
+    "comment": "Supported resolutions: [640,480]=307k pixels, [1280,720]=921k pixels (HD), [1920,1080]=2M pixels (Full HD), [3840,2160]=8.3M pixels (4K). Protocol supports up to 10M values total. Higher res = more GPU memory needed!"
   },
   
   "audio": {
