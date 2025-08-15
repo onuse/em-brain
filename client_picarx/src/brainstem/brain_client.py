@@ -139,7 +139,7 @@ class BrainClient:
             if self._handshake():
                 self.connected = True
                 print(f"✅ Connected to brain at {self.config.host}:{self.config.port}")
-                print(f"   Negotiated: {self.config.sensory_dimensions} inputs, {self.config.action_dimensions} outputs")
+                print(f"   Negotiated: {self.config.sensory_dimensions} sensory, {self.config.action_dimensions} motor")
                 return True
             else:
                 print("❌ Handshake failed")
@@ -182,9 +182,17 @@ class BrainClient:
                 gpu_available = brain_handshake[3] > 0
                 brain_capabilities = int(brain_handshake[4]) if len(brain_handshake) > 4 else 0
                 
-                # Update our config with negotiated dimensions
-                self.config.sensory_dimensions = accepted_sensory
-                self.config.action_dimensions = accepted_action
+                # Debug: Show what brain sent
+                if accepted_sensory != self.config.sensory_dimensions or accepted_action != self.config.action_dimensions:
+                    print(f"⚠️ Dimension mismatch in handshake!")
+                    print(f"   Sent: {self.config.sensory_dimensions}s/{self.config.action_dimensions}m")
+                    print(f"   Brain returned: {accepted_sensory}s/{accepted_action}m")
+                    print(f"   Full brain response: {brain_handshake}")
+                
+                # DON'T update our config - use what we originally configured
+                # The brain should accept our dimensions or reject them
+                # self.config.sensory_dimensions = accepted_sensory
+                # self.config.action_dimensions = accepted_action
                 
                 print(f"🤝 Handshake complete: Brain v{brain_version:.1f}, GPU={'✓' if gpu_available else '✗'}")
                 return True
