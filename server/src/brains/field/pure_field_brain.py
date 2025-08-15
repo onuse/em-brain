@@ -111,11 +111,12 @@ class HierarchicalField(nn.Module):
         self.device = device
         
         # The field at this resolution level
-        # Initialize with small random values to avoid dead field
+        # Initialize with moderate random values to overcome threshold
+        # This creates initial "curiosity" or exploration drive
         self.field = torch.randn(
             field_size, field_size, field_size, channels,
             device=device, dtype=torch.float32
-        ) * 0.01  # Small initial values
+        ) * 0.1  # Moderate initial values to pass threshold
         
         # Evolution kernel for this level (learns its own dynamics)
         self.evolution_kernel = nn.Parameter(
@@ -260,8 +261,9 @@ class PureFieldBrain(nn.Module):
         self.input_projection = nn.Linear(input_dim, first_channels, device=device, bias=False)
         
         # Output projection: maps from processing channels to motor outputs
+        # Initialize with stronger weights for more decisive actions
         self.output_projection = nn.Parameter(
-            torch.randn(last_channels, output_dim, device=device) * 0.1
+            torch.randn(last_channels, output_dim, device=device) * 0.3
         )
         
         # Aggressive parameters (scale-aware)
@@ -605,14 +607,12 @@ class PureFieldBrain(nn.Module):
         motor_raw = combined @ self.output_projection
         
         # Dynamic threshold based on meta-state
-        # Start with very low threshold to allow initial movements
-        # Threshold increases over time as field develops
-        base_threshold = 0.001 if self.cycle_count < 100 else 0.01
+        # Threshold filters noise from intentional signals
         if self.emergent_dynamics and self.levels[0].meta_channels > 0:
             meta_energy = self.levels[0].field[:, :, :, -self.levels[0].meta_channels:].mean()
-            threshold = base_threshold * (2.0 - meta_energy)
+            threshold = 0.1 * (2.0 - meta_energy)
         else:
-            threshold = base_threshold
+            threshold = 0.1
         
         # Apply threshold
         motor_output = torch.where(

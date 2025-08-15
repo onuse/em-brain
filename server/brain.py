@@ -175,7 +175,7 @@ class DynamicBrainServer:
         import torch
         
         print("\n" + "=" * 70)
-        print("🧠 DYNAMIC BRAIN SERVER READY")
+        print("🧠 PURE FIELD BRAIN SERVER - EMERGENT INTELLIGENCE SYSTEM")
         print("=" * 70)
         
         # System summary
@@ -183,13 +183,22 @@ class DynamicBrainServer:
         device = self.config_manager.get_device()
         spatial_res = self.config_manager.config.spatial_resolution
         
-        # Hardware line
+        # Get brain scale info
+        from src.brains.field.pure_field_brain import SCALE_CONFIGS
+        scale_name = self.config.get('brain', {}).get('scale', 'small')
+        scale_config = SCALE_CONFIGS.get(scale_name, SCALE_CONFIGS['small'])
+        
+        # Hardware line with brain info
         print(f"💻 Hardware: {device.type.upper()} | {psutil.cpu_count()} cores | "
               f"{mem.total/(1024**3):.1f}GB RAM", end="")
         if self.config_manager.config.gpu_memory_gb > 0:
             print(f" | {self.config_manager.config.gpu_memory_gb:.1f}GB GPU")
         else:
             print()
+        
+        # Brain configuration
+        print(f"🧪 Brain: {scale_name.upper()} scale | {scale_config.total_params/1e6:.1f}M parameters | "
+              f"{scale_config.levels[0][0]}³×{scale_config.levels[0][1]} field")
         
         # Brain configuration line
         print(f"🧠 Brain: 4D Field [{spatial_res}³×64] | ", end="")

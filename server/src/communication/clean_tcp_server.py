@@ -173,17 +173,23 @@ class CleanTCPServer:
                         response = protocol.encode_action_output(response_data)
                         
                         # Occasional status with brain insights
-                        if self._msg_count[client_id] % 100 == 0:
+                        if self._msg_count[client_id] % 50 == 0:
                             # Get brain state for interesting telemetry
                             brain_state = self._get_brain_insights(client_id)
                             print(f"   🧠 Cycle {self._msg_count[client_id]}: {brain_state}")
+                        elif self._msg_count[client_id] % 25 == 0:
+                            # Show sensor summary
+                            num_sensors = len(vector_data) if vector_data else 0
+                            print(f"   📡 Processing {num_sensors:,} sensor values")
+                        elif self._msg_count[client_id] % 10 == 0:
+                            # Just a pulse to show it's alive
+                            print(f"   ⚡ Active", end="\r")  # Carriage return to overwrite
                         
                     else:
                         # Unknown message type
                         response = protocol.encode_error(1.0)  # Unknown message type error
                     
-                    # Send response
-                    print(f"   Sending response to {client_id}...")
+                    # Send response (silently - we already show status above)
                     if not protocol.send_message(client_socket, response):
                         print(f"💔 Failed to send response to {client_id}")
                         break
@@ -267,11 +273,43 @@ class CleanTCPServer:
                 import torch
                 field = brain.field
                 with torch.no_grad():
+                    # Calculate various metrics
                     energy = torch.abs(field).mean().item()
-                    active = (torch.abs(field) > 0.1).sum().item()
-                    total = field.numel()
+                    max_activation = torch.abs(field).max().item()
+                    active_percent = (torch.abs(field) > 0.1).sum().item() / field.numel() * 100
                     
-                return f"energy={energy:.3f} | active={active}/{total} | exploring"
-        except:
-            pass
-        return "processing..."
+                    # Get motor outputs if available
+                    motor_str = ""
+                    if hasattr(brain, '_last_motor_commands'):
+                        motors = brain._last_motor_commands
+                        if motors and len(motors) >= 2:
+                            thrust = motors[0]
+                            turn = motors[1]
+                            motor_str = f" | thrust={thrust:+.2f} turn={turn:+.2f}"
+                    
+                    # Determine brain state
+                    if energy < 0.01:
+                        state = "🧊 dormant"
+                    elif energy < 0.05:
+                        state = "😴 waking"
+                    elif energy < 0.1:
+                        state = "🤔 thinking"
+                    elif energy < 0.2:
+                        state = "🎯 focused"
+                    elif energy < 0.3:
+                        state = "⚡ active"
+                    else:
+                        state = "🔥 intense"
+                    
+                    # Check for interesting patterns
+                    if hasattr(brain, 'cycle_count'):
+                        cycles = brain.cycle_count
+                        if cycles > 0 and cycles % 1000 == 0:
+                            state += f" | milestone: {cycles:,} cycles!"
+                    
+                    return f"{state} | energy={energy:.3f} | activity={active_percent:.1f}%{motor_str}"
+        except Exception as e:
+            import traceback
+            print(f"Debug: Error in brain insights: {e}")
+            traceback.print_exc()
+        return "🔄 processing..."
