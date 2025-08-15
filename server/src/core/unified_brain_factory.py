@@ -30,6 +30,16 @@ class PureFieldBrainWrapper(IBrain):
         self.creation_time = time.time()
         self.total_cycles = 0
         
+        # Expose attributes for parallel injection threads
+        self.field = brain.field  # Reference to primary field tensor
+        self.levels = brain.levels  # Hierarchical levels for multi-scale injection
+        self.device = brain.device  # Device for tensor operations
+        
+    @property
+    def cycle_count(self):
+        """Forward cycle count from wrapped brain."""
+        return self.brain.cycle_count
+        
     def process_field_dynamics(self, field_input) -> Any:
         """Process field dynamics through PureFieldBrain and return field output."""
         # Convert to tensor if needed
