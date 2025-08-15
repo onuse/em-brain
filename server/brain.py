@@ -29,6 +29,14 @@ from src.core.monitoring_server import DynamicMonitoringServer
 from src.core.maintenance_scheduler import MaintenanceScheduler
 from src.communication.clean_tcp_server import CleanTCPServer
 
+# Optional: Stream listeners for multi-stream sensors
+try:
+    from src.streams.sensor_listeners import StreamManager
+    STREAMS_AVAILABLE = True
+except ImportError:
+    STREAMS_AVAILABLE = False
+    print("ℹ️  Stream listeners not available (optional feature)")
+
 # Configuration
 from src.adaptive_configuration import AdaptiveConfigurationManager
 from src.config.enhanced_gpu_memory_manager import configure_gpu_memory, print_gpu_memory_report
@@ -67,6 +75,13 @@ class DynamicBrainServer:
         # Server state
         self.running = False
         self.tcp_server = None
+        
+        # Optional: Start stream listeners if available
+        self.stream_manager = None
+        if STREAMS_AVAILABLE and self.config.get('network', {}).get('enable_streams', False):
+            print("   🌊 Starting sensor stream listeners...")
+            self.stream_manager = StreamManager()
+            self.stream_manager.start_all()
     
     def _initialize_components(self):
         """Initialize all components with proper dependency injection."""

@@ -19,7 +19,9 @@
   "network": {
     "host": "0.0.0.0",
     "port": 9999,
-    "monitoring_port": 9998
+    "monitoring_port": 9998,
+    "enable_streams": true,
+    "_comment": "enable_streams starts UDP listeners for battery (10004), ultrasonic (10003), video (10002)"
   },
   
   "logging": {

@@ -30,6 +30,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 from brainstem.brainstem import Brainstem
 from hardware.bare_metal_hal import create_hal
 from hardware.picarx_hardware_limits import *
+from streams.battery_stream import BatteryStreamer
 
 
 class PiCarXRobot:
@@ -60,9 +61,19 @@ class PiCarXRobot:
             else:
                 print(f"📡 Using brain configuration from robot_config.json")
             self.brainstem = Brainstem(brain_host, brain_port)
+            
+            # Start battery stream (parallel to main connection)
+            self.battery_stream = BatteryStreamer(
+                brain_host or self.brainstem.brain_host,
+                port=10004,
+                use_tcp=False  # Try UDP first
+            )
+            self.battery_stream.start()
+            print("🔋 Battery stream started on port 10004")
         else:
             print("🧠 Running in reflex-only mode (no brain)")
             self.brainstem = Brainstem()  # Will work without brain
+            self.battery_stream = None
         
         self.running = False
         self.cycle_count = 0
@@ -214,6 +225,9 @@ class PiCarXRobot:
     def shutdown(self):
         """Clean shutdown."""
         self.running = False
+        if self.battery_stream:
+            self.battery_stream.stop()
+            print("🔋 Battery stream stopped")
         self.brainstem.shutdown()
     
     def _signal_handler(self, signum, frame):
