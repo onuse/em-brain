@@ -142,13 +142,14 @@ class BrainSession(IBrainSession):
     
     def get_handshake_response(self) -> List[float]:
         """Get handshake response for this session."""
-        # Return brain's field dimensions and version info
+        # Return handshake matching client's expected format:
+        # [brain_version, accepted_sensory, accepted_motor, gpu_available, capabilities]
         return [
-            1.0,  # Protocol version
-            float(self.brain.get_field_dimensions()),  # Field dimensions
-            float(len(self.robot.sensory_channels)),  # Expected sensory dims
-            float(len(self.robot.motor_channels)),     # Expected motor dims
-            1.0   # Session active
+            1.0,  # Brain version
+            float(len(self.robot.sensory_channels)),  # Accepted sensory dimensions
+            float(len(self.robot.motor_channels)),    # Accepted motor dimensions
+            1.0,  # GPU available (1.0 = yes)
+            1.0   # Brain capabilities (placeholder)
         ]
     
     def get_session_id(self) -> str:
