@@ -144,9 +144,14 @@ class RawRobotHatHAL:
             
             # Ultrasonic sensor (Ultrasonic class will set modes)
             # Just pass Pin objects, Ultrasonic recreates them internally
-            trig = Pin("D2")  # No mode needed, Ultrasonic sets it
-            echo = Pin("D3")  # No mode needed, Ultrasonic sets it
-            self.ultrasonic = Ultrasonic(trig, echo)
+            try:
+                trig = Pin("D2")  # No mode needed, Ultrasonic sets it
+                echo = Pin("D3")  # No mode needed, Ultrasonic sets it
+                self.ultrasonic = Ultrasonic(trig, echo)
+            except Exception as e:
+                print(f"⚠️ Ultrasonic init failed: {e}")
+                print("   Continuing without ultrasonic")
+                self.ultrasonic = None
             
             # Vision and audio (if available)
             self._init_vision_audio()
@@ -183,12 +188,16 @@ class RawRobotHatHAL:
             
             # Read ultrasonic - get raw echo time in microseconds
             # The Ultrasonic class returns cm, so we convert back to timing
-            distance_cm = self.ultrasonic.read()
-            if distance_cm > 0:
-                # Standard conversion: 58 microseconds per cm
-                ultrasonic_us = distance_cm * 58.0
+            if self.ultrasonic:
+                distance_cm = self.ultrasonic.read()
+                if distance_cm > 0:
+                    # Standard conversion: 58 microseconds per cm
+                    ultrasonic_us = distance_cm * 58.0
+                else:
+                    ultrasonic_us = 0.0  # Timeout or error
             else:
-                ultrasonic_us = 0.0  # Timeout or error
+                # No ultrasonic sensor, use default
+                ultrasonic_us = 2900.0  # ~50cm default
             
             # Read battery - RAW ADC value
             battery_raw = self.adc_channels['battery'].read()
