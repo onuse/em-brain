@@ -141,10 +141,8 @@ class Brainstem:
         self.brain_client = None
         self.last_connect_attempt = 0
         self.reconnect_interval = 5.0  # Try reconnecting every 5 seconds
-        if enable_brain:
-            self._init_brain_connection(self.brain_host, self.brain_port)
         
-        # Vision stream adapter (for UDP streaming)
+        # Vision stream adapter (for UDP streaming) - MUST BE BEFORE BRAIN CONNECTION
         self.vision_stream = None
         if VISION_STREAM_AVAILABLE and enable_brain:
             try:
@@ -152,6 +150,10 @@ class Brainstem:
                 print(f"   ✅ Vision UDP streaming enabled to {self.brain_host}:10002")
             except Exception as e:
                 print(f"   ⚠️  Vision streaming setup failed: {e}")
+        
+        # Now init brain connection (after vision_stream exists)
+        if enable_brain:
+            self._init_brain_connection(self.brain_host, self.brain_port)
         
         # Safety config from JSON
         self.safety = SafetyConfig.from_config(self.config)
