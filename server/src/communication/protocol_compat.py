@@ -35,7 +35,73 @@ class BackwardCompatibleProtocol:
         """
         sock.settimeout(timeout)
         
+        # DEBUG: Log protocol state
+        print(f"   [DEBUG] Protocol state: client_uses_magic = {self.client_uses_magic}")
+        
         try:
+            # If we already know what protocol this client uses, handle accordingly
+            if self.client_uses_magic is True:
+                # Client uses NEW protocol, always expect magic bytes
+                first_bytes = self._receive_exactly(sock, 4)
+                first_word = struct.unpack('!I', first_bytes)[0]
+                
+                if first_word != self.MAGIC_BYTES:
+                    raise ValueError(f"Expected magic bytes but got 0x{first_word:08X}")
+                
+                # Read the rest of NEW protocol message
+                length_bytes = self._receive_exactly(sock, 4)
+                message_length = struct.unpack('!I', length_bytes)[0]
+                
+                # Validate length
+                if message_length > (self.max_vector_size * 4 + 5):
+                    raise ValueError(f"Message too large: {message_length}")
+                
+                # Read rest of message
+                message_data = self._receive_exactly(sock, message_length)
+                
+                # Parse message
+                msg_type = message_data[0]
+                vector_length = struct.unpack('!I', message_data[1:5])[0]
+                
+                # Validate vector length
+                if vector_length > self.max_vector_size:
+                    raise ValueError(f"Vector too large: {vector_length}")
+                
+                # Extract vector
+                vector_data = message_data[5:5 + (vector_length * 4)]
+                vector = list(struct.unpack(f'{vector_length}f', vector_data))
+                
+                return msg_type, vector
+                
+            elif self.client_uses_magic is False:
+                # Client uses OLD protocol, never expect magic bytes
+                # First 4 bytes are the message length
+                length_bytes = self._receive_exactly(sock, 4)
+                message_length = struct.unpack('!I', length_bytes)[0]
+                
+                # Validate length for OLD protocol
+                MAX_OLD_MESSAGE = 1_500_000  # 1.5MB reasonable for 307K values
+                if message_length > MAX_OLD_MESSAGE:
+                    raise ValueError(f"Message too large: {message_length} bytes (max {MAX_OLD_MESSAGE})")
+                
+                # Read rest of message
+                message_data = self._receive_exactly(sock, message_length)
+                
+                # Parse old format message
+                msg_type = message_data[0]
+                vector_length = struct.unpack('!I', message_data[1:5])[0]
+                
+                # Validate vector length
+                if vector_length > self.max_vector_size:
+                    raise ValueError(f"Vector too large: {vector_length}")
+                
+                # Extract vector
+                vector_data = message_data[5:5 + (vector_length * 4)]
+                vector = list(struct.unpack(f'{vector_length}f', vector_data))
+                
+                return msg_type, vector
+            
+            # First message - need to detect protocol
             # Read first 4 bytes
             first_bytes = self._receive_exactly(sock, 4)
             first_word = struct.unpack('!I', first_bytes)[0]
