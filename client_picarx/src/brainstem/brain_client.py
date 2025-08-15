@@ -13,6 +13,11 @@ from typing import List, Optional, Dict, Any, Tuple
 from dataclasses import dataclass
 
 
+class MessageProtocolError(Exception):
+    """Exception raised for protocol-related errors."""
+    pass
+
+
 @dataclass
 class BrainServerConfig:
     """Brain server connection config."""
@@ -31,6 +36,14 @@ class MessageProtocol:
     MSG_ACTION_OUTPUT = 1  
     MSG_HANDSHAKE = 2
     MSG_ERROR = 255
+    
+    # Protocol constants
+    MAGIC_BYTES = 0xDEADBEEF
+    
+    # Validation limits
+    MIN_VECTOR_LENGTH = 0
+    MAX_REASONABLE_VECTOR_LENGTH = 100_000  # 100K elements for safety
+    MAX_MESSAGE_SIZE_BYTES = 50_000_000     # 50MB absolute maximum
     
     def __init__(self, max_vector_size: int = None):
         # Support up to 4K resolution (3840×2160 = 8,294,400 pixels)
@@ -57,32 +70,45 @@ class MessageProtocol:
         # Convert to float32 for consistent precision
         vector_data = struct.pack(f'{len(vector)}f', *vector)
         
-        # Message length = type(1) + vector_length(4) + vector_data
+        # Message length = type(1) + vector_length(4) + vector_data (excludes magic)
         message_length = 1 + 4 + len(vector_data)
         
-        # Pack message: length + type + vector_length + vector_data
-        header = struct.pack('!IBI', message_length, msg_type, len(vector))
+        # Pack message: magic + length + type + vector_length + vector_data
+        header = struct.pack('!IIBI', self.MAGIC_BYTES, message_length, msg_type, len(vector))
         
         return header + vector_data
     
     def decode_message(self, data: bytes) -> Tuple[int, List[float]]:
         """Decode received message."""
-        if len(data) < 9:  # Minimum message size
+        if len(data) < 13:  # Minimum message size with magic bytes
             raise ValueError("Message too short")
         
-        # Unpack header
-        message_length, msg_type, vector_length = struct.unpack('!IBI', data[:9])
+        # Unpack header with magic bytes
+        magic, message_length, msg_type, vector_length = struct.unpack('!IIBI', data[:13])
         
-        # Validate message
+        # Validate magic bytes
+        if magic != self.MAGIC_BYTES:
+            raise MessageProtocolError(f"Invalid magic bytes: 0x{magic:08X} != 0x{self.MAGIC_BYTES:08X}")
+        
+        # Validate message length consistency
         expected_length = 1 + 4 + (vector_length * 4)
         if message_length != expected_length:
-            raise ValueError(f"Invalid message length: {message_length} != {expected_length}")
+            raise MessageProtocolError(f"Message length mismatch: {message_length} != {expected_length} (type+vec_len+data)")
         
+        # Enhanced vector validation
+        if vector_length < self.MIN_VECTOR_LENGTH:
+            raise MessageProtocolError(f"Vector length negative: {vector_length}")
+        if vector_length > self.MAX_REASONABLE_VECTOR_LENGTH:
+            raise MessageProtocolError(f"Vector length unreasonable: {vector_length} > {self.MAX_REASONABLE_VECTOR_LENGTH}")
         if vector_length > self.max_vector_size:
-            raise ValueError(f"Vector too large: {vector_length}")
+            raise MessageProtocolError(f"Vector too large: {vector_length} > {self.max_vector_size}")
+        
+        # Additional sanity checks
+        if msg_type not in [self.MSG_SENSORY_INPUT, self.MSG_ACTION_OUTPUT, self.MSG_HANDSHAKE, self.MSG_ERROR]:
+            raise MessageProtocolError(f"Unknown message type: {msg_type}")
         
         # Extract vector data
-        vector_data = data[9:9 + (vector_length * 4)]
+        vector_data = data[13:13 + (vector_length * 4)]
         if len(vector_data) != vector_length * 4:
             raise ValueError("Incomplete vector data")
         
@@ -95,26 +121,82 @@ class MessageProtocol:
         """Receive and decode a complete message from socket."""
         sock.settimeout(timeout)
         
-        # First read the message length (4 bytes)
-        length_data = sock.recv(4)
-        if len(length_data) < 4:
-            raise ValueError("Failed to read message length")
-        
-        message_length = struct.unpack('!I', length_data)[0]
-        
-        # Read the rest of the message
-        remaining = message_length
-        message_data = b''
-        while remaining > 0:
-            chunk = sock.recv(min(remaining, 4096))
+        try:
+            # Receive magic bytes and message length first
+            header_data = self._receive_exactly(sock, 8)  # magic + length
+            magic, message_length = struct.unpack('!II', header_data)
+            
+            # Validate magic bytes first
+            if magic != self.MAGIC_BYTES:
+                # Try to resynchronize stream
+                self._resync_stream(sock, timeout)
+                raise MessageProtocolError(f"Invalid magic bytes: 0x{magic:08X}, stream may be corrupt")
+            
+            # Validate message length with multiple checks
+            if message_length < 5:  # Minimum: type(1) + vector_length(4)
+                raise MessageProtocolError(f"Message too small: {message_length} bytes")
+            if message_length > self.MAX_MESSAGE_SIZE_BYTES:
+                raise MessageProtocolError(f"Message too large: {message_length} bytes > {self.MAX_MESSAGE_SIZE_BYTES}")
+            if message_length > (self.max_vector_size * 4 + 5):
+                raise MessageProtocolError(f"Message larger than max vector: {message_length} bytes")
+            
+            # Receive the rest of the message
+            message_data = self._receive_exactly(sock, message_length)
+            
+            # Decode complete message
+            return self.decode_message(header_data + message_data)
+            
+        except socket.timeout:
+            raise TimeoutError("Message receive timeout")
+    
+    def _receive_exactly(self, sock: socket.socket, num_bytes: int) -> bytes:
+        """Receive exactly num_bytes from socket."""
+        data = b''
+        while len(data) < num_bytes:
+            chunk = sock.recv(num_bytes - len(data))
             if not chunk:
-                raise ValueError("Connection closed while reading message")
-            message_data += chunk
-            remaining -= len(chunk)
+                raise ConnectionError("Socket closed unexpectedly")
+            data += chunk
+        return data
+    
+    def _resync_stream(self, sock: socket.socket, timeout: float):
+        """
+        Attempt to resynchronize the stream by looking for magic bytes.
         
-        # Decode the complete message
-        full_data = length_data + message_data
-        return self.decode_message(full_data)
+        This is called when we detect stream corruption to try to recover.
+        """
+        sock.settimeout(min(timeout, 2.0))  # Shorter timeout for resync
+        
+        buffer = b''
+        max_search_bytes = 1024  # Don't search forever
+        searched = 0
+        
+        try:
+            while searched < max_search_bytes:
+                # Read one byte at a time looking for magic
+                byte = sock.recv(1)
+                if not byte:
+                    raise ConnectionError("Connection closed during resync")
+                
+                buffer += byte
+                searched += 1
+                
+                # Keep only last 4 bytes for magic detection
+                if len(buffer) > 4:
+                    buffer = buffer[-4:]
+                
+                # Check if we found magic bytes
+                if len(buffer) == 4:
+                    potential_magic = struct.unpack('!I', buffer)[0]
+                    if potential_magic == self.MAGIC_BYTES:
+                        # Found magic bytes! Stream should be synchronized now
+                        return
+                        
+        except socket.timeout:
+            pass  # Give up on resync
+        
+        # Could not resynchronize
+        raise MessageProtocolError("Could not resynchronize stream")
 
 
 class BrainClient:
