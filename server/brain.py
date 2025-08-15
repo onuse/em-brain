@@ -32,6 +32,7 @@ from src.communication.clean_tcp_server import CleanTCPServer
 # Optional: Stream listeners for multi-stream sensors
 try:
     from src.streams.sensor_listeners import StreamManager
+    from src.streams.field_injection_threads import SensorFieldInjectionManager
     STREAMS_AVAILABLE = True
 except ImportError:
     STREAMS_AVAILABLE = False
