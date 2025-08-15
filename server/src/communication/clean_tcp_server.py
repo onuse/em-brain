@@ -12,7 +12,16 @@ import datetime
 from typing import Optional, Callable
 import uuid
 
-from .protocol import MessageProtocol, MessageProtocolError
+try:
+    # Try backward-compatible protocol first
+    from .protocol_compat import BackwardCompatibleProtocol as MessageProtocol
+    print("   Using backward-compatible protocol (handles old and new clients)")
+except ImportError:
+    # Fall back to standard protocol
+    from .protocol import MessageProtocol
+    print("   Using standard protocol (requires magic bytes)")
+
+from .protocol import MessageProtocolError
 from ..core.interfaces import IConnectionHandler
 
 
@@ -42,8 +51,8 @@ class CleanTCPServer:
         self.server_socket = None
         self.running = False
         
-        # Protocol
-        self.protocol = MessageProtocol()
+        # Protocol class (each client gets its own instance)
+        self.protocol_class = MessageProtocol
         
         # Client tracking (for network management only)
         self.active_clients = {}  # client_id -> socket
@@ -123,6 +132,9 @@ class CleanTCPServer:
         # Track socket
         self.active_clients[client_id] = client_socket
         
+        # Create protocol instance for this client
+        protocol = self.protocol_class()
+        
         print(f"📋 Assigned ID {client_id} to connection from {client_address}")
         
         try:
@@ -133,23 +145,23 @@ class CleanTCPServer:
             while self.running:
                 try:
                     # Receive message
-                    msg_type, vector_data = self.protocol.receive_message(client_socket, timeout=60.0)
+                    msg_type, vector_data = protocol.receive_message(client_socket, timeout=60.0)
                     
                     # Route to handler based on message type
-                    if msg_type == MessageProtocol.MSG_HANDSHAKE:
+                    if msg_type == protocol.MSG_HANDSHAKE:
                         response_data = self.connection_handler.handle_handshake(client_id, vector_data)
-                        response = self.protocol.encode_handshake(response_data)
+                        response = protocol.encode_handshake(response_data)
                         
-                    elif msg_type == MessageProtocol.MSG_SENSORY_INPUT:
+                    elif msg_type == protocol.MSG_SENSORY_INPUT:
                         response_data = self.connection_handler.handle_sensory_input(client_id, vector_data)
-                        response = self.protocol.encode_action_output(response_data)
+                        response = protocol.encode_action_output(response_data)
                         
                     else:
                         # Unknown message type
-                        response = self.protocol.encode_error(1.0)  # Unknown message type error
+                        response = protocol.encode_error(1.0)  # Unknown message type error
                     
                     # Send response
-                    if not self.protocol.send_message(client_socket, response):
+                    if not protocol.send_message(client_socket, response):
                         print(f"💔 Failed to send response to {client_id}")
                         break
                 
@@ -159,8 +171,8 @@ class CleanTCPServer:
                     
                 except MessageProtocolError as e:
                     print(f"⚠️  Protocol error from {client_id}: {e}")
-                    error_response = self.protocol.encode_error(2.0)  # Protocol error
-                    self.protocol.send_message(client_socket, error_response)
+                    error_response = protocol.encode_error(2.0)  # Protocol error
+                    protocol.send_message(client_socket, error_response)
                     
                 except ConnectionError:
                     timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
