@@ -35,7 +35,9 @@ class MessageProtocol:
     
     # Validation limits
     MIN_VECTOR_LENGTH = 0
-    MAX_REASONABLE_VECTOR_LENGTH = 100_000  # 100K elements for safety
+    # Must support vision data: 640x480 = 307,200 pixels + sensors = 307,212 values
+    # For 4K: 3840x2160 = 8,294,400 pixels + sensors = ~8.3M values
+    MAX_REASONABLE_VECTOR_LENGTH = 10_000_000  # Support up to 4K resolution
     MAX_MESSAGE_SIZE_BYTES = 50_000_000     # 50MB absolute maximum
     
     def __init__(self, max_vector_size: int = None):
