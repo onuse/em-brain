@@ -99,10 +99,11 @@ class RawRobotHatHAL:
         'battery': 'A4',
     }
     
-    def __init__(self):
+    def __init__(self, debug: bool = False):
         """Initialize raw hardware interfaces."""
         self.running = False
         self.mock_mode = not ROBOT_HAT_AVAILABLE
+        self.debug = debug
         
         if self.mock_mode:
             print("🤖 Running in mock mode")
@@ -341,6 +342,36 @@ class RawRobotHatHAL:
             pwm.pulse_width(value)
         except Exception as e:
             print(f"PWM set error on {channel}: {e}")
+    
+    def _get_vision_data(self) -> List[float]:
+        """Get vision data from singleton (if available)."""
+        try:
+            from src.hardware.vision_singleton import VisionSingleton
+            vision_instance = VisionSingleton.get_instance()
+            if vision_instance and hasattr(vision_instance, 'get_flattened_frame'):
+                # Get latest frame (already normalized 0-1)
+                return vision_instance.get_flattened_frame()
+        except Exception as e:
+            if self.debug:
+                print(f"Vision data error: {e}")
+        
+        # Return empty list if vision not available
+        return []
+    
+    def _get_audio_features(self) -> List[float]:
+        """Get audio features from singleton (if available)."""
+        try:
+            from src.hardware.vision_singleton import AudioSingleton
+            audio_instance = AudioSingleton.get_instance()
+            if audio_instance and hasattr(audio_instance, 'get_audio_features'):
+                # Get latest audio features
+                return audio_instance.get_audio_features()
+        except Exception as e:
+            if self.debug:
+                print(f"Audio features error: {e}")
+        
+        # Return default audio features if not available
+        return [0.0] * 7  # 7 audio channels expected
     
     def emergency_stop(self):
         """Hardware-level emergency stop."""
