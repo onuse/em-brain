@@ -11,7 +11,7 @@ from typing import Dict, Any, Optional
 import torch
 import logging
 
-from ..core.interfaces import IBrainFactory, IBrain
+from .interfaces import IBrainFactory, IBrain
 from ..brains.field.pure_field_brain import PureFieldBrain, SCALE_CONFIGS
 from .simple_dimension_calculator import SimpleDimensionCalculator
 from ..parameters.cognitive_config import get_cognitive_config

@@ -162,11 +162,21 @@ class CleanTCPServer:
                         response = protocol.encode_handshake(response_data)
                         
                     elif msg_type == protocol.MSG_SENSORY_INPUT:
-                        print(f"   Processing {len(vector_data)} sensory values...")
+                        # Only log every 100th message to reduce spam
+                        if not hasattr(self, '_msg_count'):
+                            self._msg_count = {}
+                        if client_id not in self._msg_count:
+                            self._msg_count[client_id] = 0
+                        self._msg_count[client_id] += 1
+                        
                         response_data = self.connection_handler.handle_sensory_input(client_id, vector_data)
-                        print(f"   Got {len(response_data)} motor commands")
                         response = protocol.encode_action_output(response_data)
-                        print(f"   Encoded response: {len(response)} bytes")
+                        
+                        # Occasional status with brain insights
+                        if self._msg_count[client_id] % 100 == 0:
+                            # Get brain state for interesting telemetry
+                            brain_state = self._get_brain_insights(client_id)
+                            print(f"   🧠 Cycle {self._msg_count[client_id]}: {brain_state}")
                         
                     else:
                         # Unknown message type
@@ -243,3 +253,25 @@ class CleanTCPServer:
         
         self.active_clients.clear()
         print("🧹 TCP server cleanup complete")
+    
+    def _get_brain_insights(self, client_id: str) -> str:
+        """Get interesting insights about brain state."""
+        try:
+            # Access brain through connection handler
+            brain = None
+            if hasattr(self.connection_handler, 'brain_service'):
+                if hasattr(self.connection_handler.brain_service, 'brain_pool'):
+                    brain = self.connection_handler.brain_service.brain_pool.brain
+            
+            if brain and hasattr(brain, 'field'):
+                import torch
+                field = brain.field
+                with torch.no_grad():
+                    energy = torch.abs(field).mean().item()
+                    active = (torch.abs(field) > 0.1).sum().item()
+                    total = field.numel()
+                    
+                return f"energy={energy:.3f} | active={active}/{total} | exploring"
+        except:
+            pass
+        return "processing..."

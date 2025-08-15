@@ -111,10 +111,11 @@ class HierarchicalField(nn.Module):
         self.device = device
         
         # The field at this resolution level
-        self.field = torch.zeros(
+        # Initialize with small random values to avoid dead field
+        self.field = torch.randn(
             field_size, field_size, field_size, channels,
             device=device, dtype=torch.float32
-        )
+        ) * 0.01  # Small initial values
         
         # Evolution kernel for this level (learns its own dynamics)
         self.evolution_kernel = nn.Parameter(
@@ -604,11 +605,14 @@ class PureFieldBrain(nn.Module):
         motor_raw = combined @ self.output_projection
         
         # Dynamic threshold based on meta-state
+        # Start with very low threshold to allow initial movements
+        # Threshold increases over time as field develops
+        base_threshold = 0.001 if self.cycle_count < 100 else 0.01
         if self.emergent_dynamics and self.levels[0].meta_channels > 0:
             meta_energy = self.levels[0].field[:, :, :, -self.levels[0].meta_channels:].mean()
-            threshold = 0.1 * (2.0 - meta_energy)
+            threshold = base_threshold * (2.0 - meta_energy)
         else:
-            threshold = 0.1
+            threshold = base_threshold
         
         # Apply threshold
         motor_output = torch.where(
