@@ -231,6 +231,8 @@ class BrainClient:
             self.socket.settimeout(self.config.timeout)
             # Disable Nagle's algorithm for real-time communication
             self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+            # Increase send buffer for large vision data (1.2MB messages)
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 2 * 1024 * 1024)  # 2MB
             
             # Connect
             self.socket.connect((self.config.host, self.config.port))

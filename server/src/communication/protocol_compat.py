@@ -35,9 +35,6 @@ class BackwardCompatibleProtocol:
         """
         sock.settimeout(timeout)
         
-        # DEBUG: Log protocol state
-        print(f"   [DEBUG] Protocol state: client_uses_magic = {self.client_uses_magic}")
-        
         try:
             # If we already know what protocol this client uses, handle accordingly
             if self.client_uses_magic is True:

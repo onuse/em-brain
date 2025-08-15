@@ -87,6 +87,10 @@ class CleanTCPServer:
             while self.running:
                 try:
                     client_socket, client_address = self.server_socket.accept()
+                    # Increase receive buffer for large vision data (1.2MB messages)
+                    client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 2 * 1024 * 1024)  # 2MB
+                    # Also disable Nagle's for real-time communication
+                    client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
                     timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     print(f"[{timestamp}] 🤖 New connection from {client_address}")
                     
