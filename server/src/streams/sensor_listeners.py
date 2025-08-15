@@ -230,8 +230,9 @@ class VideoListener:
 class StreamManager:
     """Manages all sensor stream listeners."""
     
-    def __init__(self, brain=None):
+    def __init__(self, brain=None, adapter=None):
         self.brain = brain
+        self.adapter = adapter  # AsyncBrainAdapter for buffering
         self.listeners = {}
         
     def start_all(self):
@@ -267,16 +268,20 @@ class StreamManager:
         print("✓ All listeners stopped")
     
     def _sensor_callback(self, sensor_type: str, data):
-        """Called when sensor data arrives."""
-        if self.brain:
-            # Update brain with async sensor data
+        """Called when sensor data arrives - updates buffer."""
+        # Update async adapter buffer (overwrite with latest)
+        if self.adapter:
+            self.adapter.update_sensor(sensor_type, data)
+        
+        # Legacy: direct brain update if no adapter
+        elif self.brain:
             if sensor_type == 'battery':
                 self.brain.battery_voltage = data
             elif sensor_type == 'ultrasonic':
                 self.brain.obstacle_distance = data
             elif sensor_type == 'video':
                 self.brain.latest_vision = data
-        # If no brain, listeners just track latest values
+        # If neither, listeners just track latest values
 
 
 # Standalone test
