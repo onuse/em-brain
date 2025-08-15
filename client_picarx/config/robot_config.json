@@ -7,10 +7,10 @@
   
   "vision": {
     "enabled": true,
-    "resolution": [64, 48],
+    "resolution": [640, 480],
     "fps": 30,
     "format": "grayscale",
-    "comment": "Using 64x48 (3072 pixels) = 12KB messages that fit in 16KB TCP buffers. No fragmentation! Will migrate to UDP streams later."
+    "comment": "Full resolution 640x480 (307,200 pixels). With parallel vision thread, no longer blocks brain!"
   },
   
   "audio": {
@@ -54,7 +54,7 @@
   "performance": {
     "control_loop_hz": 20,
     "vision_processing": "gpu",
-    "comment": "At 640x480 grayscale, we send 307,200 values/frame = 6.1MB/s at 20Hz"
+    "comment": "At 64x48 grayscale, we send 3,084 total values/frame = ~60KB/s at 20Hz (fits in TCP buffers!)"
   },
   
   "debug": {

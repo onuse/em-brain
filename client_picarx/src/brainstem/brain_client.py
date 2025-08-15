@@ -42,7 +42,7 @@ class MessageProtocol:
     
     # Validation limits
     MIN_VECTOR_LENGTH = 0
-    # Must support vision data: 640x480 = 307,200 pixels + sensors = 307,212 values
+    # Must support vision data: 64x48 = 3,072 pixels + sensors = 3,084 values
     # For 4K: 3840x2160 = 8,294,400 pixels + sensors = ~8.3M values
     MAX_REASONABLE_VECTOR_LENGTH = 10_000_000  # Support up to 4K resolution
     MAX_MESSAGE_SIZE_BYTES = 50_000_000     # 50MB absolute maximum

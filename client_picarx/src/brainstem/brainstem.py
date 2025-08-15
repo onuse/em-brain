@@ -57,6 +57,13 @@ except ImportError:
     except ImportError:
         from .brainstem_monitor import BrainstemMonitor
 
+# Import vision streamer for UDP (optional)
+try:
+    from streams.vision_stream import VisionStreamAdapter
+    VISION_STREAM_AVAILABLE = True
+except ImportError:
+    VISION_STREAM_AVAILABLE = False
+
 
 def load_robot_config() -> Dict[str, Any]:
     """Load robot configuration from JSON file."""
@@ -137,6 +144,15 @@ class Brainstem:
         if enable_brain:
             self._init_brain_connection(self.brain_host, self.brain_port)
         
+        # Vision stream adapter (for UDP streaming)
+        self.vision_stream = None
+        if VISION_STREAM_AVAILABLE and enable_brain:
+            try:
+                self.vision_stream = VisionStreamAdapter(self.brain_host, enabled=True)
+                print(f"   ✅ Vision UDP streaming enabled to {self.brain_host}:10002")
+            except Exception as e:
+                print(f"   ⚠️  Vision streaming setup failed: {e}")
+        
         # Safety config from JSON
         self.safety = SafetyConfig.from_config(self.config)
         
@@ -168,13 +184,25 @@ class Brainstem:
         try:
             # Dynamically determine our sensor dimensions based on vision resolution
             basic_sensors = 5      # Grayscale (3) + ultrasonic + battery
-            vision_pixels = 307200 # 640x480 default, will be updated from HAL if available
             audio_features = 7     # Audio feature channels
             
-            # Get actual vision resolution from HAL if available
-            if self.hal and hasattr(self.hal, 'vision') and self.hal.vision:
-                vision_pixels = self.hal.vision.output_dim
-                print(f"🔍 Vision resolution detected: {vision_pixels:,} pixels")
+            # Check if vision is going via UDP (parallel) or TCP
+            if self.vision_stream and self.vision_stream.enabled:
+                # Vision via UDP - don't count in TCP dimensions!
+                vision_pixels = 0
+                print(f"🔍 Vision via UDP stream (parallel processing)")
+            else:
+                # Vision via TCP - count in dimensions
+                vision_config = self.config.get("vision", {})
+                resolution = vision_config.get("resolution", [640, 480])
+                vision_pixels = resolution[0] * resolution[1]
+                
+                # Override with actual HAL resolution if available
+                if self.hal and hasattr(self.hal, 'vision') and self.hal.vision:
+                    vision_pixels = self.hal.vision.output_dim
+                    print(f"🔍 Vision resolution from HAL: {vision_pixels:,} pixels (TCP)")
+                else:
+                    print(f"🔍 Vision resolution from config: {vision_pixels:,} pixels ({resolution[0]}x{resolution[1]}) (TCP)")
             
             sensory_dims = basic_sensors + vision_pixels + audio_features
             action_dims = 6    # We use 6 outputs (motors + servos + audio)
@@ -225,11 +253,10 @@ class Brainstem:
         """
         Convert raw sensors to brain's expanded input format.
         
-        Now using FULL RESOLUTION vision:
+        Dynamic sizing based on actual vision data:
         - Basic sensors: 5 channels
-        - Vision: 307,200 pixels (640x480) 
+        - Vision: len(raw.vision_data) pixels
         - Audio: 7 channels
-        Total: 307,212 channels (brain will adapt to any number)
         """
         brain_input = []
         
@@ -245,11 +272,16 @@ class Brainstem:
         # Channel 4: Battery (normalized)
         brain_input.append(raw.analog_battery_raw / 4095.0)
         
-        # Channels 5-307204: Full resolution vision data (307,200 pixels)
-        # Each pixel is already normalized 0-1 from ConfigurableVision
-        brain_input.extend(raw.vision_data)
+        # Vision data - send via UDP if available, otherwise TCP
+        if self.vision_stream and self.vision_stream.enabled:
+            # Send vision via UDP (parallel processing!)
+            self.vision_stream.process_vision(raw.vision_data)
+            # Don't send vision via TCP - dimensions already exclude it
+        else:
+            # Send vision via TCP (may block brain at high res)
+            brain_input.extend(raw.vision_data)
         
-        # Channels 307205-307211: Audio features (7 channels)
+        # Audio features (7 channels)
         # Volume + 4 frequency bands + pitch + onset
         brain_input.extend(raw.audio_features)
         
@@ -515,6 +547,9 @@ class Brainstem:
         
         if self.brain_client:
             self.brain_client.disconnect()
+        
+        if self.vision_stream:
+            self.vision_stream.stop()
         
         # Print final telemetry summary
         if self.monitor:

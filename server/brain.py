@@ -255,6 +255,10 @@ class DynamicBrainServer:
             print("\n💾 Saving brain states...")
             self.brain_service.shutdown()
         
+        # Shutdown brain pool (includes field injection threads)
+        if self.brain_pool and hasattr(self.brain_pool, 'shutdown'):
+            self.brain_pool.shutdown()
+        
         # Print final statistics
         self._print_statistics()
         

@@ -15,6 +15,22 @@ import torch
 import numpy as np
 from typing import Dict, Optional, Any, Tuple
 
+# Import sensor injectors
+try:
+    from .ultrasonic_field_injector import UltrasonicFieldInjector
+except ImportError:
+    UltrasonicFieldInjector = None
+
+try:
+    from .vision_field_injector import VisionFieldInjector
+except ImportError:
+    VisionFieldInjector = None
+
+try:
+    from .audio_field_injector import AudioFieldInjector
+except ImportError:
+    AudioFieldInjector = None
+
 
 class BatteryFieldInjector:
     """
@@ -178,6 +194,52 @@ class SensorFieldInjectionManager:
             self.injectors['battery'].start()
             return True
         return False
+    
+    def start_ultrasonic_injector(self, port: int = 10003):
+        """Start ultrasonic field injection thread."""
+        if UltrasonicFieldInjector and 'ultrasonic' not in self.injectors:
+            self.injectors['ultrasonic'] = UltrasonicFieldInjector(self.field, port)
+            self.injectors['ultrasonic'].start()
+            return True
+        return False
+    
+    def start_vision_injector(self, port: int = 10002, resolution: Tuple[int, int] = (320, 240)):
+        """Start vision field injection thread - THE CRITICAL ONE!"""
+        if VisionFieldInjector and 'vision' not in self.injectors:
+            self.injectors['vision'] = VisionFieldInjector(self.field, port, resolution)
+            self.injectors['vision'].start()
+            return True
+        return False
+    
+    def start_audio_injector(self, port: int = 10006, sample_rate: int = 16000):
+        """Start audio field injection thread."""
+        if AudioFieldInjector and 'audio' not in self.injectors:
+            self.injectors['audio'] = AudioFieldInjector(self.field, port, sample_rate)
+            self.injectors['audio'].start()
+            return True
+        return False
+    
+    def start_all_basic_sensors(self):
+        """Start battery and ultrasonic injectors for testing."""
+        started = []
+        if self.start_battery_injector():
+            started.append('battery')
+        if self.start_ultrasonic_injector():
+            started.append('ultrasonic')
+        return started
+    
+    def start_all_sensors(self):
+        """Start ALL sensor injectors including vision and audio."""
+        started = []
+        if self.start_battery_injector():
+            started.append('battery')
+        if self.start_ultrasonic_injector():
+            started.append('ultrasonic')
+        if self.start_vision_injector():
+            started.append('vision')
+        if self.start_audio_injector():
+            started.append('audio')
+        return started
     
     def start_from_handshake(self, sensor_declaration: Dict):
         """

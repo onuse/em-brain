@@ -14,6 +14,13 @@ import time
 
 from .interfaces import IBrainPool, IBrain, IBrainFactory
 
+# Try to import field injection for parallel sensor processing
+try:
+    from ..streams.field_injection_threads import SensorFieldInjectionManager
+    FIELD_INJECTION_AVAILABLE = True
+except ImportError:
+    FIELD_INJECTION_AVAILABLE = False
+
 
 class SingleBrainPool(IBrainPool):
     """
@@ -34,6 +41,9 @@ class SingleBrainPool(IBrainPool):
         self.connection_attempts: List[Dict] = []
         self.successful_connections = 0
         self.rejected_connections = 0
+        
+        # Field injection manager (for parallel sensor processing)
+        self.field_injection_manager = None
     
     def get_brain_for_profile(self, profile_key: str) -> IBrain:
         """Get brain if dimensions match, or create first brain."""
@@ -110,6 +120,43 @@ class SingleBrainPool(IBrainPool):
         print(f"   Motor: {motor_dim} channels") 
         print(f"   Field: {field_dims}D")
         print(f"   First connection: {profile_key}")
+        
+        # Initialize field injection manager for parallel sensor processing
+        self._init_field_injection()
+    
+    def _init_field_injection(self):
+        """Initialize parallel field injection for vision and other sensors."""
+        if not FIELD_INJECTION_AVAILABLE:
+            print("   ⚠️  Field injection not available - vision will process synchronously")
+            return
+            
+        if self.brain is None:
+            return
+            
+        try:
+            # Create field injection manager
+            self.field_injection_manager = SensorFieldInjectionManager(self.brain)
+            
+            # Start vision injector (THE CRITICAL ONE!)
+            # This enables 640x480 without blocking
+            if self.field_injection_manager.start_vision_injector(resolution=(640, 480)):
+                print("   ✅ Vision field injector started (640x480 parallel processing!)")
+            
+            # Start other sensors
+            started = []
+            if self.field_injection_manager.start_battery_injector():
+                started.append("battery")
+            if self.field_injection_manager.start_ultrasonic_injector():
+                started.append("ultrasonic")
+            if self.field_injection_manager.start_audio_injector():
+                started.append("audio")
+                
+            if started:
+                print(f"   ✅ Additional injectors: {', '.join(started)}")
+                
+        except Exception as e:
+            print(f"   ⚠️  Field injection initialization failed: {e}")
+            print("   Vision will process synchronously (may block brain)")
     
     def get_brain_config(self, profile_key: str) -> Optional[Dict]:
         """Get brain configuration if it matches the profile."""
@@ -186,3 +233,10 @@ class SingleBrainPool(IBrainPool):
         
         # Round to multiple of 4
         return ((total + 3) // 4) * 4
+    
+    def shutdown(self):
+        """Clean shutdown of brain pool and field injection."""
+        if self.field_injection_manager:
+            print("   Stopping field injection threads...")
+            self.field_injection_manager.stop_all()
+            self.field_injection_manager = None
