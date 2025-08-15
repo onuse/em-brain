@@ -77,8 +77,6 @@ def load_robot_config() -> Dict[str, Any]:
                 "battery": {"critical_voltage": 6.0}
             },
             "brain": {
-                "host": "localhost",
-                "port": 9999,
                 "timeout": 0.05
             }
         }

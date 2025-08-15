@@ -39,7 +39,7 @@ class PiCarXRobot:
     Just what's needed, nothing more.
     """
     
-    def __init__(self, brain_host: str = "localhost", brain_port: int = 9999, 
+    def __init__(self, brain_host: str = None, brain_port: int = None, 
                  use_brain: bool = True, mock_hardware: bool = False):
         """Initialize robot."""
         
@@ -54,7 +54,11 @@ class PiCarXRobot:
         
         # Initialize components
         if use_brain:
-            print(f"📡 Connecting to brain at {brain_host}:{brain_port}")
+            # Let brainstem handle config loading if not specified
+            if brain_host or brain_port:
+                print(f"📡 Connecting to brain at {brain_host}:{brain_port}")
+            else:
+                print(f"📡 Using brain configuration from robot_config.json")
             self.brainstem = Brainstem(brain_host, brain_port)
         else:
             print("🧠 Running in reflex-only mode (no brain)")
@@ -225,9 +229,9 @@ def main():
     parser = argparse.ArgumentParser(description='Simple PiCar-X Robot Controller')
     
     # Brain connection
-    parser.add_argument('--brain-host', default='localhost',
+    parser.add_argument('--brain-host', default=None,
                       help='Brain server hostname/IP')
-    parser.add_argument('--brain-port', type=int, default=9999,
+    parser.add_argument('--brain-port', type=int, default=None,
                       help='Brain server port')
     parser.add_argument('--no-brain', action='store_true',
                       help='Run without brain (reflexes only)')
@@ -251,7 +255,10 @@ def main():
     print("🚗 SIMPLE PICAR-X ROBOT CONTROLLER")
     print("=" * 60)
     print(f"Version: 1.0 (Clean Architecture)")
-    print(f"Brain: {args.brain_host}:{args.brain_port}")
+    if args.brain_host or args.brain_port:
+        print(f"Brain: {args.brain_host or 'config'}:{args.brain_port or 'config'}")
+    else:
+        print(f"Brain: Using robot_config.json")
     print(f"Rate: {args.rate}Hz")
     print("=" * 60)
     
