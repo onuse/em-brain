@@ -13,13 +13,18 @@ from typing import Optional, Callable
 import uuid
 
 try:
-    # Try backward-compatible protocol first
-    from .protocol_compat import BackwardCompatibleProtocol as MessageProtocol
-    print("   Using backward-compatible protocol (handles old and new clients)")
+    # Try chunked protocol for large messages
+    from .protocol_chunked import ChunkedProtocol as MessageProtocol
+    print("   Using chunked protocol (handles large messages with limited buffers)")
 except ImportError:
-    # Fall back to standard protocol
-    from .protocol import MessageProtocol
-    print("   Using standard protocol (requires magic bytes)")
+    try:
+        # Try backward-compatible protocol
+        from .protocol_compat import BackwardCompatibleProtocol as MessageProtocol
+        print("   Using backward-compatible protocol (handles old and new clients)")
+    except ImportError:
+        # Fall back to standard protocol
+        from .protocol import MessageProtocol
+        print("   Using standard protocol (requires magic bytes)")
 
 from .protocol import MessageProtocolError
 from ..core.interfaces import IConnectionHandler

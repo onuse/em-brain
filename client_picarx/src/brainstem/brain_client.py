@@ -231,8 +231,11 @@ class BrainClient:
             self.socket.settimeout(self.config.timeout)
             # Disable Nagle's algorithm for real-time communication
             self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-            # Increase send buffer for large vision data (1.2MB messages)
-            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 2 * 1024 * 1024)  # 2MB
+            # Try to increase send buffer (system may limit this)
+            try:
+                self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 2 * 1024 * 1024)  # Request 2MB
+            except OSError:
+                pass  # System doesn't allow, use default
             
             # Connect
             self.socket.connect((self.config.host, self.config.port))
@@ -323,6 +326,8 @@ class BrainClient:
             
             # Send sensor data using MessageProtocol
             message = self.protocol.encode_sensory_input(sensor_data)
+            # Use sendall to ensure complete message is sent
+            # This handles partial sends automatically
             self.socket.sendall(message)
             
             # Receive motor commands
