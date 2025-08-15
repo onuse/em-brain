@@ -314,6 +314,10 @@ class Brainstem:
         left = thrust - turn * 0.5
         right = thrust + turn * 0.5
         
+        # Debug output every 50 cycles
+        if self.cycle_count % 50 == 0:
+            print(f"🧠 Brain output: thrust={thrust:.2f}, turn={turn:.2f} → L={left:.2f}, R={right:.2f}")
+        
         # Clamp and convert to PWM
         left = max(-1.0, min(1.0, left))
         right = max(-1.0, min(1.0, right))
