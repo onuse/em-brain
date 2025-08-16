@@ -125,11 +125,12 @@ class Brainstem:
     """
     
     def __init__(self, brain_host: str = None, brain_port: int = None, config_path: str = None, 
-                 enable_monitor: bool = True, enable_brain: bool = True):
+                 enable_monitor: bool = True, enable_brain: bool = True, log_level: str = 'WARNING'):
         """Initialize clean brainstem with configuration."""
         
         # Setup logging FIRST before anything that might use it
         import logging
+        self.log_level = log_level
         self.logger = logging.getLogger('Brainstem')
         if not self.logger.handlers:
             handler = logging.StreamHandler()
@@ -138,7 +139,10 @@ class Brainstem:
                 datefmt='%H:%M:%S'
             ))
             self.logger.addHandler(handler)
-            self.logger.setLevel(logging.DEBUG)
+            
+            # Set log level (default to WARNING for clean output)
+            level = getattr(logging, log_level.upper(), logging.WARNING)
+            self.logger.setLevel(level)
         
         # Load configuration
         self.config = load_robot_config() if not config_path else json.load(open(config_path))
@@ -235,7 +239,7 @@ class Brainstem:
                 sensory_dimensions=sensory_dims,
                 action_dimensions=action_dims
             )
-            self.brain_client = BrainClient(config)
+            self.brain_client = BrainClient(config, log_level=self.log_level)
             
             self.logger.info("CONNECTION_ATTEMPT: Attempting to connect to brain server")
             if self.brain_client.connect():

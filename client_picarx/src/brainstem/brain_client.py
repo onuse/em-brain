@@ -48,7 +48,7 @@ class MessageProtocol:
     MAX_REASONABLE_VECTOR_LENGTH = 10_000_000  # Support up to 4K resolution
     MAX_MESSAGE_SIZE_BYTES = 50_000_000     # 50MB absolute maximum
     
-    def __init__(self, max_vector_size: int = None):
+    def __init__(self, max_vector_size: int = None, log_level: str = 'WARNING'):
         # Support up to 4K resolution (3840×2160 = 8,294,400 pixels)
         # Plus some overhead for other sensors
         # This allows ~32MB messages (8.3M * 4 bytes)
@@ -66,7 +66,10 @@ class MessageProtocol:
                 datefmt='%H:%M:%S'
             ))
             self.logger.addHandler(handler)
-            self.logger.setLevel(logging.DEBUG)
+            
+            # Set log level (default to WARNING for clean output)
+            level = getattr(logging, log_level.upper(), logging.WARNING)
+            self.logger.setLevel(level)
     
     def encode_sensory_input(self, sensory_vector: List[float]) -> bytes:
         """Encode sensory input vector for transmission."""
@@ -235,14 +238,20 @@ class BrainClient:
     Uses MessageProtocol for communication with server.
     """
     
-    def __init__(self, config: BrainServerConfig = None):
-        """Initialize client."""
+    def __init__(self, config: BrainServerConfig = None, log_level: str = 'WARNING'):
+        """
+        Initialize client.
+        
+        Args:
+            config: Server configuration
+            log_level: Logging level ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')
+        """
         self.config = config or BrainServerConfig()
         self.socket = None
         self.connected = False
-        self.protocol = MessageProtocol()
+        self.protocol = MessageProtocol(log_level=log_level)
         
-        # Setup logging for connection debugging
+        # Setup logging with configurable level
         self.logger = logging.getLogger('BrainClient')
         if not self.logger.handlers:
             handler = logging.StreamHandler()
@@ -251,7 +260,10 @@ class BrainClient:
                 datefmt='%H:%M:%S'
             ))
             self.logger.addHandler(handler)
-            self.logger.setLevel(logging.DEBUG)
+            
+            # Set log level (default to WARNING for clean output)
+            level = getattr(logging, log_level.upper(), logging.WARNING)
+            self.logger.setLevel(level)
         
     def connect(self) -> bool:
         """Connect to brain server and perform handshake."""

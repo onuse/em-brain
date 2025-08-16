@@ -41,7 +41,7 @@ class PiCarXRobot:
     """
     
     def __init__(self, brain_host: str = None, brain_port: int = None, 
-                 use_brain: bool = True, mock_hardware: bool = False):
+                 use_brain: bool = True, mock_hardware: bool = False, log_level: str = 'WARNING'):
         """Initialize robot."""
         
         print("🤖 Simple PiCar-X Robot Controller")
@@ -60,7 +60,7 @@ class PiCarXRobot:
                 print(f"📡 Connecting to brain at {brain_host}:{brain_port}")
             else:
                 print(f"📡 Using brain configuration from robot_config.json")
-            self.brainstem = Brainstem(brain_host, brain_port)
+            self.brainstem = Brainstem(brain_host, brain_port, log_level=log_level)
             
             # Start battery stream (parallel to main connection)
             self.battery_stream = BatteryStreamer(
@@ -72,7 +72,7 @@ class PiCarXRobot:
             print("🔋 Battery stream started on port 10004")
         else:
             print("🧠 Running in reflex-only mode (no brain)")
-            self.brainstem = Brainstem()  # Will work without brain
+            self.brainstem = Brainstem(log_level=log_level)  # Will work without brain
             self.battery_stream = None
         
         self.running = False
@@ -261,6 +261,9 @@ def main():
                       help='Control loop rate in Hz')
     parser.add_argument('--mock', action='store_true',
                       help='Use mock hardware')
+    parser.add_argument('--log-level', type=str, default='WARNING',
+                      choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+                      help='Logging level (default: WARNING for clean output)')
     
     args = parser.parse_args()
     
@@ -279,7 +282,7 @@ def main():
     # Run requested mode
     if args.calibrate:
         # Calibration mode
-        robot = PiCarXRobot(use_brain=False, mock_hardware=args.mock)
+        robot = PiCarXRobot(use_brain=False, mock_hardware=args.mock, log_level=args.log_level)
         robot.calibrate_servos()
         
     elif args.test:
@@ -287,7 +290,7 @@ def main():
         print("\n🧪 HARDWARE TEST MODE")
         print("-" * 40)
         
-        robot = PiCarXRobot(use_brain=False, mock_hardware=args.mock)
+        robot = PiCarXRobot(use_brain=False, mock_hardware=args.mock, log_level=args.log_level)
         
         print("\nTesting sensors...")
         for i in range(5):
@@ -319,7 +322,8 @@ def main():
             brain_host=args.brain_host,
             brain_port=args.brain_port,
             use_brain=not args.no_brain,
-            mock_hardware=args.mock
+            mock_hardware=args.mock,
+            log_level=args.log_level
         )
         
         try:

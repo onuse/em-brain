@@ -95,6 +95,7 @@ class SimpleBrainService:
         
         # Initialize tracking for heartbeats
         self.last_motivation = ""
+        self.incomplete_header_count = 0  # Track incomplete headers to avoid spam
         
         try:
             while self.running:
@@ -158,8 +159,27 @@ class SimpleBrainService:
         except Exception as e:
             print(f"Client error: {e}")
         finally:
+            # Clean up client connection
             client.close()
             self.client = None
+            
+            # Stop all stream listeners when main connection drops
+            if self.stream_manager:
+                print("🛑 Stopping stream listeners...")
+                try:
+                    # Stop all active stream injectors
+                    if hasattr(self.stream_manager, 'vision_injector') and self.stream_manager.vision_injector:
+                        self.stream_manager.vision_injector.stop()
+                    if hasattr(self.stream_manager, 'audio_injector') and self.stream_manager.audio_injector:
+                        self.stream_manager.audio_injector.stop()
+                    if hasattr(self.stream_manager, 'battery_injector') and self.stream_manager.battery_injector:
+                        self.stream_manager.battery_injector.stop()
+                    if hasattr(self.stream_manager, 'ultrasonic_injector') and self.stream_manager.ultrasonic_injector:
+                        self.stream_manager.ultrasonic_injector.stop()
+                    print("✅ Stream listeners stopped")
+                except Exception as e:
+                    print(f"⚠️ Error stopping streams: {e}")
+            
             print("Robot disconnected")
     
     def _handle_handshake(self, client: socket.socket) -> bool:
@@ -326,7 +346,13 @@ class SimpleBrainService:
             # Read header (13 bytes) - magic(4) + length(4) + type(1) + vector_length(4)
             header = client.recv(13)
             if len(header) < 13:
-                print(f"⚠️ Incomplete sensor header: {len(header)} bytes")
+                # Only print warning occasionally to avoid spam
+                if len(header) > 0:  # Got partial data
+                    self.incomplete_header_count += 1
+                    if self.incomplete_header_count <= 3:  # Only print first 3 times
+                        print(f"⚠️ Incomplete sensor header: {len(header)} bytes")
+                    elif self.incomplete_header_count == 10:  # And once more after 10
+                        print(f"⚠️ Continuing to receive incomplete headers (suppressing further messages)")
                 return None
             
             # Parse header - client uses network byte order (!)
@@ -354,6 +380,10 @@ class SimpleBrainService:
             # Unpack floats (native byte order for data)
             sensors = list(struct.unpack(f'{vector_length}f', data))
             print(f"✅ Received {len(sensors)} sensor values")
+            
+            # Reset incomplete header counter on successful receive
+            self.incomplete_header_count = 0
+            
             return sensors
             
         except socket.timeout:
