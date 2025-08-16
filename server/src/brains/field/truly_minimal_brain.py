@@ -73,6 +73,10 @@ class TrulyMinimalBrain:
         self.field = torch.randn(spatial_size, spatial_size, spatial_size, channels, 
                                 device=self.device) * 0.01
         
+        # FIELD MOMENTUM - creates recurrence and self-organization
+        # This tracks where the field has been and influences where it's going
+        self.field_momentum = torch.zeros_like(self.field)
+        
         # Initialize simple systems
         self.dynamics = SimpleFieldDynamics()
         self.tensions = IntrinsicTensions(self.field.shape, self.device)
@@ -147,6 +151,22 @@ class TrulyMinimalBrain:
         # ===== 3. INTRINSIC TENSIONS (MOTIVATION) =====
         self.field = self.tensions.apply_tensions(self.field, error_magnitude)
         
+        # ===== 3.5. FIELD MOMENTUM (RECURRENCE & MEMORY) =====
+        # This is the key to everything - the field influences its own evolution
+        # Creating cycles, attractors, and self-organization
+        
+        # Update momentum with current field activity
+        # 0.9 = how much history to keep, 0.1 = how much new to add
+        self.field_momentum = 0.9 * self.field_momentum + 0.1 * self.field
+        
+        # Apply momentum back to field
+        # This creates recurrence - patterns that can sustain themselves
+        self.field = self.field + self.field_momentum * 0.05
+        
+        # Momentum also creates natural oscillations and prevents getting stuck
+        # Strong activity builds momentum that overshoots and reverses
+        # This should naturally break out of static patterns!
+        
         # ===== 4. FIELD EVOLUTION (PHYSICS) =====
         # Add exploration noise if we're not learning well
         exploration = self.learning.should_explore()
@@ -176,7 +196,8 @@ class TrulyMinimalBrain:
             'motivation': self._interpret_state(comfort),
             'learning': self.learning.get_learning_state(),
             'motor': self.motor.get_motor_state(motor_output),
-            'exploring': exploration
+            'exploring': exploration,
+            'momentum': torch.abs(self.field_momentum).mean().item()
         }
         
         # Periodic logging

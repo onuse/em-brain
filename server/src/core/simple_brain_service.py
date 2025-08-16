@@ -102,6 +102,25 @@ class SimpleBrainService:
                 # Receive sensor data
                 sensors = self.receive_sensors(client)
                 if sensors is None:
+                    # Check if client is still connected
+                    try:
+                        # Try to peek at the socket
+                        client.setblocking(False)
+                        data = client.recv(1, socket.MSG_PEEK)
+                        client.setblocking(True)
+                        if not data:
+                            # Connection closed cleanly
+                            break
+                    except BlockingIOError:
+                        # No data available but socket is still open
+                        pass
+                    except (ConnectionResetError, ConnectionAbortedError, OSError):
+                        # Connection lost
+                        break
+                    except:
+                        # Any other error, assume disconnected
+                        break
+                    
                     time.sleep(0.001)
                     continue
                 
@@ -156,8 +175,17 @@ class SimpleBrainService:
                     if brain_telemetry.get('exploring', False):
                         print(f"    🔍 Exploring... (cycle {self.telemetry.cycles})")
                     
+        except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError):
+            # Normal disconnection - client closed connection
+            pass
+        except OSError as e:
+            # Windows-specific connection errors
+            if e.errno not in [10054, 10053, 10038, 10035, 104]:
+                # Only print if it's not a normal disconnect error or WOULDBLOCK
+                print(f"Network error: {e}")
         except Exception as e:
-            print(f"Client error: {e}")
+            # Unexpected errors
+            print(f"Unexpected error: {e}")
         finally:
             # Clean up client connection
             client.close()
@@ -165,18 +193,10 @@ class SimpleBrainService:
             
             # Stop all stream listeners when main connection drops
             if self.stream_manager:
-                print("🛑 Stopping stream listeners...")
+                print("🛑 Stopping all stream listeners...")
                 try:
-                    # Stop all active stream injectors
-                    if hasattr(self.stream_manager, 'vision_injector') and self.stream_manager.vision_injector:
-                        self.stream_manager.vision_injector.stop()
-                    if hasattr(self.stream_manager, 'audio_injector') and self.stream_manager.audio_injector:
-                        self.stream_manager.audio_injector.stop()
-                    if hasattr(self.stream_manager, 'battery_injector') and self.stream_manager.battery_injector:
-                        self.stream_manager.battery_injector.stop()
-                    if hasattr(self.stream_manager, 'ultrasonic_injector') and self.stream_manager.ultrasonic_injector:
-                        self.stream_manager.ultrasonic_injector.stop()
-                    print("✅ Stream listeners stopped")
+                    self.stream_manager.stop_all()
+                    print("✅ All stream listeners stopped")
                 except Exception as e:
                     print(f"⚠️ Error stopping streams: {e}")
             
@@ -358,9 +378,6 @@ class SimpleBrainService:
             # Parse header - client uses network byte order (!)
             magic, message_length, msg_type, vector_length = struct.unpack('!IIBI', header)
             
-            # Debug logging
-            print(f"📥 Sensor message: magic=0x{magic:08X}, len={message_length}, type={msg_type}, veclen={vector_length}")
-            
             # Validate magic
             if magic != 0x524F424F:  # 'ROBO'
                 print(f"❌ Invalid magic in sensor message: 0x{magic:08X}")
@@ -379,7 +396,16 @@ class SimpleBrainService:
             
             # Unpack floats (native byte order for data)
             sensors = list(struct.unpack(f'{vector_length}f', data))
-            print(f"✅ Received {len(sensors)} sensor values")
+            
+            # Only log first successful receive, then periodically
+            if not hasattr(self, 'sensor_receive_count'):
+                self.sensor_receive_count = 0
+            self.sensor_receive_count += 1
+            
+            if self.sensor_receive_count == 1:
+                print(f"✅ Receiving sensor data: {len(sensors)} values per message")
+            elif self.sensor_receive_count % 1000 == 0:  # Every 1000 messages (~50 seconds at 20Hz)
+                print(f"📊 Processed {self.sensor_receive_count} sensor messages")
             
             # Reset incomplete header counter on successful receive
             self.incomplete_header_count = 0
@@ -388,8 +414,20 @@ class SimpleBrainService:
             
         except socket.timeout:
             return None
+        except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError) as e:
+            # Connection closed by client - this is normal when client disconnects
+            # Don't spam the log, just return None to trigger cleanup
+            return None
+        except OSError as e:
+            # Windows-specific connection errors (10054, 10053, etc.)
+            if e.errno in [10054, 10053, 10038, 10035, 104]:  # Common connection/non-blocking errors
+                # Silent - these are normal
+                return None
+            else:
+                print(f"❌ Network error: {e}")
+                return None
         except Exception as e:
-            print(f"❌ Error receiving sensors: {e}")
+            print(f"❌ Unexpected error receiving sensors: {e}")
             return None
     
     def send_motors(self, client: socket.socket, motors: list):

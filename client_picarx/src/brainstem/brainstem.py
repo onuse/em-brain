@@ -420,8 +420,9 @@ class Brainstem:
             return False
         
         # Cliff detection (high grayscale = no ground)
-        if any(adc > self.safety.cliff_threshold_adc for adc in sensors.i2c_grayscale):
-            print("⚠️ REFLEX: Cliff detected")
+        cliff_detection_enabled = self.config.get("safety", {}).get("cliff_detection_enabled", True)
+        if cliff_detection_enabled and any(adc > self.safety.cliff_threshold_adc for adc in sensors.i2c_grayscale):
+            print(f"⚠️ REFLEX: Cliff detected (grayscale: {sensors.i2c_grayscale})")
             self.hal.emergency_stop()
             self.reflex_active = True
             if self.monitor:
