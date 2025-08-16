@@ -30,19 +30,21 @@ def calculate_memory_usage(spatial_size, channels):
     # Main field tensor
     field_size = spatial_size ** 3 * channels * 4  # float32
     
-    # Additional tensors (gradients, temporaries, etc.)
-    # Conservative estimate: 3x the field size
-    total_bytes = field_size * 3
+    # Additional tensors needed:
+    # - Field momentum (same size as field)
+    # - Temporary tensors for computation (~0.5x field)
+    # Total: 2.5x the field size (no training, no gradients!)
+    total_bytes = field_size * 2.5
     
     return total_bytes / 1e9
 
 
-def get_optimal_config(target='balanced', memory_limit=None):
+def get_optimal_config(memory_limit=None):
     """
     Get optimal brain configuration for available hardware.
+    Uses all available resources.
     
     Args:
-        target: 'speed', 'balanced', or 'intelligence'
         memory_limit: Override automatic detection (GB)
         
     Returns:
@@ -57,77 +59,36 @@ def get_optimal_config(target='balanced', memory_limit=None):
         if memory_limit:
             available_gb = min(available_gb, memory_limit)
         
-        # Use 85% of available memory (leave headroom)
-        usable_gb = available_gb * 0.85
+        # Use 90% of available memory (we're inference-only, no gradient accumulation)
+        usable_gb = available_gb * 0.90
         
     else:
         device = torch.device('cpu')
         gpu_name = "CPU"
         usable_gb = 2  # Conservative for CPU
     
-    # Configuration table
-    # (spatial, channels, min_memory_gb, name)
+    # Configuration table - just sizes, no names
     configs = [
-        (16, 32, 0.1, "tiny"),
-        (24, 48, 0.5, "small"),
-        (32, 64, 2.0, "medium"),
-        (40, 80, 4.0, "large"),
-        (48, 96, 6.0, "xlarge"),
-        (56, 112, 8.0, "xxlarge"),
-        (64, 128, 12.0, "huge"),
-        (80, 160, 20.0, "gigantic"),
-        (96, 192, 35.0, "colossal"),
-        (128, 256, 80.0, "maximum"),
+        (16, 32),
+        (24, 48),
+        (32, 64),
+        (40, 80),
+        (48, 96),
+        (56, 112),
+        (64, 128),
+        (80, 160),
+        (96, 192),
+        (128, 256),
     ]
     
-    # Select based on target
-    if target == 'speed':
-        # Prioritize fast processing
-        # Smaller brain, higher frequency
-        max_params = 5_000_000  # 5M max for speed
-        selected = None
-        for spatial, channels, min_mem, name in configs:
-            params = spatial ** 3 * channels
-            mem_usage = calculate_memory_usage(spatial, channels)
-            if params <= max_params and mem_usage <= usable_gb:
-                selected = (spatial, channels, name)
-        
-        if not selected:
-            selected = (16, 32, "tiny")
-            
-    elif target == 'intelligence':
-        # Maximum size that fits
-        selected = None
-        for spatial, channels, min_mem, name in reversed(configs):
-            mem_usage = calculate_memory_usage(spatial, channels)
-            if mem_usage <= usable_gb:
-                selected = (spatial, channels, name)
-                break
-        
-        if not selected:
-            selected = (16, 32, "tiny")
-            
-    else:  # balanced
-        # Good tradeoff between size and speed
-        # Aim for ~500Hz processing
-        selected = None
-        target_params = 10_000_000  # 10M for balance
-        
-        best_diff = float('inf')
-        for spatial, channels, min_mem, name in configs:
-            params = spatial ** 3 * channels
-            mem_usage = calculate_memory_usage(spatial, channels)
-            
-            if mem_usage <= usable_gb:
-                diff = abs(params - target_params)
-                if diff < best_diff:
-                    best_diff = diff
-                    selected = (spatial, channels, name)
-        
-        if not selected:
-            selected = (16, 32, "tiny")
+    # Find the largest configuration that fits in available memory
+    spatial, channels = (16, 32)  # Start with minimum
     
-    spatial, channels, size_name = selected
+    for s, c in reversed(configs):
+        mem_usage = calculate_memory_usage(s, c)
+        if mem_usage <= usable_gb:
+            spatial, channels = s, c
+            break
     params = spatial ** 3 * channels
     memory_usage = calculate_memory_usage(spatial, channels)
     
@@ -156,8 +117,6 @@ def get_optimal_config(target='balanced', memory_limit=None):
         'memory_gb': memory_usage,
         'device': device,
         'gpu_name': gpu_name,
-        'size_name': size_name,
-        'target': target,
         'estimated_hz': hz_estimate,
         'available_memory_gb': available_gb if torch.cuda.is_available() else None,
         'total_memory_gb': total_gb if torch.cuda.is_available() else None,

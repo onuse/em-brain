@@ -266,6 +266,22 @@ class SimpleBrainService:
                 # Get config
                 config = get_optimal_config(self.brain_config)
                 
+                # Print hardware detection
+                print(f"\n{'='*60}")
+                print(f"HARDWARE DETECTION")
+                print(f"{'='*60}")
+                print(f"Device: {config['gpu_name']}")
+                if config['device'].type == 'cuda':
+                    print(f"Memory: {config['available_memory_gb']:.1f}/{config['total_memory_gb']:.1f} GB available")
+                print(f"\nBRAIN CONFIGURATION")
+                print(f"{'='*60}")
+                print(f"Target: {config['target']}")
+                print(f"Size: {config['spatial_size']}³×{config['channels']} ({config['size_name']})")
+                print(f"Parameters: {config['parameters']:,}")
+                print(f"Memory usage: {config['memory_gb']:.2f} GB")
+                print(f"Estimated speed: {config['estimated_hz']:,} Hz")
+                print(f"{'='*60}\n")
+                
                 # Create brain with correct dimensions
                 from ..brains.field.truly_minimal_brain import TrulyMinimalBrain
                 self.brain = TrulyMinimalBrain(
@@ -274,7 +290,7 @@ class SimpleBrainService:
                     spatial_size=config['spatial_size'],
                     channels=config['channels'],
                     device=config['device'],
-                    quiet_mode=False
+                    quiet_mode=True  # We already printed info above
                 )
                 
                 # Initialize stream manager if needed

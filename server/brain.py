@@ -21,11 +21,8 @@ def main():
     parser = argparse.ArgumentParser(description='Simple Brain Server')
     parser.add_argument('--port', type=int, default=9999,
                        help='TCP port (default: 9999)')
-    parser.add_argument('--config', choices=['speed', 'balanced', 'intelligence'],
-                       default='balanced',
-                       help='Brain configuration (default: balanced)')
     parser.add_argument('--safe-mode', action='store_true',
-                       help='Use smaller brain for safety')
+                       help='Use minimal brain for safety/testing')
     parser.add_argument('--load', type=str,
                        help='Load brain state from file')
     parser.add_argument('--autosave', action='store_true',
@@ -34,21 +31,20 @@ def main():
     
     args = parser.parse_args()
     
-    # Override config in safe mode
+    # Safe mode uses minimal configuration
     if args.safe_mode:
         print("🦺 SAFE MODE: Using minimal brain configuration")
-        args.config = 'speed'
     
     print("="*60)
     print("SIMPLE BRAIN SERVER")
     print("="*60)
     print(f"Port: {args.port}")
-    print(f"Config: {args.config}")
+    print(f"Brain: Auto-scaling to available hardware")
     print(f"Streams: Configured by client during handshake")
     print()
     
     # Create and run service
-    service = SimpleBrainService(port=args.port, brain_config=args.config)
+    service = SimpleBrainService(port=args.port)
     
     # Load brain state if requested (note: brain will be created during handshake)
     if args.load:
