@@ -11,6 +11,7 @@ import time
 import datetime
 from typing import Optional, Callable
 import uuid
+import logging
 
 try:
     # Try chunked protocol for large messages
@@ -67,6 +68,17 @@ class CleanTCPServer:
         self.start_time = None
         self.total_connections = 0
         
+        # Setup logging for connection debugging
+        self.logger = logging.getLogger(f'TCPServer-{port}')
+        if not self.logger.handlers:
+            handler = logging.StreamHandler()
+            handler.setFormatter(logging.Formatter(
+                '%(asctime)s [%(name)s] %(levelname)s: %(message)s',
+                datefmt='%H:%M:%S'
+            ))
+            self.logger.addHandler(handler)
+            self.logger.setLevel(logging.DEBUG)
+        
         # Silent initialization - details shown at server ready
     
     def start(self):
@@ -98,6 +110,7 @@ class CleanTCPServer:
                     client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
                     timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     print(f"[{timestamp}] 🤖 New connection from {client_address}")
+                    self.logger.info(f"ACCEPT: New client connection from {client_address[0]}:{client_address[1]}")
                     
                     # Handle client in separate thread
                     client_thread = threading.Thread(
@@ -142,24 +155,30 @@ class CleanTCPServer:
         self.active_clients[client_id] = client_socket
         
         # Create protocol instance for this client
-        protocol = self.protocol_class()
+        protocol = self.protocol_class(logger_name=f'Protocol-{client_id}')
         
         print(f"📋 Assigned ID {client_id} to connection from {client_address}")
+        self.logger.info(f"CLIENT_ID: Assigned {client_id} to {client_address[0]}:{client_address[1]}")
         
         try:
             # Set socket timeout
             client_socket.settimeout(300.0)  # 5 minutes
+            self.logger.debug(f"SOCKET_CONFIG: {client_id} timeout set to 300s")
             
             # Main communication loop
             while self.running:
                 try:
                     # Receive message
+                    self.logger.debug(f"RECV_START: {client_id} waiting for message...")
                     msg_type, vector_data = protocol.receive_message(client_socket, timeout=60.0)
+                    self.logger.debug(f"RECV_SUCCESS: {client_id} received {msg_type} with {len(vector_data)} values")
                     
                     # Route to handler based on message type
                     if msg_type == protocol.MSG_HANDSHAKE:
+                        self.logger.info(f"HANDSHAKE_START: {client_id} initiating handshake with {len(vector_data)} capabilities")
                         response_data = self.connection_handler.handle_handshake(client_id, vector_data)
                         response = protocol.encode_handshake(response_data)
+                        self.logger.info(f"HANDSHAKE_COMPLETE: {client_id} handshake processed, responding with {len(response_data)} values")
                         
                     elif msg_type == protocol.MSG_SENSORY_INPUT:
                         # Only log every 100th message to reduce spam
@@ -187,29 +206,43 @@ class CleanTCPServer:
                         
                     else:
                         # Unknown message type
+                        self.logger.warning(f"UNKNOWN_MSG: {client_id} sent unknown message type {msg_type}")
                         response = protocol.encode_error(1.0)  # Unknown message type error
                     
                     # Send response (silently - we already show status above)
+                    self.logger.debug(f"SEND_START: {client_id} sending {len(response)} bytes response")
                     if not protocol.send_message(client_socket, response):
                         print(f"💔 Failed to send response to {client_id}")
+                        self.logger.error(f"SEND_FAILED: {client_id} could not send response")
                         break
+                    else:
+                        self.logger.debug(f"SEND_SUCCESS: {client_id} response sent successfully")
                 
                 except TimeoutError:
                     print(f"⏰ Client {client_id} timed out")
+                    self.logger.warning(f"TIMEOUT: {client_id} timed out waiting for message")
                     break
                     
                 except MessageProtocolError as e:
                     print(f"⚠️  Protocol error from {client_id}: {e}")
+                    self.logger.error(f"PROTOCOL_ERROR: {client_id} - {e}")
                     error_response = protocol.encode_error(2.0)  # Protocol error
-                    protocol.send_message(client_socket, error_response)
+                    if not protocol.send_message(client_socket, error_response):
+                        self.logger.error(f"ERROR_SEND_FAILED: {client_id} could not send error response")
+                    else:
+                        self.logger.debug(f"ERROR_SENT: {client_id} protocol error response sent")
                     
-                except ConnectionError:
+                except ConnectionError as e:
                     timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     print(f"[{timestamp}] 💔 Client {client_id} disconnected")
+                    self.logger.info(f"DISCONNECT: {client_id} connection error - {e}")
                     break
                     
                 except Exception as e:
                     print(f"❌ Unexpected error handling {client_id}: {e}")
+                    self.logger.error(f"UNEXPECTED_ERROR: {client_id} - {e}")
+                    import traceback
+                    self.logger.debug(f"STACK_TRACE: {client_id} - {traceback.format_exc()}")
                     break
         
         finally:
@@ -228,6 +261,7 @@ class CleanTCPServer:
             
             timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             print(f"[{timestamp}] 👋 Connection closed for {client_id}")
+            self.logger.info(f"CLEANUP: {client_id} connection cleanup complete")
     
     def get_server_stats(self) -> dict:
         """Get server statistics."""

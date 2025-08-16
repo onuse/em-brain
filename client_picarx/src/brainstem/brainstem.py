@@ -174,6 +174,17 @@ class Brainstem:
             self.monitor = BrainstemMonitor(port=monitor_port)
             self.monitor.start()
         
+        # Setup logging for brainstem debugging
+        self.logger = logging.getLogger('Brainstem')
+        if not self.logger.handlers:
+            handler = logging.StreamHandler()
+            handler.setFormatter(logging.Formatter(
+                '%(asctime)s [%(name)s] %(levelname)s: %(message)s',
+                datefmt='%H:%M:%S'
+            ))
+            self.logger.addHandler(handler)
+            self.logger.setLevel(logging.DEBUG)
+        
         print("🧠 Clean brainstem initialized")
         print(f"   Config: Loaded from robot_config.json")
         print(f"   Brain: {self.brain_host}:{self.brain_port}")
@@ -183,6 +194,8 @@ class Brainstem:
     
     def _init_brain_connection(self, host: str, port: int):
         """Initialize brain server connection."""
+        self.logger.info(f"BRAIN_INIT: Initializing connection to {host}:{port}")
+        
         try:
             # Dynamically determine our sensor dimensions based on vision resolution
             basic_sensors = 5      # Grayscale (3) + ultrasonic + battery
@@ -223,13 +236,19 @@ class Brainstem:
             )
             self.brain_client = BrainClient(config)
             
+            self.logger.info("CONNECTION_ATTEMPT: Attempting to connect to brain server")
             if self.brain_client.connect():
+                self.logger.info("CONNECTION_SUCCESS: Successfully connected to brain server")
                 print(f"✅ Connected to brain server")
             else:
+                self.logger.warning("CONNECTION_FAILED: Could not connect to brain server, entering reflexes-only mode")
                 print(f"⚠️  Could not connect to brain - reflexes only mode")
                 self.brain_client = None
         except Exception as e:
+            self.logger.error(f"BRAIN_INIT_ERROR: Brain connection initialization failed: {e}")
             print(f"❌ Brain connection failed: {e}")
+            import traceback
+            self.logger.debug(f"BRAIN_INIT_TRACEBACK: {traceback.format_exc()}")
             self.brain_client = None
         
         self.last_connect_attempt = time.time()
@@ -240,11 +259,13 @@ class Brainstem:
         if current_time - self.last_connect_attempt < self.reconnect_interval:
             return  # Too soon to retry
         
+        self.logger.info(f"RECONNECT_ATTEMPT: Trying to reconnect (last attempt {current_time - self.last_connect_attempt:.1f}s ago)")
         print(f"🔄 Attempting to reconnect to brain server...")
         self.last_connect_attempt = current_time
         
         # Clean up old client
         if self.brain_client:
+            self.logger.debug("RECONNECT_CLEANUP: Disconnecting old client")
             self.brain_client.disconnect()
             self.brain_client = None
         

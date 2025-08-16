@@ -8,6 +8,7 @@ Raw vector exchange - no JSON, no complex packets, just numbers.
 import struct
 from typing import List, Tuple, Optional
 import socket
+import logging
 
 
 class MessageProtocol:
@@ -40,7 +41,7 @@ class MessageProtocol:
     MAX_REASONABLE_VECTOR_LENGTH = 10_000_000  # Support up to 4K resolution
     MAX_MESSAGE_SIZE_BYTES = 50_000_000     # 50MB absolute maximum
     
-    def __init__(self, max_vector_size: int = None):
+    def __init__(self, max_vector_size: int = None, logger_name: str = None):
         # Support up to 4K resolution (3840×2160 = 8,294,400 pixels)
         # Plus some overhead for other sensors
         # This allows ~32MB messages (8.3M * 4 bytes)
@@ -48,6 +49,17 @@ class MessageProtocol:
         if max_vector_size is None:
             max_vector_size = 10_000_000  # 10 million values (~40MB max)
         self.max_vector_size = max_vector_size
+        
+        # Setup logging for protocol debugging
+        self.logger = logging.getLogger(logger_name or 'MessageProtocol')
+        if not self.logger.handlers:
+            handler = logging.StreamHandler()
+            handler.setFormatter(logging.Formatter(
+                '%(asctime)s [%(name)s] %(levelname)s: %(message)s',
+                datefmt='%H:%M:%S'
+            ))
+            self.logger.addHandler(handler)
+            self.logger.setLevel(logging.DEBUG)
     
     def encode_sensory_input(self, sensory_vector: List[float]) -> bytes:
         """Encode sensory input vector for transmission."""
@@ -137,34 +149,50 @@ class MessageProtocol:
             Tuple of (message_type, vector_data)
         """
         sock.settimeout(timeout)
+        client_info = f"{sock.getpeername()[0]}:{sock.getpeername()[1]}" if sock.getpeername() else "unknown"
         
         try:
+            self.logger.debug(f"RECV_HEADER: {client_info} waiting for message header (timeout={timeout}s)")
             # Receive magic bytes and message length first
             header_data = self._receive_exactly(sock, 8)  # magic + length
             magic, message_length = struct.unpack('!II', header_data)
             
+            self.logger.debug(f"RECV_HEADER_SUCCESS: {client_info} magic=0x{magic:08X}, length={message_length}")
+            
             # Validate magic bytes first
             if magic != self.MAGIC_BYTES:
+                self.logger.error(f"INVALID_MAGIC: {client_info} got 0x{magic:08X}, expected 0x{self.MAGIC_BYTES:08X}")
                 # Try to resynchronize stream
                 self._resync_stream(sock, timeout)
                 raise MessageProtocolError(f"Invalid magic bytes: 0x{magic:08X}, stream may be corrupt")
             
             # Validate message length with multiple checks
             if message_length < 5:  # Minimum: type(1) + vector_length(4)
+                self.logger.error(f"MSG_TOO_SMALL: {client_info} length={message_length} < 5")
                 raise MessageProtocolError(f"Message too small: {message_length} bytes")
             if message_length > self.MAX_MESSAGE_SIZE_BYTES:
+                self.logger.error(f"MSG_TOO_LARGE: {client_info} length={message_length} > {self.MAX_MESSAGE_SIZE_BYTES}")
                 raise MessageProtocolError(f"Message too large: {message_length} bytes > {self.MAX_MESSAGE_SIZE_BYTES}")
             if message_length > (self.max_vector_size * 4 + 5):
+                self.logger.error(f"MSG_EXCEEDS_VECTOR: {client_info} length={message_length} > max_vector")
                 raise MessageProtocolError(f"Message larger than max vector: {message_length} bytes")
             
             # Receive the rest of the message
+            self.logger.debug(f"RECV_BODY: {client_info} receiving {message_length} bytes...")
             message_data = self._receive_exactly(sock, message_length)
+            self.logger.debug(f"RECV_BODY_SUCCESS: {client_info} received {len(message_data)} bytes")
             
             # Decode complete message
-            return self.decode_message(header_data + message_data)
+            msg_type, vector = self.decode_message(header_data + message_data)
+            self.logger.debug(f"DECODE_SUCCESS: {client_info} type={msg_type}, vector_len={len(vector)}")
+            return msg_type, vector
             
         except socket.timeout:
+            self.logger.warning(f"RECV_TIMEOUT: {client_info} timed out after {timeout}s")
             raise TimeoutError("Message receive timeout")
+        except Exception as e:
+            self.logger.error(f"RECV_ERROR: {client_info} - {e}")
+            raise
     
     def send_message(self, sock: socket.socket, message_data: bytes) -> bool:
         """
@@ -178,25 +206,52 @@ class MessageProtocol:
             True if sent successfully
         """
         try:
+            client_info = f"{sock.getpeername()[0]}:{sock.getpeername()[1]}" if sock.getpeername() else "unknown"
+            self.logger.debug(f"SEND_START: {client_info} sending {len(message_data)} bytes")
+            
             total_sent = 0
             while total_sent < len(message_data):
                 sent = sock.send(message_data[total_sent:])
                 if sent == 0:
+                    self.logger.error(f"SEND_ZERO: {client_info} socket returned 0 bytes sent")
                     return False
                 total_sent += sent
+                self.logger.debug(f"SEND_PROGRESS: {client_info} {total_sent}/{len(message_data)} bytes sent")
+            
+            self.logger.debug(f"SEND_SUCCESS: {client_info} all {total_sent} bytes sent")
             return True
             
-        except (socket.error, BrokenPipeError):
+        except (socket.error, BrokenPipeError) as e:
+            client_info = "unknown"
+            try:
+                client_info = f"{sock.getpeername()[0]}:{sock.getpeername()[1]}"
+            except:
+                pass
+            self.logger.error(f"SEND_ERROR: {client_info} - {e}")
             return False
     
     def _receive_exactly(self, sock: socket.socket, num_bytes: int) -> bytes:
         """Receive exactly num_bytes from socket."""
         data = b''
         while len(data) < num_bytes:
-            chunk = sock.recv(num_bytes - len(data))
+            remaining = num_bytes - len(data)
+            chunk = sock.recv(remaining)
             if not chunk:
+                client_info = "unknown"
+                try:
+                    client_info = f"{sock.getpeername()[0]}:{sock.getpeername()[1]}"
+                except:
+                    pass
+                self.logger.error(f"RECV_CLOSED: {client_info} socket closed, got {len(data)}/{num_bytes} bytes")
                 raise ConnectionError("Socket closed unexpectedly")
             data += chunk
+            if len(chunk) < remaining:
+                # Partial receive - this is normal for large messages
+                try:
+                    client_info = f"{sock.getpeername()[0]}:{sock.getpeername()[1]}"
+                    self.logger.debug(f"RECV_PARTIAL: {client_info} got {len(chunk)}/{remaining} bytes, continuing...")
+                except:
+                    pass
         return data
     
     def _resync_stream(self, sock: socket.socket, timeout: float):

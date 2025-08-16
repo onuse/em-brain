@@ -141,13 +141,19 @@ class ConnectionHandler(IConnectionHandler):
     def handle_disconnect(self, client_id: str) -> None:
         """Clean up when client disconnects."""
         
+        self.logger.info(f"DISCONNECT_START: {client_id} beginning cleanup")
+        
         with self.lock:
             # Get session
             session = self.client_sessions.get(client_id)
             
             if session:
+                session_id = session.get_session_id()
+                robot_id = self.client_robots.get(client_id)
+                
+                self.logger.debug(f"DISCONNECT_SESSION: {client_id} closing session {session_id}")
                 # Close brain session
-                self.brain_service.close_session(session.get_session_id())
+                self.brain_service.close_session(session_id)
                 
                 # Remove mappings
                 del self.client_sessions[client_id]
@@ -155,8 +161,10 @@ class ConnectionHandler(IConnectionHandler):
                 if client_id in self.client_robots:
                     del self.client_robots[client_id]
                 
+                self.logger.info(f"DISCONNECT_COMPLETE: {client_id} cleaned up (session={session_id}, robot={robot_id})")
                 print(f"🧹 Cleaned up connection for client {client_id}")
             else:
+                self.logger.warning(f"DISCONNECT_NO_SESSION: {client_id} had no active session")
                 print(f"⚠️  No session to clean up for client {client_id}")
     
     def get_stats(self) -> Dict:

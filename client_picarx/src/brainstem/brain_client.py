@@ -9,6 +9,7 @@ Using the same MessageProtocol as the server.
 import socket
 import struct
 import time
+import logging
 from typing import List, Optional, Dict, Any, Tuple
 from dataclasses import dataclass
 
@@ -55,6 +56,17 @@ class MessageProtocol:
         if max_vector_size is None:
             max_vector_size = 10_000_000  # 10 million values (~40MB max)
         self.max_vector_size = max_vector_size
+        
+        # Setup logging for protocol debugging
+        self.logger = logging.getLogger('BrainClient.Protocol')
+        if not self.logger.handlers:
+            handler = logging.StreamHandler()
+            handler.setFormatter(logging.Formatter(
+                '%(asctime)s [%(name)s] %(levelname)s: %(message)s',
+                datefmt='%H:%M:%S'
+            ))
+            self.logger.addHandler(handler)
+            self.logger.setLevel(logging.DEBUG)
     
     def encode_sensory_input(self, sensory_vector: List[float]) -> bytes:
         """Encode sensory input vector for transmission."""
@@ -124,32 +136,47 @@ class MessageProtocol:
         sock.settimeout(timeout)
         
         try:
+            self.logger.debug(f"RECV_START: Waiting for message header (timeout={timeout}s)")
             # Receive magic bytes and message length first
             header_data = self._receive_exactly(sock, 8)  # magic + length
             magic, message_length = struct.unpack('!II', header_data)
             
+            self.logger.debug(f"RECV_HEADER: magic=0x{magic:08X}, length={message_length}")
+            
             # Validate magic bytes first
             if magic != self.MAGIC_BYTES:
+                self.logger.error(f"INVALID_MAGIC: got 0x{magic:08X}, expected 0x{self.MAGIC_BYTES:08X}")
                 # Try to resynchronize stream
                 self._resync_stream(sock, timeout)
                 raise MessageProtocolError(f"Invalid magic bytes: 0x{magic:08X}, stream may be corrupt")
             
             # Validate message length with multiple checks
             if message_length < 5:  # Minimum: type(1) + vector_length(4)
+                self.logger.error(f"MSG_TOO_SMALL: length={message_length} < 5")
                 raise MessageProtocolError(f"Message too small: {message_length} bytes")
             if message_length > self.MAX_MESSAGE_SIZE_BYTES:
+                self.logger.error(f"MSG_TOO_LARGE: length={message_length} > {self.MAX_MESSAGE_SIZE_BYTES}")
                 raise MessageProtocolError(f"Message too large: {message_length} bytes > {self.MAX_MESSAGE_SIZE_BYTES}")
             if message_length > (self.max_vector_size * 4 + 5):
+                self.logger.error(f"MSG_EXCEEDS_VECTOR: length={message_length} > max_vector")
                 raise MessageProtocolError(f"Message larger than max vector: {message_length} bytes")
             
             # Receive the rest of the message
+            self.logger.debug(f"RECV_BODY: receiving {message_length} bytes...")
             message_data = self._receive_exactly(sock, message_length)
+            self.logger.debug(f"RECV_BODY_SUCCESS: received {len(message_data)} bytes")
             
             # Decode complete message
-            return self.decode_message(header_data + message_data)
+            msg_type, vector = self.decode_message(header_data + message_data)
+            self.logger.debug(f"DECODE_SUCCESS: type={msg_type}, vector_len={len(vector)}")
+            return msg_type, vector
             
         except socket.timeout:
+            self.logger.warning(f"RECV_TIMEOUT: timed out after {timeout}s")
             raise TimeoutError("Message receive timeout")
+        except Exception as e:
+            self.logger.error(f"RECV_ERROR: {e}")
+            raise
     
     def _receive_exactly(self, sock: socket.socket, num_bytes: int) -> bytes:
         """Receive exactly num_bytes from socket."""
@@ -215,43 +242,82 @@ class BrainClient:
         self.connected = False
         self.protocol = MessageProtocol()
         
+        # Setup logging for connection debugging
+        self.logger = logging.getLogger('BrainClient')
+        if not self.logger.handlers:
+            handler = logging.StreamHandler()
+            handler.setFormatter(logging.Formatter(
+                '%(asctime)s [%(name)s] %(levelname)s: %(message)s',
+                datefmt='%H:%M:%S'
+            ))
+            self.logger.addHandler(handler)
+            self.logger.setLevel(logging.DEBUG)
+        
     def connect(self) -> bool:
         """Connect to brain server and perform handshake."""
+        self.logger.info(f"CONNECT_START: Attempting connection to {self.config.host}:{self.config.port}")
+        
         try:
             # Close any existing socket first
             if self.socket:
+                self.logger.debug("SOCKET_CLEANUP: Closing existing socket")
                 try:
                     self.socket.close()
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"SOCKET_CLEANUP_ERROR: {e}")
                 self.socket = None
             
             # Create fresh socket
+            self.logger.debug("SOCKET_CREATE: Creating new TCP socket")
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            
+            self.logger.debug(f"SOCKET_TIMEOUT: Setting timeout to {self.config.timeout}s")
             self.socket.settimeout(self.config.timeout)
+            
             # Disable Nagle's algorithm for real-time communication
+            self.logger.debug("SOCKET_CONFIG: Disabling Nagle's algorithm")
             self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+            
             # Try to increase send buffer (system may limit this)
             try:
                 self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 2 * 1024 * 1024)  # Request 2MB
-            except OSError:
-                pass  # System doesn't allow, use default
+                self.logger.debug("SOCKET_CONFIG: Send buffer increased to 2MB")
+            except OSError as e:
+                self.logger.debug(f"SOCKET_CONFIG: Could not increase send buffer: {e}")
             
             # Connect
+            self.logger.info(f"TCP_CONNECT: Connecting to {self.config.host}:{self.config.port}...")
+            connect_start = time.time()
             self.socket.connect((self.config.host, self.config.port))
+            connect_time = time.time() - connect_start
+            self.logger.info(f"TCP_CONNECT_SUCCESS: Connected in {connect_time:.3f}s")
             
             # Perform handshake to negotiate dimensions
+            self.logger.info("HANDSHAKE_START: Beginning handshake negotiation")
             if self._handshake():
                 self.connected = True
+                self.logger.info(f"CONNECT_SUCCESS: Fully connected and handshake complete")
                 print(f"✅ Connected to brain at {self.config.host}:{self.config.port}")
                 print(f"   Negotiated: {self.config.sensory_dimensions} sensory, {self.config.action_dimensions} motor")
                 return True
             else:
+                self.logger.error("HANDSHAKE_FAILED: Handshake negotiation failed")
                 print("❌ Handshake failed")
                 self.socket.close()
                 return False
                 
+        except socket.timeout:
+            self.logger.error(f"CONNECT_TIMEOUT: Connection timed out after {self.config.timeout}s")
+            print(f"❌ Connection timed out after {self.config.timeout}s")
+            self.connected = False
+            return False
+        except ConnectionRefusedError:
+            self.logger.error(f"CONNECT_REFUSED: Server refused connection at {self.config.host}:{self.config.port}")
+            print(f"❌ Connection refused by {self.config.host}:{self.config.port}")
+            self.connected = False
+            return False
         except Exception as e:
+            self.logger.error(f"CONNECT_ERROR: Connection failed with error: {e}")
             print(f"❌ Connection failed: {e}")
             self.connected = False
             return False
@@ -273,12 +339,23 @@ class BrainClient:
                 float(capabilities)  # Capabilities mask
             ]
             
+            self.logger.info(f"HANDSHAKE_SEND: Sending capabilities: {handshake_data}")
+            
             # Send handshake using MessageProtocol
             message = self.protocol.encode_handshake(handshake_data)
+            self.logger.debug(f"HANDSHAKE_ENCODE: Encoded {len(message)} bytes for handshake")
+            
+            send_start = time.time()
             self.socket.sendall(message)
+            send_time = time.time() - send_start
+            self.logger.debug(f"HANDSHAKE_SENT: Handshake sent in {send_time:.3f}s")
             
             # Receive brain's handshake response
+            self.logger.debug("HANDSHAKE_RECV: Waiting for brain response...")
+            recv_start = time.time()
             msg_type, brain_handshake = self.protocol.receive_message(self.socket, timeout=5.0)
+            recv_time = time.time() - recv_start
+            self.logger.debug(f"HANDSHAKE_RECV_SUCCESS: Received response in {recv_time:.3f}s, type={msg_type}, data={brain_handshake}")
             
             if msg_type == MessageProtocol.MSG_HANDSHAKE and len(brain_handshake) >= 5:
                 brain_version = brain_handshake[0]
@@ -287,24 +364,34 @@ class BrainClient:
                 gpu_available = brain_handshake[3] > 0
                 brain_capabilities = int(brain_handshake[4]) if len(brain_handshake) > 4 else 0
                 
+                self.logger.info(f"HANDSHAKE_RESPONSE: brain_v={brain_version}, sensory={accepted_sensory}, action={accepted_action}, gpu={gpu_available}")
+                
                 # Debug: Show what brain sent
                 if accepted_sensory != self.config.sensory_dimensions or accepted_action != self.config.action_dimensions:
+                    self.logger.warning(f"DIMENSION_MISMATCH: Sent {self.config.sensory_dimensions}s/{self.config.action_dimensions}m, got {accepted_sensory}s/{accepted_action}m")
                     print(f"⚠️ Dimension mismatch in handshake!")
                     print(f"   Sent: {self.config.sensory_dimensions}s/{self.config.action_dimensions}m")
                     print(f"   Brain returned: {accepted_sensory}s/{accepted_action}m")
                     print(f"   Full brain response: {brain_handshake}")
+                else:
+                    self.logger.info(f"DIMENSION_MATCH: Sensory and action dimensions accepted by brain")
                 
                 # DON'T update our config - use what we originally configured
                 # The brain should accept our dimensions or reject them
-                # self.config.sensory_dimensions = accepted_sensory
-                # self.config.action_dimensions = accepted_action
                 
+                self.logger.info(f"HANDSHAKE_COMPLETE: Successfully negotiated with brain")
                 print(f"🤝 Handshake complete: Brain v{brain_version:.1f}, GPU={'✓' if gpu_available else '✗'}")
                 return True
+            else:
+                self.logger.error(f"HANDSHAKE_INVALID: Invalid response type={msg_type}, len={len(brain_handshake) if brain_handshake else 0}")
+                return False
                 
+        except socket.timeout:
+            self.logger.error("HANDSHAKE_TIMEOUT: Brain server did not respond to handshake within 5s")
+            print("Handshake error: Message receive timeout")
             return False
-            
         except Exception as e:
+            self.logger.error(f"HANDSHAKE_ERROR: Handshake failed with error: {e}")
             print(f"Handshake error: {e}")
             return False
     
@@ -315,41 +402,58 @@ class BrainClient:
         Returns dict with 'motor_commands' or None on error.
         """
         if not self.connected:
+            self.logger.debug("PROCESS_SENSORS: Not connected, skipping")
             return None
         
         try:
             # Ensure correct dimensions
+            original_len = len(sensor_data)
             if len(sensor_data) < self.config.sensory_dimensions:
-                sensor_data.extend([0.5] * (self.config.sensory_dimensions - len(sensor_data)))
+                padding = self.config.sensory_dimensions - len(sensor_data)
+                sensor_data.extend([0.5] * padding)
+                self.logger.debug(f"SENSOR_PADDING: Added {padding} values to reach {self.config.sensory_dimensions}")
             elif len(sensor_data) > self.config.sensory_dimensions:
                 sensor_data = sensor_data[:self.config.sensory_dimensions]
+                truncated = original_len - self.config.sensory_dimensions
+                self.logger.debug(f"SENSOR_TRUNCATE: Removed {truncated} values to fit {self.config.sensory_dimensions}")
             
             # Send sensor data using MessageProtocol
             message = self.protocol.encode_sensory_input(sensor_data)
+            self.logger.debug(f"SENSOR_SEND: Sending {len(sensor_data)} sensor values ({len(message)} bytes)")
+            
             # Use sendall to ensure complete message is sent
-            # This handles partial sends automatically
+            send_start = time.time()
             self.socket.sendall(message)
+            send_time = time.time() - send_start
+            self.logger.debug(f"SENSOR_SENT: Data sent in {send_time:.3f}s")
             
             # Receive motor commands
+            self.logger.debug(f"MOTOR_RECV: Waiting for motor commands (timeout={self.config.timeout}s)")
+            recv_start = time.time()
             msg_type, motor_commands = self.protocol.receive_message(self.socket, timeout=self.config.timeout)
+            recv_time = time.time() - recv_start
             
             if msg_type == MessageProtocol.MSG_ACTION_OUTPUT:
+                self.logger.debug(f"MOTOR_SUCCESS: Received {len(motor_commands)} motor commands in {recv_time:.3f}s")
                 return {'motor_commands': motor_commands}
-            
-            return None
+            else:
+                self.logger.warning(f"MOTOR_WRONG_TYPE: Expected action output, got message type {msg_type}")
+                return None
             
         except socket.timeout:
             # Timeout is ok, just means no response yet
+            self.logger.debug(f"PROCESS_TIMEOUT: No response within {self.config.timeout}s (normal for real-time operation)")
             return None
         except Exception as e:
+            self.logger.error(f"COMMUNICATION_ERROR: {e}")
             print(f"❌ Communication error: {e}")
             self.connected = False
             # IMPORTANT: Close the socket to prevent corruption
             if self.socket:
                 try:
                     self.socket.close()
-                except:
-                    pass
+                except Exception as close_e:
+                    self.logger.debug(f"SOCKET_CLOSE_ERROR: {close_e}")
                 self.socket = None
             return None
     
