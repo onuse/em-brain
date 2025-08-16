@@ -128,6 +128,18 @@ class Brainstem:
                  enable_monitor: bool = True, enable_brain: bool = True):
         """Initialize clean brainstem with configuration."""
         
+        # Setup logging FIRST before anything that might use it
+        import logging
+        self.logger = logging.getLogger('Brainstem')
+        if not self.logger.handlers:
+            handler = logging.StreamHandler()
+            handler.setFormatter(logging.Formatter(
+                '%(asctime)s [%(name)s] %(levelname)s: %(message)s',
+                datefmt='%H:%M:%S'
+            ))
+            self.logger.addHandler(handler)
+            self.logger.setLevel(logging.DEBUG)
+        
         # Load configuration
         self.config = load_robot_config() if not config_path else json.load(open(config_path))
         
@@ -173,17 +185,6 @@ class Brainstem:
             monitor_port = self.config.get("debug", {}).get("monitor_port", 9997)
             self.monitor = BrainstemMonitor(port=monitor_port)
             self.monitor.start()
-        
-        # Setup logging for brainstem debugging
-        self.logger = logging.getLogger('Brainstem')
-        if not self.logger.handlers:
-            handler = logging.StreamHandler()
-            handler.setFormatter(logging.Formatter(
-                '%(asctime)s [%(name)s] %(levelname)s: %(message)s',
-                datefmt='%H:%M:%S'
-            ))
-            self.logger.addHandler(handler)
-            self.logger.setLevel(logging.DEBUG)
         
         print("🧠 Clean brainstem initialized")
         print(f"   Config: Loaded from robot_config.json")
