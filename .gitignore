@@ -11,7 +11,9 @@ robot_memory*/
 test_memory*/
 brain_memory/
 *brain_memory*
-*server/brain_memory*/
+brain_states/
+*brain_states*
+*server/brain_states*/
 .DS_Store
 .claude*/
 run_logs/
