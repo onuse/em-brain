@@ -98,6 +98,10 @@ class SimpleBrainService:
             self.client = None
             return
         
+        # Give client time to process handshake response
+        print("⏳ Waiting for client to process handshake...")
+        time.sleep(0.5)  # 500ms for client to receive and process response
+        
         client.settimeout(0.1)  # Non-blocking after handshake
         
         # Initialize tracking for heartbeats and error counts
@@ -422,25 +426,24 @@ class SimpleBrainService:
                 # Try different sending methods
                 print(f"   Attempting to send {len(response_msg)} bytes...")
                 
-                # Method 1: sendall (most reliable)
+                # Send the response
                 bytes_sent = 0
                 try:
+                    # Use sendall to ensure all bytes are sent
                     client.sendall(response_msg)
                     bytes_sent = len(response_msg)
                     print(f"   ✅ sendall() succeeded - {bytes_sent} bytes sent")
+                    
+                    # DO NOT use SO_LINGER with timeout 0 - it causes immediate close!
+                    # Instead, ensure data is sent by disabling buffering
+                    client.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+                    
+                    # Give TCP stack time to actually send the data
+                    time.sleep(0.01)  # 10ms to ensure data goes out
+                    
                 except Exception as e:
                     print(f"   ❌ sendall() failed: {e}")
-                    # Try send() as fallback
-                    try:
-                        bytes_sent = client.send(response_msg)
-                        print(f"   send() sent {bytes_sent}/{len(response_msg)} bytes")
-                        if bytes_sent < len(response_msg):
-                            remaining = response_msg[bytes_sent:]
-                            client.sendall(remaining)
-                            print(f"   Sent remaining {len(remaining)} bytes")
-                    except Exception as e2:
-                        print(f"   ❌ send() also failed: {e2}")
-                        raise
+                    raise
                 
                 # Verify send buffer is empty
                 import select
@@ -461,13 +464,20 @@ class SimpleBrainService:
                     import select
                     readable, _, _ = select.select([client], [], [], 0.1)
                     if readable:
-                        peek_data = client.recv(1, socket.MSG_PEEK | socket.MSG_DONTWAIT)
-                        if peek_data:
-                            print(f"   🔍 Client has sent data (peeked: 0x{peek_data[0]:02X})")
-                        else:
-                            print(f"   ⚠️ Client closed connection")
+                        try:
+                            # Set non-blocking for peek
+                            client.setblocking(False)
+                            peek_data = client.recv(1, socket.MSG_PEEK)
+                            client.setblocking(True)
+                            if peek_data:
+                                print(f"   🔍 Client has data ready (peeked: 0x{peek_data[0]:02X})")
+                            else:
+                                print(f"   ⚠️ Socket readable but no data - connection may be closing")
+                        except (BlockingIOError, socket.error):
+                            # Would block - no data available yet
+                            print(f"   ⏳ No immediate data from client (normal)")
                     else:
-                        print(f"   ⏳ No immediate response from client (normal)")
+                        print(f"   ⏳ Waiting for client to process response (normal)")
                         
                 except Exception as e:
                     print(f"   ⚠️ Post-send check failed: {e}")

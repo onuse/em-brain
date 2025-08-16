@@ -140,11 +140,11 @@ class MessageProtocol:
         
         try:
             self.logger.debug(f"RECV_START: Waiting for message header (timeout={timeout}s)")
-            # Receive magic bytes and message length first
-            header_data = self._receive_exactly(sock, 8)  # magic + length
-            magic, message_length = struct.unpack('!II', header_data)
+            # Receive full header: magic(4) + length(4) + type(1) + vector_length(4) = 13 bytes
+            header_data = self._receive_exactly(sock, 13)  # Full header
+            magic, message_length, msg_type, vector_length = struct.unpack('!IIBI', header_data)
             
-            self.logger.debug(f"RECV_HEADER: magic=0x{magic:08X}, length={message_length}")
+            self.logger.debug(f"RECV_HEADER: magic=0x{magic:08X}, length={message_length}, type={msg_type}, vec_len={vector_length}")
             
             # Validate magic bytes first
             if magic != self.MAGIC_BYTES:
@@ -154,23 +154,19 @@ class MessageProtocol:
                 raise MessageProtocolError(f"Invalid magic bytes: 0x{magic:08X}, stream may be corrupt")
             
             # Validate message length with multiple checks
-            if message_length < 5:  # Minimum: type(1) + vector_length(4)
-                self.logger.error(f"MSG_TOO_SMALL: length={message_length} < 5")
-                raise MessageProtocolError(f"Message too small: {message_length} bytes")
-            if message_length > self.MAX_MESSAGE_SIZE_BYTES:
-                self.logger.error(f"MSG_TOO_LARGE: length={message_length} > {self.MAX_MESSAGE_SIZE_BYTES}")
-                raise MessageProtocolError(f"Message too large: {message_length} bytes > {self.MAX_MESSAGE_SIZE_BYTES}")
-            if message_length > (self.max_vector_size * 4 + 5):
-                self.logger.error(f"MSG_EXCEEDS_VECTOR: length={message_length} > max_vector")
-                raise MessageProtocolError(f"Message larger than max vector: {message_length} bytes")
+            expected_body_length = 1 + 4 + (vector_length * 4)  # type + vec_len + data
+            if message_length != expected_body_length:
+                self.logger.error(f"MSG_LENGTH_MISMATCH: got {message_length}, expected {expected_body_length}")
+                raise MessageProtocolError(f"Message length mismatch: {message_length} != {expected_body_length}")
             
-            # Receive the rest of the message
-            self.logger.debug(f"RECV_BODY: receiving {message_length} bytes...")
-            message_data = self._receive_exactly(sock, message_length)
-            self.logger.debug(f"RECV_BODY_SUCCESS: received {len(message_data)} bytes")
+            # Receive the vector data (we already have the header)
+            vector_data_size = vector_length * 4
+            self.logger.debug(f"RECV_BODY: receiving {vector_data_size} bytes of vector data...")
+            vector_data = self._receive_exactly(sock, vector_data_size) if vector_data_size > 0 else b''
+            self.logger.debug(f"RECV_BODY_SUCCESS: received {len(vector_data)} bytes")
             
-            # Decode complete message
-            msg_type, vector = self.decode_message(header_data + message_data)
+            # Decode vector
+            vector = list(struct.unpack(f'{vector_length}f', vector_data)) if vector_length > 0 else []
             self.logger.debug(f"DECODE_SUCCESS: type={msg_type}, vector_len={len(vector)}")
             return msg_type, vector
             
