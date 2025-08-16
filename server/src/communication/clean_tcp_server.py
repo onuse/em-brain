@@ -287,19 +287,27 @@ class CleanTCPServer:
                             turn = motors[1]
                             motor_str = f" | thrust={thrust:+.2f} turn={turn:+.2f}"
                     
-                    # Determine brain state
-                    if energy < 0.01:
-                        state = "🧊 dormant"
+                    # Determine brain state based on energy and motor activity
+                    motor_active = False
+                    if hasattr(brain, '_last_motor_commands'):
+                        motors = brain._last_motor_commands
+                        if motors:
+                            motor_active = any(abs(m) > 0.01 for m in motors[:2])  # Check thrust/turn
+                    
+                    if energy < 0.001:
+                        state = "🧘 meditating" if not motor_active else "🚫 error"
+                    elif energy < 0.01:
+                        state = "💭 contemplating" if not motor_active else "🐢 creeping"
                     elif energy < 0.05:
-                        state = "😴 waking"
+                        state = "🤔 deliberating" if not motor_active else "🚶 moving"
                     elif energy < 0.1:
-                        state = "🤔 thinking"
+                        state = "💡 deciding" if not motor_active else "🏃 acting"
                     elif energy < 0.2:
-                        state = "🎯 focused"
+                        state = "🎯 focused" if not motor_active else "🎮 executing"
                     elif energy < 0.3:
-                        state = "⚡ active"
+                        state = "⚡ energized" if not motor_active else "🚀 driven"
                     else:
-                        state = "🔥 intense"
+                        state = "🔥 intense" if not motor_active else "⚠️ overdrive"
                     
                     # Check for interesting patterns
                     if hasattr(brain, 'cycle_count'):

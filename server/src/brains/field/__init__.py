@@ -1,33 +1,45 @@
+# -*- coding: utf-8 -*-
 """
-Field-native brain implementation
-Only PureFieldBrain remains - all complexity eliminated
+Truly Minimal Field Brain Package
+
+Reduced to absolute essentials - ~250 lines total.
+Everything complex emerges from simple physics + intrinsic tensions.
 """
 
-from .pure_field_brain import PureFieldBrain, SCALE_CONFIGS
+from .truly_minimal_brain import TrulyMinimalBrain, MinimalUnifiedBrain, UnifiedFieldBrain
 
-__all__ = ['PureFieldBrain', 'SCALE_CONFIGS']
+# Export main interfaces
+__all__ = [
+    'MinimalUnifiedBrain',
+    'UnifiedFieldBrain',  # Alias for compatibility
+    'create_brain',  # Factory function
+]
 
-# Legacy compatibility
-# These imports exist only for backward compatibility with tests
-try:
-    from .simplified_unified_brain import SimplifiedUnifiedBrain
-except ImportError:
-    SimplifiedUnifiedBrain = PureFieldBrain
 
-try:
-    from .unified_field_brain import UnifiedFieldBrain
-except ImportError:
-    UnifiedFieldBrain = PureFieldBrain
-
-try:
-    from .field_strategic_planner import FieldStrategicPlanner, StrategicPattern
-except ImportError:
-    FieldStrategicPlanner = PureFieldBrain
-    class StrategicPattern:
-        def __init__(self, *args, **kwargs):
-            pass
-
-try:
-    from .evolved_field_dynamics import EvolvedFieldDynamics
-except ImportError:
-    EvolvedFieldDynamics = PureFieldBrain
+def create_brain(
+    sensory_dim: int = 16,
+    motor_dim: int = 5,
+    spatial_resolution: int = 32,
+    device=None,
+    quiet_mode: bool = False
+):
+    """
+    Factory function to create minimal brain
+    
+    Args:
+        sensory_dim: Number of sensors
+        motor_dim: Number of motors
+        spatial_resolution: Spatial resolution (32 = 32³×64 field)
+        device: Specific device to use (auto-selects if None)
+        quiet_mode: Suppress output
+    
+    Returns:
+        MinimalUnifiedBrain instance
+    """
+    return MinimalUnifiedBrain(
+        sensory_dim=sensory_dim,
+        motor_dim=motor_dim,
+        spatial_resolution=spatial_resolution,
+        device=device,
+        quiet_mode=quiet_mode
+    )

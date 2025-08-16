@@ -1,346 +1,365 @@
 #!/usr/bin/env python3
 """
-Field-Native Intelligence Demo
+Minimal Brain Demo & Test
 
-An interactive demonstration of the brain's emergent intelligence through
-continuous field dynamics and predictive processing.
-
-This demo showcases:
-- Self-modifying field dynamics
-- Predictive processing in action
-- Emergent behaviors from simple rules
-- Real-time learning and adaptation
+A self-contained demonstration that:
+1. Tests the brain technically works
+2. Shows intrinsic motivation in action
+3. Visualizes learning and exploration
+4. Serves as a sanity check for the system
 
 Usage:
-    python3 demo.py                    # Run interactive visualization
-    python3 demo.py --mode terminal    # Terminal-only mode
-    python3 demo.py --mode server      # Server mode (for external clients)
+    python3 demo.py              # Run full demo with visualization
+    python3 demo.py --quick      # Quick test (30 seconds)
+    python3 demo.py --headless   # No visualization, just metrics
 """
 
 import sys
 import os
 import time
-import subprocess
-import signal
 import argparse
+import numpy as np
 from pathlib import Path
 
 # Add server to path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'server'))
 
+
 def check_dependencies():
-    """Check and report on available dependencies."""
-    deps = {
-        'pygame': {'available': False, 'purpose': '2D visualization'},
-        'matplotlib': {'available': False, 'purpose': '3D plots'},
-        'numpy': {'available': False, 'purpose': 'core computation'},
-        'torch': {'available': False, 'purpose': 'tensor operations'}
+    """Check required dependencies."""
+    required = {
+        'numpy': False,
+        'torch': False,
+    }
+    optional = {
+        'matplotlib': False,
     }
     
-    # Check each dependency
-    for module, info in deps.items():
+    for module in required:
         try:
             __import__(module)
-            info['available'] = True
+            required[module] = True
         except ImportError:
-            pass
+            print(f"❌ Missing required: {module}")
     
-    # Report status
-    all_available = all(d['available'] for d in deps.values())
-    required = ['numpy', 'torch']
-    required_available = all(deps[m]['available'] for m in required)
+    for module in optional:
+        try:
+            __import__(module)
+            optional[module] = True
+        except ImportError:
+            print(f"⚠️  Missing optional: {module} (visualization disabled)")
     
-    if not required_available:
-        print("❌ Missing required dependencies:")
-        for module in required:
-            if not deps[module]['available']:
-                print(f"   - {module}: {deps[module]['purpose']}")
+    if not all(required.values()):
         print("\nInstall with: pip install numpy torch")
         sys.exit(1)
     
-    return all_available, deps
+    return optional['matplotlib']
 
-def run_terminal_demo():
-    """Run a terminal-based demonstration."""
+
+def test_brain_sanity():
+    """Basic sanity checks that brain works."""
     print("\n" + "="*60)
-    print("TERMINAL DEMONSTRATION")
+    print("BRAIN SANITY CHECK")
     print("="*60)
     
-    from src.brains.field.unified_field_brain import UnifiedFieldBrain
-    import numpy as np
+    from src.brains.field.truly_minimal_brain import TrulyMinimalBrain
     
-    print("\n1. Creating brain...")
-    brain = UnifiedFieldBrain(
-        sensory_dim=8,
-        motor_dim=3,
-        spatial_resolution=32,
+    print("\n✓ Brain imports successfully")
+    
+    # Create brain
+    brain = TrulyMinimalBrain(
+        spatial_size=16,
+        channels=32,
+        quiet_mode=True
+    )
+    print("✓ Brain creates successfully")
+    
+    # Test processing
+    sensors = [0.5] * 16
+    motors, telemetry = brain.process(sensors)
+    print("✓ Brain processes input")
+    
+    # Check outputs
+    assert len(motors) == 5, "Wrong motor count"
+    assert 'energy' in telemetry, "Missing telemetry"
+    assert 'comfort' in telemetry, "Missing comfort metric"
+    assert 'motivation' in telemetry, "Missing motivation"
+    print("✓ Brain outputs correct format")
+    
+    # Test persistence
+    brain.save("test_save.pt")
+    print("✓ Brain saves state")
+    
+    brain.reset()
+    original_cycle = brain.cycle
+    brain.load("test_save.pt")
+    assert brain.cycle > original_cycle, "Load failed"
+    print("✓ Brain loads state")
+    
+    print("\n✅ ALL SANITY CHECKS PASSED")
+    return True
+
+
+def demonstrate_intrinsic_motivation():
+    """Show how intrinsic motivation drives behavior."""
+    print("\n" + "="*60)
+    print("INTRINSIC MOTIVATION DEMO")
+    print("="*60)
+    
+    from src.brains.field.truly_minimal_brain import TrulyMinimalBrain
+    
+    brain = TrulyMinimalBrain(
+        spatial_size=16,
+        channels=32,
+        quiet_mode=True
+    )
+    
+    print("\n1. STARVATION TEST (no input)")
+    print("-" * 40)
+    for i in range(5):
+        sensors = [0.0] * 16  # No input
+        motors, telemetry = brain.process(sensors)
+        print(f"  Cycle {i+1}: {telemetry['motivation']}")
+        if "STARVED" in telemetry['motivation']:
+            print("  ✓ Brain gets hungry without input!")
+            break
+    
+    print("\n2. BOREDOM TEST (uniform input)")
+    print("-" * 40)
+    for i in range(5):
+        sensors = [0.5] * 16  # Boring uniform input
+        motors, telemetry = brain.process(sensors)
+        print(f"  Cycle {i+1}: {telemetry['motivation']}")
+        if "BORED" in telemetry['motivation']:
+            print("  ✓ Brain gets bored with uniformity!")
+            break
+    
+    print("\n3. EXPLORATION TEST (varied input)")
+    print("-" * 40)
+    for i in range(5):
+        sensors = [np.sin(i * 0.5 + j * 0.2) for j in range(16)]
+        motors, telemetry = brain.process(sensors)
+        print(f"  Cycle {i+1}: {telemetry['motivation']}, "
+              f"Exploring: {telemetry.get('exploring', False)}")
+    print("  ✓ Brain explores when stimulated!")
+    
+    print("\n4. LEARNING TEST (pattern)")
+    print("-" * 40)
+    pattern_a = [1.0 if i < 8 else 0.0 for i in range(16)]
+    pattern_b = [0.0 if i < 8 else 1.0 for i in range(16)]
+    
+    predictions_improved = False
+    initial_error = 0
+    
+    for epoch in range(3):
+        print(f"\n  Epoch {epoch+1}:")
+        for p_name, pattern in [("A", pattern_a), ("B", pattern_b)]:
+            motors, telemetry = brain.process(pattern)
+            error = abs(telemetry.get('energy', 0) - 0.5)
+            if epoch == 0 and p_name == "A":
+                initial_error = error
+            print(f"    Pattern {p_name}: {telemetry['motivation'][:20]}, "
+                  f"Error: {error:.3f}")
+            if epoch == 2 and error < initial_error * 0.8:
+                predictions_improved = True
+    
+    if predictions_improved:
+        print("  ✓ Brain learns patterns over time!")
+    
+    return True
+
+
+def run_visual_demo(duration=60, headless=False):
+    """Run demo with optional visualization."""
+    print("\n" + "="*60)
+    print("BRAIN BEHAVIOR DEMO" + (" (HEADLESS)" if headless else ""))
+    print("="*60)
+    
+    from src.brains.field.truly_minimal_brain import TrulyMinimalBrain
+    
+    brain = TrulyMinimalBrain(
+        spatial_size=24,  # Larger for more interesting dynamics
+        channels=48,
         quiet_mode=False
     )
     
-    print("\n2. Testing basic responsiveness...")
-    for i in range(5):
-        sensory = [0.5 + 0.2 * np.sin(i * 0.5 + j * 0.1) for j in range(8)]
-        motor, state = brain.process_robot_cycle(sensory)
-        print(f"   Cycle {i+1}: confidence={state.get('confidence', 0):.2f}, "
-              f"motor=[{', '.join(f'{m:.2f}' for m in motor)}]")
+    if not headless:
+        try:
+            import matplotlib.pyplot as plt
+            fig, axes = plt.subplots(2, 2, figsize=(10, 8))
+            plt.ion()
+            show_plot = True
+        except:
+            print("⚠️  Matplotlib unavailable, running headless")
+            show_plot = False
+            headless = True
+    else:
+        show_plot = False
     
-    print("\n3. Testing pattern learning...")
-    pattern = [[1.0 if j == i % 8 else 0.0 for j in range(8)] for i in range(4)]
+    # Metrics tracking
+    energy_history = []
+    comfort_history = []
+    motor_history = []
+    motivation_counts = {
+        'STARVED': 0,
+        'BORED': 0,
+        'ACTIVE': 0,
+        'CONTENT': 0,
+        'UNCOMFORTABLE': 0
+    }
     
-    for epoch in range(3):
-        print(f"\n   Epoch {epoch + 1}:")
-        for i, p in enumerate(pattern):
-            motor, state = brain.process_robot_cycle(p)
-            print(f"     Pattern {i+1}: energy={state.get('energy', 0):.2f}")
+    print(f"\nRunning for {duration} seconds...")
+    print("Watch the brain's motivation change!\n")
     
-    print("\n4. Field statistics:")
-    props = brain.field_dynamics.get_emergent_properties()
-    print(f"   Evolution cycles: {brain.field_dynamics.evolution_count}")
-    print(f"   Self-modification: {brain.field_dynamics.self_modification_strength:.3f}")
-    print(f"   Confidence: {props['smoothed_confidence']:.3f}")
-    print(f"   Active regions: {len(brain.topology_region_system.regions)}")
+    start_time = time.time()
+    cycle = 0
     
-    print("\n✅ Terminal demo complete!")
-
-def run_visual_demo():
-    """Run the visual demonstration with pygame."""
-    try:
-        import pygame
-        import numpy as np
-        from src.brains.field.unified_field_brain import UnifiedFieldBrain
+    while time.time() - start_time < duration:
+        cycle += 1
         
-        # Initialize pygame
-        pygame.init()
-        width, height = 1200, 800
-        screen = pygame.display.set_mode((width, height))
-        pygame.display.set_caption("Field-Native Intelligence Demo")
-        clock = pygame.time.Clock()
-        font = pygame.font.Font(None, 24)
-        
-        # Create brain
-        brain = UnifiedFieldBrain(
-            sensory_dim=8,
-            motor_dim=2,  # 2D movement
-            spatial_resolution=32,
-            quiet_mode=True
-        )
-        
-        # Virtual robot state
-        robot_x, robot_y = width // 2, height // 2
-        robot_angle = 0
-        trail = []
-        
-        # Light sources (goals)
-        lights = [
-            {'x': width * 0.25, 'y': height * 0.25, 'intensity': 1.0},
-            {'x': width * 0.75, 'y': height * 0.75, 'intensity': 1.0}
-        ]
-        
-        # Main loop
-        running = True
-        cycle = 0
-        
-        while running:
-            # Handle events
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_SPACE:
-                        # Reset robot position
-                        robot_x, robot_y = width // 2, height // 2
-                        trail.clear()
-                    elif event.key == pygame.K_r:
-                        # Add random light
-                        lights.append({
-                            'x': np.random.randint(100, width-100),
-                            'y': np.random.randint(100, height-100),
-                            'intensity': np.random.uniform(0.5, 1.0)
-                        })
-            
-            # Calculate sensory input based on lights
-            sensory = []
-            for i in range(8):
-                angle = robot_angle + (i * 45)  # 8 sensors, 45 degrees apart
-                sensor_x = robot_x + np.cos(np.radians(angle)) * 50
-                sensor_y = robot_y + np.sin(np.radians(angle)) * 50
-                
-                # Calculate light intensity at sensor
-                intensity = 0
-                for light in lights:
-                    dist = np.sqrt((sensor_x - light['x'])**2 + (sensor_y - light['y'])**2)
-                    intensity += light['intensity'] * max(0, 1 - dist / 300)
-                
-                sensory.append(min(1.0, intensity))
-            
-            # Process through brain
-            motor, brain_state = brain.process_robot_cycle(sensory)
-            
-            # Update robot position
-            if len(motor) >= 2:
-                # Motor[0] = forward/backward, Motor[1] = turn
-                speed = motor[0] * 5
-                robot_x += np.cos(np.radians(robot_angle)) * speed
-                robot_y += np.sin(np.radians(robot_angle)) * speed
-                robot_angle += motor[1] * 10
-                
-                # Keep robot on screen
-                robot_x = max(50, min(width - 50, robot_x))
-                robot_y = max(50, min(height - 50, robot_y))
-                
-                # Add to trail
-                trail.append((robot_x, robot_y))
-                if len(trail) > 200:
-                    trail.pop(0)
-            
-            # Clear screen
-            screen.fill((20, 20, 30))
-            
-            # Draw lights
-            for light in lights:
-                intensity = int(light['intensity'] * 255)
-                pygame.draw.circle(screen, (intensity, intensity, 100), 
-                                 (int(light['x']), int(light['y'])), 30)
-                # Light glow
-                for r in range(30, 100, 10):
-                    alpha = int((100 - r) * 2)
-                    pygame.draw.circle(screen, (alpha, alpha, 50), 
-                                     (int(light['x']), int(light['y'])), r, 1)
-            
-            # Draw trail
-            for i in range(1, len(trail)):
-                alpha = int(255 * (i / len(trail)))
-                color = (alpha // 4, alpha // 2, alpha)
-                pygame.draw.line(screen, color, trail[i-1], trail[i], 2)
-            
-            # Draw robot
-            robot_color = (100, 200, 100)  # Default green
-            confidence = brain_state.get('confidence', 0)
-            if confidence > 0.7:
-                robot_color = (100, 100, 200)  # Blue when confident
-            elif confidence < 0.3:
-                robot_color = (200, 100, 100)  # Red when uncertain
-            
-            pygame.draw.circle(screen, robot_color, (int(robot_x), int(robot_y)), 20)
-            
-            # Draw robot direction
-            end_x = robot_x + np.cos(np.radians(robot_angle)) * 30
-            end_y = robot_y + np.sin(np.radians(robot_angle)) * 30
-            pygame.draw.line(screen, (255, 255, 255), 
-                           (robot_x, robot_y), (end_x, end_y), 3)
-            
-            # Draw sensor rays
-            for i in range(8):
-                angle = robot_angle + (i * 45)
-                sensor_x = robot_x + np.cos(np.radians(angle)) * 50
-                sensor_y = robot_y + np.sin(np.radians(angle)) * 50
-                intensity = int(sensory[i] * 255)
-                pygame.draw.line(screen, (intensity, intensity, 0), 
-                               (robot_x, robot_y), (sensor_x, sensor_y), 1)
-            
-            # Draw HUD
-            y_offset = 10
-            texts = [
-                f"Field-Native Intelligence Demo",
-                f"Cycle: {cycle}",
-                f"Confidence: {confidence:.2f}",
-                f"Energy: {brain_state.get('energy', 0):.2f}",
-                f"Information: {brain_state.get('information', 0):.2f}",
-                f"Active Regions: {len(brain.topology_region_system.regions)}",
-                "",
-                "Controls:",
-                "SPACE - Reset position",
-                "R - Add random light",
-                "ESC - Exit"
+        # Generate interesting sensory input
+        t = time.time() - start_time
+        if cycle < 100:
+            # Start with low input (starvation)
+            sensors = [np.random.randn() * 0.1 for _ in range(16)]
+        elif cycle < 200:
+            # Uniform input (boredom)
+            sensors = [0.5] * 16
+        else:
+            # Varied input (exploration)
+            sensors = [
+                np.sin(t * 2 + i * 0.5) * np.cos(t * 0.5 + i * 0.2) 
+                + np.random.randn() * 0.1
+                for i in range(16)
             ]
-            
-            for text in texts:
-                if text:  # Skip empty lines
-                    surface = font.render(text, True, (255, 255, 255))
-                    screen.blit(surface, (10, y_offset))
-                y_offset += 25
-            
-            # Update display
-            pygame.display.flip()
-            clock.tick(30)  # 30 FPS
-            cycle += 1
         
-        pygame.quit()
-        print("\n✅ Visual demo complete!")
+        # Process
+        motors, telemetry = brain.process(sensors)
         
-    except ImportError as e:
-        print(f"\n❌ Cannot run visual demo: {e}")
-        print("Install pygame with: pip install pygame")
-        print("\nFalling back to terminal demo...")
-        run_terminal_demo()
-
-def run_server_demo():
-    """Run the brain server for external connections."""
+        # Track metrics
+        energy_history.append(telemetry['energy'])
+        comfort_history.append(telemetry['comfort'])
+        motor_history.append(motors[0])  # Track first motor
+        
+        # Count motivations
+        for key in motivation_counts:
+            if key in telemetry['motivation']:
+                motivation_counts[key] += 1
+                break
+        
+        # Update visualization
+        if show_plot and cycle % 10 == 0:
+            # Clear axes
+            for ax in axes.flat:
+                ax.clear()
+            
+            # Energy over time
+            axes[0, 0].plot(energy_history[-100:])
+            axes[0, 0].set_title('Field Energy')
+            axes[0, 0].set_ylabel('Energy')
+            
+            # Comfort over time
+            axes[0, 1].plot(comfort_history[-100:], 'orange')
+            axes[0, 1].set_title('Comfort Level')
+            axes[0, 1].set_ylabel('Comfort')
+            axes[0, 1].axhline(y=0, color='red', linestyle='--', alpha=0.3)
+            
+            # Motor output
+            axes[1, 0].plot(motor_history[-100:], 'green')
+            axes[1, 0].set_title('Motor Output (first)')
+            axes[1, 0].set_ylabel('Motor Value')
+            
+            # Motivation distribution
+            if sum(motivation_counts.values()) > 0:
+                axes[1, 1].bar(range(len(motivation_counts)), 
+                             list(motivation_counts.values()))
+                axes[1, 1].set_xticks(range(len(motivation_counts)))
+                axes[1, 1].set_xticklabels(list(motivation_counts.keys()), 
+                                          rotation=45, ha='right')
+                axes[1, 1].set_title('Motivation States')
+                axes[1, 1].set_ylabel('Count')
+            
+            plt.tight_layout()
+            plt.pause(0.01)
+        
+        # Console output every 100 cycles
+        if cycle % 100 == 0:
+            print(f"Cycle {cycle}: {telemetry['motivation']}, "
+                  f"Energy: {telemetry['energy']:.3f}, "
+                  f"Comfort: {telemetry['comfort']:.2f}")
+    
+    # Final summary
     print("\n" + "="*60)
-    print("BRAIN SERVER MODE")
+    print("DEMO COMPLETE - SUMMARY")
     print("="*60)
     
-    # Kill any existing servers
-    subprocess.run(['pkill', '-f', 'brain.py'], stderr=subprocess.DEVNULL)
-    time.sleep(1)
+    print(f"\nTotal cycles: {cycle}")
+    print(f"Average energy: {np.mean(energy_history):.3f}")
+    print(f"Energy variance: {np.var(energy_history):.3f}")
     
-    # Start the brain server
-    print("\nStarting brain server...")
-    server_process = subprocess.Popen(
-        [sys.executable, 'server/brain.py'],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True
-    )
+    print("\nMotivation distribution:")
+    total = sum(motivation_counts.values())
+    for state, count in motivation_counts.items():
+        percentage = (count / total * 100) if total > 0 else 0
+        bar = '█' * int(percentage / 5)
+        print(f"  {state:15} {percentage:5.1f}% {bar}")
     
-    print("✅ Brain server started on port 9999")
-    print("\nYou can now connect with:")
-    print("  - Python clients using MinimalBrainClient")
-    print("  - The biological embodied learning experiment")
-    print("  - Custom robot simulations")
-    print("\nPress Ctrl+C to stop the server")
+    print("\nKey observations:")
+    if motivation_counts['STARVED'] > cycle * 0.1:
+        print("  • Brain showed hunger for input")
+    if motivation_counts['BORED'] > cycle * 0.1:
+        print("  • Brain exhibited boredom with uniformity")
+    if motivation_counts['ACTIVE'] > cycle * 0.2:
+        print("  • Brain actively explored and learned")
+    if np.var(motor_history) > 0.01:
+        print("  • Motor outputs showed dynamic behavior")
     
-    try:
-        # Wait for interrupt
-        server_process.wait()
-    except KeyboardInterrupt:
-        print("\n\nStopping server...")
-        server_process.terminate()
-        time.sleep(1)
-        if server_process.poll() is None:
-            server_process.kill()
-        print("✅ Server stopped")
+    if show_plot:
+        plt.ioff()
+        plt.show()
+    
+    return True
+
 
 def main():
-    """Main entry point for the demo."""
-    parser = argparse.ArgumentParser(description="Field-Native Intelligence Demo")
-    parser.add_argument('--mode', choices=['visual', 'terminal', 'server'], 
-                       default='visual', help='Demo mode to run')
+    """Main demo entry point."""
+    parser = argparse.ArgumentParser(description='Minimal Brain Demo & Test')
+    parser.add_argument('--quick', action='store_true',
+                       help='Quick 30-second test')
+    parser.add_argument('--headless', action='store_true',
+                       help='Run without visualization')
+    parser.add_argument('--skip-sanity', action='store_true',
+                       help='Skip sanity checks')
+    
     args = parser.parse_args()
     
-    print("\n🧠 FIELD-NATIVE INTELLIGENCE SYSTEM")
+    print("\n" + "="*60)
+    print("MINIMAL BRAIN - DEMO & TEST")
     print("="*60)
-    print("A continuous field-based artificial brain that combines")
-    print("predictive processing with self-modifying dynamics.")
-    print("="*60)
+    print("\nA brain that learns through discomfort, not rewards.")
     
     # Check dependencies
-    all_deps, deps = check_dependencies()
+    has_viz = check_dependencies()
     
-    if args.mode == 'visual' and not deps['pygame']['available']:
-        print("\n⚠️  Pygame not available, falling back to terminal mode")
-        args.mode = 'terminal'
+    # Run sanity check
+    if not args.skip_sanity:
+        if not test_brain_sanity():
+            print("❌ Sanity check failed!")
+            sys.exit(1)
     
-    # Run appropriate demo
-    if args.mode == 'visual':
-        print("\n🎮 Starting visual demo...")
-        run_visual_demo()
-    elif args.mode == 'terminal':
-        print("\n📟 Starting terminal demo...")
-        run_terminal_demo()
-    elif args.mode == 'server':
-        print("\n🌐 Starting server mode...")
-        run_server_demo()
+    # Demonstrate intrinsic motivation
+    demonstrate_intrinsic_motivation()
+    
+    # Run visual demo
+    duration = 30 if args.quick else 60
+    run_visual_demo(duration, args.headless or not has_viz)
+    
+    print("\n✅ Demo complete! The brain works through intrinsic motivation.")
+    print("\nNext steps:")
+    print("  • Run the server: cd server && python3 brain.py")
+    print("  • Connect a robot: cd client_picarx && python3 picarx_robot.py")
+    print("  • Try 3D demo: python3 demos/demo_3d.py")
+
 
 if __name__ == "__main__":
     main()

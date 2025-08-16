@@ -180,10 +180,17 @@ class SensorFieldInjectionManager:
         
         # Get reference to first level field (where injection happens)
         if hasattr(brain, 'levels') and len(brain.levels) > 0:
-            self.field = brain.levels[0].field
-        else:
+            # Check if levels contains objects with .field or tensors directly
+            first_level = brain.levels[0]
+            if hasattr(first_level, 'field'):
+                self.field = first_level.field  # PureFieldBrain style
+            else:
+                self.field = first_level  # UnifiedFieldBrain style (tensor directly)
+        elif hasattr(brain, 'field'):
             # Fallback for single-level brain
             self.field = brain.field
+        else:
+            raise AttributeError("Brain has no accessible field tensor")
         
         print(f"📍 Field injection ready. Field shape: {self.field.shape}")
     

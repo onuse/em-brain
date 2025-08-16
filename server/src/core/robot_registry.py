@@ -9,7 +9,7 @@ import uuid
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 
-from .interfaces import IRobotRegistry, Robot, SensorChannel, MotorChannel
+from server.src.core.interfaces import IRobotRegistry, Robot, SensorChannel, MotorChannel
 
 
 class RobotRegistry(IRobotRegistry):

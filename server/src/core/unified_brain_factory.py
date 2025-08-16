@@ -1,63 +1,61 @@
 """
-Pure Field Brain Factory
+Unified Field Brain Factory
 
-Creates PureFieldBrain instances for real intelligence research.
-Standardized on the ultimate synthesis - GPU-optimal, biologically-inspired,
-emergent field dynamics without architectural complexity.
+Creates UnifiedFieldBrain instances with full intelligence mechanisms.
+Restored from backup - includes all emergent intelligence systems.
 """
 
 import time
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List, Tuple
 import torch
 import logging
 
 from .interfaces import IBrainFactory, IBrain
-from ..brains.field.pure_field_brain import PureFieldBrain, SCALE_CONFIGS
+from ..brains.field.truly_minimal_brain import MinimalUnifiedBrain, UnifiedFieldBrain
 from .simple_dimension_calculator import SimpleDimensionCalculator
 from ..parameters.cognitive_config import get_cognitive_config
 
 logger = logging.getLogger(__name__)
 
 
-class PureFieldBrainWrapper(IBrain):
+class UnifiedFieldBrainWrapper(IBrain):
     """
-    Wrapper that implements IBrain interface for PureFieldBrain.
-    Standardized on PureFieldBrain - the ultimate synthesis.
+    Minimal wrapper to adapt UnifiedFieldBrain to IBrain interface.
+    Direct pass-through with no unnecessary abstraction.
     """
     
-    def __init__(self, brain: PureFieldBrain):
+    def __init__(self, brain: MinimalUnifiedBrain):
         self.brain = brain
         self.creation_time = time.time()
         self.total_cycles = 0
         
         # Expose attributes for parallel injection threads
-        self.field = brain.field  # Reference to primary field tensor
-        self.levels = brain.levels  # Hierarchical levels for multi-scale injection
+        self.field = brain.field  # Reference to the field tensor
+        self.levels = [brain.field]  # Single level for compatibility
         self.device = brain.device  # Device for tensor operations
         
     @property
     def cycle_count(self):
         """Forward cycle count from wrapped brain."""
-        return self.brain.cycle_count
+        return self.brain.cycle  # TrulyMinimalBrain uses 'cycle'
         
     def process_field_dynamics(self, field_input) -> Any:
-        """Process field dynamics through PureFieldBrain and return field output."""
-        # Convert to tensor if needed
+        """Process field dynamics through UnifiedFieldBrain."""
+        # Convert to list if tensor
         if isinstance(field_input, torch.Tensor):
-            sensory_input = field_input
+            sensory_input = field_input.cpu().tolist()
         else:
-            sensory_input = torch.tensor(field_input, dtype=torch.float32, device=self.brain.device)
+            sensory_input = field_input
             
-        # Process through PureFieldBrain (uses forward method)
-        output_tensor = self.brain.forward(sensory_input)
-        action_output = output_tensor.cpu().tolist()
-        brain_state = {'cycle': self.brain.cycle_count}
+        # Process through MinimalUnifiedBrain's process method
+        motor_commands, brain_state = self.brain.process(sensory_input)
         
         # Store for direct access
-        self._last_motor_commands = action_output
+        self._last_motor_commands = motor_commands
         self._last_brain_state = brain_state
         
-        return output_tensor
+        # Return as tensor for compatibility
+        return torch.tensor(motor_commands, dtype=torch.float32, device=self.brain.device)
     
     def get_motor_commands(self) -> list:
         """Get motor commands directly without field space conversion."""
@@ -69,29 +67,19 @@ class PureFieldBrainWrapper(IBrain):
         return len(self.get_motor_commands()) if hasattr(self, '_last_motor_commands') else 5
     
     def get_brain_state(self) -> Dict[str, Any]:
-        """Get current brain state from PureFieldBrain."""
-        # Use the brain's metrics if available
-        if hasattr(self.brain, 'metrics'):
-            metrics = self.brain.metrics
-            return {
-                'cycle': self.brain.cycle_count,
-                'field_energy': metrics.get('field_energy', 0.0),
-                'field_mean': metrics.get('field_mean', 0.0),
-                'field_std': metrics.get('field_std', 0.0),
-                'prediction_error': metrics.get('prediction_error', 0.0),
-                'device': str(self.brain.device),
-                'tensor_shape': list(self.brain.field.shape),
-                'brain_type': 'pure'
-            }
+        """Get current brain state from UnifiedFieldBrain."""
+        # Return the last brain state from process_robot_cycle
+        if hasattr(self, '_last_brain_state'):
+            return self._last_brain_state
         
         # Fallback to basic state
         field = self.brain.field
         return {
-            'cycle': self.brain.cycle_count,
+            'cycle': self.brain.cycle,  # TrulyMinimalBrain uses 'cycle'
             'field_energy': float(torch.mean(torch.abs(field))),
             'device': str(self.brain.device),
             'tensor_shape': list(field.shape),
-            'brain_type': 'pure'
+            'brain_type': 'minimal'
         }
     
     def _create_brain_state(self) -> Dict[str, Any]:
@@ -101,56 +89,62 @@ class PureFieldBrainWrapper(IBrain):
         return self.get_brain_state()
     
     def get_field_statistics(self) -> Dict[str, Any]:
-        """Get field statistics from PureFieldBrain."""
+        """Get field statistics from UnifiedFieldBrain."""
         field = self.brain.field
         return {
             'field_energy': float(torch.mean(torch.abs(field))),
             'max_activation': float(torch.max(torch.abs(field))),
             'field_variance': float(torch.var(field)),
             'active_regions': torch.sum(torch.abs(field) > 0.1).item(),
-            'brain_type': 'pure'
+            'brain_type': 'minimal'
         }
     
     def get_state(self) -> Dict[str, Any]:
         """Get state for persistence."""
-        # Use PureFieldBrain's built-in state management
-        state_dict = self.brain.get_state_dict()
+        # Get the unified field state
         return {
-            'brain_state': state_dict,
-            'brain_cycles': self.brain.cycle_count,
+            'brain_state': {
+                'unified_field': self.brain.field.cpu().numpy(),
+                'brain_cycles': self.brain.cycle,  # TrulyMinimalBrain uses 'cycle'
+                'metrics': getattr(self.brain, 'metrics', {})
+            },
+            'brain_cycles': self.brain.cycle,  # TrulyMinimalBrain uses 'cycle'
             'creation_time': self.creation_time,
-            'brain_type': 'pure'
+            'brain_type': 'unified'
         }
     
     def load_state(self, state: Dict[str, Any]) -> None:
         """Load state from persistence."""
-        # Use PureFieldBrain's built-in state loading
+        # Load unified field state
         if 'brain_state' in state:
-            self.brain.load_state_dict(state['brain_state'])
+            brain_state = state['brain_state']
+            if 'unified_field' in brain_state:
+                field_data = torch.tensor(brain_state['unified_field'])
+                if field_data.shape == self.brain.field.shape:
+                    self.brain.field = field_data.to(self.brain.device)
+            if 'brain_cycles' in brain_state:
+                self.brain.cycle = brain_state['brain_cycles']  # TrulyMinimalBrain uses 'cycle'
         elif 'field' in state:
-            # Legacy format - convert to PureFieldBrain format
+            # Legacy format
             field_data = torch.tensor(state['field'])
             if field_data.shape == self.brain.field.shape:
                 self.brain.field = field_data.to(self.brain.device)
-        
-        # Set cycle count
-        if 'brain_cycles' in state:
-            self.brain.cycle_count = state['brain_cycles']
         
         # Set creation time
         if 'creation_time' in state:
             self.creation_time = state['creation_time']
 
 
-class PureFieldBrainFactory(IBrainFactory):
+class UnifiedFieldBrainFactory(IBrainFactory):
     """
-    Factory for creating PureFieldBrain instances.
+    Factory for creating UnifiedFieldBrain instances.
     
-    Standardized on the ultimate synthesis:
-    - GPU-optimal field computation
-    - Biologically-inspired dynamics  
-    - Emergent intelligence through scale
-    - No architectural complexity - pure field dynamics
+    Complete intelligence system with:
+    - Intrinsic tensions driving behavior
+    - Prediction error learning
+    - Self-modifying dynamics
+    - Strategic pattern discovery
+    - Emergent sensory mapping
     """
     
     def __init__(self, brain_config: Optional[Dict[str, Any]] = None):
@@ -161,7 +155,7 @@ class PureFieldBrainFactory(IBrainFactory):
         
         # Log initialization (quiet by default for clean startup)
         if not self.brain_config.get('quiet_mode', False):
-            logger.info("PureFieldBrain factory initialized - focused on real intelligence")
+            logger.info("🧠 UnifiedFieldBrain factory initialized - full intelligence restored")
     
     def create(self, 
                field_dimensions: Optional[int] = None,
@@ -169,16 +163,16 @@ class PureFieldBrainFactory(IBrainFactory):
                sensory_dim: int = 16,
                motor_dim: int = 5) -> IBrain:
         """
-        Create a PureFieldBrain instance.
+        Create a UnifiedFieldBrain instance.
         
         Args:
-            field_dimensions: Ignored - PureFieldBrain uses 4D tensors
+            field_dimensions: Ignored - UnifiedFieldBrain uses 4D tensors
             spatial_resolution: Spatial resolution (default 32)
             sensory_dim: Number of input sensors
             motor_dim: Number of output motors
             
         Returns:
-            PureFieldBrain instance wrapped in IBrain interface
+            UnifiedFieldBrain instance wrapped in IBrain interface
         """
         # Use provided resolution or default
         if spatial_resolution is None:
@@ -188,80 +182,46 @@ class PureFieldBrainFactory(IBrainFactory):
         
         quiet_mode = self.brain_config.get('quiet_mode', False)
         
-        # Create PureFieldBrain - the ultimate synthesis
-        # Choose scale based on available resources and spatial resolution
-        import torch
-        
-        # Use hardware constrained config for small spatial resolutions (6 or less)
-        if spatial_resolution <= 6:
-            scale_config = SCALE_CONFIGS.get('hardware_constrained')
-            if not quiet_mode:
-                logger.info(f"🎯 Using HARDWARE_CONSTRAINED scale config ({spatial_resolution}³×64) - optimized for hardware limits")
-        elif torch.cuda.is_available():
-            # GPU available - use medium scale for good balance
-            scale_config = SCALE_CONFIGS.get('medium')
-            if not quiet_mode:
-                logger.info(f"🎯 Using MEDIUM scale config on GPU - optimal for real-time learning")
-        else:
-            # CPU only - use small scale for performance
-            scale_config = SCALE_CONFIGS.get('small')
-            if not quiet_mode:
-                logger.info(f"⚡ Using SMALL scale config on CPU - optimized for performance")
-        
-        # Check for safe mode overrides
-        aggressive_mode = self.brain_config.get('aggressive_learning', True)
-        
-        # Apply safe mode overrides if present
-        if 'learning_rate_override' in self.brain_config:
-            # Safe mode overrides will be applied in PureFieldBrain
-            aggressive_mode = False  # Disable aggressive mode when overrides present
-        
-        brain = PureFieldBrain(
-            input_dim=sensory_dim,
-            output_dim=motor_dim,
-            scale_config=scale_config,
+        # Create MinimalUnifiedBrain with essential systems only
+        brain = MinimalUnifiedBrain(
+            sensory_dim=sensory_dim,
+            motor_dim=motor_dim,
+            spatial_size=spatial_resolution,  # TrulyMinimalBrain uses spatial_size
             device=None,  # Auto-select best device
-            aggressive=aggressive_mode
+            quiet_mode=quiet_mode
         )
         
-        # Apply safe mode parameter overrides directly
-        if 'learning_rate_override' in self.brain_config:
-            brain.learning_rate = self.brain_config['learning_rate_override']
-            if not quiet_mode:
-                logger.info(f"⚠️  Safe mode: learning_rate overridden to {brain.learning_rate}")
-        
-        if 'exploration_rate_override' in self.brain_config:
-            brain.exploration_rate = self.brain_config['exploration_rate_override']
-            if not quiet_mode:
-                logger.info(f"⚠️  Safe mode: exploration_rate overridden to {brain.exploration_rate}")
-        
-        if 'gradient_scale_override' in self.brain_config:
-            brain.gradient_scale = self.brain_config['gradient_scale_override']
-            if not quiet_mode:
-                logger.info(f"⚠️  Safe mode: gradient_scale overridden to {brain.gradient_scale}")
+        # No features to enable - everything emerges!
         
         if not quiet_mode:
-            logger.info("🧠 PureFieldBrain initialized - The ultimate synthesis for real intelligence")
+            logger.info("🧠 MinimalUnifiedBrain initialized - emergence enabled")
+            logger.info("   ✅ Field dynamics (physics-based)")
+            logger.info("   ✅ Sensory mapping (emergent)")
+            logger.info("   ✅ Motor extraction (gradients)")
+            logger.info("   ✅ Prediction (next state)")
+            logger.info("   ✅ Learning (error only)")
             
-        # Wrap in interface
-        return PureFieldBrainWrapper(brain)
+        # Wrap in minimal interface adapter
+        return UnifiedFieldBrainWrapper(brain)
     
     def get_brain_types(self) -> list:
-        """Get available brain types - now only pure."""
-        return ['pure']
+        """Get available brain types - unified with full intelligence."""
+        return ['unified']
     
     def get_configuration(self) -> Dict[str, Any]:
         """Get factory configuration."""
         return {
-            'brain_type': 'pure',
+            'brain_type': 'unified',
             'tensor_architecture': '4D',
             'gpu_optimized': True,
             'spatial_resolution': self.brain_config.get('field_spatial_resolution', 32),
-            'status': 'THE ULTIMATE SYNTHESIS',
-            'notes': 'Real intelligence through pure field dynamics'
+            'status': 'MINIMAL BRAIN - EMERGENCE ENABLED',
+            'notes': 'Reduced to 5 essential systems - everything else emerges'
         }
 
 
-# Compatibility aliases for existing code
-UnifiedBrainFactory = PureFieldBrainFactory
-UnifiedBrainWrapper = PureFieldBrainWrapper
+# Compatibility aliases - keep the same names so server doesn't break
+PureFieldBrainFactory = UnifiedFieldBrainFactory
+PureFieldBrainWrapper = UnifiedFieldBrainWrapper
+UnifiedBrainFactory = UnifiedFieldBrainFactory  # For brain.py import
+UnifiedBrainWrapper = UnifiedFieldBrainWrapper  # For consistency

@@ -210,12 +210,26 @@ class VisionFieldInjector:
             field_w = spatial[1].stop - spatial[1].start
             field_d = spatial[2].stop - spatial[2].start
             
-            # Create visual feature tensor
-            features = torch.zeros(field_h, field_w, field_d, 16)
+            # Create visual feature tensor on same device as field
+            device = self.field.device
+            features = torch.zeros(field_h, field_w, field_d, 16, device=device)
             
             # Channel 0-3: Raw intensity at different depths
             for d in range(min(4, field_d)):
-                features[:, :, d, 0] = torch.from_numpy(image) * (1.0 - d*0.2)
+                # Resize image to field dimensions if needed
+                if image.shape != (field_h, field_w):
+                    try:
+                        from PIL import Image
+                        img_pil = Image.fromarray((image * 255).astype(np.uint8))
+                        img_resized = img_pil.resize((field_w, field_h), Image.BILINEAR)
+                        img_array = np.array(img_resized) / 255.0
+                    except ImportError:
+                        # Fallback to simple averaging if PIL not available
+                        import cv2
+                        img_array = cv2.resize(image, (field_w, field_h), interpolation=cv2.INTER_LINEAR)
+                else:
+                    img_array = image
+                features[:, :, d, 0] = torch.from_numpy(img_array.astype(np.float32)).to(device) * (1.0 - d*0.2)
             
             # Channel 4-7: Edge detection (simple gradients)
             if image.shape[0] > 1 and image.shape[1] > 1:
@@ -226,31 +240,70 @@ class VisionFieldInjector:
                 dy = np.pad(dy, ((0,1), (0,0)), mode='edge')
                 dx = np.pad(dx, ((0,0), (0,1)), mode='edge')
                 
+                # Resize gradients to field dimensions
+                if dy.shape != (field_h, field_w):
+                    try:
+                        from PIL import Image
+                        dy_img = Image.fromarray((np.abs(dy) * 255).astype(np.uint8))
+                        dy_resized = dy_img.resize((field_w, field_h), Image.BILINEAR)
+                        dy = np.array(dy_resized) / 255.0
+                        
+                        dx_img = Image.fromarray((np.abs(dx) * 255).astype(np.uint8))
+                        dx_resized = dx_img.resize((field_w, field_h), Image.BILINEAR)
+                        dx = np.array(dx_resized) / 255.0
+                    except ImportError:
+                        import cv2
+                        dy = cv2.resize(np.abs(dy), (field_w, field_h), interpolation=cv2.INTER_LINEAR)
+                        dx = cv2.resize(np.abs(dx), (field_w, field_h), interpolation=cv2.INTER_LINEAR)
+                
                 # Inject gradients
-                features[:, :, 0, 4] = torch.from_numpy(np.abs(dy))
-                features[:, :, 0, 5] = torch.from_numpy(np.abs(dx))
+                features[:, :, 0, 4] = torch.from_numpy(np.abs(dy).astype(np.float32)).to(device)
+                features[:, :, 0, 5] = torch.from_numpy(np.abs(dx).astype(np.float32)).to(device)
                 
                 # Magnitude
                 magnitude = np.sqrt(dy**2 + dx**2)
-                features[:, :, 0, 6] = torch.from_numpy(magnitude)
+                features[:, :, 0, 6] = torch.from_numpy(magnitude.astype(np.float32)).to(device)
             
             # Channel 8-11: Motion (difference from last frame)
-            if hasattr(self, '_last_image'):
+            if hasattr(self, '_last_image') and self._last_image.shape == image.shape:
                 motion = np.abs(image - self._last_image)
-                features[:, :, 0, 8] = torch.from_numpy(motion)
+                
+                # Resize motion to field dimensions if needed
+                if motion.shape != (field_h, field_w):
+                    try:
+                        from PIL import Image
+                        motion_img = Image.fromarray((motion * 255).astype(np.uint8))
+                        motion_resized = motion_img.resize((field_w, field_h), Image.BILINEAR)
+                        motion = np.array(motion_resized) / 255.0
+                    except ImportError:
+                        import cv2
+                        motion = cv2.resize(motion, (field_w, field_h), interpolation=cv2.INTER_LINEAR)
+                
+                features[:, :, 0, 8] = torch.from_numpy(motion.astype(np.float32)).to(device)
                 
                 # Directional motion
                 motion_x = image - self._last_image
-                features[:, :, 0, 9] = torch.from_numpy(np.maximum(motion_x, 0))  # Rightward
-                features[:, :, 0, 10] = torch.from_numpy(np.maximum(-motion_x, 0))  # Leftward
+                if motion_x.shape != (field_h, field_w):
+                    try:
+                        from PIL import Image
+                        motion_x_img = Image.fromarray((np.abs(motion_x) * 255).astype(np.uint8))
+                        motion_x_resized = motion_x_img.resize((field_w, field_h), Image.BILINEAR)
+                        motion_x = (np.array(motion_x_resized) / 255.0) * np.sign(motion_x.mean())
+                    except ImportError:
+                        import cv2
+                        motion_x_sign = np.sign(motion_x.mean())
+                        motion_x = cv2.resize(np.abs(motion_x), (field_w, field_h), interpolation=cv2.INTER_LINEAR) * motion_x_sign
+                
+                features[:, :, 0, 9] = torch.from_numpy(np.maximum(motion_x, 0).astype(np.float32)).to(device)  # Rightward
+                features[:, :, 0, 10] = torch.from_numpy(np.maximum(-motion_x, 0).astype(np.float32)).to(device)  # Leftward
             
             self._last_image = image.copy()
             
             # Channel 12-15: Summary statistics
-            features[0, 0, 0, 12] = image.mean()  # Overall brightness
-            features[0, 0, 0, 13] = image.std()   # Contrast
-            features[0, 0, 0, 14] = image.max()   # Brightest point
-            features[0, 0, 0, 15] = image.min()   # Darkest point
+            features[0, 0, 0, 12] = float(image.mean())  # Overall brightness
+            features[0, 0, 0, 13] = float(image.std())   # Contrast
+            features[0, 0, 0, 14] = float(image.max())   # Brightest point
+            features[0, 0, 0, 15] = float(image.min())   # Darkest point
             
             # Inject features into field
             self.field[spatial][..., channels] += features * strength
