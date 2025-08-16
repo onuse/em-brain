@@ -30,12 +30,7 @@ def main():
                        help='Load brain state from file')
     parser.add_argument('--autosave', action='store_true',
                        help='Enable auto-saving every 1000 cycles')
-    parser.add_argument('--no-vision', action='store_true',
-                       help='Disable vision stream (port 10002)')
-    parser.add_argument('--enable-audio', action='store_true',
-                       help='Enable audio stream (port 10006)')
-    parser.add_argument('--vision-res', type=str, default='320x240',
-                       help='Vision resolution WxH (default: 320x240)')
+    # Stream configuration is now negotiated with client, not set by server
     
     args = parser.parse_args()
     
@@ -44,52 +39,40 @@ def main():
         print("🦺 SAFE MODE: Using minimal brain configuration")
         args.config = 'speed'
     
-    # Parse vision resolution
-    try:
-        w, h = map(int, args.vision_res.split('x'))
-        vision_res = (w, h)
-    except:
-        vision_res = (320, 240)
-        print(f"Invalid resolution '{args.vision_res}', using 320x240")
-    
     print("="*60)
     print("SIMPLE BRAIN SERVER")
     print("="*60)
     print(f"Port: {args.port}")
     print(f"Config: {args.config}")
-    print(f"Vision: {'DISABLED' if args.no_vision else f'ENABLED ({vision_res[0]}x{vision_res[1]})'}")
-    print(f"Audio: {'ENABLED' if args.enable_audio else 'DISABLED'}")
+    print(f"Streams: Configured by client during handshake")
     print()
     
     # Create and run service
     service = SimpleBrainService(port=args.port, brain_config=args.config)
     
-    # Load brain state if requested
+    # Load brain state if requested (note: brain will be created during handshake)
     if args.load:
-        if service.brain.load(args.load):
-            print(f"✅ Loaded brain state from {args.load}")
-        else:
-            print(f"❌ Failed to load {args.load}, starting fresh")
+        print(f"📁 Brain state will be loaded from {args.load} after handshake")
+        service.brain_state_to_load = args.load
+    else:
+        service.brain_state_to_load = None
     
     # Handle shutdown
     def shutdown(sig, frame):
         print("\n📛 Shutting down...")
-        # Save brain state on shutdown
-        save_path = service.brain.save("shutdown_save.pt")
-        print(f"💾 Saved brain state to {save_path}")
+        # Save brain state on shutdown (if brain exists)
+        if service.brain is not None:
+            save_path = service.brain.save("shutdown_save.pt")
+            print(f"💾 Saved brain state to {save_path}")
         service.stop()
         sys.exit(0)
     
     signal.signal(signal.SIGINT, shutdown)
     signal.signal(signal.SIGTERM, shutdown)
     
-    # Run with stream configuration
+    # Run server (streams configured by client)
     try:
-        service.start(
-            enable_vision=not args.no_vision,
-            enable_audio=args.enable_audio,
-            vision_resolution=vision_res
-        )
+        service.start()
     except KeyboardInterrupt:
         shutdown(None, None)
     except Exception as e:

@@ -31,7 +31,8 @@ class SimpleBrainService:
     def __init__(self, port=9999, brain_config='balanced', enable_streams=True, telemetry_port=9998):
         self.port = port
         self.telemetry_port = telemetry_port
-        self.brain = create_brain(brain_config)
+        self.brain_config = brain_config  # Store config for later
+        self.brain = None  # Create brain after handshake
         self.telemetry = SimpleTelemetry()
         self.running = False
         self.client = None
@@ -49,39 +50,12 @@ class SimpleBrainService:
             except Exception as e:
                 print(f"⚠️ Could not initialize streams: {e}")
         
-    def start(self, enable_vision=True, enable_audio=False, vision_resolution=(320, 240)):
+    def start(self):
         """
-        Start TCP server and optional stream listeners.
-        
-        Args:
-            enable_vision: Start vision stream on port 10002
-            enable_audio: Start audio stream on port 10006
-            vision_resolution: Resolution for vision stream
+        Start TCP server. Stream listeners will be started after handshake
+        based on client capabilities.
         """
         self.running = True
-        
-        # Start multi-stream listeners if available
-        if self.stream_manager:
-            started = []
-            
-            # Always start basic sensors (battery, ultrasonic)
-            if self.stream_manager.start_battery_injector():
-                started.append("battery(10004)")
-            if self.stream_manager.start_ultrasonic_injector():
-                started.append("ultrasonic(10003)")
-            
-            # Start vision if requested
-            if enable_vision:
-                if self.stream_manager.start_vision_injector(port=10002, resolution=vision_resolution):
-                    started.append(f"vision(10002@{vision_resolution[0]}x{vision_resolution[1]})")
-            
-            # Start audio if requested
-            if enable_audio:
-                if self.stream_manager.start_audio_injector():
-                    started.append("audio(10006)")
-            
-            if started:
-                print(f"📡 Stream listeners started: {', '.join(started)}")
         
         # Start telemetry server
         self._start_telemetry_server()
@@ -224,14 +198,90 @@ class SimpleBrainService:
             version = capabilities[0] if vector_length > 0 else 1.0
             sensory_dim = int(capabilities[1]) if vector_length > 1 else 16
             motor_dim = int(capabilities[2]) if vector_length > 2 else 5
+            hardware_type = capabilities[3] if vector_length > 3 else 1.0
+            capability_mask = int(capabilities[4]) if vector_length > 4 else 0
+            
+            # Extended capabilities for vision (if present)
+            vision_width = int(capabilities[5]) if vector_length > 5 else 320
+            vision_height = int(capabilities[6]) if vector_length > 6 else 240
+            self.vision_resolution = (vision_width, vision_height)
             
             print(f"📡 Robot capabilities: v{version}, sensors={sensory_dim}, motors={motor_dim}")
             
+            # Parse capability mask to understand what streams the client has
+            has_vision = bool(capability_mask & 1)
+            has_audio = bool(capability_mask & 2)
+            
+            if has_vision:
+                print(f"   Vision: {vision_width}x{vision_height} resolution")
+            if has_audio:
+                print(f"   Audio: Enabled")
+            
+            # Create brain with negotiated dimensions if not already created
+            if self.brain is None:
+                print(f"🧠 Creating brain with negotiated dimensions: {sensory_dim} sensors, {motor_dim} motors")
+                from .simple_factory import create_brain
+                from ..brains.field.auto_config import get_optimal_config
+                
+                # Get config
+                config = get_optimal_config(self.brain_config)
+                
+                # Create brain with correct dimensions
+                from ..brains.field.truly_minimal_brain import TrulyMinimalBrain
+                self.brain = TrulyMinimalBrain(
+                    sensory_dim=sensory_dim,
+                    motor_dim=motor_dim,
+                    spatial_size=config['spatial_size'],
+                    channels=config['channels'],
+                    device=config['device'],
+                    quiet_mode=False
+                )
+                
+                # Initialize stream manager if needed
+                if self.stream_manager and hasattr(self.stream_manager, 'brain') and self.stream_manager.brain is None:
+                    self.stream_manager.brain = self.brain
+                
+                # Load brain state if requested
+                if hasattr(self, 'brain_state_to_load') and self.brain_state_to_load:
+                    if self.brain.load(self.brain_state_to_load):
+                        print(f"✅ Loaded brain state from {self.brain_state_to_load}")
+                    else:
+                        print(f"❌ Failed to load {self.brain_state_to_load}, starting fresh")
+            
+            # Start stream listeners based on CLIENT capabilities
+            if self.stream_manager and self.brain:
+                started = []
+                
+                # Basic sensors (always try these)
+                if self.stream_manager.start_battery_injector():
+                    started.append("battery(10004)")
+                if self.stream_manager.start_ultrasonic_injector():
+                    started.append("ultrasonic(10003)")
+                
+                # Vision stream - only if client has vision
+                if has_vision:
+                    if self.stream_manager.start_vision_injector(port=10002, resolution=self.vision_resolution):
+                        started.append(f"vision(10002@{vision_width}x{vision_height})")
+                
+                # Audio stream - only if client has audio  
+                if has_audio:
+                    if self.stream_manager.start_audio_injector():
+                        started.append("audio(10006)")
+                
+                if started:
+                    print(f"📡 Stream listeners started: {', '.join(started)}")
+            
             # Send response using client's protocol format
+            # Client expects: [brain_version, accepted_sensory, accepted_action, gpu_available, brain_capabilities]
+            import torch
+            gpu_available = 1.0 if torch.cuda.is_available() else 0.0
+            
             response_capabilities = [
-                1.0,  # Version
-                float(self.brain.sensory_dim),
-                float(self.brain.motor_dim)
+                1.0,  # Brain version
+                float(sensory_dim),  # Accept client's sensory dimensions
+                float(motor_dim),    # Accept client's motor dimensions
+                gpu_available,       # GPU available (1.0 = yes, 0.0 = no)
+                15.0                 # Brain capabilities (1=visual, 2=audio, 4=manipulation, 8=multi-agent)
             ]
             
             # Encode response in client's format
@@ -243,7 +293,22 @@ class SimpleBrainService:
                 2,  # MSG_HANDSHAKE
                 len(response_capabilities)  # Vector length
             )
-            client.sendall(response_header + vector_data)
+            response_msg = response_header + vector_data
+            
+            print(f"📤 Sending handshake response: {len(response_msg)} bytes")
+            print(f"   Magic: 0x524F424F, Length: {message_length}, Type: 2, VecLen: {len(response_capabilities)}")
+            
+            # Use sendall to ensure all bytes are sent
+            try:
+                client.sendall(response_msg)
+                print(f"   Successfully sent all {len(response_msg)} bytes")
+                
+                # Force flush by disabling Nagle temporarily
+                client.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+                
+            except Exception as e:
+                print(f"   ❌ Failed to send response: {e}")
+                return False
             
             print(f"✅ Handshake complete - sensors={sensory_dim}, motors={motor_dim}")
             return True
@@ -261,31 +326,40 @@ class SimpleBrainService:
             # Read header (13 bytes) - magic(4) + length(4) + type(1) + vector_length(4)
             header = client.recv(13)
             if len(header) < 13:
+                print(f"⚠️ Incomplete sensor header: {len(header)} bytes")
                 return None
             
             # Parse header - client uses network byte order (!)
             magic, message_length, msg_type, vector_length = struct.unpack('!IIBI', header)
             
+            # Debug logging
+            print(f"📥 Sensor message: magic=0x{magic:08X}, len={message_length}, type={msg_type}, veclen={vector_length}")
+            
             # Validate magic
             if magic != 0x524F424F:  # 'ROBO'
+                print(f"❌ Invalid magic in sensor message: 0x{magic:08X}")
                 return None
             
             if msg_type != 0:  # MSG_SENSORY_INPUT in client protocol
+                print(f"❌ Wrong message type: {msg_type}, expected 0 (SENSORY_INPUT)")
                 return None
             
             # Read sensor values
             data_size = vector_length * 4
             data = client.recv(data_size)
             if len(data) < data_size:
+                print(f"❌ Incomplete sensor data: {len(data)}/{data_size} bytes")
                 return None
             
             # Unpack floats (native byte order for data)
             sensors = list(struct.unpack(f'{vector_length}f', data))
+            print(f"✅ Received {len(sensors)} sensor values")
             return sensors
             
         except socket.timeout:
             return None
-        except Exception:
+        except Exception as e:
+            print(f"❌ Error receiving sensors: {e}")
             return None
     
     def send_motors(self, client: socket.socket, motors: list):

@@ -325,8 +325,22 @@ class BrainClient:
     def _handshake(self) -> bool:
         """Perform handshake with brain server."""
         try:
+            # Load vision config if available
+            from pathlib import Path
+            import json
+            config_path = Path(__file__).parent.parent.parent / "config" / "robot_config.json"
+            vision_width, vision_height = 320, 200  # modest fallback resolution
+            
+            if config_path.exists():
+                with open(config_path, 'r') as f:
+                    robot_config = json.load(f)
+                    vision_config = robot_config.get('vision', {})
+                    if vision_config.get('enabled', False):
+                        resolution = vision_config.get('resolution', [320, 200])
+                        vision_width, vision_height = resolution[0], resolution[1]
+            
             # Prepare handshake data
-            # [robot_version, sensory_size, action_size, hardware_type, capabilities_mask]
+            # [robot_version, sensory_size, action_size, hardware_type, capabilities_mask, vision_width, vision_height]
             capabilities = 0
             capabilities |= 1  # Visual (we have camera support)
             capabilities |= 2  # Audio (we have mic/speaker)
@@ -336,7 +350,9 @@ class BrainClient:
                 float(self.config.sensory_dimensions),  # Sensory dimensions
                 float(self.config.action_dimensions),   # Action dimensions
                 1.0,  # Hardware type (1.0 = PiCar-X)
-                float(capabilities)  # Capabilities mask
+                float(capabilities),  # Capabilities mask
+                float(vision_width),  # Vision width
+                float(vision_height)  # Vision height
             ]
             
             self.logger.info(f"HANDSHAKE_SEND: Sending capabilities: {handshake_data}")
