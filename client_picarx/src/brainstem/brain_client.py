@@ -185,21 +185,40 @@ class MessageProtocol:
         """Receive exactly num_bytes from socket."""
         data = b''
         attempts = 0
+        start_time = time.time()
+        
+        self.logger.debug(f"RECV_EXACT_START: Attempting to receive {num_bytes} bytes")
+        
         while len(data) < num_bytes:
             attempts += 1
+            remaining = num_bytes - len(data)
+            
             try:
-                chunk = sock.recv(num_bytes - len(data))
+                # Log each receive attempt
+                self.logger.debug(f"RECV_ATTEMPT_{attempts}: Trying to receive {remaining} more bytes...")
+                chunk = sock.recv(remaining)
+                
                 if not chunk:
-                    self.logger.error(f"RECV_EXACT_CLOSED: Socket closed after {len(data)}/{num_bytes} bytes")
+                    self.logger.error(f"RECV_EXACT_CLOSED: Socket closed after {len(data)}/{num_bytes} bytes, {attempts} attempts")
                     raise ConnectionError("Socket closed unexpectedly")
+                    
                 data += chunk
-                if attempts == 1 and len(chunk) > 0:
-                    self.logger.debug(f"RECV_EXACT_PROGRESS: Got {len(chunk)} bytes on first attempt, total {len(data)}/{num_bytes}")
+                elapsed = time.time() - start_time
+                self.logger.debug(f"RECV_CHUNK_{attempts}: Got {len(chunk)} bytes, total {len(data)}/{num_bytes} after {elapsed:.3f}s")
+                
+                if len(chunk) > 0:
+                    self.logger.debug(f"RECV_BYTES_{attempts}: {chunk.hex()[:40]}..." if len(chunk) > 20 else f"RECV_BYTES_{attempts}: {chunk.hex()}")
+                    
             except socket.timeout:
-                self.logger.warning(f"RECV_EXACT_TIMEOUT: Timeout after receiving {len(data)}/{num_bytes} bytes")
+                elapsed = time.time() - start_time
+                self.logger.warning(f"RECV_EXACT_TIMEOUT: Timeout after {elapsed:.1f}s, {len(data)}/{num_bytes} bytes, {attempts} attempts")
                 if len(data) > 0:
-                    self.logger.warning(f"RECV_EXACT_PARTIAL: Partial data received: {data.hex()}")
+                    self.logger.warning(f"RECV_EXACT_PARTIAL: Partial data: {data.hex()}")
+                else:
+                    self.logger.warning(f"RECV_EXACT_NOTHING: No bytes received at all")
                 raise
+                
+        self.logger.debug(f"RECV_EXACT_COMPLETE: Successfully received all {num_bytes} bytes in {attempts} attempts")
         return data
     
     def _resync_stream(self, sock: socket.socket, timeout: float):
@@ -382,19 +401,41 @@ class BrainClient:
             
             # Send handshake using MessageProtocol
             message = self.protocol.encode_handshake(handshake_data)
-            self.logger.debug(f"HANDSHAKE_ENCODE: Encoded {len(message)} bytes for handshake")
+            self.logger.info(f"HANDSHAKE_ENCODE: Encoded {len(message)} bytes for handshake")
+            self.logger.debug(f"HANDSHAKE_BYTES: {message.hex()[:60]}..." if len(message) > 30 else f"HANDSHAKE_BYTES: {message.hex()}")
             
             send_start = time.time()
             self.socket.sendall(message)
             send_time = time.time() - send_start
-            self.logger.debug(f"HANDSHAKE_SENT: Handshake sent in {send_time:.3f}s")
+            self.logger.info(f"HANDSHAKE_SENT: {len(message)} bytes sent in {send_time:.3f}s")
+            
+            # Check socket state after send
+            try:
+                peer = self.socket.getpeername()
+                local = self.socket.getsockname()
+                self.logger.debug(f"SOCKET_STATE: Connected {local} -> {peer}")
+            except Exception as e:
+                self.logger.error(f"SOCKET_ERROR: Socket check failed: {e}")
             
             # Receive brain's handshake response
-            self.logger.debug("HANDSHAKE_RECV: Waiting for brain response...")
+            self.logger.info("HANDSHAKE_RECV: Waiting for brain response...")
+            
+            # First try to receive ANY data to see if server is responding
+            import select
+            self.logger.debug("SOCKET_POLL: Checking if data is available...")
+            readable, _, exceptional = select.select([self.socket], [], [self.socket], 0.5)
+            
+            if exceptional:
+                self.logger.error("SOCKET_EXCEPTION: Socket in exceptional state")
+            if readable:
+                self.logger.info("SOCKET_READABLE: Data is available to read")
+            else:
+                self.logger.warning("SOCKET_NOT_READABLE: No data available after 0.5s")
+            
             recv_start = time.time()
             msg_type, brain_handshake = self.protocol.receive_message(self.socket, timeout=5.0)
             recv_time = time.time() - recv_start
-            self.logger.debug(f"HANDSHAKE_RECV_SUCCESS: Received response in {recv_time:.3f}s, type={msg_type}, data={brain_handshake}")
+            self.logger.info(f"HANDSHAKE_RECV_SUCCESS: Received response in {recv_time:.3f}s, type={msg_type}, data={brain_handshake}")
             
             if msg_type == MessageProtocol.MSG_HANDSHAKE and len(brain_handshake) >= 5:
                 brain_version = brain_handshake[0]

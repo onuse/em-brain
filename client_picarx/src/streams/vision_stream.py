@@ -14,6 +14,15 @@ import time
 from typing import Optional, Tuple
 import queue
 
+# Import connection monitor
+try:
+    from .connection_monitor import connection_monitor
+except ImportError:
+    # Dummy if not available
+    class DummyMonitor:
+        def is_connected(self): return True
+    connection_monitor = DummyMonitor()
+
 try:
     import cv2
     CV2_AVAILABLE = True
@@ -100,6 +109,11 @@ class VisionStreamer:
         frame_interval = 1.0 / self.fps_target
         
         while self.running:
+            # Check if main connection is still alive
+            if not connection_monitor.is_connected():
+                print("🔌 Vision stream stopping - main connection lost")
+                break
+                
             try:
                 # Get frame from queue (with timeout)
                 frame = self.frame_queue.get(timeout=0.1)

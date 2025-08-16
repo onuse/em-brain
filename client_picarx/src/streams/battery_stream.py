@@ -11,6 +11,15 @@ import time
 import threading
 from typing import Optional
 
+# Import connection monitor
+try:
+    from .connection_monitor import connection_monitor
+except ImportError:
+    # Dummy if not available
+    class DummyMonitor:
+        def is_connected(self): return True
+    connection_monitor = DummyMonitor()
+
 class BatteryStreamer:
     """Streams battery voltage to brain server on separate port."""
     
@@ -94,6 +103,11 @@ class BatteryStreamer:
         last_voltage = 0.0
         
         while self.running:
+            # Check if main connection is still alive
+            if not connection_monitor.is_connected():
+                print("🔌 Battery stream stopping - main connection lost")
+                break
+                
             try:
                 # Read battery voltage
                 voltage = self._read_battery_voltage()

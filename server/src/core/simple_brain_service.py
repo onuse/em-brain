@@ -83,6 +83,14 @@ class SimpleBrainService:
         """Handle robot connection."""
         self.client = client
         
+        # Log connection details
+        try:
+            peer = client.getpeername()
+            local = client.getsockname()
+            print(f"   Connection established: {peer} -> {local}")
+        except Exception as e:
+            print(f"   ⚠️ Could not get socket details: {e}")
+        
         # Handle handshake first
         if not self._handle_handshake(client):
             print("❌ Handshake failed, closing connection")
@@ -92,36 +100,42 @@ class SimpleBrainService:
         
         client.settimeout(0.1)  # Non-blocking after handshake
         
-        # Initialize tracking for heartbeats
+        # Initialize tracking for heartbeats and error counts
         self.last_motivation = ""
         self.incomplete_header_count = 0  # Track incomplete headers to avoid spam
+        self.bad_magic_count = 0  # Track bad magic bytes to avoid spam
         
         try:
             while self.running:
                 # Receive sensor data
-                sensors = self.receive_sensors(client)
-                if sensors is None:
-                    # Check if client is still connected
-                    try:
-                        # Try to peek at the socket
-                        client.setblocking(False)
-                        data = client.recv(1, socket.MSG_PEEK)
-                        client.setblocking(True)
-                        if not data:
-                            # Connection closed cleanly
+                try:
+                    sensors = self.receive_sensors(client)
+                    if sensors is None:
+                        # Check if client is still connected
+                        try:
+                            # Try to peek at the socket
+                            client.setblocking(False)
+                            data = client.recv(1, socket.MSG_PEEK)
+                            client.setblocking(True)
+                            if not data:
+                                # Connection closed cleanly
+                                break
+                        except BlockingIOError:
+                            # No data available but socket is still open
+                            pass
+                        except (ConnectionResetError, ConnectionAbortedError, OSError):
+                            # Connection lost
                             break
-                    except BlockingIOError:
-                        # No data available but socket is still open
-                        pass
-                    except (ConnectionResetError, ConnectionAbortedError, OSError):
-                        # Connection lost
-                        break
-                    except:
-                        # Any other error, assume disconnected
-                        break
-                    
-                    time.sleep(0.001)
-                    continue
+                        except:
+                            # Any other error, assume disconnected
+                            break
+                        
+                        time.sleep(0.001)
+                        continue
+                except ConnectionError as e:
+                    # Stream corrupted (bad magic, etc) - disconnect
+                    print(f"🔌 Disconnecting due to protocol error: {e}")
+                    break
                 
                 # Process with brain
                 motors, brain_telemetry = self.brain.process(sensors)
@@ -241,9 +255,14 @@ class SimpleBrainService:
             client.settimeout(5.0)  # 5 second timeout for handshake
             
             # Read handshake header (13 bytes) - magic(4) + length(4) + type(1) + vector_length(4)
+            print("   Waiting for handshake header (13 bytes)...")
             header = client.recv(13)
+            if len(header) == 0:
+                print("❌ Handshake failed: Client closed connection before sending handshake")
+                return False
             if len(header) < 13:
-                print(f"❌ Handshake failed: incomplete header (got {len(header)} bytes)")
+                print(f"❌ Handshake failed: incomplete header (got {len(header)} bytes, expected 13)")
+                print(f"   Received: {header.hex()}")
                 return False
             
             # Parse header - client uses network byte order (!)
@@ -260,13 +279,15 @@ class SimpleBrainService:
             
             # Read handshake data
             data_size = vector_length * 4
+            print(f"   Waiting for handshake data ({data_size} bytes for {vector_length} floats)...")
             data = client.recv(data_size)
             if len(data) < data_size:
-                print(f"❌ Handshake failed: incomplete data")
+                print(f"❌ Handshake failed: incomplete data (got {len(data)}/{data_size} bytes)")
                 return False
             
             # Parse capabilities (client sends floats in native byte order)
             capabilities = struct.unpack(f'{vector_length}f', data)
+            print(f"   Received capabilities: {capabilities}")
             version = capabilities[0] if vector_length > 0 else 1.0
             sensory_dim = int(capabilities[1]) if vector_length > 1 else 16
             motor_dim = int(capabilities[2]) if vector_length > 2 else 5
@@ -382,32 +403,82 @@ class SimpleBrainService:
             )
             response_msg = response_header + vector_data
             
-            print(f"📤 Sending handshake response: {len(response_msg)} bytes")
-            print(f"   Magic: 0x524F424F, Length: {message_length}, Type: 2, VecLen: {len(response_capabilities)}")
+            print(f"📤 Preparing handshake response: {len(response_msg)} bytes")
+            print(f"   Header: magic=0x{0x524F424F:08X}, msg_len={message_length}, type=2, vec_len={len(response_capabilities)}")
+            print(f"   Capabilities being sent: {response_capabilities}")
+            print(f"   Full response bytes: {response_msg.hex()[:60]}..." if len(response_msg) > 30 else f"   Full response: {response_msg.hex()}")
             
             # Use sendall to ensure all bytes are sent
             try:
+                # Log socket state before sending
+                print(f"   Socket state before send:")
+                print(f"     - Connected: {client.getpeername()}")
+                print(f"     - Timeout: {client.gettimeout()}")
+                
                 # First disable Nagle algorithm for immediate sending
                 client.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+                print(f"     - TCP_NODELAY set (Nagle disabled)")
                 
-                # Send the response
-                bytes_sent = client.send(response_msg)
-                print(f"   Sent {bytes_sent}/{len(response_msg)} bytes")
+                # Try different sending methods
+                print(f"   Attempting to send {len(response_msg)} bytes...")
                 
-                # If not all bytes sent, send the rest
-                if bytes_sent < len(response_msg):
-                    remaining = response_msg[bytes_sent:]
-                    client.sendall(remaining)
-                    print(f"   Sent remaining {len(remaining)} bytes")
+                # Method 1: sendall (most reliable)
+                bytes_sent = 0
+                try:
+                    client.sendall(response_msg)
+                    bytes_sent = len(response_msg)
+                    print(f"   ✅ sendall() succeeded - {bytes_sent} bytes sent")
+                except Exception as e:
+                    print(f"   ❌ sendall() failed: {e}")
+                    # Try send() as fallback
+                    try:
+                        bytes_sent = client.send(response_msg)
+                        print(f"   send() sent {bytes_sent}/{len(response_msg)} bytes")
+                        if bytes_sent < len(response_msg):
+                            remaining = response_msg[bytes_sent:]
+                            client.sendall(remaining)
+                            print(f"   Sent remaining {len(remaining)} bytes")
+                    except Exception as e2:
+                        print(f"   ❌ send() also failed: {e2}")
+                        raise
                 
-                # Force socket to flush
-                client.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 0)
-                client.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 65536)
+                # Verify send buffer is empty
+                import select
+                readable, writable, exceptional = select.select([], [client], [], 0)
+                if writable:
+                    print(f"     - Socket is writable (send buffer has space)")
+                else:
+                    print(f"     - Socket NOT writable (send buffer may be full)")
                 
-                print(f"   ✅ All {len(response_msg)} bytes sent and flushed")
+                print(f"   ✅ Total {bytes_sent} bytes sent successfully")
                 
+                # Debug: Verify client is still connected and data was sent
+                try:
+                    peer = client.getpeername()
+                    print(f"   ✅ Client still connected at {peer}")
+                    
+                    # Try to receive 1 byte with MSG_PEEK to check if client sent anything
+                    import select
+                    readable, _, _ = select.select([client], [], [], 0.1)
+                    if readable:
+                        peek_data = client.recv(1, socket.MSG_PEEK | socket.MSG_DONTWAIT)
+                        if peek_data:
+                            print(f"   🔍 Client has sent data (peeked: 0x{peek_data[0]:02X})")
+                        else:
+                            print(f"   ⚠️ Client closed connection")
+                    else:
+                        print(f"   ⏳ No immediate response from client (normal)")
+                        
+                except Exception as e:
+                    print(f"   ⚠️ Post-send check failed: {e}")
+                
+            except socket.error as e:
+                print(f"   ❌ Socket error sending response: {e}")
+                if hasattr(e, 'errno'):
+                    print(f"   Error code: {e.errno}")
+                return False
             except Exception as e:
-                print(f"   ❌ Failed to send response: {e}")
+                print(f"   ❌ Unexpected error sending response: {e}")
                 import traceback
                 traceback.print_exc()
                 return False
@@ -416,10 +487,20 @@ class SimpleBrainService:
             return True
             
         except socket.timeout:
-            print("❌ Handshake timeout")
+            print("❌ Handshake timeout: Client didn't send handshake within 5 seconds")
+            print("   Possible causes:")
+            print("   - Client crashed or hung")
+            print("   - Network connectivity issues")
+            print("   - Client using wrong protocol version")
+            return False
+        except struct.error as e:
+            print(f"❌ Handshake protocol error: {e}")
+            print("   The data format doesn't match expected protocol")
             return False
         except Exception as e:
-            print(f"❌ Handshake error: {e}")
+            print(f"❌ Unexpected handshake error: {e}")
+            import traceback
+            traceback.print_exc()
             return False
     
     def receive_sensors(self, client: socket.socket) -> Optional[list]:
@@ -442,8 +523,18 @@ class SimpleBrainService:
             
             # Validate magic
             if magic != 0x524F424F:  # 'ROBO'
-                print(f"❌ Invalid magic in sensor message: 0x{magic:08X}")
-                return None
+                # Only print error for first few occurrences to avoid spam
+                if not hasattr(self, 'bad_magic_count'):
+                    self.bad_magic_count = 0
+                self.bad_magic_count += 1
+                
+                if self.bad_magic_count <= 3:
+                    print(f"❌ Invalid magic in sensor message: 0x{magic:08X}")
+                    if self.bad_magic_count == 3:
+                        print("   (suppressing further magic errors - connection likely corrupted)")
+                
+                # Bad magic usually means connection is corrupted, trigger disconnect
+                raise ConnectionError("Invalid magic bytes - stream corrupted")
             
             if msg_type != 0:  # MSG_SENSORY_INPUT in client protocol
                 print(f"❌ Wrong message type: {msg_type}, expected 0 (SENSORY_INPUT)")
@@ -469,8 +560,9 @@ class SimpleBrainService:
             elif self.sensor_receive_count % 1000 == 0:  # Every 1000 messages (~50 seconds at 20Hz)
                 print(f"📊 Processed {self.sensor_receive_count} sensor messages")
             
-            # Reset incomplete header counter on successful receive
+            # Reset error counters on successful receive
             self.incomplete_header_count = 0
+            self.bad_magic_count = 0
             
             return sensors
             

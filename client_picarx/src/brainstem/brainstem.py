@@ -64,6 +64,16 @@ try:
 except ImportError:
     VISION_STREAM_AVAILABLE = False
 
+# Import connection monitor for coordinating auxiliary streams
+try:
+    from streams.connection_monitor import connection_monitor
+except ImportError:
+    # Create a dummy if not available
+    class DummyMonitor:
+        def set_connected(self, state): pass
+        def is_connected(self): return False
+    connection_monitor = DummyMonitor()
+
 
 def load_robot_config() -> Dict[str, Any]:
     """Load robot configuration from JSON file."""
@@ -208,24 +218,17 @@ class Brainstem:
             basic_sensors = 5      # Grayscale (3) + ultrasonic + battery
             audio_features = 7     # Audio feature channels
             
-            # Check if vision is going via UDP (parallel) or TCP
-            # Note: vision_stream will be None at this point, initialized after handshake
-            if self.vision_stream and self.vision_stream.enabled:
-                # Vision via UDP - don't count in TCP dimensions!
+            # Check if vision streaming is available (will use UDP)
+            # Since vision_stream is initialized AFTER handshake, check if the module is available
+            if VISION_STREAM_AVAILABLE:
+                # Vision will go via UDP - don't count in TCP dimensions!
                 vision_pixels = 0
                 print(f"🔍 Vision via UDP stream (parallel processing)")
             else:
-                # Vision via TCP - count in dimensions
-                vision_config = self.config.get("vision", {})
-                resolution = vision_config.get("resolution", [640, 480])
-                vision_pixels = resolution[0] * resolution[1]
-                
-                # Override with actual HAL resolution if available
-                if self.hal and hasattr(self.hal, 'vision') and self.hal.vision:
-                    vision_pixels = self.hal.vision.output_dim
-                    print(f"🔍 Vision resolution from HAL: {vision_pixels:,} pixels (TCP)")
-                else:
-                    print(f"🔍 Vision resolution from config: {vision_pixels:,} pixels ({resolution[0]}x{resolution[1]}) (TCP)")
+                # No vision streaming available - would need TCP (but that's too much data!)
+                # For now, just don't include vision in TCP
+                vision_pixels = 0
+                print(f"⚠️ Vision streaming not available - vision disabled")
             
             sensory_dims = basic_sensors + vision_pixels + audio_features
             action_dims = 6    # We use 6 outputs (motors + servos + audio)
@@ -242,22 +245,27 @@ class Brainstem:
                 sensory_dimensions=sensory_dims,
                 action_dimensions=action_dims
             )
-            self.brain_client = BrainClient(config, log_level=self.log_level)
+            # Use DEBUG level for brain client during handshake debugging
+            self.brain_client = BrainClient(config, log_level='DEBUG')
             
             self.logger.info("CONNECTION_ATTEMPT: Attempting to connect to brain server")
             if self.brain_client.connect():
                 self.logger.info("CONNECTION_SUCCESS: Successfully connected to brain server")
                 print(f"✅ Connected to brain server")
+                # Notify connection monitor
+                connection_monitor.set_connected(True)
             else:
                 self.logger.warning("CONNECTION_FAILED: Could not connect to brain server, entering reflexes-only mode")
                 print(f"⚠️  Could not connect to brain - reflexes only mode")
                 self.brain_client = None
+                connection_monitor.set_connected(False)
         except Exception as e:
             self.logger.error(f"BRAIN_INIT_ERROR: Brain connection initialization failed: {e}")
             print(f"❌ Brain connection failed: {e}")
             import traceback
             self.logger.debug(f"BRAIN_INIT_TRACEBACK: {traceback.format_exc()}")
             self.brain_client = None
+            connection_monitor.set_connected(False)
         
         self.last_connect_attempt = time.time()
     
