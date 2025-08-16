@@ -5,10 +5,11 @@
 This document defines the **actual implemented** communication protocol between robot brainstems (clients) and the brain server. This is a minimal, high-performance binary protocol optimized for real-time robotics communication.
 
 **Key Design Principles:**
-- **Ultra-minimal overhead**: Only 9 bytes per message
+- **Fixed overhead**: 13 bytes header per message
 - **High performance**: Binary format with no parsing overhead
 - **Simple implementation**: Easy to implement on embedded systems
 - **Vector-based**: Pure float vectors for sensory input and motor commands
+- **Magic bytes**: 'ROBO' (0x524F424F) for protocol validation
 
 ## Protocol Fundamentals
 
@@ -16,19 +17,21 @@ This document defines the **actual implemented** communication protocol between 
 - **Protocol**: TCP/IP sockets
 - **Port**: 9999 (default, configurable)
 - **Connection**: Persistent, long-lived connection
-- **Encoding**: Binary struct format (big-endian)
+- **Encoding**: Binary struct format (network byte order for header, native for data)
 - **Data Type**: IEEE 754 float32 arrays
 
 ### Message Structure
 ```
-┌────────────┬──────────┬──────────────┬────────────────────┐
-│ Length     │ Type     │ Vector Len   │ Vector Data        │
-│ (4 bytes)  │ (1 byte) │ (4 bytes)    │ (N * 4 bytes)      │
-│ uint32     │ uint8    │ uint32       │ float32 array      │
-└────────────┴──────────┴──────────────┴────────────────────┘
+┌────────────┬────────────┬──────────┬──────────────┬────────────────────┐
+│ Magic      │ Length     │ Type     │ Vector Len   │ Vector Data        │
+│ (4 bytes)  │ (4 bytes)  │ (1 byte) │ (4 bytes)    │ (N * 4 bytes)      │
+│ 0x524F424F │ uint32     │ uint8    │ uint32       │ float32 array      │
+│ ('ROBO')   │            │          │              │                    │
+└────────────┴────────────┴──────────┴──────────────┴────────────────────┘
 ```
 
-**Total overhead: 9 bytes per message (extremely efficient)**
+**Header size: 13 bytes (magic + length + type + vector_length)**
+**Note:** Length field contains the message size AFTER the magic bytes (type + vector_len + data)
 
 ### Message Types
 
@@ -132,16 +135,18 @@ class BrainProtocol:
     MSG_HANDSHAKE = 2
     MSG_ERROR = 255
     
+    MAGIC_BYTES = 0x524F424F  # 'ROBO' in hex
+    
     def encode_message(self, vector: List[float], msg_type: int) -> bytes:
         """Encode vector message for transmission."""
         # Convert to float32
         vector_data = struct.pack(f'{len(vector)}f', *vector)
         
-        # Message length = type(1) + vector_length(4) + vector_data
+        # Message length = type(1) + vector_length(4) + vector_data (excludes magic)
         message_length = 1 + 4 + len(vector_data)
         
-        # Pack: length + type + vector_length + vector_data
-        header = struct.pack('!IBI', message_length, msg_type, len(vector))
+        # Pack: magic + length + type + vector_length + vector_data
+        header = struct.pack('!IIBI', self.MAGIC_BYTES, message_length, msg_type, len(vector))
         return header + vector_data
     
     def send_sensory_input(self, sock: socket.socket, sensors: List[float]):

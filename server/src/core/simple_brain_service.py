@@ -109,7 +109,15 @@ class SimpleBrainService:
     def handle_client(self, client: socket.socket):
         """Handle robot connection."""
         self.client = client
-        client.settimeout(0.1)  # Non-blocking
+        
+        # Handle handshake first
+        if not self._handle_handshake(client):
+            print("❌ Handshake failed, closing connection")
+            client.close()
+            self.client = None
+            return
+        
+        client.settimeout(0.1)  # Non-blocking after handshake
         
         # Initialize tracking for heartbeats
         self.last_motivation = ""
@@ -180,28 +188,99 @@ class SimpleBrainService:
             self.client = None
             print("Robot disconnected")
     
+    def _handle_handshake(self, client: socket.socket) -> bool:
+        """Handle initial handshake with robot."""
+        try:
+            print("🤝 Starting handshake...")
+            client.settimeout(5.0)  # 5 second timeout for handshake
+            
+            # Read handshake header (13 bytes) - magic(4) + length(4) + type(1) + vector_length(4)
+            header = client.recv(13)
+            if len(header) < 13:
+                print(f"❌ Handshake failed: incomplete header (got {len(header)} bytes)")
+                return False
+            
+            # Parse header - client uses network byte order (!)
+            magic, message_length, msg_type, vector_length = struct.unpack('!IIBI', header)
+            
+            # Check magic (0x524F424F = 'ROBO')
+            if magic != 0x524F424F:
+                print(f"❌ Handshake failed: wrong magic (got 0x{magic:08X}, expected 0x524F424F 'ROBO')")
+                return False
+            
+            if msg_type != 2:  # HANDSHAKE type in client protocol
+                print(f"❌ Handshake failed: wrong type (got {msg_type}, expected 2)")
+                return False
+            
+            # Read handshake data
+            data_size = vector_length * 4
+            data = client.recv(data_size)
+            if len(data) < data_size:
+                print(f"❌ Handshake failed: incomplete data")
+                return False
+            
+            # Parse capabilities (client sends floats in native byte order)
+            capabilities = struct.unpack(f'{vector_length}f', data)
+            version = capabilities[0] if vector_length > 0 else 1.0
+            sensory_dim = int(capabilities[1]) if vector_length > 1 else 16
+            motor_dim = int(capabilities[2]) if vector_length > 2 else 5
+            
+            print(f"📡 Robot capabilities: v{version}, sensors={sensory_dim}, motors={motor_dim}")
+            
+            # Send response using client's protocol format
+            response_capabilities = [
+                1.0,  # Version
+                float(self.brain.sensory_dim),
+                float(self.brain.motor_dim)
+            ]
+            
+            # Encode response in client's format
+            vector_data = struct.pack(f'{len(response_capabilities)}f', *response_capabilities)
+            message_length = 1 + 4 + len(vector_data)  # type + vector_length + data
+            response_header = struct.pack('!IIBI', 
+                0x524F424F,  # Magic ('ROBO')
+                message_length,  # Length
+                2,  # MSG_HANDSHAKE
+                len(response_capabilities)  # Vector length
+            )
+            client.sendall(response_header + vector_data)
+            
+            print(f"✅ Handshake complete - sensors={sensory_dim}, motors={motor_dim}")
+            return True
+            
+        except socket.timeout:
+            print("❌ Handshake timeout")
+            return False
+        except Exception as e:
+            print(f"❌ Handshake error: {e}")
+            return False
+    
     def receive_sensors(self, client: socket.socket) -> Optional[list]:
         """Receive sensor data from robot."""
         try:
-            # Read header (9 bytes)
-            header = client.recv(9)
-            if len(header) < 9:
+            # Read header (13 bytes) - magic(4) + length(4) + type(1) + vector_length(4)
+            header = client.recv(13)
+            if len(header) < 13:
                 return None
             
-            # Parse header
-            msg_type, count = struct.unpack('>BI', header[4:])
+            # Parse header - client uses network byte order (!)
+            magic, message_length, msg_type, vector_length = struct.unpack('!IIBI', header)
             
-            if msg_type != 1:  # SENSOR type
+            # Validate magic
+            if magic != 0x524F424F:  # 'ROBO'
+                return None
+            
+            if msg_type != 0:  # MSG_SENSORY_INPUT in client protocol
                 return None
             
             # Read sensor values
-            data_size = count * 4
+            data_size = vector_length * 4
             data = client.recv(data_size)
             if len(data) < data_size:
                 return None
             
-            # Unpack floats
-            sensors = list(struct.unpack(f'>{count}f', data))
+            # Unpack floats (native byte order for data)
+            sensors = list(struct.unpack(f'{vector_length}f', data))
             return sensors
             
         except socket.timeout:
@@ -212,12 +291,18 @@ class SimpleBrainService:
     def send_motors(self, client: socket.socket, motors: list):
         """Send motor commands to robot."""
         try:
-            # Create message
-            header = b'BRAIN' + struct.pack('>BI', 2, len(motors))  # Type 2 = MOTOR
-            data = struct.pack(f'>{len(motors)}f', *motors)
+            # Encode in client's protocol format
+            vector_data = struct.pack(f'{len(motors)}f', *motors)
+            message_length = 1 + 4 + len(vector_data)  # type + vector_length + data
+            header = struct.pack('!IIBI', 
+                0x524F424F,  # Magic ('ROBO')
+                message_length,  # Length
+                1,  # MSG_ACTION_OUTPUT in client protocol
+                len(motors)  # Vector length
+            )
             
             # Send
-            client.sendall(header + data)
+            client.sendall(header + vector_data)
         except Exception:
             pass  # Robot might have disconnected
     

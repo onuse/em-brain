@@ -39,7 +39,7 @@ class MessageProtocol:
     MSG_ERROR = 255
     
     # Protocol constants
-    MAGIC_BYTES = 0xDEADBEEF
+    MAGIC_BYTES = 0x524F424F  # 'ROBO' in hex
     
     # Validation limits
     MIN_VECTOR_LENGTH = 0
