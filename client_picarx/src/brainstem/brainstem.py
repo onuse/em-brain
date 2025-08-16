@@ -158,18 +158,20 @@ class Brainstem:
         self.last_connect_attempt = 0
         self.reconnect_interval = 5.0  # Try reconnecting every 5 seconds
         
-        # Vision stream adapter (for UDP streaming) - MUST BE BEFORE BRAIN CONNECTION
+        # Vision stream adapter - will be initialized AFTER successful handshake
         self.vision_stream = None
-        if VISION_STREAM_AVAILABLE and enable_brain:
-            try:
-                self.vision_stream = VisionStreamAdapter(self.brain_host, enabled=True)
-                print(f"   ✅ Vision UDP streaming enabled to {self.brain_host}:10002")
-            except Exception as e:
-                print(f"   ⚠️  Vision streaming setup failed: {e}")
         
-        # Now init brain connection (after vision_stream exists)
+        # Init brain connection first
         if enable_brain:
             self._init_brain_connection(self.brain_host, self.brain_port)
+            
+            # Only start vision stream if brain connection succeeded
+            if self.brain_client and self.brain_client.connected and VISION_STREAM_AVAILABLE:
+                try:
+                    self.vision_stream = VisionStreamAdapter(self.brain_host, enabled=True)
+                    print(f"   ✅ Vision UDP streaming enabled to {self.brain_host}:10002")
+                except Exception as e:
+                    print(f"   ⚠️  Vision streaming setup failed: {e}")
         
         # Safety config from JSON
         self.safety = SafetyConfig.from_config(self.config)
@@ -207,6 +209,7 @@ class Brainstem:
             audio_features = 7     # Audio feature channels
             
             # Check if vision is going via UDP (parallel) or TCP
+            # Note: vision_stream will be None at this point, initialized after handshake
             if self.vision_stream and self.vision_stream.enabled:
                 # Vision via UDP - don't count in TCP dimensions!
                 vision_pixels = 0

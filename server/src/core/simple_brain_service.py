@@ -28,10 +28,9 @@ except ImportError:
 class SimpleBrainService:
     """Minimal TCP server for brain."""
     
-    def __init__(self, port=9999, brain_config='balanced', enable_streams=True, telemetry_port=9998):
+    def __init__(self, port=9999, enable_streams=True, telemetry_port=9998):
         self.port = port
         self.telemetry_port = telemetry_port
-        self.brain_config = brain_config  # Store config for later
         self.brain = None  # Create brain after handshake
         self.telemetry = SimpleTelemetry()
         self.running = False
@@ -41,11 +40,11 @@ class SimpleBrainService:
         self.telemetry_clients = []
         self.telemetry_thread = None
         
-        # Initialize multi-stream support if available
+        # Initialize multi-stream support if available (brain will be set later)
         self.stream_manager = None
         if enable_streams and STREAMS_AVAILABLE:
             try:
-                self.stream_manager = SensorFieldInjectionManager(self.brain)
+                self.stream_manager = SensorFieldInjectionManager(None)  # Brain set after handshake
                 print("✅ Multi-stream support initialized")
             except Exception as e:
                 print(f"⚠️ Could not initialize streams: {e}")
@@ -200,6 +199,39 @@ class SimpleBrainService:
                 except Exception as e:
                     print(f"⚠️ Error stopping streams: {e}")
             
+            # CRITICAL: Clean up brain to free GPU memory
+            if self.brain is not None:
+                print("🧹 Cleaning up brain (freeing GPU memory)...")
+                try:
+                    # Delete tensors to free CUDA memory
+                    del self.brain.field
+                    del self.brain.field_momentum
+                    if hasattr(self.brain, 'dynamics'):
+                        del self.brain.dynamics
+                    if hasattr(self.brain, 'tensions'):
+                        del self.brain.tensions
+                    if hasattr(self.brain, 'prediction'):
+                        del self.brain.prediction
+                    if hasattr(self.brain, 'learning'):
+                        del self.brain.learning
+                    if hasattr(self.brain, 'motor'):
+                        del self.brain.motor
+                    
+                    # Clear the brain reference
+                    del self.brain
+                    self.brain = None
+                    
+                    # Force CUDA memory cleanup
+                    import torch
+                    if torch.cuda.is_available():
+                        torch.cuda.empty_cache()
+                        torch.cuda.synchronize()
+                    
+                    print("✅ Brain cleaned up, GPU memory freed")
+                except Exception as e:
+                    print(f"⚠️ Error cleaning up brain: {e}")
+                    self.brain = None  # At least clear the reference
+            
             print("Robot disconnected")
     
     def _handle_handshake(self, client: socket.socket) -> bool:
@@ -264,7 +296,7 @@ class SimpleBrainService:
                 from ..brains.field.auto_config import get_optimal_config
                 
                 # Get config
-                config = get_optimal_config(self.brain_config)
+                config = get_optimal_config()  # No parameter needed - auto-detects
                 
                 # Print hardware detection
                 print(f"\n{'='*60}")
@@ -275,8 +307,7 @@ class SimpleBrainService:
                     print(f"Memory: {config['available_memory_gb']:.1f}/{config['total_memory_gb']:.1f} GB available")
                 print(f"\nBRAIN CONFIGURATION")
                 print(f"{'='*60}")
-                print(f"Target: {config['target']}")
-                print(f"Size: {config['spatial_size']}³×{config['channels']} ({config['size_name']})")
+                print(f"Size: {config['spatial_size']}³×{config['channels']}")
                 print(f"Parameters: {config['parameters']:,}")
                 print(f"Memory usage: {config['memory_gb']:.2f} GB")
                 print(f"Estimated speed: {config['estimated_hz']:,} Hz")
@@ -293,8 +324,8 @@ class SimpleBrainService:
                     quiet_mode=True  # We already printed info above
                 )
                 
-                # Initialize stream manager if needed
-                if self.stream_manager and hasattr(self.stream_manager, 'brain') and self.stream_manager.brain is None:
+                # Update stream manager with the new brain
+                if self.stream_manager:
                     self.stream_manager.brain = self.brain
                 
                 # Load brain state if requested
@@ -547,9 +578,9 @@ class SimpleBrainService:
 
 
 # Simple entry point
-def run_brain_service(port=9999, config='balanced'):
+def run_brain_service(port=9999):
     """Run the brain service."""
-    service = SimpleBrainService(port, config)
+    service = SimpleBrainService(port)
     
     try:
         service.start()

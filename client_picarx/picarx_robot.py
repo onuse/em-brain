@@ -62,14 +62,13 @@ class PiCarXRobot:
                 print(f"📡 Using brain configuration from robot_config.json")
             self.brainstem = Brainstem(brain_host, brain_port, log_level=log_level)
             
-            # Start battery stream (parallel to main connection)
+            # Initialize battery stream but don't start yet
             self.battery_stream = BatteryStreamer(
                 brain_host or self.brainstem.brain_host,
                 port=10004,
                 use_tcp=False  # Try UDP first
             )
-            self.battery_stream.start()
-            print("🔋 Battery stream started on port 10004")
+            # Will start after successful brain connection
         else:
             print("🧠 Running in reflex-only mode (no brain)")
             self.brainstem = Brainstem(log_level=log_level)  # Will work without brain
@@ -81,6 +80,11 @@ class PiCarXRobot:
         # Setup signal handlers
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
+        
+        # Start battery stream after brainstem is ready (if brain connected)
+        if self.battery_stream and self.brainstem.brain_client and self.brainstem.brain_client.connected:
+            self.battery_stream.start()
+            print("🔋 Battery stream started on port 10004")
         
         print("✅ Robot initialized and ready!")
         print("=" * 50)

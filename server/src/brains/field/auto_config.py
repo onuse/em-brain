@@ -125,8 +125,12 @@ def get_optimal_config(memory_limit=None):
     return config
 
 
-def print_config(config):
-    """Pretty print configuration."""
+# Test/Demo
+if __name__ == "__main__":
+    print("Detecting optimal configuration for your hardware...")
+    
+    config = get_optimal_config()
+    
     print("\n" + "="*60)
     print("OPTIMAL BRAIN CONFIGURATION")
     print("="*60)
@@ -135,9 +139,6 @@ def print_config(config):
     if config['available_memory_gb']:
         print(f"Memory: {config['available_memory_gb']:.1f}/{config['total_memory_gb']:.1f} GB available")
     
-    print(f"\nTarget: {config['target']}")
-    print(f"Size: {config['size_name']}")
-    
     print(f"\nConfiguration:")
     print(f"  Spatial: {config['spatial_size']}³")
     print(f"  Channels: {config['channels']}")
@@ -145,78 +146,4 @@ def print_config(config):
     print(f"  Memory Usage: {config['memory_gb']:.2f} GB")
     print(f"  Estimated Speed: {config['estimated_hz']:,} Hz")
     
-    print(f"\nExpected Capabilities:")
-    if config['parameters'] < 1_000_000:
-        print("  • Basic reflexes and reactions")
-        print("  • Simple pattern learning")
-    elif config['parameters'] < 5_000_000:
-        print("  • Complex reflexes")
-        print("  • Pattern recognition")
-        print("  • Short-term memory")
-    elif config['parameters'] < 20_000_000:
-        print("  • Behavioral sequences")
-        print("  • Environmental mapping")
-        print("  • Associative learning")
-    elif config['parameters'] < 50_000_000:
-        print("  • Abstract patterns")
-        print("  • Strategic behavior")
-        print("  • Long-term memory")
-    else:
-        print("  • Complex reasoning")
-        print("  • Creative problem solving")
-        print("  • Emergent consciousness?")
-    
     print("\n" + "="*60)
-
-
-def create_optimal_brain(target='balanced', quiet=False):
-    """
-    Create a brain with optimal settings for your hardware.
-    
-    Args:
-        target: 'speed', 'balanced', or 'intelligence'
-        quiet: Suppress output
-        
-    Returns:
-        TrulyMinimalBrain instance
-    """
-    from .truly_minimal_brain import TrulyMinimalBrain
-    
-    config = get_optimal_config(target)
-    
-    if not quiet:
-        print_config(config)
-    
-    brain = TrulyMinimalBrain(
-        spatial_size=config['spatial_size'],
-        channels=config['channels'],
-        device=config['device'],
-        quiet_mode=quiet
-    )
-    
-    return brain, config
-
-
-# Test/Demo
-if __name__ == "__main__":
-    import sys
-    
-    target = sys.argv[1] if len(sys.argv) > 1 else 'balanced'
-    
-    print(f"Detecting optimal configuration for target: {target}")
-    
-    config = get_optimal_config(target)
-    print_config(config)
-    
-    print("\nTo create this brain:")
-    print(f"  brain, config = create_optimal_brain('{target}')")
-    
-    # Show all options
-    print("\n" + "="*60)
-    print("ALL CONFIGURATIONS")
-    print("="*60)
-    
-    for t in ['speed', 'balanced', 'intelligence']:
-        c = get_optimal_config(t)
-        print(f"\n{t.upper():12} -> {c['spatial_size']}³×{c['channels']:3} = {c['parameters']:>10,} params, "
-              f"{c['memory_gb']:>5.1f} GB, {c['estimated_hz']:>5,} Hz")
