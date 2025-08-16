@@ -184,11 +184,22 @@ class MessageProtocol:
     def _receive_exactly(self, sock: socket.socket, num_bytes: int) -> bytes:
         """Receive exactly num_bytes from socket."""
         data = b''
+        attempts = 0
         while len(data) < num_bytes:
-            chunk = sock.recv(num_bytes - len(data))
-            if not chunk:
-                raise ConnectionError("Socket closed unexpectedly")
-            data += chunk
+            attempts += 1
+            try:
+                chunk = sock.recv(num_bytes - len(data))
+                if not chunk:
+                    self.logger.error(f"RECV_EXACT_CLOSED: Socket closed after {len(data)}/{num_bytes} bytes")
+                    raise ConnectionError("Socket closed unexpectedly")
+                data += chunk
+                if attempts == 1 and len(chunk) > 0:
+                    self.logger.debug(f"RECV_EXACT_PROGRESS: Got {len(chunk)} bytes on first attempt, total {len(data)}/{num_bytes}")
+            except socket.timeout:
+                self.logger.warning(f"RECV_EXACT_TIMEOUT: Timeout after receiving {len(data)}/{num_bytes} bytes")
+                if len(data) > 0:
+                    self.logger.warning(f"RECV_EXACT_PARTIAL: Partial data received: {data.hex()}")
+                raise
         return data
     
     def _resync_stream(self, sock: socket.socket, timeout: float):

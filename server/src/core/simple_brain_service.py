@@ -387,14 +387,29 @@ class SimpleBrainService:
             
             # Use sendall to ensure all bytes are sent
             try:
-                client.sendall(response_msg)
-                print(f"   Successfully sent all {len(response_msg)} bytes")
-                
-                # Force flush by disabling Nagle temporarily
+                # First disable Nagle algorithm for immediate sending
                 client.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+                
+                # Send the response
+                bytes_sent = client.send(response_msg)
+                print(f"   Sent {bytes_sent}/{len(response_msg)} bytes")
+                
+                # If not all bytes sent, send the rest
+                if bytes_sent < len(response_msg):
+                    remaining = response_msg[bytes_sent:]
+                    client.sendall(remaining)
+                    print(f"   Sent remaining {len(remaining)} bytes")
+                
+                # Force socket to flush
+                client.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 0)
+                client.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 65536)
+                
+                print(f"   ✅ All {len(response_msg)} bytes sent and flushed")
                 
             except Exception as e:
                 print(f"   ❌ Failed to send response: {e}")
+                import traceback
+                traceback.print_exc()
                 return False
             
             print(f"✅ Handshake complete - sensors={sensory_dim}, motors={motor_dim}")
