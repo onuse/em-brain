@@ -98,11 +98,13 @@ class SimpleBrainService:
             self.client = None
             return
         
-        # Give client time to process handshake response
-        print("⏳ Waiting for client to process handshake...")
-        time.sleep(0.5)  # 500ms for client to receive and process response
+        # Give client time to process handshake and start sensor loop
+        print("⏳ Waiting for client to start sensor stream...")
+        time.sleep(1.0)  # 1 second for client to process handshake and start sending
         
-        client.settimeout(0.1)  # Non-blocking after handshake
+        # Be patient for first sensor data
+        client.settimeout(5.0)  # Long timeout for first sensor packet
+        first_sensor_received = False
         
         # Initialize tracking for heartbeats and error counts
         self.last_motivation = ""
@@ -114,6 +116,13 @@ class SimpleBrainService:
                 # Receive sensor data
                 try:
                     sensors = self.receive_sensors(client)
+                    
+                    # After first successful receive, reduce timeout
+                    if sensors and not first_sensor_received:
+                        first_sensor_received = True
+                        client.settimeout(0.1)  # Now we can use short timeout
+                        print("✅ First sensor data received, switching to fast mode")
+                    
                     if sensors is None:
                         # Check if client is still connected
                         try:
@@ -412,75 +421,16 @@ class SimpleBrainService:
             print(f"   Capabilities being sent: {response_capabilities}")
             print(f"   Full response bytes: {response_msg.hex()[:60]}..." if len(response_msg) > 30 else f"   Full response: {response_msg.hex()}")
             
-            # Use sendall to ensure all bytes are sent
+            # Simple send - no hacks
             try:
-                # Log socket state before sending
-                print(f"   Socket state before send:")
-                print(f"     - Connected: {client.getpeername()}")
-                print(f"     - Timeout: {client.gettimeout()}")
+                print(f"   Sending {len(response_msg)} bytes...")
                 
-                # First disable Nagle algorithm for immediate sending
+                # Just disable Nagle and send
                 client.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-                print(f"     - TCP_NODELAY set (Nagle disabled)")
+                client.sendall(response_msg)
                 
-                # Try different sending methods
-                print(f"   Attempting to send {len(response_msg)} bytes...")
+                print(f"   ✅ Sent {len(response_msg)} bytes")
                 
-                # Send the response
-                bytes_sent = 0
-                try:
-                    # Use sendall to ensure all bytes are sent
-                    client.sendall(response_msg)
-                    bytes_sent = len(response_msg)
-                    print(f"   ✅ sendall() succeeded - {bytes_sent} bytes sent")
-                    
-                    # DO NOT use SO_LINGER with timeout 0 - it causes immediate close!
-                    # Instead, ensure data is sent by disabling buffering
-                    client.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-                    
-                    # Give TCP stack time to actually send the data
-                    time.sleep(0.01)  # 10ms to ensure data goes out
-                    
-                except Exception as e:
-                    print(f"   ❌ sendall() failed: {e}")
-                    raise
-                
-                # Verify send buffer is empty
-                import select
-                readable, writable, exceptional = select.select([], [client], [], 0)
-                if writable:
-                    print(f"     - Socket is writable (send buffer has space)")
-                else:
-                    print(f"     - Socket NOT writable (send buffer may be full)")
-                
-                print(f"   ✅ Total {bytes_sent} bytes sent successfully")
-                
-                # Debug: Verify client is still connected and data was sent
-                try:
-                    peer = client.getpeername()
-                    print(f"   ✅ Client still connected at {peer}")
-                    
-                    # Try to receive 1 byte with MSG_PEEK to check if client sent anything
-                    import select
-                    readable, _, _ = select.select([client], [], [], 0.1)
-                    if readable:
-                        try:
-                            # Set non-blocking for peek
-                            client.setblocking(False)
-                            peek_data = client.recv(1, socket.MSG_PEEK)
-                            client.setblocking(True)
-                            if peek_data:
-                                print(f"   🔍 Client has data ready (peeked: 0x{peek_data[0]:02X})")
-                            else:
-                                print(f"   ⚠️ Socket readable but no data - connection may be closing")
-                        except (BlockingIOError, socket.error):
-                            # Would block - no data available yet
-                            print(f"   ⏳ No immediate data from client (normal)")
-                    else:
-                        print(f"   ⏳ Waiting for client to process response (normal)")
-                        
-                except Exception as e:
-                    print(f"   ⚠️ Post-send check failed: {e}")
                 
             except socket.error as e:
                 print(f"   ❌ Socket error sending response: {e}")
