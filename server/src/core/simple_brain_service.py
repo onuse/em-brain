@@ -83,6 +83,17 @@ class SimpleBrainService:
         """Handle robot connection."""
         self.client = client
         
+        # Enable TCP keepalive to prevent Windows from closing the connection
+        client.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+        
+        # Windows-specific keepalive settings
+        if hasattr(socket, 'TCP_KEEPIDLE'):
+            client.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, 1)
+        if hasattr(socket, 'TCP_KEEPINTVL'):
+            client.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 1)
+        if hasattr(socket, 'TCP_KEEPCNT'):
+            client.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 3)
+        
         # Log connection details
         try:
             peer = client.getpeername()
@@ -115,7 +126,9 @@ class SimpleBrainService:
             while self.running:
                 # Receive sensor data
                 try:
+                    print(f"DEBUG: Waiting for sensor data (timeout={client.gettimeout()}s)...")
                     sensors = self.receive_sensors(client)
+                    print(f"DEBUG: receive_sensors returned: {sensors is not None}")
                     
                     # After first successful receive, reduce timeout
                     if sensors and not first_sensor_received:
@@ -124,27 +137,17 @@ class SimpleBrainService:
                         print("✅ First sensor data received, switching to fast mode")
                     
                     if sensors is None:
-                        # Check if client is still connected
-                        try:
-                            # Try to peek at the socket
-                            client.setblocking(False)
-                            data = client.recv(1, socket.MSG_PEEK)
-                            client.setblocking(True)
-                            if not data:
-                                # Connection closed cleanly
-                                break
-                        except BlockingIOError:
-                            # No data available but socket is still open
-                            pass
-                        except (ConnectionResetError, ConnectionAbortedError, OSError):
-                            # Connection lost
-                            break
-                        except:
-                            # Any other error, assume disconnected
-                            break
-                        
-                        time.sleep(0.001)
-                        continue
+                        # Don't check connection immediately - just continue waiting
+                        # The recv() in receive_sensors already has a timeout
+                        if not first_sensor_received:
+                            # Be patient for first sensor packet
+                            print("DEBUG: Still waiting for first sensor packet...")
+                            time.sleep(0.1)  # Wait 100ms before trying again
+                            continue
+                        else:
+                            # After first packet, we can be less patient
+                            time.sleep(0.001)
+                            continue
                 except ConnectionError as e:
                     # Stream corrupted (bad magic, etc) - disconnect
                     print(f"🔌 Disconnecting due to protocol error: {e}")
@@ -406,7 +409,15 @@ class SimpleBrainService:
             ]
             
             # Encode response in client's format
-            vector_data = struct.pack(f'{len(response_capabilities)}f', *response_capabilities)
+            # Use native byte order for floats (not network order)
+            print(f"   DEBUG: About to pack {len(response_capabilities)} floats: {response_capabilities}")
+            pack_format = str(len(response_capabilities)) + 'f'  # Creates '5f' for 5 floats
+            try:
+                vector_data = struct.pack(pack_format, *response_capabilities)
+                print(f"   DEBUG: Packed {len(vector_data)} bytes successfully")
+            except Exception as e:
+                print(f"   ERROR: struct.pack failed: {e}")
+                return False
             message_length = 1 + 4 + len(vector_data)  # type + vector_length + data
             response_header = struct.pack('!IIBI', 
                 0x524F424F,  # Magic ('ROBO')
@@ -421,15 +432,28 @@ class SimpleBrainService:
             print(f"   Capabilities being sent: {response_capabilities}")
             print(f"   Full response bytes: {response_msg.hex()[:60]}..." if len(response_msg) > 30 else f"   Full response: {response_msg.hex()}")
             
-            # Simple send - no hacks
+            # Send with verification
             try:
                 print(f"   Sending {len(response_msg)} bytes...")
                 
-                # Just disable Nagle and send
+                # Disable Nagle for immediate send
                 client.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-                client.sendall(response_msg)
                 
-                print(f"   ✅ Sent {len(response_msg)} bytes")
+                # Send and verify
+                bytes_sent = client.send(response_msg)
+                if bytes_sent < len(response_msg):
+                    print(f"   ⚠️ Only sent {bytes_sent}/{len(response_msg)} bytes!")
+                    remaining = response_msg[bytes_sent:]
+                    client.sendall(remaining)
+                    print(f"   Sent remaining {len(remaining)} bytes")
+                else:
+                    print(f"   ✅ Sent all {bytes_sent} bytes")
+                
+                # Force a flush by sending empty data (sometimes helps)
+                try:
+                    client.send(b'')
+                except:
+                    pass
                 
                 
             except socket.error as e:
