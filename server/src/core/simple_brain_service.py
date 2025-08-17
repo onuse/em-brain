@@ -393,8 +393,8 @@ class SimpleBrainService:
                 print(f"{'='*60}\n")
                 
                 # Create brain with correct dimensions
-                from ..brains.field.truly_minimal_brain import TrulyMinimalBrain
-                self.brain = TrulyMinimalBrain(
+                from ..brains.field.unified_field_brain import UnifiedFieldBrain
+                self.brain = UnifiedFieldBrain(
                     sensory_dim=sensory_dim,
                     motor_dim=motor_dim,
                     spatial_size=config['spatial_size'],

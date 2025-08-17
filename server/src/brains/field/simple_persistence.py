@@ -28,7 +28,7 @@ class SimplePersistence:
         Save brain state to disk.
         
         Args:
-            brain: TrulyMinimalBrain instance
+            brain: UnifiedFieldBrain instance
             name: Optional name for the save file
             
         Returns:
@@ -59,7 +59,7 @@ class SimplePersistence:
         Load brain state from disk.
         
         Args:
-            brain: TrulyMinimalBrain instance to load into
+            brain: UnifiedFieldBrain instance to load into
             name: Name of the save file
             
         Returns:

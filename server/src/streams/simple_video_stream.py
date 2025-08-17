@@ -36,7 +36,7 @@ class SimpleVideoStream:
         Initialize video stream.
         
         Args:
-            brain: TrulyMinimalBrain instance to inject into
+            brain: UnifiedFieldBrain instance to inject into
             port: UDP port for video stream
         """
         self.brain = brain

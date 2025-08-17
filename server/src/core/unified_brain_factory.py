@@ -11,7 +11,7 @@ import torch
 import logging
 
 from .interfaces import IBrainFactory, IBrain
-from ..brains.field.truly_minimal_brain import MinimalUnifiedBrain, UnifiedFieldBrain
+from ..brains.field.unified_field_brain import MinimalUnifiedBrain, UnifiedFieldBrain
 from .simple_dimension_calculator import SimpleDimensionCalculator
 from ..parameters.cognitive_config import get_cognitive_config
 
