@@ -245,9 +245,9 @@ class Brainstem:
                 sensory_dimensions=sensory_dims,
                 action_dimensions=action_dims
             )
-            # Use WARNING level by default for clean output (use --debug flag for debugging)
-            log_level = 'DEBUG' if self.debug else 'WARNING'
-            self.brain_client = BrainClient(config, log_level=log_level)
+            # Use WARNING level by default for clean output
+            # Pass through the log level from the brainstem initialization
+            self.brain_client = BrainClient(config, log_level=self.log_level)
             
             self.logger.info("CONNECTION_ATTEMPT: Attempting to connect to brain server")
             if self.brain_client.connect():
