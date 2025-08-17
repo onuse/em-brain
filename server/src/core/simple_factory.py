@@ -1,14 +1,14 @@
 """
-Simple Brain Factory - Creates one brain type.
+Simple Brain Factory - Creates the unified field brain.
 
-No complex configurations, no multiple brain types. Just TrulyMinimalBrain.
+Automatically configures optimal parameters based on hardware.
 """
 
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from src.brains.field.truly_minimal_brain import TrulyMinimalBrain
+from src.brains.field.unified_field_brain import UnifiedFieldBrain
 from src.brains.field.auto_config import get_optimal_config
 
 
@@ -21,7 +21,7 @@ def create_brain(target='balanced', quiet=False):
         quiet: Suppress output
     
     Returns:
-        TrulyMinimalBrain instance
+        UnifiedFieldBrain instance
     """
     config = get_optimal_config(target)
     
@@ -30,7 +30,7 @@ def create_brain(target='balanced', quiet=False):
         print(f"Parameters: {config['parameters']:,}")
         print(f"Device: {config['device']}")
     
-    brain = TrulyMinimalBrain(
+    brain = UnifiedFieldBrain(
         spatial_size=config['spatial_size'],
         channels=config['channels'],
         device=config['device'],
