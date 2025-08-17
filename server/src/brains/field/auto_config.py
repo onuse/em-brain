@@ -32,9 +32,10 @@ def calculate_memory_usage(spatial_size, channels):
     
     # Additional tensors needed:
     # - Field momentum (same size as field)
-    # - Temporary tensors for computation (~0.5x field)
-    # Total: 2.5x the field size (no training, no gradients!)
-    total_bytes = field_size * 2.5
+    # - Dynamics/tensions/prediction modules create temporary tensors
+    # - Various intermediate computations
+    # Total: 3.5x the field size to be safe
+    total_bytes = field_size * 3.5
     
     return total_bytes / 1e9
 
@@ -59,8 +60,8 @@ def get_optimal_config(memory_limit=None):
         if memory_limit:
             available_gb = min(available_gb, memory_limit)
         
-        # Use 90% of available memory (we're inference-only, no gradient accumulation)
-        usable_gb = available_gb * 0.90
+        # Use only 30% of available memory for reasonable speed
+        usable_gb = available_gb * 0.30
         
     else:
         device = torch.device('cpu')
@@ -68,17 +69,15 @@ def get_optimal_config(memory_limit=None):
         usable_gb = 2  # Conservative for CPU
     
     # Configuration table - just sizes, no names
+    # Reduced sizes for faster processing
     configs = [
-        (16, 32),
-        (24, 48),
-        (32, 64),
-        (40, 80),
-        (48, 96),
-        (56, 112),
-        (64, 128),
-        (80, 160),
-        (96, 192),
-        (128, 256),
+        (16, 32),   # ~32K params - super fast
+        (24, 48),   # ~110K params - very fast  
+        (32, 64),   # ~260K params - fast
+        (40, 80),   # ~512K params - reasonable
+        (48, 96),   # ~1M params - moderate
+        (56, 112),  # ~1.7M params - slower
+        (64, 128),  # ~2.6M params - slow
     ]
     
     # Find the largest configuration that fits in available memory

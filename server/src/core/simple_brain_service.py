@@ -62,6 +62,9 @@ class SimpleBrainService:
         # Start main TCP server
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # Also set SO_REUSEPORT if available (helps with socket reuse)
+        if hasattr(socket, 'SO_REUSEPORT'):
+            self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
         self.server.bind(('0.0.0.0', self.port))
         self.server.listen(1)
         
@@ -154,16 +157,39 @@ class SimpleBrainService:
                     break
                 
                 # Process with brain
-                motors, brain_telemetry = self.brain.process(sensors)
+                try:
+                    print(f"DEBUG: Processing {len(sensors)} sensors with brain...")
+                    motors, brain_telemetry = self.brain.process(sensors)
+                    print(f"DEBUG: Brain returned {len(motors)} motor commands")
+                except Exception as e:
+                    print(f"❌ Brain processing error: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    break
                 
                 # Update telemetry
-                metrics = self.telemetry.update(brain_telemetry)
+                try:
+                    metrics = self.telemetry.update(brain_telemetry)
+                except Exception as e:
+                    print(f"❌ Telemetry error: {e}")
+                    metrics = {}
                 
                 # Broadcast telemetry
-                self._broadcast_telemetry(sensors, motors, brain_telemetry, metrics)
+                try:
+                    self._broadcast_telemetry(sensors, motors, brain_telemetry, metrics)
+                except Exception as e:
+                    print(f"⚠️ Telemetry broadcast error: {e}")
                 
                 # Send motor commands
-                self.send_motors(client, motors)
+                try:
+                    print(f"DEBUG: Sending {len(motors)} motor commands...")
+                    self.send_motors(client, motors)
+                    print(f"DEBUG: Motor commands sent")
+                except Exception as e:
+                    print(f"❌ Error sending motors: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    break
                 
                 # Periodic status with field evolution
                 if self.telemetry.cycles % 100 == 0:
@@ -430,7 +456,16 @@ class SimpleBrainService:
             print(f"📤 Preparing handshake response: {len(response_msg)} bytes")
             print(f"   Header: magic=0x{0x524F424F:08X}, msg_len={message_length}, type=2, vec_len={len(response_capabilities)}")
             print(f"   Capabilities being sent: {response_capabilities}")
-            print(f"   Full response bytes: {response_msg.hex()[:60]}..." if len(response_msg) > 30 else f"   Full response: {response_msg.hex()}")
+            print(f"   Full response ({len(response_msg)} bytes): {response_msg.hex()}")
+            
+            # Verify it matches expected
+            expected = bytes.fromhex("524f424f0000001902000000050000803f000040410000c0400000803f00007041")
+            if response_msg == expected:
+                print(f"   ✅ Response matches expected format")
+            else:
+                print(f"   ⚠️ Response differs from expected!")
+                print(f"   Expected: {expected.hex()}")
+                print(f"   Got:      {response_msg.hex()}")
             
             # Send with verification
             try:

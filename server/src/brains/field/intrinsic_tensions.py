@@ -171,11 +171,13 @@ class IntrinsicTensions:
         
         # Compute comfort scores (0 = uncomfortable, 1 = comfortable)
         resting_comfort = 1.0 - abs(field_mean - self.resting_potential) / self.resting_potential
-        variance_comfort = min(1.0, local_var / self.comfort_variance)
-        activity_comfort = min(1.0, activity / 0.1)  # Want at least 0.1 activity
+        variance_comfort = torch.clamp(torch.tensor(local_var / self.comfort_variance), max=1.0).item()
+        activity_comfort = torch.clamp(torch.tensor(activity / 0.1), max=1.0).item()  # Want at least 0.1 activity
         
         # Overall comfort is minimum of all factors (weakest link)
-        overall_comfort = min(resting_comfort, variance_comfort, activity_comfort)
+        # Use torch operations to avoid Python's min
+        comfort_tensor = torch.tensor([resting_comfort, variance_comfort, activity_comfort])
+        overall_comfort = comfort_tensor.min().item()
         
         return {
             'overall_comfort': overall_comfort,
@@ -212,11 +214,13 @@ class MotivationalDynamics:
         
         Returns a human-readable description of what's driving the system.
         """
-        lowest_comfort = min(
+        # Use torch to find minimum instead of Python's min
+        comfort_values = torch.tensor([
             comfort_metrics['resting_comfort'],
             comfort_metrics['variance_comfort'],
             comfort_metrics['activity_comfort']
-        )
+        ])
+        lowest_comfort = comfort_values.min().item()
         
         if comfort_metrics['activity_comfort'] == lowest_comfort:
             if comfort_metrics['activity_level'] < 0.05:

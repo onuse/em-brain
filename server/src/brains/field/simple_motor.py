@@ -52,40 +52,53 @@ class SimpleMotorExtraction:
         # Gradient magnitude at each point
         gradient_mag = torch.sqrt(dx**2 + dy**2 + dz**2).mean(dim=3)  # Average across channels
         
-        # Extract motor commands from specific regions
-        motors = []
+        # Pre-allocate motor tensor on GPU
+        motor_values = torch.zeros(self.motor_dim, device=field.device)
+        motor_directions = torch.zeros(self.motor_dim, device=field.device)
+        
+        # Vectorized boundary computation using torch operations
+        x_coords = self.motor_regions[:, 0]
+        y_coords = self.motor_regions[:, 1]
+        z_coords = self.motor_regions[:, 2]
+        
+        # Compute bounds using torch operations (stays on GPU)
+        x_min = torch.clamp(x_coords - 1, min=0)
+        x_max = torch.clamp(x_coords + 2, max=field.shape[0])
+        y_min = torch.clamp(y_coords - 1, min=0)
+        y_max = torch.clamp(y_coords + 2, max=field.shape[1])
+        z_min = torch.clamp(z_coords - 1, min=0)
+        z_max = torch.clamp(z_coords + 2, max=field.shape[2])
+        
+        # Clamp indices for direction sampling
+        x_clamped = torch.clamp(x_coords, max=dx.shape[0] - 1)
+        y_clamped = torch.clamp(y_coords, max=dx.shape[1] - 1)
+        z_clamped = torch.clamp(z_coords, max=dx.shape[2] - 1)
+        
+        # Extract motor commands (still need loop for variable-sized regions)
         for i in range(self.motor_dim):
-            x, y, z = self.motor_regions[i]
-            
-            # Sample gradient in a small region around the motor point
-            x_min, x_max = max(0, x-1), min(field.shape[0], x+2)
-            y_min, y_max = max(0, y-1), min(field.shape[1], y+2)
-            z_min, z_max = max(0, z-1), min(field.shape[2], z+2)
-            
-            region_gradient = gradient_mag[x_min:x_max, y_min:y_max, z_min:z_max]
+            # Get region bounds (already computed on GPU)
+            region_gradient = gradient_mag[
+                x_min[i]:x_max[i], 
+                y_min[i]:y_max[i], 
+                z_min[i]:z_max[i]
+            ]
             
             # Motor command is mean gradient in that region
-            motor_value = region_gradient.mean().item()
+            motor_values[i] = region_gradient.mean()
             
-            # Also consider the direction of the gradient for signed motor commands
-            # Use x-gradient for forward/backward, y-gradient for left/right
-            # Clamp indices to valid range
-            x = min(x, dx.shape[0] - 1)
-            y = min(y, dx.shape[1] - 1)
-            z = min(z, dx.shape[2] - 1)
-            
+            # Get direction based on motor index
             if i == 0:  # Forward/backward
-                direction = dx[x, y, z].mean().item()
+                motor_directions[i] = dx[x_clamped[i], y_clamped[i], z_clamped[i]].mean()
             elif i == 1:  # Left/right  
-                direction = dy[x, y, z].mean().item()
+                motor_directions[i] = dy[x_clamped[i], y_clamped[i], z_clamped[i]].mean()
             else:  # Other motors
-                direction = dz[x, y, z].mean().item()
-            
-            # Combine magnitude and direction
-            motor_command = np.tanh(direction * motor_value * 10)  # Scale and bound to [-1, 1]
-            motors.append(motor_command)
+                motor_directions[i] = dz[x_clamped[i], y_clamped[i], z_clamped[i]].mean()
         
-        return motors
+        # Combine magnitude and direction, apply tanh on GPU
+        motor_commands = torch.tanh(motor_directions * motor_values * 10)
+        
+        # Convert to list only at the very end (single CPU transfer)
+        return motor_commands.cpu().tolist()
     
     def get_motor_state(self, motors: list) -> str:
         """Interpret motor commands as behavior."""
