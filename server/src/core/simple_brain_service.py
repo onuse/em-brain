@@ -28,13 +28,14 @@ except ImportError:
 class SimpleBrainService:
     """Minimal TCP server for brain."""
     
-    def __init__(self, port=9999, enable_streams=True, telemetry_port=9998):
+    def __init__(self, port=9999, enable_streams=True, telemetry_port=9998, debug=False):
         self.port = port
         self.telemetry_port = telemetry_port
         self.brain = None  # Create brain after handshake
         self.telemetry = SimpleTelemetry()
         self.running = False
         self.client = None
+        self.debug = debug  # Debug logging flag
         
         # Telemetry broadcasting
         self.telemetry_clients = []
@@ -101,9 +102,11 @@ class SimpleBrainService:
         try:
             peer = client.getpeername()
             local = client.getsockname()
-            print(f"   Connection established: {peer} -> {local}")
+            if self.debug:
+                print(f"   Connection established: {peer} -> {local}")
         except Exception as e:
-            print(f"   ⚠️ Could not get socket details: {e}")
+            if self.debug:
+                print(f"   ⚠️ Could not get socket details: {e}")
         
         # Handle handshake first
         if not self._handle_handshake(client):
@@ -113,7 +116,8 @@ class SimpleBrainService:
             return
         
         # Give client time to process handshake and start sensor loop
-        print("⏳ Waiting for client to start sensor stream...")
+        if self.debug:
+            print("⏳ Waiting for client to start sensor stream...")
         time.sleep(1.0)  # 1 second for client to process handshake and start sending
         
         # Be patient for first sensor data
@@ -129,22 +133,26 @@ class SimpleBrainService:
             while self.running:
                 # Receive sensor data
                 try:
-                    print(f"DEBUG: Waiting for sensor data (timeout={client.gettimeout()}s)...")
+                    if self.debug:
+                        print(f"DEBUG: Waiting for sensor data (timeout={client.gettimeout()}s)...")
                     sensors = self.receive_sensors(client)
-                    print(f"DEBUG: receive_sensors returned: {sensors is not None}")
+                    if self.debug:
+                        print(f"DEBUG: receive_sensors returned: {sensors is not None}")
                     
                     # After first successful receive, reduce timeout
                     if sensors and not first_sensor_received:
                         first_sensor_received = True
                         client.settimeout(0.1)  # Now we can use short timeout
-                        print("✅ First sensor data received, switching to fast mode")
+                        if self.debug:
+                            print("✅ First sensor data received, switching to fast mode")
                     
                     if sensors is None:
                         # Don't check connection immediately - just continue waiting
                         # The recv() in receive_sensors already has a timeout
                         if not first_sensor_received:
                             # Be patient for first sensor packet
-                            print("DEBUG: Still waiting for first sensor packet...")
+                            if self.debug:
+                                print("DEBUG: Still waiting for first sensor packet...")
                             time.sleep(0.1)  # Wait 100ms before trying again
                             continue
                         else:
@@ -158,9 +166,11 @@ class SimpleBrainService:
                 
                 # Process with brain
                 try:
-                    print(f"DEBUG: Processing {len(sensors)} sensors with brain...")
+                    if self.debug:
+                        print(f"DEBUG: Processing {len(sensors)} sensors with brain...")
                     motors, brain_telemetry = self.brain.process(sensors)
-                    print(f"DEBUG: Brain returned {len(motors)} motor commands")
+                    if self.debug:
+                        print(f"DEBUG: Brain returned {len(motors)} motor commands")
                 except Exception as e:
                     print(f"❌ Brain processing error: {e}")
                     import traceback
@@ -182,9 +192,11 @@ class SimpleBrainService:
                 
                 # Send motor commands
                 try:
-                    print(f"DEBUG: Sending {len(motors)} motor commands...")
+                    if self.debug:
+                        print(f"DEBUG: Sending {len(motors)} motor commands...")
                     self.send_motors(client, motors)
-                    print(f"DEBUG: Motor commands sent")
+                    if self.debug:
+                        print(f"DEBUG: Motor commands sent")
                 except Exception as e:
                     print(f"❌ Error sending motors: {e}")
                     import traceback
@@ -293,11 +305,13 @@ class SimpleBrainService:
     def _handle_handshake(self, client: socket.socket) -> bool:
         """Handle initial handshake with robot."""
         try:
-            print("🤝 Starting handshake...")
+            if self.debug:
+                print("🤝 Starting handshake...")
             client.settimeout(5.0)  # 5 second timeout for handshake
             
             # Read handshake header (13 bytes) - magic(4) + length(4) + type(1) + vector_length(4)
-            print("   Waiting for handshake header (13 bytes)...")
+            if self.debug:
+                print("   Waiting for handshake header (13 bytes)...")
             header = client.recv(13)
             if len(header) == 0:
                 print("❌ Handshake failed: Client closed connection before sending handshake")
@@ -321,7 +335,8 @@ class SimpleBrainService:
             
             # Read handshake data
             data_size = vector_length * 4
-            print(f"   Waiting for handshake data ({data_size} bytes for {vector_length} floats)...")
+            if self.debug:
+                print(f"   Waiting for handshake data ({data_size} bytes for {vector_length} floats)...")
             data = client.recv(data_size)
             if len(data) < data_size:
                 print(f"❌ Handshake failed: incomplete data (got {len(data)}/{data_size} bytes)")
@@ -329,7 +344,8 @@ class SimpleBrainService:
             
             # Parse capabilities (client sends floats in native byte order)
             capabilities = struct.unpack(f'{vector_length}f', data)
-            print(f"   Received capabilities: {capabilities}")
+            if self.debug:
+                print(f"   Received capabilities: {capabilities}")
             version = capabilities[0] if vector_length > 0 else 1.0
             sensory_dim = int(capabilities[1]) if vector_length > 1 else 16
             motor_dim = int(capabilities[2]) if vector_length > 2 else 5
@@ -436,11 +452,13 @@ class SimpleBrainService:
             
             # Encode response in client's format
             # Use native byte order for floats (not network order)
-            print(f"   DEBUG: About to pack {len(response_capabilities)} floats: {response_capabilities}")
+            if self.debug:
+                print(f"   DEBUG: About to pack {len(response_capabilities)} floats: {response_capabilities}")
             pack_format = str(len(response_capabilities)) + 'f'  # Creates '5f' for 5 floats
             try:
                 vector_data = struct.pack(pack_format, *response_capabilities)
-                print(f"   DEBUG: Packed {len(vector_data)} bytes successfully")
+                if self.debug:
+                    print(f"   DEBUG: Packed {len(vector_data)} bytes successfully")
             except Exception as e:
                 print(f"   ERROR: struct.pack failed: {e}")
                 return False
@@ -453,23 +471,26 @@ class SimpleBrainService:
             )
             response_msg = response_header + vector_data
             
-            print(f"📤 Preparing handshake response: {len(response_msg)} bytes")
-            print(f"   Header: magic=0x{0x524F424F:08X}, msg_len={message_length}, type=2, vec_len={len(response_capabilities)}")
-            print(f"   Capabilities being sent: {response_capabilities}")
-            print(f"   Full response ({len(response_msg)} bytes): {response_msg.hex()}")
+            if self.debug:
+                print(f"📤 Preparing handshake response: {len(response_msg)} bytes")
+                print(f"   Header: magic=0x{0x524F424F:08X}, msg_len={message_length}, type=2, vec_len={len(response_capabilities)}")
+                print(f"   Capabilities being sent: {response_capabilities}")
+                print(f"   Full response ({len(response_msg)} bytes): {response_msg.hex()}")
             
-            # Verify it matches expected
-            expected = bytes.fromhex("524f424f0000001902000000050000803f000040410000c0400000803f00007041")
-            if response_msg == expected:
-                print(f"   ✅ Response matches expected format")
-            else:
-                print(f"   ⚠️ Response differs from expected!")
-                print(f"   Expected: {expected.hex()}")
-                print(f"   Got:      {response_msg.hex()}")
+            if self.debug:
+                # Verify it matches expected
+                expected = bytes.fromhex("524f424f0000001902000000050000803f000040410000c0400000803f00007041")
+                if response_msg == expected:
+                    print(f"   ✅ Response matches expected format")
+                else:
+                    print(f"   ⚠️ Response differs from expected!")
+                    print(f"   Expected: {expected.hex()}")
+                    print(f"   Got:      {response_msg.hex()}")
             
             # Send with verification
             try:
-                print(f"   Sending {len(response_msg)} bytes...")
+                if self.debug:
+                    print(f"   Sending {len(response_msg)} bytes...")
                 
                 # Disable Nagle for immediate send
                 client.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
@@ -477,12 +498,15 @@ class SimpleBrainService:
                 # Send and verify
                 bytes_sent = client.send(response_msg)
                 if bytes_sent < len(response_msg):
-                    print(f"   ⚠️ Only sent {bytes_sent}/{len(response_msg)} bytes!")
+                    if self.debug:
+                        print(f"   ⚠️ Only sent {bytes_sent}/{len(response_msg)} bytes!")
                     remaining = response_msg[bytes_sent:]
                     client.sendall(remaining)
-                    print(f"   Sent remaining {len(remaining)} bytes")
+                    if self.debug:
+                        print(f"   Sent remaining {len(remaining)} bytes")
                 else:
-                    print(f"   ✅ Sent all {bytes_sent} bytes")
+                    if self.debug:
+                        print(f"   ✅ Sent all {bytes_sent} bytes")
                 
                 # Force a flush by sending empty data (sometimes helps)
                 try:

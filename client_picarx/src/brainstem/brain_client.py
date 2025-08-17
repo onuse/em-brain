@@ -445,10 +445,11 @@ class BrainClient:
                 # Debug: Show what brain sent
                 if accepted_sensory != self.config.sensory_dimensions or accepted_action != self.config.action_dimensions:
                     self.logger.warning(f"DIMENSION_MISMATCH: Sent {self.config.sensory_dimensions}s/{self.config.action_dimensions}m, got {accepted_sensory}s/{accepted_action}m")
-                    print(f"⚠️ Dimension mismatch in handshake!")
-                    print(f"   Sent: {self.config.sensory_dimensions}s/{self.config.action_dimensions}m")
-                    print(f"   Brain returned: {accepted_sensory}s/{accepted_action}m")
-                    print(f"   Full brain response: {brain_handshake}")
+                    if self.logger.level <= logging.WARNING:
+                        print(f"⚠️ Dimension mismatch in handshake!")
+                        print(f"   Sent: {self.config.sensory_dimensions}s/{self.config.action_dimensions}m")
+                        print(f"   Brain returned: {accepted_sensory}s/{accepted_action}m")
+                        print(f"   Full brain response: {brain_handshake}")
                 else:
                     self.logger.info(f"DIMENSION_MATCH: Sensory and action dimensions accepted by brain")
                 
@@ -456,7 +457,8 @@ class BrainClient:
                 # The brain should accept our dimensions or reject them
                 
                 self.logger.info(f"HANDSHAKE_COMPLETE: Successfully negotiated with brain")
-                print(f"🤝 Handshake complete: Brain v{brain_version:.1f}, GPU={'✓' if gpu_available else '✗'}")
+                if self.logger.level <= logging.INFO:
+                    print(f"🤝 Handshake complete: Brain v{brain_version:.1f}, GPU={'✓' if gpu_available else '✗'}")
                 return True
             else:
                 self.logger.error(f"HANDSHAKE_INVALID: Invalid response type={msg_type}, len={len(brain_handshake) if brain_handshake else 0}")
@@ -464,11 +466,13 @@ class BrainClient:
                 
         except socket.timeout:
             self.logger.error("HANDSHAKE_TIMEOUT: Brain server did not respond to handshake within 5s")
-            print("Handshake error: Message receive timeout")
+            if self.logger.level <= logging.WARNING:
+                print("Handshake error: Message receive timeout")
             return False
         except Exception as e:
             self.logger.error(f"HANDSHAKE_ERROR: Handshake failed with error: {e}")
-            print(f"Handshake error: {e}")
+            if self.logger.level <= logging.WARNING:
+                print(f"Handshake error: {e}")
             return False
     
     def process_sensors(self, sensor_data: List[float]) -> Optional[Dict[str, Any]]:
@@ -551,13 +555,15 @@ def test_connection():
     parser = argparse.ArgumentParser(description='Test brain connection')
     parser.add_argument('--host', default='localhost', help='Brain server host')
     parser.add_argument('--port', type=int, default=9999, help='Brain server port')
+    parser.add_argument('--debug', action='store_true', help='Enable debug logging')
     
     args = parser.parse_args()
     
     print(f"Testing connection to {args.host}:{args.port}...")
     
     config = BrainServerConfig(host=args.host, port=args.port)
-    client = BrainClient(config)
+    log_level = 'DEBUG' if args.debug else 'ERROR'
+    client = BrainClient(config, log_level=log_level)
     
     if client.connect():
         print("✅ Connection successful!")
