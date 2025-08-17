@@ -66,28 +66,52 @@ class SimpleFieldDynamics:
     def _apply_diffusion(self, field: torch.Tensor) -> torch.Tensor:
         """
         Apply simple diffusion using nearest-neighbor averaging.
-        
-        This is like heat spreading through the field.
+        Optimized for large tensors.
         """
-        # Create padded version for boundary handling
-        # Use constant padding since replicate doesn't work with 4D tensors
-        padded = torch.nn.functional.pad(field, (0, 0, 1, 1, 1, 1, 1, 1), mode='constant', value=0)
-        
-        # Sum of 6 neighbors (±x, ±y, ±z)
-        neighbors = (
-            padded[:-2, 1:-1, 1:-1, :] +  # -x
-            padded[2:, 1:-1, 1:-1, :] +   # +x
-            padded[1:-1, :-2, 1:-1, :] +  # -y
-            padded[1:-1, 2:, 1:-1, :] +   # +y
-            padded[1:-1, 1:-1, :-2, :] +  # -z
-            padded[1:-1, 1:-1, 2:, :]     # +z
-        )
-        
-        # Discrete laplacian: neighbors - 6*center
-        laplacian = neighbors - 6 * field
-        
-        # Apply diffusion
-        field = field + self.diffusion_rate * laplacian
+        # For very large fields, use strided diffusion for efficiency
+        if field.shape[0] > 64:
+            # Subsample for diffusion calculation (4x faster)
+            stride = 2
+            subsampled = field[::stride, ::stride, ::stride, :]
+            
+            # Apply diffusion on smaller field
+            padded = torch.nn.functional.pad(subsampled, (0, 0, 1, 1, 1, 1, 1, 1), mode='constant', value=0)
+            
+            neighbors = (
+                padded[:-2, 1:-1, 1:-1, :] +  # -x
+                padded[2:, 1:-1, 1:-1, :] +   # +x
+                padded[1:-1, :-2, 1:-1, :] +  # -y
+                padded[1:-1, 2:, 1:-1, :] +   # +y
+                padded[1:-1, 1:-1, :-2, :] +  # -z
+                padded[1:-1, 1:-1, 2:, :]     # +z
+            )
+            
+            laplacian_sub = neighbors - 6 * subsampled
+            
+            # Upsample back using nearest neighbor interpolation
+            laplacian_full = torch.nn.functional.interpolate(
+                laplacian_sub.permute(3, 0, 1, 2).unsqueeze(0),
+                size=field.shape[:3],
+                mode='nearest'
+            ).squeeze(0).permute(1, 2, 3, 0)
+            
+            # Apply diffusion with slightly reduced rate to compensate
+            field = field + self.diffusion_rate * laplacian_full * 0.8
+        else:
+            # Original implementation for smaller fields
+            padded = torch.nn.functional.pad(field, (0, 0, 1, 1, 1, 1, 1, 1), mode='constant', value=0)
+            
+            neighbors = (
+                padded[:-2, 1:-1, 1:-1, :] +  # -x
+                padded[2:, 1:-1, 1:-1, :] +   # +x
+                padded[1:-1, :-2, 1:-1, :] +  # -y
+                padded[1:-1, 2:, 1:-1, :] +   # +y
+                padded[1:-1, 1:-1, :-2, :] +  # -z
+                padded[1:-1, 1:-1, 2:, :]     # +z
+            )
+            
+            laplacian = neighbors - 6 * field
+            field = field + self.diffusion_rate * laplacian
         
         return field
     

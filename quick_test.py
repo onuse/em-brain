@@ -1,50 +1,39 @@
 #!/usr/bin/env python3
-"""Quick test to isolate the performance issue."""
+"""Quick performance test with smaller brain."""
+
+import sys
+import os
+sys.path.append('/mnt/c/Users/glimm/Documents/Projects/em-brain/server/src')
 
 import torch
 import time
-from server.src.brains.field.truly_minimal_brain import TrulyMinimalBrain
+from brains.field.gpu_optimized_brain import GPUOptimizedFieldBrain
 
-print("Quick performance test...")
-
-# Start with smaller size to test
-brain = TrulyMinimalBrain(
-    sensory_dim=12,
-    motor_dim=6,
-    spatial_size=16,  # Start small
-    channels=32,
-    device=torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
-    quiet_mode=True
+# Test with smaller size first
+brain = GPUOptimizedFieldBrain(
+    sensory_dim=16,
+    motor_dim=5,
+    spatial_size=16,  # Small size for testing
+    channels=32,      # Small channels
+    quiet_mode=False
 )
 
-sensors = [0.5] * 12
-
-# Test single cycle
+print("\nTesting single cycle...")
 start = time.perf_counter()
-motors, telemetry = brain.process(sensors)
-if torch.cuda.is_available():
-    torch.cuda.synchronize()
-elapsed = (time.perf_counter() - start) * 1000
+motor_output, telemetry = brain.process([0.5] * 16)
+end = time.perf_counter()
 
-print(f"Small brain (16³×32): {elapsed:.1f}ms")
+print(f"Time: {(end-start)*1000:.1f}ms")
+print(f"Motivation: {telemetry['motivation']}")
+print(f"Exploring: {telemetry['exploring']}")
 
-# Now test with larger size
-print("\nTesting larger brain...")
-brain2 = TrulyMinimalBrain(
-    sensory_dim=12,
-    motor_dim=6,
-    spatial_size=32,  # Medium size
-    channels=64,
-    device=torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
-    quiet_mode=True
-)
+print("\nTesting 10 cycles...")
+times = []
+for i in range(10):
+    start = time.perf_counter()
+    motor_output, telemetry = brain.process([0.5 + 0.1*i] * 16)
+    end = time.perf_counter()
+    times.append((end-start)*1000)
+    print(f"  Cycle {i+1}: {times[-1]:.1f}ms")
 
-start = time.perf_counter()
-motors, telemetry = brain2.process(sensors)
-if torch.cuda.is_available():
-    torch.cuda.synchronize()
-elapsed = (time.perf_counter() - start) * 1000
-
-print(f"Medium brain (32³×64): {elapsed:.1f}ms")
-
-print("\nDone!")
+print(f"\nAverage: {sum(times)/len(times):.1f}ms")

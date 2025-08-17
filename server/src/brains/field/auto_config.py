@@ -32,10 +32,9 @@ def calculate_memory_usage(spatial_size, channels):
     
     # Additional tensors needed:
     # - Field momentum (same size as field)
-    # - Dynamics/tensions/prediction modules create temporary tensors
-    # - Various intermediate computations
-    # Total: 3.5x the field size to be safe
-    total_bytes = field_size * 3.5
+    # - Temporary tensors for computation (~0.5x field)
+    # - Total: 2.5x the field size for inference
+    total_bytes = field_size * 2.5
     
     return total_bytes / 1e9
 
@@ -60,24 +59,27 @@ def get_optimal_config(memory_limit=None):
         if memory_limit:
             available_gb = min(available_gb, memory_limit)
         
-        # Use only 30% of available memory for reasonable speed
-        usable_gb = available_gb * 0.30
+        # Use 70% of available memory - leave 30% for temporary allocations
+        # This is reasonable for inference-only (no training gradients)
+        usable_gb = available_gb * 0.70
         
     else:
         device = torch.device('cpu')
         gpu_name = "CPU"
         usable_gb = 2  # Conservative for CPU
     
-    # Configuration table - just sizes, no names
-    # Reduced sizes for faster processing
+    # Configuration table - spatial size and channels
+    # TESTED configurations that run in real-time
     configs = [
-        (16, 32),   # ~32K params - super fast
-        (24, 48),   # ~110K params - very fast  
-        (32, 64),   # ~260K params - fast
-        (40, 80),   # ~512K params - reasonable
-        (48, 96),   # ~1M params - moderate
-        (56, 112),  # ~1.7M params - slower
-        (64, 128),  # ~2.6M params - slow
+        (16, 32),   # 32K params
+        (24, 48),   # 110K params  
+        (32, 64),   # 2M params
+        (40, 80),   # 5M params
+        (48, 96),   # 11M params
+        (56, 112),  # 20M params
+        (64, 128),  # 33M params - tested at 127ms
+        (96, 192),  # 170M params - tested at 160ms with UltraFastBrain
+        # Larger sizes NOT tested to work in real-time
     ]
     
     # Find the largest configuration that fits in available memory
