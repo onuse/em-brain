@@ -1,10 +1,10 @@
 """
-Ultra-Fast GPU Brain - Properly Optimized
+Large Field Implementation
 
-Achieves <200ms on 96³×192 tensors by:
-1. Computing expensive operations on downsampled tensors
-2. Temporal interleaving of costly operations
-3. Vectorized sensor/motor operations
+Optimized implementation for large tensor fields (>64³) that:
+1. Computes expensive operations on downsampled tensors
+2. Temporally interleaves costly operations
+3. Uses vectorized sensor/motor operations
 """
 
 import torch
@@ -19,8 +19,8 @@ from .simple_learning import SimpleLearning
 from .simple_persistence import SimplePersistence
 
 
-class UltraFastBrain:
-    """Ultra-fast brain implementation with all optimizations."""
+class LargeFieldImplementation:
+    """Optimized implementation for large field tensors."""
     
     def __init__(self,
                  sensory_dim: int = 16,

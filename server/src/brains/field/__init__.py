@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Truly Minimal Field Brain Package
+Unified Field Brain Package
 
-Reduced to absolute essentials - ~250 lines total.
-Everything complex emerges from simple physics + intrinsic tensions.
+A single brain implementation with automatic algorithm selection
+based on tensor size for optimal performance.
 """
 
-from .truly_minimal_brain import TrulyMinimalBrain, MinimalUnifiedBrain, UnifiedFieldBrain
+from .unified_field_brain import UnifiedFieldBrain, MinimalUnifiedBrain, TrulyMinimalBrain
 
 # Export main interfaces
 __all__ = [

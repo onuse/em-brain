@@ -1,8 +1,8 @@
 """
-Truly Minimal Field Brain
+Unified Field Brain
 
-Absolutely minimal implementation using only simple, understandable components.
-Total: ~250 lines for a complete emergent intelligence system.
+Single brain implementation that automatically selects the appropriate
+algorithm based on tensor size for optimal performance.
 """
 
 import torch
@@ -19,16 +19,9 @@ from .simple_motor import SimpleMotorExtraction
 from .intrinsic_tensions import IntrinsicTensions
 from .simple_persistence import SimplePersistence
 
-# For large tensors (>64³), use the GPU-optimized version
-# that preserves all intelligence features
-try:
-    from .final_optimized_brain import FinalOptimizedFieldBrain
-    OPTIMIZED_AVAILABLE = True
-except ImportError:
-    OPTIMIZED_AVAILABLE = False
 
 
-class TrulyMinimalBrain:
+class UnifiedFieldBrain:
     """
     The absolute minimal brain for emergent intelligence.
     
@@ -43,25 +36,14 @@ class TrulyMinimalBrain:
     """
     
     def __new__(cls, *args, **kwargs):
-        """
-        Factory method to select appropriate implementation.
-        Uses ultra-fast version for large tensors (>64³).
-        """
+        """Use optimized version for large brains."""
         spatial_size = kwargs.get('spatial_size', 16)
         if len(args) >= 3:
             spatial_size = args[2]
             
-        # Use ultra-fast version for large brains
-        try:
-            if spatial_size > 64:
-                from .ultra_fast_brain import UltraFastBrain
-                if not kwargs.get('quiet_mode', False):
-                    print("⚡ Using ultra-fast brain for large tensor field")
-                return UltraFastBrain(*args, **kwargs)
-        except ImportError:
-            pass
-            
-        # Use original implementation
+        if spatial_size > 64:
+            from .large_field_implementation import LargeFieldImplementation
+            return LargeFieldImplementation(*args, **kwargs)
         return object.__new__(cls)
     
     def __init__(self,
@@ -95,7 +77,7 @@ class TrulyMinimalBrain:
             
         if not quiet_mode:
             params = spatial_size ** 3 * channels
-            print(f"🧠 Truly Minimal Brain")
+            print(f"🧠 Unified Field Brain")
             print(f"   Size: {spatial_size}³×{channels} = {params:,} parameters")
             print(f"   Device: {self.device}")
         
@@ -273,29 +255,6 @@ class TrulyMinimalBrain:
             print("🔄 Brain reset")
 
 
-# Import optimized version for production use
-try:
-    from .gpu_fixed_brain import GPUFixedBrain
-    # Use properly fixed GPU version
-    MinimalUnifiedBrain = GPUFixedBrain
-    UnifiedFieldBrain = GPUFixedBrain
-    print("✅ Using GPU-fixed brain (vectorized operations)")
-except ImportError:
-    try:
-        from .final_optimized_brain import FinalOptimizedFieldBrain
-        # Use final optimized version for production (96³×192 @ <200ms)
-        MinimalUnifiedBrain = FinalOptimizedFieldBrain
-        UnifiedFieldBrain = FinalOptimizedFieldBrain
-        print("⚡ Using production-optimized brain (<200ms @ 169M params)")
-    except ImportError:
-        try:
-            from .gpu_optimized_brain import GPUOptimizedFieldBrain
-            # Fallback to GPU-optimized version
-            MinimalUnifiedBrain = GPUOptimizedFieldBrain
-            UnifiedFieldBrain = GPUOptimizedFieldBrain
-            print("🚀 Using GPU-optimized brain implementation")
-        except ImportError:
-            # Fallback to original if optimizations not available
-            MinimalUnifiedBrain = TrulyMinimalBrain
-            UnifiedFieldBrain = TrulyMinimalBrain
-            print("⚠️  Optimizations not available, using standard implementation")
+# Compatibility aliases for existing code
+MinimalUnifiedBrain = UnifiedFieldBrain
+TrulyMinimalBrain = UnifiedFieldBrain
