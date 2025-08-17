@@ -104,7 +104,7 @@ class SafetyConfig:
     """Safety thresholds for reflexes - loaded from config."""
     collision_distance_cm: float = 3.0
     cliff_threshold_adc: int = 3500
-    battery_critical_v: float = 2.0
+    battery_critical_v: float = 6.0
     max_temp_c: float = 80.0
     max_speed: float = 0.8
     
