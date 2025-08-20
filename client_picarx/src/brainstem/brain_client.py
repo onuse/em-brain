@@ -429,7 +429,7 @@ class BrainClient:
                 self.logger.warning("SOCKET_NOT_READABLE: No data available after 0.5s")
             
             recv_start = time.time()
-            msg_type, brain_handshake = self.protocol.receive_message(self.socket, timeout=5.0)
+            msg_type, brain_handshake = self.protocol.receive_message(self.socket, timeout=self.config.timeout)
             recv_time = time.time() - recv_start
             self.logger.info(f"HANDSHAKE_RECV_SUCCESS: Received response in {recv_time:.3f}s, type={msg_type}, data={brain_handshake}")
             
