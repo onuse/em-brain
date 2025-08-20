@@ -724,3 +724,96 @@ class EnhancedCriticalMassBrain(CriticalMassFieldBrain):
         ]
         
         return np.mean(scores)
+    
+    def save_state(self, filepath: str) -> bool:
+        """
+        Save the complete brain state including all learning.
+        """
+        try:
+            state = {
+                # Core field state
+                'field': self.field.cpu().numpy(),
+                'momentum': self.momentum.cpu().numpy(),
+                
+                # Resonance system
+                'resonance_buffer': self.resonance_buffer.cpu().numpy(),
+                'resonance_coupling': self.resonance_coupling.cpu().numpy(),
+                'concepts_formed': self.metrics['concepts_formed'],
+                
+                # Learning systems
+                'temporal_couplings': self.predictive_chains.temporal_couplings,
+                'resonance_outcomes': self.semantic_grounding.resonance_outcomes,
+                'success_rates': self.semantic_grounding.success_rates,
+                'preference_field': self.preference_field.cpu().numpy(),
+                'goal_field': self.goal_field.cpu().numpy(),
+                
+                # Metrics and history
+                'metrics': self.metrics,
+                'enhanced_metrics': self.enhanced_metrics,
+                'cycles': self.metrics['cycles'],
+                
+                # Memory
+                'memory_hologram': self.memory_hologram.cpu().numpy(),
+            }
+            
+            # Save with compression
+            import pickle
+            import gzip
+            
+            with gzip.open(filepath, 'wb') as f:
+                pickle.dump(state, f)
+            
+            logger.info(f"Brain state saved to {filepath}")
+            print(f"💾 Brain state saved: {self.metrics['cycles']} cycles, {self.metrics['concepts_formed']} concepts")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to save brain state: {e}")
+            return False
+    
+    def load_state(self, filepath: str) -> bool:
+        """
+        Load a previously saved brain state.
+        """
+        try:
+            import pickle
+            import gzip
+            
+            with gzip.open(filepath, 'rb') as f:
+                state = pickle.load(f)
+            
+            # Restore core field state
+            self.field = torch.tensor(state['field'], device=self.device)
+            self.momentum = torch.tensor(state['momentum'], device=self.device)
+            
+            # Restore resonance system
+            self.resonance_buffer = torch.tensor(state['resonance_buffer'], device=self.device)
+            self.resonance_coupling = torch.tensor(state['resonance_coupling'], device=self.device)
+            self.metrics['concepts_formed'] = state['concepts_formed']
+            
+            # Restore learning systems
+            self.predictive_chains.temporal_couplings = state['temporal_couplings']
+            self.semantic_grounding.resonance_outcomes = state['resonance_outcomes']
+            self.semantic_grounding.success_rates = state['success_rates']
+            self.preference_field = torch.tensor(state['preference_field'], device=self.device)
+            self.goal_field = torch.tensor(state['goal_field'], device=self.device)
+            
+            # Restore metrics
+            self.metrics.update(state['metrics'])
+            self.enhanced_metrics.update(state['enhanced_metrics'])
+            
+            # Restore memory
+            self.memory_hologram = torch.tensor(state['memory_hologram'], device=self.device)
+            
+            logger.info(f"Brain state loaded from {filepath}")
+            print(f"🧠 Brain restored: {self.metrics['cycles']} cycles learned, {self.metrics['concepts_formed']} concepts")
+            print(f"   Causal chains: {len(self.predictive_chains.temporal_couplings)}")
+            print(f"   Semantic meanings: {len(self.semantic_grounding.resonance_outcomes)}")
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to load brain state: {e}")
+            print(f"⚠️ Could not load brain state: {e}")
+            print("   Starting with fresh brain")
+            return False

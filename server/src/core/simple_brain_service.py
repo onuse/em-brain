@@ -29,7 +29,8 @@ class SimpleBrainService:
     """Minimal TCP server for brain."""
     
     def __init__(self, port=9999, enable_streams=True, telemetry_port=9998, debug=False, 
-                 brain_type='unified', target='balanced'):
+                 brain_type='unified', target='balanced', auto_save_interval=300,
+                 save_on_exit=True, brain_state_path=None):
         self.port = port
         self.telemetry_port = telemetry_port
         self.brain = None  # Create brain after handshake
@@ -39,6 +40,13 @@ class SimpleBrainService:
         self.running = False
         self.client = None
         self.debug = debug  # Debug logging flag
+        
+        # Auto-save configuration
+        self.auto_save_interval = auto_save_interval  # Save every N seconds (0 = disabled)
+        self.save_on_exit = save_on_exit  # Save when disconnecting
+        self.brain_state_path = brain_state_path  # Path to load/save brain state
+        self.last_save_time = 0
+        self.last_save_cycle = 0
         
         # Telemetry broadcasting
         self.telemetry_clients = []
@@ -221,6 +229,13 @@ class SimpleBrainService:
                     traceback.print_exc()
                     break
                 
+                # Auto-save check
+                if self.auto_save_interval > 0 and self.brain:
+                    current_time = time.time()
+                    if current_time - self.last_save_time >= self.auto_save_interval:
+                        self._auto_save_brain()
+                        self.last_save_time = current_time
+                
                 # Periodic status with field evolution
                 if self.telemetry.cycles % 100 == 0:
                     field_energy = brain_telemetry.get('energy', 0)
@@ -272,6 +287,11 @@ class SimpleBrainService:
             # Unexpected errors
             print(f"Unexpected error: {e}")
         finally:
+            # Save brain state on exit if configured
+            if self.save_on_exit and self.brain and hasattr(self.brain, 'save_state'):
+                print("💾 Saving brain state before disconnecting...")
+                self._save_brain_on_exit()
+            
             # Clean up client connection
             client.close()
             self.client = None
@@ -432,12 +452,21 @@ class SimpleBrainService:
                         if self.debug:
                             print(f"Stream initialization: {e}")
                 
-                # Load brain state if requested
-                if hasattr(self, 'brain_state_to_load') and self.brain_state_to_load:
-                    if self.brain.load(self.brain_state_to_load):
-                        print(f"✅ Loaded brain state from {self.brain_state_to_load}")
+                # Load brain state if specified
+                if self.brain_state_path and hasattr(self.brain, 'load_state'):
+                    import os
+                    if os.path.exists(self.brain_state_path):
+                        if self.brain.load_state(self.brain_state_path):
+                            print(f"✅ Loaded brain state from {self.brain_state_path}")
+                        else:
+                            print(f"❌ Failed to load {self.brain_state_path}, starting fresh")
                     else:
-                        print(f"❌ Failed to load {self.brain_state_to_load}, starting fresh")
+                        print(f"ℹ️ No saved brain state found at {self.brain_state_path}, starting fresh")
+                
+                # Initialize auto-save
+                if self.auto_save_interval > 0:
+                    self.last_save_time = time.time()
+                    print(f"⏰ Auto-save enabled every {self.auto_save_interval} seconds")
             
             # Start stream listeners based on CLIENT capabilities
             if self.stream_manager and self.brain:
@@ -750,6 +779,62 @@ class SimpleBrainService:
                 client.close()
             except:
                 pass
+    
+    def _auto_save_brain(self):
+        """Auto-save brain state periodically."""
+        if not self.brain or not hasattr(self.brain, 'save_state'):
+            return
+        
+        # Generate filename with timestamp if no path specified
+        if not self.brain_state_path:
+            import os
+            os.makedirs("brain_states", exist_ok=True)
+            self.brain_state_path = f"brain_states/{self.brain_type}_autosave.brain"
+        
+        # Save state
+        if self.brain.save_state(self.brain_state_path):
+            cycles = self.telemetry.cycles
+            delta_cycles = cycles - self.last_save_cycle
+            print(f"💾 Auto-saved brain state (cycle {cycles}, +{delta_cycles} since last save)")
+            self.last_save_cycle = cycles
+        else:
+            print(f"⚠️ Failed to auto-save brain state")
+    
+    def _save_brain_on_exit(self):
+        """Save brain state when exiting."""
+        if not self.brain or not hasattr(self.brain, 'save_state'):
+            return
+        
+        # Generate exit filename
+        import os
+        from datetime import datetime
+        
+        os.makedirs("brain_states", exist_ok=True)
+        
+        # Use configured path or generate one
+        if self.brain_state_path:
+            # Add _exit suffix if using auto-save path
+            base, ext = os.path.splitext(self.brain_state_path)
+            exit_path = f"{base}_exit{ext}"
+        else:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            exit_path = f"brain_states/{self.brain_type}_{timestamp}_exit.brain"
+        
+        # Save state
+        if self.brain.save_state(exit_path):
+            cycles = self.telemetry.cycles
+            print(f"✅ Brain state saved on exit: {exit_path}")
+            print(f"   Total cycles: {cycles}")
+            if hasattr(self.brain, 'metrics'):
+                concepts = self.brain.metrics.get('concepts_formed', 0)
+                print(f"   Concepts formed: {concepts}")
+                if hasattr(self.brain, 'enhanced_metrics'):
+                    chains = self.brain.enhanced_metrics.get('causal_chains_learned', 0)
+                    meanings = self.brain.enhanced_metrics.get('semantic_meanings', 0)
+                    print(f"   Causal chains: {chains}")
+                    print(f"   Semantic meanings: {meanings}")
+        else:
+            print(f"⚠️ Failed to save brain state on exit")
 
 
 # Simple entry point

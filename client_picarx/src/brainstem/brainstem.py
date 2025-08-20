@@ -134,7 +134,7 @@ class Brainstem:
     4. That's it!
     """
     
-    def __init__(self, brain_host: str = None, brain_port: int = None, config_path: str = None, 
+    def __init__(self, brain_host: str = None, brain_port: int = None, brain_timeout: float = 30, config_path: str = None, 
                  enable_monitor: bool = True, enable_brain: bool = True, log_level: str = 'WARNING'):
         """Initialize clean brainstem with configuration."""
         
@@ -164,6 +164,7 @@ class Brainstem:
         brain_config = self.config.get("brain", {})
         self.brain_host = brain_host if brain_host is not None else brain_config.get("host", "localhost") 
         self.brain_port = brain_port if brain_port is not None else brain_config.get("port", 9999)
+        self.brain_timeout = brain_timeout if brain_timeout is not None else brain_config.get("port", 9999)
         self.brain_client = None
         self.last_connect_attempt = 0
         self.reconnect_interval = 5.0  # Try reconnecting every 5 seconds
@@ -173,7 +174,7 @@ class Brainstem:
         
         # Init brain connection first
         if enable_brain:
-            self._init_brain_connection(self.brain_host, self.brain_port)
+            self._init_brain_connection(self.brain_host, self.brain_port, self.brain_timeout)
             
             # Only start vision stream if brain connection succeeded
             if self.brain_client and self.brain_client.connected and VISION_STREAM_AVAILABLE:
@@ -209,7 +210,7 @@ class Brainstem:
         print(f"   Safety: collision<{self.safety.collision_distance_cm}cm, battery>{self.safety.battery_critical_v}V")
         print(f"   Performance: {self.control_loop_hz}Hz control loop")
     
-    def _init_brain_connection(self, host: str, port: int):
+    def _init_brain_connection(self, host: str, port: int, timeout: float):
         """Initialize brain server connection."""
         self.logger.info(f"BRAIN_INIT: Initializing connection to {host}:{port}")
         
@@ -241,7 +242,7 @@ class Brainstem:
             config = BrainServerConfig(
                 host=host, 
                 port=port, 
-                timeout=self.config.timeout
+                timeout=timeout,
                 sensory_dimensions=sensory_dims,
                 action_dimensions=action_dims
             )
@@ -287,7 +288,7 @@ class Brainstem:
             self.brain_client = None
         
         # Try connecting again
-        self._init_brain_connection(self.brain_host, self.brain_port)
+        self._init_brain_connection(self.brain_host, self.brain_port, self.brain_timeout)
     
     def sensors_to_brain_format(self, raw: RawSensorData) -> List[float]:
         """
@@ -642,6 +643,7 @@ def main():
     # Use config values if args are None
     brain_host = args.brain_host or brain_config.get('host', 'localhost')
     brain_port = args.brain_port or brain_config.get('port', 9999)
+    brain_timeout = args.brain_port or brain_config.get('timeout', 30)
     rate = args.rate or config.get('performance', {}).get('control_loop_hz', 20.0)
     
     print("=" * 60)
@@ -653,7 +655,7 @@ def main():
     print("=" * 60)
     
     # Pass None to Brainstem to let it use config values
-    brainstem = Brainstem(args.brain_host, args.brain_port)
+    brainstem = Brainstem(args.brain_host, args.brain_port, args.brain_timeout)
     
     try:
         brainstem.run(rate)

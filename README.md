@@ -5,17 +5,24 @@ Field-based intelligence with intrinsic motivation. No rewards, just physics and
 ## Quick Start
 
 ```bash
-# Run brain server with telemetry
-cd server && python3 brain.py
+# Start the brain server (with smart defaults)
+python3 run_server.py
+
+# This automatically:
+# - Uses Enhanced Critical Mass Brain (most advanced)
+# - Runs with --target speed (optimized for real-time)
+# - Auto-saves every 5 minutes
+# - Saves when disconnecting
+# - Loads previous brain state if it exists
+
+# To start fresh (ignore saved state):
+python3 run_server.py --fresh-brain
 
 # In another terminal - monitor the brain
 python3 monitor.py
 
 # In another terminal - connect robot  
 cd client_picarx && python3 picarx_robot.py --brain-host <IP>
-
-# Or run demo with visualization
-python3 demo.py
 ```
 
 ## Telemetry Dashboard
