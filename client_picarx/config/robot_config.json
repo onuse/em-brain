@@ -2,7 +2,7 @@
   "brain": {
     "host": "192.168.1.160",
     "port": 9999,
-    "timeout": 0.05
+    "timeout": 30
   },
   
   "vision": {

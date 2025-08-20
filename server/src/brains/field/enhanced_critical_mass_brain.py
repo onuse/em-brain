@@ -507,19 +507,36 @@ class EnhancedCriticalMassBrain(CriticalMassFieldBrain):
         
         logger.info("Enhanced brain initialized with full learning capabilities")
     
-    def process(self, sensor_data: Dict[str, float]) -> Dict[str, float]:
+    def process(self, sensor_data):
         """
         Enhanced processing with causal learning, semantic grounding,
         temporal memory, and curiosity-driven exploration.
+        
+        Args:
+            sensor_data: List of sensor values from robot or dict for testing
+        
+        Returns:
+            Tuple of (motor_list, telemetry_dict) for robot interface
         """
-        # Convert sensor dict to array
-        sensory_input = np.array([
-            sensor_data.get('ultrasonic', 50.0) / 100.0,
-            sensor_data.get('vision_detected', 0.0),
-            sensor_data.get('audio_level', 0.0),
-            sensor_data.get('battery', 1.0),
-            (sensor_data.get('temperature', 25.0) - 25.0) / 10.0
-        ])
+        # Handle both dict (testing) and list (robot) inputs
+        if isinstance(sensor_data, dict):
+            # Testing mode - convert dict to list for processing
+            sensory_list = [
+                sensor_data.get('ultrasonic', 50.0),
+                sensor_data.get('vision_detected', 0.0), 
+                sensor_data.get('audio_level', 0.0),
+                sensor_data.get('battery', 1.0),
+                sensor_data.get('temperature', 25.0)
+            ]
+            # Pad to match robot's sensor count if needed
+            while len(sensory_list) < 12:
+                sensory_list.append(0.0)
+            sensory_input = np.array(sensory_list[:5])  # Use first 5 for learning
+        else:
+            # Robot mode - list of sensor values
+            sensory_list = sensor_data
+            sensory_input = np.array(sensor_data[:5] if len(sensor_data) >= 5 else 
+                                    list(sensor_data) + [0.0] * (5 - len(sensor_data)))
         
         # TEMPORAL CONTEXT: Inject memory into current processing
         context = self.temporal_memory.get_context()
@@ -612,21 +629,39 @@ class EnhancedCriticalMassBrain(CriticalMassFieldBrain):
         self.previous_sensors = sensory_input
         self.previous_resonances = current_resonances
         
-        # Convert action to motor dict
-        motor_commands = {
-            'pan': float(np.tanh(action[0])),
-            'tilt': float(np.tanh(action[1])),
-            'motor1': float(np.tanh(action[2])),
-            'motor2': float(np.tanh(action[3])),
-            'motor3': float(np.tanh(action[4])),
-            'motor4': float(np.tanh(action[5]))
-        }
+        # Convert action to motor list for robot interface
+        motor_list = [
+            float(np.tanh(action[0])),  # pan
+            float(np.tanh(action[1])),  # tilt
+            float(np.tanh(action[2])),  # motor1
+            float(np.tanh(action[3])),  # motor2
+            float(np.tanh(action[4])),  # motor3
+            float(np.tanh(action[5]))   # motor4
+        ]
+        
+        # Create telemetry dict
+        telemetry = self.get_telemetry()
         
         # Log learning progress periodically
         if self.metrics['cycles'] % 100 == 0:
             self._log_learning_progress()
         
-        return motor_commands
+        # Return format expected by robot interface: (motor_list, telemetry_dict)
+        # But also support dict return for testing
+        if isinstance(sensor_data, dict):
+            # Testing mode - return motor dict
+            motor_commands = {
+                'pan': motor_list[0],
+                'tilt': motor_list[1],
+                'motor1': motor_list[2],
+                'motor2': motor_list[3],
+                'motor3': motor_list[4],
+                'motor4': motor_list[5]
+            }
+            return motor_commands
+        else:
+            # Robot mode - return tuple of (motors, telemetry)
+            return motor_list, telemetry
     
     def _log_learning_progress(self):
         """Log the brain's learning progress."""

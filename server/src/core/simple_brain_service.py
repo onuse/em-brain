@@ -180,7 +180,13 @@ class SimpleBrainService:
                 try:
                     if self.debug:
                         print(f"DEBUG: Processing {len(sensors)} sensors with brain...")
+                    
+                    # For first few cycles, warn that it might take time
+                    if self.telemetry.cycles < 5:
+                        print(f"  ⏳ Processing cycle {self.telemetry.cycles + 1} (may take 30-60s initially)...")
+                    
                     motors, brain_telemetry = self.brain.process(sensors)
+                    
                     if self.debug:
                         print(f"DEBUG: Brain returned {len(motors)} motor commands")
                 except Exception as e:
