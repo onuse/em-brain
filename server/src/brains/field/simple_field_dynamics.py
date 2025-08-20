@@ -6,6 +6,7 @@ No patterns, no waves, no complex features. Just physics.
 """
 
 import torch
+import torch.nn.functional as F
 from typing import Optional
 
 
@@ -31,6 +32,7 @@ class SimpleFieldDynamics:
         self.decay_rate = decay_rate
         self.diffusion_rate = diffusion_rate
         self.noise_scale = noise_scale
+        self._laplacian_kernel = None  # Will be created on first use
         
     def evolve(self, field: torch.Tensor, external_input: Optional[torch.Tensor] = None) -> torch.Tensor:
         """
@@ -66,7 +68,83 @@ class SimpleFieldDynamics:
     def _apply_diffusion(self, field: torch.Tensor) -> torch.Tensor:
         """
         Apply simple diffusion using nearest-neighbor averaging.
-        Optimized for large tensors.
+        GPU-optimized using conv3d for better performance.
+        """
+        # Try GPU-optimized version first
+        if hasattr(F, 'conv3d'):
+            return self._apply_diffusion_gpu_optimized(field)
+        else:
+            # Fallback to original implementation
+            return self._apply_diffusion_original(field)
+    
+    def _apply_diffusion_gpu_optimized(self, field: torch.Tensor) -> torch.Tensor:
+        """
+        GPU-optimized diffusion using 3D convolution.
+        Produces identical results to the original but much faster.
+        """
+        # Create Laplacian kernel on first use (cached)
+        if self._laplacian_kernel is None or self._laplacian_kernel.device != field.device:
+            # 3D Laplacian kernel for discrete approximation
+            kernel = torch.zeros(1, 1, 3, 3, 3, device=field.device, dtype=field.dtype)
+            kernel[0, 0, 1, 1, 1] = -6.0  # center
+            kernel[0, 0, 0, 1, 1] = 1.0   # -x
+            kernel[0, 0, 2, 1, 1] = 1.0   # +x
+            kernel[0, 0, 1, 0, 1] = 1.0   # -y
+            kernel[0, 0, 1, 2, 1] = 1.0   # +y
+            kernel[0, 0, 1, 1, 0] = 1.0   # -z
+            kernel[0, 0, 1, 1, 2] = 1.0   # +z
+            self._laplacian_kernel = kernel
+        
+        # For very large fields, use the same subsampling strategy
+        if field.shape[0] > 64:
+            # Subsample for diffusion calculation (4x faster)
+            stride = 2
+            subsampled = field[::stride, ::stride, ::stride, :]
+            
+            # Reshape for conv3d: [D,H,W,C] -> [1,C,D,H,W]
+            C = subsampled.shape[3]
+            field_conv = subsampled.permute(3, 0, 1, 2).unsqueeze(0)
+            
+            # Expand kernel for all channels (depthwise convolution)
+            kernel_expanded = self._laplacian_kernel.expand(C, 1, -1, -1, -1)
+            
+            # Apply 3D convolution with proper padding
+            laplacian_sub = F.conv3d(field_conv, kernel_expanded, padding=1, groups=C)
+            
+            # Reshape back: [1,C,D,H,W] -> [D,H,W,C]
+            laplacian_sub = laplacian_sub.squeeze(0).permute(1, 2, 3, 0)
+            
+            # Upsample back using nearest neighbor interpolation
+            laplacian_full = F.interpolate(
+                laplacian_sub.permute(3, 0, 1, 2).unsqueeze(0),
+                size=field.shape[:3],
+                mode='nearest'
+            ).squeeze(0).permute(1, 2, 3, 0)
+            
+            # Apply diffusion with slightly reduced rate to compensate
+            field = field + self.diffusion_rate * laplacian_full * 0.8
+        else:
+            # For smaller fields, apply conv3d directly
+            # Reshape for conv3d: [D,H,W,C] -> [1,C,D,H,W]
+            C = field.shape[3]
+            field_conv = field.permute(3, 0, 1, 2).unsqueeze(0)
+            
+            # Expand kernel for all channels (depthwise convolution)
+            kernel_expanded = self._laplacian_kernel.expand(C, 1, -1, -1, -1)
+            
+            # Apply 3D convolution with proper padding
+            laplacian = F.conv3d(field_conv, kernel_expanded, padding=1, groups=C)
+            
+            # Reshape back: [1,C,D,H,W] -> [D,H,W,C]
+            laplacian = laplacian.squeeze(0).permute(1, 2, 3, 0)
+            
+            field = field + self.diffusion_rate * laplacian
+        
+        return field
+    
+    def _apply_diffusion_original(self, field: torch.Tensor) -> torch.Tensor:
+        """
+        Original diffusion implementation for reference and fallback.
         """
         # For very large fields, use strided diffusion for efficiency
         if field.shape[0] > 64:

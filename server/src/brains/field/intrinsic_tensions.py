@@ -8,7 +8,6 @@ Core principle: Motivation emerges from the tension between current and comforta
 """
 
 import torch
-import numpy as np
 from typing import Tuple, Dict, Any
 
 
@@ -159,25 +158,39 @@ class IntrinsicTensions:
     def get_comfort_metrics(self, field: torch.Tensor) -> Dict[str, float]:
         """
         Measure how "comfortable" the current field state is.
+        GPU-optimized with batched computation to reduce synchronization.
         
         This helps us understand what drives the system's behavior.
         """
-        field_mean = field.mean().item()
-        field_var = field.var().item()
-        activity = torch.abs(field).mean().item()
+        # Batch all metric computations on GPU
+        field_mean_gpu = field.mean()
+        field_var_gpu = field.var()
+        activity_gpu = torch.abs(field).mean()
+        local_var_gpu = self._compute_local_variance(field).mean()
         
-        # Compute local variance
-        local_var = self._compute_local_variance(field).mean().item()
+        # Stack for single CPU transfer
+        metrics_gpu = torch.stack([
+            field_mean_gpu,
+            field_var_gpu,
+            activity_gpu,
+            local_var_gpu
+        ])
         
-        # Compute comfort scores (0 = uncomfortable, 1 = comfortable)
+        # Single CPU transfer for all metrics
+        metrics_cpu = metrics_gpu.cpu().numpy()
+        
+        field_mean = metrics_cpu[0]
+        field_var = metrics_cpu[1]
+        activity = metrics_cpu[2]
+        local_var = metrics_cpu[3]
+        
+        # Compute comfort scores (using numpy for efficiency)
         resting_comfort = 1.0 - abs(field_mean - self.resting_potential) / self.resting_potential
-        variance_comfort = torch.clamp(torch.tensor(local_var / self.comfort_variance), max=1.0).item()
-        activity_comfort = torch.clamp(torch.tensor(activity / 0.1), max=1.0).item()  # Want at least 0.1 activity
+        variance_comfort = min(local_var / self.comfort_variance, 1.0)
+        activity_comfort = min(activity / 0.1, 1.0)  # Want at least 0.1 activity
         
         # Overall comfort is minimum of all factors (weakest link)
-        # Use torch operations to avoid Python's min
-        comfort_tensor = torch.tensor([resting_comfort, variance_comfort, activity_comfort])
-        overall_comfort = comfort_tensor.min().item()
+        overall_comfort = min(resting_comfort, variance_comfort, activity_comfort)
         
         return {
             'overall_comfort': overall_comfort,
@@ -265,10 +278,14 @@ class MotivationalDynamics:
         if len(self.comfort_history) > 10:
             recent_comfort = self.comfort_history[-5:]
             older_comfort = self.comfort_history[-10:-5]
-            if np.mean(recent_comfort) <= np.mean(older_comfort):
+            # Use Python's built-in mean to avoid numpy dependency
+            recent_mean = sum(recent_comfort) / len(recent_comfort)
+            older_mean = sum(older_comfort) / len(older_comfort)
+            if recent_mean <= older_mean:
                 return True
         
         # Otherwise, exploration probability based on comfort
         # High comfort = low exploration probability
         explore_prob = 1.0 - comfort_metrics['overall_comfort']
-        return np.random.random() < explore_prob * 0.3  # Max 30% exploration when comfortable
+        # Use torch for random generation (stays on GPU if possible)
+        return torch.rand(1, device=self.device).item() < explore_prob * 0.3  # Max 30% exploration when comfortable

@@ -28,10 +28,13 @@ except ImportError:
 class SimpleBrainService:
     """Minimal TCP server for brain."""
     
-    def __init__(self, port=9999, enable_streams=True, telemetry_port=9998, debug=False):
+    def __init__(self, port=9999, enable_streams=True, telemetry_port=9998, debug=False, 
+                 brain_type='unified', target='balanced'):
         self.port = port
         self.telemetry_port = telemetry_port
         self.brain = None  # Create brain after handshake
+        self.brain_type = brain_type  # Store brain type for creation
+        self.target = target  # Store optimization target
         self.telemetry = SimpleTelemetry()
         self.running = False
         self.client = None
@@ -372,36 +375,31 @@ class SimpleBrainService:
             if self.brain is None:
                 print(f"🧠 Creating brain with negotiated dimensions: {sensory_dim} sensors, {motor_dim} motors")
                 from .simple_factory import create_brain
-                from ..brains.field.auto_config import get_optimal_config
                 
-                # Get config
-                config = get_optimal_config()  # No parameter needed - auto-detects
-                
-                # Print hardware detection
+                # Print brain type being created
                 print(f"\n{'='*60}")
-                print(f"HARDWARE DETECTION")
+                print(f"BRAIN CREATION")
                 print(f"{'='*60}")
-                print(f"Device: {config['gpu_name']}")
-                if config['device'].type == 'cuda':
-                    print(f"Memory: {config['available_memory_gb']:.1f}/{config['total_memory_gb']:.1f} GB available")
-                print(f"\nBRAIN CONFIGURATION")
-                print(f"{'='*60}")
-                print(f"Size: {config['spatial_size']}³×{config['channels']}")
-                print(f"Parameters: {config['parameters']:,}")
-                print(f"Memory usage: {config['memory_gb']:.2f} GB")
-                print(f"Estimated speed: {config['estimated_hz']:,} Hz")
-                print(f"{'='*60}\n")
+                print(f"Brain Type: {self.brain_type.upper()}")
+                print(f"Target: {self.target}")
                 
-                # Create brain with correct dimensions
-                from ..brains.field.unified_field_brain import UnifiedFieldBrain
-                self.brain = UnifiedFieldBrain(
-                    sensory_dim=sensory_dim,
-                    motor_dim=motor_dim,
-                    spatial_size=config['spatial_size'],
-                    channels=config['channels'],
-                    device=config['device'],
-                    quiet_mode=True  # We already printed info above
+                # Create brain using factory with selected type
+                self.brain = create_brain(
+                    brain_type=self.brain_type,
+                    target=self.target,
+                    quiet=False  # Let factory print its info
                 )
+                
+                # For Critical Mass Brain, it already handles sensor/motor dims internally
+                # For UnifiedFieldBrain, we need to check compatibility
+                if self.brain_type == 'unified':
+                    # UnifiedFieldBrain needs dimension compatibility check
+                    if hasattr(self.brain, 'sensory_dim') and self.brain.sensory_dim != sensory_dim:
+                        print(f"⚠️ Adjusting sensory dimensions: {self.brain.sensory_dim} -> {sensory_dim}")
+                    if hasattr(self.brain, 'motor_dim') and self.brain.motor_dim != motor_dim:
+                        print(f"⚠️ Adjusting motor dimensions: {self.brain.motor_dim} -> {motor_dim}")
+                
+                print(f"{'='*60}\n")
                 
                 # Update stream manager with the new brain
                 if self.stream_manager:

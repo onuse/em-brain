@@ -19,6 +19,11 @@ from .simple_motor import SimpleMotorExtraction
 from .intrinsic_tensions import IntrinsicTensions
 from .simple_persistence import SimplePersistence
 
+# Import the three critical additions for true learning
+from .selective_persistence import SelectivePersistence
+from .spatial_sensory_encoding import SpatialSensoryEncoding
+from .prediction_gated_learning import PredictionGatedLearning
+
 
 
 class UnifiedFieldBrain:
@@ -97,6 +102,11 @@ class UnifiedFieldBrain:
         self.motor = SimpleMotorExtraction(motor_dim, self.device, spatial_size)
         self.persistence = SimplePersistence()
         
+        # Initialize the three critical additions for true learning
+        self.selective_persistence = SelectivePersistence(self.field.shape, self.device)
+        self.spatial_encoder = SpatialSensoryEncoding(self.field.shape, self.device)
+        self.gated_learning = PredictionGatedLearning(self.field.shape, self.device)
+        
         # State tracking
         self.cycle = 0
         self.last_prediction = None
@@ -129,34 +139,36 @@ class UnifiedFieldBrain:
         sensors = torch.tensor(sensory_input[:self.sensory_dim], 
                               dtype=torch.float32, device=self.device)
         
-        # ===== 1. SENSORY INJECTION =====
-        # Simple: each sensor adds energy at a random but fixed location
-        if not hasattr(self, 'sensor_spots'):
-            # Initialize injection spots on first use
-            self.sensor_spots = torch.randint(0, self.spatial_size, 
-                                             (self.sensory_dim, 3), 
-                                             device=self.device)
+        # ===== 1. SENSORY INJECTION (Now with spatial structure!) =====
+        # Use spatial encoding instead of random injection
+        # This preserves spatial relationships in sensory data
         
-        for i, value in enumerate(sensors):
-            if i >= self.sensory_dim:
-                break
-            x, y, z = self.sensor_spots[i]
-            # Inject into first few channels
-            self.field[x, y, z, i % 8] += value * 0.3
+        # For now, inject sensors as before but with spatial encoding
+        # In future, visual input can be added here too
+        sensor_list = sensors.cpu().tolist() if isinstance(sensors, torch.Tensor) else sensors
+        self.field = self.spatial_encoder.encode_sensor_array(sensor_list, self.field)
         
-        # ===== 2. LEARNING FROM PREDICTION ERROR =====
+        # ===== 2. LEARNING FROM PREDICTION ERROR (Now gated!) =====
         if self.last_prediction is not None:
             # Compute error between prediction and reality
             error = self.prediction.compute_error(self.last_prediction, sensors)
-            
-            # Error creates field tension (discomfort)
-            tension = self.learning.error_to_field_tension(error, self.field)
-            self.field = self.field + tension
-            
-            # Update prediction system
-            self.prediction.learn_from_error(error, self.field)
-            
             error_magnitude = torch.abs(error).mean().item()
+            
+            # Use prediction-gated learning
+            # Only learn when surprised, not from every tiny error
+            if self.gated_learning.should_learn(error_magnitude):
+                # Error creates field tension (discomfort)
+                tension = self.learning.error_to_field_tension(error, self.field)
+                
+                # Gate the learning update based on confidence
+                gated_tension = self.gated_learning.gate_learning(tension, error_magnitude, self.field)
+                self.field = self.field + gated_tension
+                
+                # Update prediction system
+                self.prediction.learn_from_error(error, self.field)
+            
+            # Update selective persistence based on prediction success
+            self.selective_persistence.update_stability(self.field, error_magnitude)
         else:
             error_magnitude = 0.0
         
@@ -179,7 +191,10 @@ class UnifiedFieldBrain:
         # Strong activity builds momentum that overshoots and reverses
         # This should naturally break out of static patterns!
         
-        # ===== 4. FIELD EVOLUTION (PHYSICS) =====
+        # ===== 4. FIELD EVOLUTION (PHYSICS with selective persistence!) =====
+        # Apply selective decay - successful patterns persist
+        self.field = self.selective_persistence.apply_selective_decay(self.field)
+        
         # Add exploration noise if we're not learning well
         exploration = self.learning.should_explore()
         if exploration:
@@ -187,7 +202,12 @@ class UnifiedFieldBrain:
         else:
             noise = None
         
+        # Continue with normal dynamics (but decay is now handled above)
+        # Temporarily override decay in dynamics to avoid double-decay
+        original_decay = self.dynamics.decay_rate
+        self.dynamics.decay_rate = 1.0  # No decay (already handled)
         self.field = self.dynamics.evolve(self.field, noise)
+        self.dynamics.decay_rate = original_decay  # Restore
         
         # ===== 5. MOTOR EXTRACTION =====
         motor_output = self.motor.extract_motors(self.field)
@@ -198,6 +218,7 @@ class UnifiedFieldBrain:
         
         # ===== TELEMETRY =====
         comfort = self.tensions.get_comfort_metrics(self.field)
+        learning_stats = self.gated_learning.get_learning_stats()
         
         telemetry = {
             'cycle': self.cycle,
@@ -205,6 +226,9 @@ class UnifiedFieldBrain:
             'energy': self.dynamics.get_energy(self.field),
             'variance': self.dynamics.get_variance(self.field),
             'comfort': comfort['overall_comfort'],
+            'memory_utilization': self.selective_persistence.get_memory_utilization(),
+            'learning_active': learning_stats['should_learn'],
+            'prediction_confidence': learning_stats['confidence'],
             'motivation': self._interpret_state(comfort),
             'learning': self.learning.get_learning_state(),
             'motor': self.motor.get_motor_state(motor_output),
