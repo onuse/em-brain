@@ -45,13 +45,8 @@ class SimpleBrainService:
         self.telemetry_thread = None
         
         # Initialize multi-stream support if available (brain will be set later)
-        self.stream_manager = None
-        if enable_streams and STREAMS_AVAILABLE:
-            try:
-                self.stream_manager = SensorFieldInjectionManager(None)  # Brain set after handshake
-                print("✅ Multi-stream support initialized")
-            except Exception as e:
-                print(f"⚠️ Could not initialize streams: {e}")
+        self.enable_streams = enable_streams
+        self.stream_manager = None  # Will be created after brain initialization
         
     def start(self):
         """
@@ -69,7 +64,21 @@ class SimpleBrainService:
         # Also set SO_REUSEPORT if available (helps with socket reuse)
         if hasattr(socket, 'SO_REUSEPORT'):
             self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+        # Bind to all interfaces (0.0.0.0) to accept external connections
         self.server.bind(('0.0.0.0', self.port))
+        
+        # Get and display the actual IP address
+        import socket as s
+        hostname = s.gethostname()
+        try:
+            # Get local IP
+            local_ip = s.gethostbyname(hostname)
+            print(f"📡 Accepting connections on:")
+            print(f"   - localhost:{self.port}")
+            print(f"   - {local_ip}:{self.port}")
+            print(f"   - 0.0.0.0:{self.port} (all interfaces)")
+        except:
+            print(f"📡 Accepting connections on 0.0.0.0:{self.port}")
         self.server.listen(1)
         
         print(f"🧠 Brain service listening on port {self.port}")
@@ -401,9 +410,21 @@ class SimpleBrainService:
                 
                 print(f"{'='*60}\n")
                 
-                # Update stream manager with the new brain
-                if self.stream_manager:
-                    self.stream_manager.brain = self.brain
+                # Initialize stream manager now that brain exists
+                if self.enable_streams and STREAMS_AVAILABLE and self.stream_manager is None:
+                    try:
+                        from ..streams.field_injection_threads import SensorFieldInjectionManager
+                        
+                        # Check if brain has field tensor for injection
+                        if hasattr(self.brain, 'field'):
+                            self.stream_manager = SensorFieldInjectionManager(self.brain)
+                            print("✅ Multi-stream support initialized (vision/audio → field injection)")
+                        else:
+                            print("ℹ️ Brain type doesn't support direct field injection")
+                    except Exception as e:
+                        # Not critical - streams are optional
+                        if self.debug:
+                            print(f"Stream initialization: {e}")
                 
                 # Load brain state if requested
                 if hasattr(self, 'brain_state_to_load') and self.brain_state_to_load:
